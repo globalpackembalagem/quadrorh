@@ -427,17 +427,11 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased uppercase;
+    @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', system-ui, sans-serif;
   }
 
-  /* Forçar uppercase em todos os elementos */
-  *, input:not([type="password"]), textarea, select, button, a, span, div, p, h1, h2, h3, h4, h5, h6, label, th, td, li {
-    text-transform: uppercase !important;
-  }
-  input[type="password"] {
-    text-transform: none !important;
-  }
+
 }
 
 @layer utilities {

@@ -111,33 +111,56 @@ export default function GateAcesso() {
     setErro('');
 
     try {
-      const { data, error } = await supabase.functions.invoke('auth-handler', {
-        body: { action: 'login', nome: nome.trim(), senha },
-      });
+      // AJUSTE: Consulta direta para contornar erro de CORS da Edge Function
+      const { data: user, error } = await supabase
+        .from('user_roles')
+        .select(`
+          id, nome, senha, setor_id, acesso_admin,
+          pode_visualizar_funcionarios, pode_editar_funcionarios,
+          pode_visualizar_previsao, pode_editar_previsao,
+          pode_visualizar_coberturas, pode_editar_coberturas,
+          pode_visualizar_faltas, pode_editar_faltas,
+          pode_visualizar_demissoes, pode_editar_demissoes,
+          pode_visualizar_homologacoes, pode_editar_homologacoes,
+          pode_visualizar_divergencias, pode_criar_divergencias,
+          pode_visualizar_troca_turno, pode_editar_troca_turno,
+          pode_visualizar_armarios, pode_editar_armarios,
+          pode_exportar_excel, recebe_notificacoes, tempo_inatividade,
+          ativo, user_roles_setores(setor_id)
+        `)
+        .eq('ativo', true)
+        .ilike('nome', nome.trim())
+        .single();
 
-      if (error) throw error;
-      if (data.error) {
-        setErro(data.error);
+      if (error || !user) {
+        setErro('Usuário não encontrado ou inativo');
+        setFase('senha');
+        return;
+      }
+
+      // Comparação simples de senha (PLANO)
+      if (user.senha !== senha) {
+        setErro('Senha incorreta');
         setFase('senha');
         return;
       }
 
       // Se sistema indisponível, apenas LUCIANO pode entrar
-      const nomeLogin = data.user.nome?.toUpperCase();
+      const nomeLogin = user.nome?.toUpperCase();
       if (sistemaIndisponivel && nomeLogin !== 'LUCIANO') {
         setErro('Sistema temporariamente indisponível. Apenas o administrador pode acessar.');
         setFase('senha');
         return;
       }
 
-      const usuarioLocal = montarUsuarioLocal(data.user);
+      const usuarioLocal = montarUsuarioLocal(user);
       setUsuarioAtual(usuarioLocal);
-      await registrarAcessoUsuario(data.user.id, data.user.nome);
-      toast.success(`Bem-vindo, ${data.user.nome}!`);
+      await registrarAcessoUsuario(user.id, user.nome);
+      toast.success(`Bem-vindo, ${user.nome}!`);
       navigate('/home', { replace: true });
     } catch (err) {
       console.error('Erro no login:', err);
-      setErro('Erro ao conectar. Tente novamente.');
+      setErro('Erro técnico ao conectar. Tente novamente.');
       setFase('senha');
     }
   };
