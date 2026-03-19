@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR" translate="no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Bloqueia tradução automática de navegadores (Chrome, Edge, etc.) -->
+    <meta name="google" content="notranslate" />
+    <title>Quadro RH - GlobalPack</title>
+    <meta name="description" content="Sistema de Controle de Quadro de Funcionários" />
+    <meta name="author" content="GlobalPack" />
+
+    <meta property="og:title" content="Quadro RH - GlobalPack" />
+    <meta property="og:description" content="Sistema de Controle de Quadro de Funcionários" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@Lovable" />
+    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+  </head>
+
+  <body translate="no">
+    <div id="root"></div>
+    <script>
+      // Fallback global: se React não montar em 10s ou JS crashar, mostra tela de recuperação
+      window.__APP_LOADED = false;
+      window.onerror = function(msg, url, line, col, error) {
+        if (window.__APP_LOADED) return;
+        console.error('[FATAL]', msg, url, line, col, error);
+        showFallback('Erro ao carregar: ' + (msg || 'desconhecido'));
+      };
+      window.addEventListener('unhandledrejection', function(e) {
+        console.error('[FATAL promise]', e.reason);
+      });
+      setTimeout(function() {
+        var root = document.getElementById('root');
+        if (root && (!root.hasChildNodes() || root.innerHTML.trim() === '')) {
+          showFallback('A página não carregou corretamente.');
+        }
+      }, 12000);
+      function showFallback(msg) {
+        var root = document.getElementById('root');
+        if (!root || window.__FALLBACK_SHOWN) return;
+        window.__FALLBACK_SHOWN = true;
+        root.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui;background:#f0f4f8;padding:20px">'
+          + '<div style="background:white;border-radius:12px;padding:40px;max-width:420px;width:100%;box-shadow:0 4px 20px rgba(0,0,0,0.08);text-align:center">'
+          + '<div style="font-size:48px;margin-bottom:16px">⚠️</div>'
+          + '<h2 style="color:#1a1a2e;margin-bottom:12px;font-size:18px">Erro ao carregar o sistema</h2>'
+          + '<p style="color:#666;margin-bottom:20px;font-size:14px;line-height:1.5">' + msg + '</p>'
+          + '<button onclick="localStorage.clear();sessionStorage.clear();if(\'caches\' in window){caches.keys().then(function(n){n.forEach(function(k){caches.delete(k)})})};location.href=\'/\'" '
+          + 'style="padding:12px 24px;background:#3b5998;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;width:100%">'
+          + '🔄 Limpar Cache e Recarregar</button>'
+          + '<p style="color:#999;font-size:11px;margin-top:16px">Se o problema persistir, tente abrir em janela anônima (Ctrl+Shift+N)</p>'
+          + '</div></div>';
+      }
+      // Limpa caches do Service Worker ao carregar nova versão
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          names.forEach(function(name) { caches.delete(name); });
+        });
+      }
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

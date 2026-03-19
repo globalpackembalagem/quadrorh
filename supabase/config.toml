@@ -1,0 +1,7 @@
+project_id = "iffakffvaqharvhjeeuk"
+
+[functions.processar-trocas-turno]
+verify_jwt = false
+
+[functions.enviar-previsao-agendada]
+verify_jwt = false

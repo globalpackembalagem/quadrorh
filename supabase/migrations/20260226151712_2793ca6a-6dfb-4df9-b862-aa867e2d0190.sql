@@ -1,0 +1,1 @@
+ALTER TYPE public.ponto_tipo ADD VALUE IF NOT EXISTS 'S';

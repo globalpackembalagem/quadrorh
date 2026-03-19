@@ -1,0 +1,1 @@
+DELETE FROM historico_movimentacao WHERE funcionario_nome = 'QUADRO INICIAL';

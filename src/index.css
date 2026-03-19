@@ -1,0 +1,475 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+#lovable-badge {
+  display: none !important;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Sistema de Controle de Quadro - Design System Profissional */
+
+@layer base {
+  /* TEMA 1 — CLARO AZUL CORPORATIVO (PADRÃO) */
+  :root {
+    --background: 214 45% 95%;
+    --foreground: 215 30% 15%;
+
+    --card: 213 40% 98%;
+    --card-foreground: 215 30% 15%;
+
+    --popover: 213 40% 98%;
+    --popover-foreground: 215 30% 15%;
+
+    --primary: 221 84% 48%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 214 40% 88%;
+    --secondary-foreground: 215 30% 15%;
+
+    --muted: 214 35% 90%;
+    --muted-foreground: 215 20% 42%;
+
+    --accent: 214 40% 88%;
+    --accent-foreground: 215 30% 15%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 152 55% 33%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 85% 48%;
+    --warning-foreground: 0 0% 100%;
+
+    --info: 221 83% 48%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 214 30% 84%;
+    --input: 214 30% 84%;
+    --ring: 221 83% 48%;
+
+    --radius: 0.625rem;
+
+    --sidebar-background: 217 45% 15%;
+    --sidebar-foreground: 213 32% 91%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 18%;
+    --sidebar-accent-foreground: 213 32% 91%;
+    --sidebar-border: 217 33% 25%;
+    --sidebar-ring: 221 83% 53%;
+
+    --chart-1: 221 83% 48%;
+    --chart-2: 152 55% 33%;
+    --chart-3: 38 85% 48%;
+    --chart-4: 0 72% 51%;
+    --chart-5: 270 50% 50%;
+  }
+
+  /* TEMA 2 — DARK TECH */
+  .dark.dark-tech {
+    --background: 222 47% 11%;
+    --foreground: 220 13% 91%;
+
+    --card: 217 33% 17%;
+    --card-foreground: 220 13% 91%;
+
+    --popover: 217 33% 17%;
+    --popover-foreground: 220 13% 91%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 217 19% 27%;
+    --secondary-foreground: 220 13% 91%;
+
+    --muted: 217 19% 27%;
+    --muted-foreground: 215 14% 64%;
+
+    --accent: 215 28% 17%;
+    --accent-foreground: 220 13% 91%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 60% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 90% 55%;
+    --warning-foreground: 0 0% 10%;
+
+    --border: 215 19% 35%;
+    --input: 215 19% 35%;
+    --ring: 217 91% 60%;
+
+    --sidebar-background: 217 45% 15%;
+    --sidebar-foreground: 213 32% 91%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 18%;
+    --sidebar-accent-foreground: 213 32% 91%;
+    --sidebar-border: 217 33% 25%;
+    --sidebar-ring: 221 83% 53%;
+  }
+
+  /* TEMA 3 — DARK CORPORATE (dourado) */
+  .dark.dark-corporate {
+    --background: 0 0% 7%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 16%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 16%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 38 92% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 23%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 23%;
+    --muted-foreground: 0 0% 70%;
+
+    --accent: 0 0% 16%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 60% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 90% 55%;
+    --warning-foreground: 0 0% 10%;
+
+    --border: 0 0% 23%;
+    --input: 0 0% 23%;
+    --ring: 38 92% 50%;
+
+    --sidebar-background: 217 45% 15%;
+    --sidebar-foreground: 213 32% 91%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 18%;
+    --sidebar-accent-foreground: 213 32% 91%;
+    --sidebar-border: 217 33% 25%;
+    --sidebar-ring: 221 83% 53%;
+  }
+
+  /* TEMA 4 — GLOBAL BLUE (CLARO ALTERNATIVO — verde) */
+  .global-blue {
+    --background: 210 29% 97%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 142 72% 36%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 29% 93%;
+    --muted-foreground: 215 14% 47%;
+
+    --accent: 214 32% 91%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 72% 36%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 85% 48%;
+    --warning-foreground: 0 0% 100%;
+
+    --info: 142 72% 36%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 142 72% 36%;
+
+    --sidebar-background: 217 45% 15%;
+    --sidebar-foreground: 213 32% 91%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 18%;
+    --sidebar-accent-foreground: 213 32% 91%;
+    --sidebar-border: 217 33% 25%;
+    --sidebar-ring: 221 83% 53%;
+
+    --chart-1: 142 72% 36%;
+    --chart-2: 217 91% 60%;
+    --chart-3: 38 85% 48%;
+    --chart-4: 0 72% 51%;
+    --chart-5: 270 50% 50%;
+  }
+
+  /* TEMA 5 — PREMIUM BLACK */
+  .dark.premium-black {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 11%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 11%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 64%;
+
+    --accent: 0 0% 11%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 60% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 90% 55%;
+    --warning-foreground: 0 0% 10%;
+
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 221 83% 53%;
+
+    --sidebar-background: 217 45% 15%;
+    --sidebar-foreground: 213 32% 91%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 18%;
+    --sidebar-accent-foreground: 213 32% 91%;
+    --sidebar-border: 217 33% 25%;
+    --sidebar-ring: 221 83% 53%;
+  }
+
+  /* TEMA 6 — HACKER NEON (verde neon) */
+  .dark.hacker-neon {
+    --background: 150 20% 4%;
+    --foreground: 142 100% 50%;
+
+    --card: 150 15% 8%;
+    --card-foreground: 142 80% 70%;
+
+    --popover: 150 15% 8%;
+    --popover-foreground: 142 80% 70%;
+
+    --primary: 142 100% 50%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 150 15% 12%;
+    --secondary-foreground: 142 80% 70%;
+
+    --muted: 150 15% 12%;
+    --muted-foreground: 142 40% 45%;
+
+    --accent: 150 15% 10%;
+    --accent-foreground: 142 100% 50%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 100% 50%;
+    --success-foreground: 0 0% 0%;
+
+    --warning: 38 90% 55%;
+    --warning-foreground: 0 0% 0%;
+
+    --border: 142 40% 16%;
+    --input: 142 40% 16%;
+    --ring: 142 100% 50%;
+
+    --sidebar-background: 150 20% 6%;
+    --sidebar-foreground: 142 80% 70%;
+    --sidebar-primary: 142 100% 50%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 150 15% 10%;
+    --sidebar-accent-foreground: 142 100% 50%;
+    --sidebar-border: 142 40% 16%;
+    --sidebar-ring: 142 100% 50%;
+
+    --chart-1: 142 100% 50%;
+    --chart-2: 180 100% 40%;
+    --chart-3: 60 100% 50%;
+    --chart-4: 0 72% 55%;
+    --chart-5: 300 100% 50%;
+  }
+
+  /* TEMA 7 — MIDNIGHT BLUE (azul profundo) */
+  .dark.midnight-blue {
+    --background: 222 60% 7%;
+    --foreground: 210 40% 90%;
+
+    --card: 222 50% 12%;
+    --card-foreground: 210 40% 90%;
+
+    --popover: 222 50% 12%;
+    --popover-foreground: 210 40% 90%;
+
+    --primary: 217 100% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 222 40% 18%;
+    --secondary-foreground: 210 40% 90%;
+
+    --muted: 222 40% 18%;
+    --muted-foreground: 210 20% 55%;
+
+    --accent: 222 50% 14%;
+    --accent-foreground: 210 40% 90%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 60% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 90% 55%;
+    --warning-foreground: 0 0% 10%;
+
+    --border: 222 30% 22%;
+    --input: 222 30% 22%;
+    --ring: 217 100% 60%;
+
+    --sidebar-background: 222 55% 10%;
+    --sidebar-foreground: 210 40% 90%;
+    --sidebar-primary: 217 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 45% 15%;
+    --sidebar-accent-foreground: 210 40% 90%;
+    --sidebar-border: 222 30% 22%;
+    --sidebar-ring: 217 100% 60%;
+
+    --chart-1: 217 100% 60%;
+    --chart-2: 142 60% 45%;
+    --chart-3: 38 90% 55%;
+    --chart-4: 0 72% 55%;
+    --chart-5: 270 60% 60%;
+  }
+
+  /* TEMA 8 — CLARO QUENTE (tons quentes/âmbar) */
+  .claro-quente {
+    --background: 30 50% 97%;
+    --foreground: 20 40% 18%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 20 40% 18%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 40% 18%;
+
+    --primary: 38 92% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 30 30% 90%;
+    --secondary-foreground: 20 40% 18%;
+
+    --muted: 30 20% 93%;
+    --muted-foreground: 20 15% 47%;
+
+    --accent: 30 30% 90%;
+    --accent-foreground: 20 40% 18%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 72% 36%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 85% 48%;
+    --warning-foreground: 0 0% 100%;
+
+    --info: 38 92% 50%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 30 25% 85%;
+    --input: 30 25% 85%;
+    --ring: 38 92% 50%;
+
+    --sidebar-background: 20 30% 18%;
+    --sidebar-foreground: 30 30% 92%;
+    --sidebar-primary: 38 92% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 20 25% 25%;
+    --sidebar-accent-foreground: 30 30% 92%;
+    --sidebar-border: 20 20% 28%;
+    --sidebar-ring: 38 92% 50%;
+
+    --chart-1: 38 92% 50%;
+    --chart-2: 142 72% 36%;
+    --chart-3: 217 91% 60%;
+    --chart-4: 0 72% 51%;
+    --chart-5: 270 50% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased uppercase;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  /* Forçar uppercase em todos os elementos */
+  *, input:not([type="password"]), textarea, select, button, a, span, div, p, h1, h2, h3, h4, h5, h6, label, th, td, li {
+    text-transform: uppercase !important;
+  }
+  input[type="password"] {
+    text-transform: none !important;
+  }
+}
+
+@layer utilities {
+  .stat-card {
+    @apply bg-card rounded-lg border border-border/80 p-6 shadow-sm transition-all hover:shadow-md hover:border-border;
+  }
+
+  .data-table {
+    @apply w-full text-sm;
+  }
+
+  .data-table th {
+    @apply text-left font-semibold text-foreground/70 py-3 px-4 border-b border-border bg-muted/60;
+  }
+
+  .data-table td {
+    @apply py-3 px-4 border-b border-border/70;
+  }
+
+  .data-table tr:hover td {
+    @apply bg-accent/40;
+  }
+
+  .page-header {
+    @apply mb-8;
+  }
+
+  .page-title {
+    @apply text-2xl font-bold tracking-tight;
+  }
+
+  .page-description {
+    @apply text-muted-foreground mt-1;
+  }
+}

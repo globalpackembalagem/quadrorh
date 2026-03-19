@@ -1,0 +1,1 @@
+ALTER TABLE public.trocas_turno ADD COLUMN data_programada date;

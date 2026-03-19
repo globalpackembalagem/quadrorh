@@ -1,0 +1,1 @@
+UPDATE situacoes SET conta_no_quadro = true WHERE nome = 'SUMIDO';

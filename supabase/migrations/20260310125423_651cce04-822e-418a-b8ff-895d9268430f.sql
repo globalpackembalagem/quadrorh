@@ -1,0 +1,1 @@
+ALTER TABLE public.armarios_femininos ADD COLUMN IF NOT EXISTS quebrado boolean NOT NULL DEFAULT false;

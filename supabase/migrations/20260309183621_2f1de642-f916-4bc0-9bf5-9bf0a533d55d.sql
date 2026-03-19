@@ -1,0 +1,1 @@
+ALTER TABLE public.armarios_femininos ADD COLUMN matricula text DEFAULT NULL;

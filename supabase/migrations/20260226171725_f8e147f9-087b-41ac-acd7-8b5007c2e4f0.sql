@@ -1,0 +1,1 @@
+ALTER TABLE public.experiencia_decisoes ADD COLUMN funcionario_ciente boolean NOT NULL DEFAULT false;

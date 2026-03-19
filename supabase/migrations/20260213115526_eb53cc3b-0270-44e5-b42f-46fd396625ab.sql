@@ -1,0 +1,1 @@
+ALTER TABLE public.funcionarios ADD COLUMN nao_e_meu_funcionario boolean NOT NULL DEFAULT false;

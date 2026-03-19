@@ -1,0 +1,1 @@
+ALTER TABLE public.funcionarios ADD COLUMN tamanho_uniforme text NULL;

@@ -1,0 +1,10 @@
+-- Enable realtime for main tables
+ALTER PUBLICATION supabase_realtime ADD TABLE public.funcionarios;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.registros_ponto;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.divergencias_quadro;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.demissoes;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.periodos_ponto;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.quadro_planejado;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.quadro_decoracao;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.setores;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.situacoes;

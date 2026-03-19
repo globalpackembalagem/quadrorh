@@ -1,0 +1,1 @@
+ALTER TABLE public.experiencia_decisoes ADD COLUMN responsavel text NULL;

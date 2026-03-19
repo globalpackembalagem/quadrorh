@@ -1,0 +1,1 @@
+ALTER TABLE public.armarios_femininos ADD COLUMN bloqueado boolean NOT NULL DEFAULT false;
