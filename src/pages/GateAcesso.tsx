@@ -111,39 +111,31 @@ export default function GateAcesso() {
     setErro('');
 
     try {
-      // AJUSTE: Consulta direta para contornar erro de CORS da Edge Function
-      const { data: user, error } = await supabase
-        .from('user_roles')
-        .select(`
-          id, nome, senha, setor_id, acesso_admin,
-          pode_visualizar_funcionarios, pode_editar_funcionarios,
-          pode_visualizar_previsao, pode_editar_previsao,
-          pode_visualizar_coberturas, pode_editar_coberturas,
-          pode_visualizar_faltas, pode_editar_faltas,
-          pode_visualizar_demissoes, pode_editar_demissoes,
-          pode_visualizar_homologacoes, pode_editar_homologacoes,
-          pode_visualizar_divergencias, pode_criar_divergencias,
-          pode_visualizar_troca_turno, pode_editar_troca_turno,
-          pode_visualizar_armarios, pode_editar_armarios,
-          pode_exportar_excel, recebe_notificacoes, tempo_inatividade,
-          ativo, user_roles_setores(setor_id)
-        `)
-        .eq('ativo', true)
-        .ilike('nome', nome.trim())
-        .single();
+      // Chamar Edge Function para validar senha com segurança (suporta hash e texto simples)
+      const { data, error } = await supabase.functions.invoke('auth-handler', {
+        body: { action: 'login', nome: nome.trim(), senha },
+      });
 
-      if (error || !user) {
-        setErro('Usuário não encontrado ou inativo');
+      if (error) {
+        console.error('Erro na Edge Function:', error);
+        setErro('Erro ao conectar. Tente novamente.');
         setFase('senha');
         return;
       }
 
-      // Comparação simples de senha (PLANO)
-      if (user.senha !== senha) {
-        setErro('Senha incorreta');
+      if (data?.error) {
+        setErro(data.error);
         setFase('senha');
         return;
       }
+
+      if (!data?.success || !data?.user) {
+        setErro('Erro inesperado. Tente novamente.');
+        setFase('senha');
+        return;
+      }
+
+      const user = data.user;
 
       // Se sistema indisponível, apenas LUCIANO pode entrar
       const nomeLogin = user.nome?.toUpperCase();
