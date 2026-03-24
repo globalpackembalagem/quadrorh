@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 // xlsx-js-style loaded dynamically
 import { useFuncionarios, useUpdateFuncionario, useDeleteFuncionario } from '@/hooks/useFuncionarios';
 import { criarEventoSistema } from '@/hooks/useEventosSistema';
+import { useCreateTreinamento } from '@/hooks/useTreinamentosPrevisao';
 import { useSituacoesAtivas } from '@/hooks/useSituacoes';
 import { useSetoresAtivos } from '@/hooks/useSetores';
 import { usePrevisaoDocumentos, usePrevisaoDocumentosHistorico, useUpdateDocumentoStatus } from '@/hooks/usePrevisaoDocumentos';
