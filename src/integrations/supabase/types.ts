@@ -1034,13 +1034,22 @@ export type Database = {
           created_at: string
           criado_por: string | null
           data_integracao: string | null
+          documento_ok: boolean | null
+          documento_ok_em: string | null
+          documento_ok_por: string | null
           funcao: string | null
           id: string
           indicacao: string | null
           nome_completo: string | null
           oculos: string | null
           ponto_referencia: string | null
+          presenca: string | null
+          presenca_em: string | null
+          presenca_por: string | null
           residencia_fretado: string | null
+          resultado: string | null
+          resultado_em: string | null
+          resultado_por: string | null
           sapato: string | null
           setor: string | null
           sexo: string | null
@@ -1056,13 +1065,22 @@ export type Database = {
           created_at?: string
           criado_por?: string | null
           data_integracao?: string | null
+          documento_ok?: boolean | null
+          documento_ok_em?: string | null
+          documento_ok_por?: string | null
           funcao?: string | null
           id?: string
           indicacao?: string | null
           nome_completo?: string | null
           oculos?: string | null
           ponto_referencia?: string | null
+          presenca?: string | null
+          presenca_em?: string | null
+          presenca_por?: string | null
           residencia_fretado?: string | null
+          resultado?: string | null
+          resultado_em?: string | null
+          resultado_por?: string | null
           sapato?: string | null
           setor?: string | null
           sexo?: string | null
@@ -1078,13 +1096,22 @@ export type Database = {
           created_at?: string
           criado_por?: string | null
           data_integracao?: string | null
+          documento_ok?: boolean | null
+          documento_ok_em?: string | null
+          documento_ok_por?: string | null
           funcao?: string | null
           id?: string
           indicacao?: string | null
           nome_completo?: string | null
           oculos?: string | null
           ponto_referencia?: string | null
+          presenca?: string | null
+          presenca_em?: string | null
+          presenca_por?: string | null
           residencia_fretado?: string | null
+          resultado?: string | null
+          resultado_em?: string | null
+          resultado_por?: string | null
           sapato?: string | null
           setor?: string | null
           sexo?: string | null
@@ -1092,6 +1119,47 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      integracoes_historico: {
+        Row: {
+          acao: string
+          campo: string | null
+          candidato_id: string
+          created_at: string
+          id: string
+          usuario_nome: string
+          valor_anterior: string | null
+          valor_novo: string | null
+        }
+        Insert: {
+          acao: string
+          campo?: string | null
+          candidato_id: string
+          created_at?: string
+          id?: string
+          usuario_nome: string
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Update: {
+          acao?: string
+          campo?: string | null
+          candidato_id?: string
+          created_at?: string
+          id?: string
+          usuario_nome?: string
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integracoes_historico_candidato_id_fkey"
+            columns: ["candidato_id"]
+            isOneToOne: false
+            referencedRelation: "integracoes_agencia"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       liberacoes_faltas: {
         Row: {
@@ -1958,6 +2026,7 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          integracao_perfil: string | null
           nome: string
           perfil: Database["public"]["Enums"]["perfil_usuario"]
           pode_criar_divergencias: boolean
@@ -1967,6 +2036,7 @@ export type Database = {
           pode_editar_faltas: boolean
           pode_editar_funcionarios: boolean
           pode_editar_homologacoes: boolean
+          pode_editar_integracao: boolean
           pode_editar_previsao: boolean
           pode_editar_troca_turno: boolean
           pode_exportar_excel: boolean
@@ -1977,6 +2047,7 @@ export type Database = {
           pode_visualizar_faltas: boolean
           pode_visualizar_funcionarios: boolean
           pode_visualizar_homologacoes: boolean
+          pode_visualizar_integracao: boolean
           pode_visualizar_previsao: boolean
           pode_visualizar_troca_turno: boolean
           recebe_notificacoes: boolean
@@ -1992,6 +2063,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          integracao_perfil?: string | null
           nome: string
           perfil?: Database["public"]["Enums"]["perfil_usuario"]
           pode_criar_divergencias?: boolean
@@ -2001,6 +2073,7 @@ export type Database = {
           pode_editar_faltas?: boolean
           pode_editar_funcionarios?: boolean
           pode_editar_homologacoes?: boolean
+          pode_editar_integracao?: boolean
           pode_editar_previsao?: boolean
           pode_editar_troca_turno?: boolean
           pode_exportar_excel?: boolean
@@ -2011,6 +2084,7 @@ export type Database = {
           pode_visualizar_faltas?: boolean
           pode_visualizar_funcionarios?: boolean
           pode_visualizar_homologacoes?: boolean
+          pode_visualizar_integracao?: boolean
           pode_visualizar_previsao?: boolean
           pode_visualizar_troca_turno?: boolean
           recebe_notificacoes?: boolean
@@ -2026,6 +2100,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          integracao_perfil?: string | null
           nome?: string
           perfil?: Database["public"]["Enums"]["perfil_usuario"]
           pode_criar_divergencias?: boolean
@@ -2035,6 +2110,7 @@ export type Database = {
           pode_editar_faltas?: boolean
           pode_editar_funcionarios?: boolean
           pode_editar_homologacoes?: boolean
+          pode_editar_integracao?: boolean
           pode_editar_previsao?: boolean
           pode_editar_troca_turno?: boolean
           pode_exportar_excel?: boolean
@@ -2045,6 +2121,7 @@ export type Database = {
           pode_visualizar_faltas?: boolean
           pode_visualizar_funcionarios?: boolean
           pode_visualizar_homologacoes?: boolean
+          pode_visualizar_integracao?: boolean
           pode_visualizar_previsao?: boolean
           pode_visualizar_troca_turno?: boolean
           recebe_notificacoes?: boolean
