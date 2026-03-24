@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import { Users, TrendingUp, TrendingDown, Minus, UserPlus, UserX, Umbrella, GraduationCap, UserRound, UserRoundCheck, AlertTriangle } from 'lucide-react';
 import { HistoricoMovimentacaoDialog } from '@/components/dashboard/HistoricoMovimentacaoDialog';
+import { TreinamentosSetorDialog } from '@/components/dashboard/TreinamentosSetorDialog';
 import { Funcionario, QuadroPlanejado, QuadroDecoracao } from '@/types/database';
+import { TreinamentoPrevisao, filterByGrupo } from '@/hooks/useTreinamentosPrevisao';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
