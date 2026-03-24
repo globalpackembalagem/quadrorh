@@ -49,6 +49,7 @@ export function NovaPrevisaoDialog() {
   const { data: setores = [] } = useSetoresAtivos();
   const { data: situacoes = [] } = useSituacoesAtivas();
   const queryClient = useQueryClient();
+  const createTreinamento = useCreateTreinamento();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState(initialForm);
