@@ -90,28 +90,6 @@ export function NovaPrevisaoDialog() {
 
       if (error) throw error;
 
-      // Find setor info for training record
-      const selectedSetor = setores.find(s => s.id === formData.setor_id);
-
-      // Auto-create training record
-      if (inserted?.id) {
-        try {
-          await createTreinamento.mutateAsync({
-            funcionario_id: inserted.id,
-            nome_completo: formData.nome_completo.trim(),
-            matricula: formData.matricula || null,
-            empresa: formData.empresa,
-            setor_nome: selectedSetor?.nome || null,
-            setor_grupo: selectedSetor?.grupo || null,
-            turma: formData.turma || null,
-            cargo: formData.cargo || null,
-            data_previsao: formData.data_admissao ? format(formData.data_admissao, 'yyyy-MM-dd') : null,
-          });
-        } catch {
-          console.warn('Falha ao criar treinamento automático');
-        }
-      }
-
       toast.success('Previsão adicionada com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
       setFormData(initialForm);
