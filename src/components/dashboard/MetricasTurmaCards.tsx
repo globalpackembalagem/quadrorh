@@ -26,6 +26,7 @@ interface MetricasTurmaCardsProps {
   treinamentoPorTurma?: StatusPorTurma;
   mostrarSumidos?: boolean;
   recentesPorTurma?: RecentesPorTurma;
+  treinamentosPrevisao?: TreinamentoPrevisao[];
 }
 
 // Turmas para cada grupo
