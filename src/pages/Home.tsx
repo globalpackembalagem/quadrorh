@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { DashboardFaltasDiario } from '@/components/faltas/DashboardFaltasDiario';
 import { HistoricoMovimentacaoDialog, HistoricoMovimentacaoFullDialog } from '@/components/dashboard/HistoricoMovimentacaoDialog';
+import { TreinamentosSetorDialog } from '@/components/dashboard/TreinamentosSetorDialog';
+import { TreinamentoPrevisao } from '@/hooks/useTreinamentosPrevisao';
 import { format, parseISO, eachDayOfInterval } from 'date-fns';
 
 // Reuse calculation functions
