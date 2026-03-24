@@ -201,9 +201,10 @@ export default function PrevisaoAdmissao() {
         ...(!func?.data_admissao ? { data_admissao: format(new Date(), 'yyyy-MM-dd') } : {}),
       });
       
-      // Criar evento na central de notificações
+      // Criar evento na central de notificações + registro de treinamento
       if (func) {
-        const setorNome = setores.find(s => s.id === func.setor_id)?.nome || '';
+        const setor = setores.find(s => s.id === func.setor_id);
+        const setorNome = setor?.nome || '';
         await criarEventoSistema({
           tipo: 'admissao',
           descricao: `Funcionário ${func.nome_completo} admitido (Previsão → Ativo)`,
@@ -214,6 +215,23 @@ export default function PrevisaoAdmissao() {
           turma: func.turma,
           criado_por: userRole.nome,
         });
+
+        // Criar registro de treinamento/onboarding ao sair da previsão
+        try {
+          await createTreinamento.mutateAsync({
+            funcionario_id: func.id,
+            nome_completo: func.nome_completo,
+            matricula: func.matricula || null,
+            empresa: func.empresa || null,
+            setor_nome: setorNome,
+            setor_grupo: setor?.grupo || null,
+            turma: func.turma || null,
+            cargo: func.cargo || null,
+            data_previsao: func.data_admissao || null,
+          });
+        } catch {
+          console.warn('Falha ao criar registro de treinamento');
+        }
       }
       
       toast.success('Funcionário ativado e movido para o quadro!');
