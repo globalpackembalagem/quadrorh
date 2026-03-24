@@ -64,10 +64,30 @@ export function useTreinamentosPrevisaoTodos() {
 export function useCreateTreinamento() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (record: Omit<TreinamentoPrevisao, 'id' | 'created_at' | 'updated_at' | 'status' | 'ativo' | 'treinamento_inicio' | 'treinamento_expiracao'> & { treinamento_inicio?: string; treinamento_expiracao?: string }) => {
+    mutationFn: async (record: {
+      funcionario_id: string;
+      nome_completo: string;
+      matricula?: string | null;
+      empresa?: string | null;
+      setor_nome?: string | null;
+      setor_grupo?: string | null;
+      turma?: string | null;
+      cargo?: string | null;
+      data_previsao?: string | null;
+    }) => {
       const { data, error } = await supabase
         .from('treinamentos_previsao')
-        .insert(record)
+        .insert({
+          funcionario_id: record.funcionario_id,
+          nome_completo: record.nome_completo,
+          matricula: record.matricula ?? null,
+          empresa: record.empresa ?? null,
+          setor_nome: record.setor_nome ?? null,
+          setor_grupo: record.setor_grupo ?? null,
+          turma: record.turma ?? null,
+          cargo: record.cargo ?? null,
+          data_previsao: record.data_previsao ?? null,
+        })
         .select()
         .single();
       if (error) throw error;

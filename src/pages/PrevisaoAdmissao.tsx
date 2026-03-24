@@ -216,7 +216,7 @@ export default function PrevisaoAdmissao() {
           criado_por: userRole.nome,
         });
 
-        // Criar registro de treinamento/onboarding ao sair da previsão
+        // Criar registro de treinamento/onboarding ao ativar funcionário
         try {
           await createTreinamento.mutateAsync({
             funcionario_id: func.id,
@@ -229,8 +229,9 @@ export default function PrevisaoAdmissao() {
             cargo: func.cargo || null,
             data_previsao: func.data_admissao || null,
           });
-        } catch {
-          console.warn('Falha ao criar registro de treinamento');
+        } catch (err) {
+          console.error('Falha ao criar registro de treinamento:', err);
+          toast.error('Erro ao criar registro de treinamento');
         }
       }
       
