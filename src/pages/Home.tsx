@@ -46,7 +46,7 @@ function isSetorDoQuadro(setor: { nome?: string; conta_no_quadro?: boolean } | n
 }
 
 // ── Sector Card (estilo referência) ──
-function SetorCard({ label, total, necessario, homens, mulheres, previsao, recentes }: {
+function SetorCard({ label, total, necessario, homens, mulheres, previsao, recentes, treinamentos = [] }: {
   label: string;
   total: number;
   necessario: number;
@@ -54,6 +54,7 @@ function SetorCard({ label, total, necessario, homens, mulheres, previsao, recen
   mulheres: number;
   previsao: number;
   recentes?: { count: number; nomes: string[]; situacao: string } | null;
+  treinamentos?: TreinamentoPrevisao[];
 }) {
   const diferenca = total - necessario;
   const totalGender = homens + mulheres || 1;
