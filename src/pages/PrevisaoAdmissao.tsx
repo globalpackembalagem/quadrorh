@@ -205,16 +205,6 @@ export default function PrevisaoAdmissao() {
       if (func) {
         const setor = setores.find(s => s.id === func.setor_id);
         const setorNome = setor?.nome || '';
-        await criarEventoSistema({
-          tipo: 'admissao',
-          descricao: `Funcionário ${func.nome_completo} admitido (Previsão → Ativo)`,
-          funcionario_id: func.id,
-          funcionario_nome: func.nome_completo,
-          setor_id: func.setor_id,
-          setor_nome: setorNome,
-          turma: func.turma,
-          criado_por: userRole.nome,
-        });
 
         // Criar registro de treinamento/onboarding ao ativar funcionário
         try {
@@ -232,6 +222,22 @@ export default function PrevisaoAdmissao() {
         } catch (err) {
           console.error('Falha ao criar registro de treinamento:', err);
           toast.error('Erro ao criar registro de treinamento');
+        }
+
+        // Criar evento na central de notificações (não bloqueia ativação)
+        try {
+          await criarEventoSistema({
+            tipo: 'admissao',
+            descricao: `Funcionário ${func.nome_completo} admitido (Previsão → Ativo)`,
+            funcionario_id: func.id,
+            funcionario_nome: func.nome_completo,
+            setor_id: func.setor_id,
+            setor_nome: setorNome,
+            turma: func.turma,
+            criado_por: userRole.nome,
+          });
+        } catch (err) {
+          console.error('Falha ao criar evento de sistema:', err);
         }
       }
       
