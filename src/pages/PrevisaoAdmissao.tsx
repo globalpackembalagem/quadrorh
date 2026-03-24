@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 // xlsx-js-style loaded dynamically
 import { useFuncionarios, useUpdateFuncionario, useDeleteFuncionario } from '@/hooks/useFuncionarios';
 import { criarEventoSistema } from '@/hooks/useEventosSistema';
+import { useCreateTreinamento } from '@/hooks/useTreinamentosPrevisao';
 import { useSituacoesAtivas } from '@/hooks/useSituacoes';
 import { useSetoresAtivos } from '@/hooks/useSetores';
 import { usePrevisaoDocumentos, usePrevisaoDocumentosHistorico, useUpdateDocumentoStatus } from '@/hooks/usePrevisaoDocumentos';
@@ -74,6 +75,7 @@ export default function PrevisaoAdmissao() {
   const updateFuncionario = useUpdateFuncionario();
   const deleteFuncionario = useDeleteFuncionario();
   const updateDocStatus = useUpdateDocumentoStatus();
+  const createTreinamento = useCreateTreinamento();
 
   const isParceria = isRealParceria(userRole.nome);
   const showDocStatus = canSeeDocStatus(userRole.nome, isAdmin);
@@ -199,9 +201,10 @@ export default function PrevisaoAdmissao() {
         ...(!func?.data_admissao ? { data_admissao: format(new Date(), 'yyyy-MM-dd') } : {}),
       });
       
-      // Criar evento na central de notificações
+      // Criar evento na central de notificações + registro de treinamento
       if (func) {
-        const setorNome = setores.find(s => s.id === func.setor_id)?.nome || '';
+        const setor = setores.find(s => s.id === func.setor_id);
+        const setorNome = setor?.nome || '';
         await criarEventoSistema({
           tipo: 'admissao',
           descricao: `Funcionário ${func.nome_completo} admitido (Previsão → Ativo)`,
@@ -212,6 +215,23 @@ export default function PrevisaoAdmissao() {
           turma: func.turma,
           criado_por: userRole.nome,
         });
+
+        // Criar registro de treinamento/onboarding ao sair da previsão
+        try {
+          await createTreinamento.mutateAsync({
+            funcionario_id: func.id,
+            nome_completo: func.nome_completo,
+            matricula: func.matricula || null,
+            empresa: func.empresa || null,
+            setor_nome: setorNome,
+            setor_grupo: setor?.grupo || null,
+            turma: func.turma || null,
+            cargo: func.cargo || null,
+            data_previsao: func.data_admissao || null,
+          });
+        } catch {
+          console.warn('Falha ao criar registro de treinamento');
+        }
       }
       
       toast.success('Funcionário ativado e movido para o quadro!');

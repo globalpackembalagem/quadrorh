@@ -6,7 +6,6 @@ import { useSetoresAtivos } from '@/hooks/useSetores';
 import { useSituacoesAtivas } from '@/hooks/useSituacoes';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
-import { useCreateTreinamento } from '@/hooks/useTreinamentosPrevisao';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,7 +48,6 @@ export function NovaPrevisaoDialog() {
   const { data: setores = [] } = useSetoresAtivos();
   const { data: situacoes = [] } = useSituacoesAtivas();
   const queryClient = useQueryClient();
-  const createTreinamento = useCreateTreinamento();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState(initialForm);
@@ -89,28 +87,6 @@ export function NovaPrevisaoDialog() {
       }).select('id').single();
 
       if (error) throw error;
-
-      // Find setor info for training record
-      const selectedSetor = setores.find(s => s.id === formData.setor_id);
-
-      // Auto-create training record
-      if (inserted?.id) {
-        try {
-          await createTreinamento.mutateAsync({
-            funcionario_id: inserted.id,
-            nome_completo: formData.nome_completo.trim(),
-            matricula: formData.matricula || null,
-            empresa: formData.empresa,
-            setor_nome: selectedSetor?.nome || null,
-            setor_grupo: selectedSetor?.grupo || null,
-            turma: formData.turma || null,
-            cargo: formData.cargo || null,
-            data_previsao: formData.data_admissao ? format(formData.data_admissao, 'yyyy-MM-dd') : null,
-          });
-        } catch {
-          console.warn('Falha ao criar treinamento automático');
-        }
-      }
 
       toast.success('Previsão adicionada com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
