@@ -170,6 +170,7 @@ export default function Home() {
   const { data: periodos = [] } = usePeriodosFaltas();
   const { data: recentesSopro = [] } = useAdmissaoRecente('SOPRO');
   const { data: recentesDeco = [] } = useAdmissaoRecente('DECORAÇÃO');
+  const { data: treinamentos = [] } = useTreinamentosPrevisao();
   const recentesSoproMap = useMemo(() => agruparRecentesPorTurma(recentesSopro, 'SOPRO'), [recentesSopro]);
   const recentesDecoMap = useMemo(() => agruparRecentesPorTurma(recentesDeco, 'DECORAÇÃO'), [recentesDeco]);
 
