@@ -8,12 +8,15 @@ import { useQuadroDecoracao } from '@/hooks/useQuadroDecoracao';
 import { useFuncionariosPrevisao } from '@/hooks/usePrevisoes';
 import { usePeriodosFaltas, useRegistrosFaltas, useFuncionariosFaltas } from '@/hooks/useFaltas';
 import { useAdmissaoRecente, agruparRecentesPorTurma } from '@/hooks/useAdmissaoRecente';
+import { useTreinamentosPrevisao, filterByGrupo } from '@/hooks/useTreinamentosPrevisao';
 import { useUsuario } from '@/contexts/UserContext';
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { DashboardFaltasDiario } from '@/components/faltas/DashboardFaltasDiario';
 import { HistoricoMovimentacaoDialog, HistoricoMovimentacaoFullDialog } from '@/components/dashboard/HistoricoMovimentacaoDialog';
+import { TreinamentosSetorDialog } from '@/components/dashboard/TreinamentosSetorDialog';
+import { TreinamentoPrevisao } from '@/hooks/useTreinamentosPrevisao';
 import { format, parseISO, eachDayOfInterval } from 'date-fns';
 
 // Reuse calculation functions
@@ -43,7 +46,7 @@ function isSetorDoQuadro(setor: { nome?: string; conta_no_quadro?: boolean } | n
 }
 
 // ── Sector Card (estilo referência) ──
-function SetorCard({ label, total, necessario, homens, mulheres, previsao, recentes }: {
+function SetorCard({ label, total, necessario, homens, mulheres, previsao, recentes, treinamentos = [] }: {
   label: string;
   total: number;
   necessario: number;
@@ -51,6 +54,7 @@ function SetorCard({ label, total, necessario, homens, mulheres, previsao, recen
   mulheres: number;
   previsao: number;
   recentes?: { count: number; nomes: string[]; situacao: string } | null;
+  treinamentos?: TreinamentoPrevisao[];
 }) {
   const diferenca = total - necessario;
   const totalGender = homens + mulheres || 1;
@@ -82,6 +86,7 @@ function SetorCard({ label, total, necessario, homens, mulheres, previsao, recen
             </button>
           )}
           <HistoricoMovimentacaoDialog grupo={label} quadroAtual={total} necessario={necessario} />
+          <TreinamentosSetorDialog grupoLabel={label} treinamentos={treinamentos} />
           <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
             <Users className="h-5 w-5 text-primary" />
           </div>
@@ -165,6 +170,7 @@ export default function Home() {
   const { data: periodos = [] } = usePeriodosFaltas();
   const { data: recentesSopro = [] } = useAdmissaoRecente('SOPRO');
   const { data: recentesDeco = [] } = useAdmissaoRecente('DECORAÇÃO');
+  const { data: treinamentos = [] } = useTreinamentosPrevisao();
   const recentesSoproMap = useMemo(() => agruparRecentesPorTurma(recentesSopro, 'SOPRO'), [recentesSopro]);
   const recentesDecoMap = useMemo(() => agruparRecentesPorTurma(recentesDeco, 'DECORAÇÃO'), [recentesDeco]);
 
@@ -222,9 +228,10 @@ export default function Home() {
         efetivos: funcs.filter(f => !isTemp(f)).length,
         temporarios: funcs.filter(f => isTemp(f)).length,
         recentes: recentesSoproMap[turma] || null,
+        treinamentos: filterByGrupo(treinamentos, `SOPRO ${turma}`),
       };
     });
-  }, [funcionariosSopro, quadroPlanejado, funcionariosPrevisao, recentesSoproMap]);
+  }, [funcionariosSopro, quadroPlanejado, funcionariosPrevisao, recentesSoproMap, treinamentos]);
 
   // ── Decoração metrics ──
   const funcionariosDecoracao = useMemo(() =>
@@ -237,9 +244,12 @@ export default function Home() {
 
   const decoCards = useMemo(() => {
     const turmas = ['DIA-T1', 'DIA-T2', 'NOITE-T1', 'NOITE-T2'];
-    const labels: Record<string, string> = {
-      'DIA-T1': 'DIA T1', 'DIA-T2': 'DIA T2', 'NOITE-T1': 'NOITE T1', 'NOITE-T2': 'NOITE T2'
-    };
+      const labels: Record<string, string> = {
+        'DIA-T1': 'DIA T1', 'DIA-T2': 'DIA T2', 'NOITE-T1': 'NOITE T1', 'NOITE-T2': 'NOITE T2'
+      };
+      const treinamentoLabels: Record<string, string> = {
+        'DIA-T1': 'DIA - T1', 'DIA-T2': 'DIA - T2', 'NOITE-T1': 'NOITE - T1', 'NOITE-T2': 'NOITE - T2'
+      };
     return turmas.map(turmaKey => {
       const funcs = funcionariosDecoracao.filter(f => {
         const turma = f.turma?.toUpperCase();
@@ -276,9 +286,10 @@ export default function Home() {
         efetivos: funcs.filter(f => !isTemp(f)).length,
         temporarios: funcs.filter(f => isTemp(f)).length,
         recentes: recentesDecoMap[turmaKey] || null,
+        treinamentos: filterByGrupo(treinamentos, treinamentoLabels[turmaKey]),
       };
     });
-  }, [funcionariosDecoracao, quadroDecoracao, funcionariosPrevisao, recentesDecoMap]);
+  }, [funcionariosDecoracao, quadroDecoracao, funcionariosPrevisao, recentesDecoMap, treinamentos]);
 
   // ── Painel Geral totals ──
   const totalFuncionarios = funcionariosQuadro.length;

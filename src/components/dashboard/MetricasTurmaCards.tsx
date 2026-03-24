@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
 import { Users, TrendingUp, TrendingDown, Minus, UserPlus, UserX, Umbrella, GraduationCap, UserRound, UserRoundCheck, AlertTriangle } from 'lucide-react';
 import { HistoricoMovimentacaoDialog } from '@/components/dashboard/HistoricoMovimentacaoDialog';
+import { TreinamentosSetorDialog } from '@/components/dashboard/TreinamentosSetorDialog';
 import { Funcionario, QuadroPlanejado, QuadroDecoracao } from '@/types/database';
+import { TreinamentoPrevisao, filterByGrupo } from '@/hooks/useTreinamentosPrevisao';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
@@ -24,6 +26,7 @@ interface MetricasTurmaCardsProps {
   treinamentoPorTurma?: StatusPorTurma;
   mostrarSumidos?: boolean;
   recentesPorTurma?: RecentesPorTurma;
+  treinamentosPrevisao?: TreinamentoPrevisao[];
 }
 
 // Turmas para cada grupo
@@ -76,7 +79,7 @@ function calcularTotalPlanejadoDecoracao(dados: QuadroDecoracao): number {
   );
 }
 
-export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro = [], quadroPlanejadoDecoracao = [], funcionariosPrevisao = [], sumidosPorTurma = {}, cobFeriasPorTurma = {}, treinamentoPorTurma = {}, mostrarSumidos = false, recentesPorTurma = {} }: MetricasTurmaCardsProps) {
+export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro = [], quadroPlanejadoDecoracao = [], funcionariosPrevisao = [], sumidosPorTurma = {}, cobFeriasPorTurma = {}, treinamentoPorTurma = {}, mostrarSumidos = false, recentesPorTurma = {}, treinamentosPrevisao = [] }: MetricasTurmaCardsProps) {
   const turmas = grupo === 'SOPRO' ? TURMAS_SOPRO : TURMAS_DECORACAO;
 
   // Calcular métricas por turma usando a mesma lógica do Quadro Real
@@ -232,6 +235,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                   <Users className="h-5 w-5 text-primary" />
                 </div>
                 <HistoricoMovimentacaoDialog grupo={TURMAS_LABELS[turma]} quadroAtual={totalAjustado} necessario={metricas.quadroNecessario} />
+                <TreinamentosSetorDialog grupoLabel={TURMAS_LABELS[turma]} treinamentos={filterByGrupo(treinamentosPrevisao, TURMAS_LABELS[turma])} />
               </div>
             </div>
             

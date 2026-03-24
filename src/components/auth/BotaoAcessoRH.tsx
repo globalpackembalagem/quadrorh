@@ -70,6 +70,8 @@ export function BotaoAcessoRH() {
       pode_visualizar_armarios: user.pode_visualizar_armarios ?? false,
       pode_editar_armarios: user.pode_editar_armarios ?? false,
       pode_exportar_excel: user.pode_exportar_excel,
+      pode_visualizar_integracoes: user.pode_visualizar_integracoes ?? true,
+      pode_editar_integracoes: user.pode_editar_integracoes ?? false,
       recebe_notificacoes: user.recebe_notificacoes ?? true,
       tempo_inatividade: user.tempo_inatividade ?? 4,
     };

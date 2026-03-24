@@ -7,7 +7,7 @@ export function useIntegracoes(data?: string) {
   return useQuery({
     queryKey: ['integracoes', data],
     queryFn: async () => {
-      let query = supabase
+      let query = (supabase as any)
         .from('integracoes_lista')
         .select('*')
         .order('nome_completo', { ascending: true });
@@ -18,7 +18,7 @@ export function useIntegracoes(data?: string) {
 
       const { data: result, error } = await query;
       if (error) throw error;
-      return result as Integracao[];
+      return (result || []) as Integracao[];
     },
   });
 }
@@ -28,7 +28,7 @@ export function useMarcarPresenca() {
 
   return useMutation({
     mutationFn: async ({ id, presente, usuarioNome }: { id: string; presente: boolean; usuarioNome: string }) => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('integracoes_lista')
         .update({
           presente,
@@ -58,7 +58,7 @@ export function useImportIntegracoes() {
 
   return useMutation({
     mutationFn: async (lista: Partial<Integracao>[]) => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('integracoes_lista')
         .insert(lista);
 
@@ -81,7 +81,7 @@ export function useDeleteIntegracao() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('integracoes_lista')
         .delete()
         .eq('id', id);
