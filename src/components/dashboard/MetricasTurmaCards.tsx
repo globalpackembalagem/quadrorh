@@ -79,7 +79,7 @@ function calcularTotalPlanejadoDecoracao(dados: QuadroDecoracao): number {
   );
 }
 
-export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro = [], quadroPlanejadoDecoracao = [], funcionariosPrevisao = [], sumidosPorTurma = {}, cobFeriasPorTurma = {}, treinamentoPorTurma = {}, mostrarSumidos = false, recentesPorTurma = {} }: MetricasTurmaCardsProps) {
+export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro = [], quadroPlanejadoDecoracao = [], funcionariosPrevisao = [], sumidosPorTurma = {}, cobFeriasPorTurma = {}, treinamentoPorTurma = {}, mostrarSumidos = false, recentesPorTurma = {}, treinamentosPrevisao = [] }: MetricasTurmaCardsProps) {
   const turmas = grupo === 'SOPRO' ? TURMAS_SOPRO : TURMAS_DECORACAO;
 
   // Calcular métricas por turma usando a mesma lógica do Quadro Real
