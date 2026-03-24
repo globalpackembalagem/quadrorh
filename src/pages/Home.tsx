@@ -228,9 +228,10 @@ export default function Home() {
         efetivos: funcs.filter(f => !isTemp(f)).length,
         temporarios: funcs.filter(f => isTemp(f)).length,
         recentes: recentesSoproMap[turma] || null,
+        treinamentos: filterByGrupo(treinamentos, `SOPRO ${turma}`),
       };
     });
-  }, [funcionariosSopro, quadroPlanejado, funcionariosPrevisao, recentesSoproMap]);
+  }, [funcionariosSopro, quadroPlanejado, funcionariosPrevisao, recentesSoproMap, treinamentos]);
 
   // ── Decoração metrics ──
   const funcionariosDecoracao = useMemo(() =>
