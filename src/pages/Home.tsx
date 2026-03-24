@@ -244,9 +244,12 @@ export default function Home() {
 
   const decoCards = useMemo(() => {
     const turmas = ['DIA-T1', 'DIA-T2', 'NOITE-T1', 'NOITE-T2'];
-    const labels: Record<string, string> = {
-      'DIA-T1': 'DIA T1', 'DIA-T2': 'DIA T2', 'NOITE-T1': 'NOITE T1', 'NOITE-T2': 'NOITE T2'
-    };
+      const labels: Record<string, string> = {
+        'DIA-T1': 'DIA T1', 'DIA-T2': 'DIA T2', 'NOITE-T1': 'NOITE T1', 'NOITE-T2': 'NOITE T2'
+      };
+      const treinamentoLabels: Record<string, string> = {
+        'DIA-T1': 'DIA - T1', 'DIA-T2': 'DIA - T2', 'NOITE-T1': 'NOITE - T1', 'NOITE-T2': 'NOITE - T2'
+      };
     return turmas.map(turmaKey => {
       const funcs = funcionariosDecoracao.filter(f => {
         const turma = f.turma?.toUpperCase();
