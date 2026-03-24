@@ -235,6 +235,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                   <Users className="h-5 w-5 text-primary" />
                 </div>
                 <HistoricoMovimentacaoDialog grupo={TURMAS_LABELS[turma]} quadroAtual={totalAjustado} necessario={metricas.quadroNecessario} />
+                <TreinamentosSetorDialog grupoLabel={TURMAS_LABELS[turma]} treinamentos={filterByGrupo(treinamentosPrevisao, TURMAS_LABELS[turma])} />
               </div>
             </div>
             
