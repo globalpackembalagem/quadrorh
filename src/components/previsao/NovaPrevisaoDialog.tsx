@@ -6,6 +6,7 @@ import { useSetoresAtivos } from '@/hooks/useSetores';
 import { useSituacoesAtivas } from '@/hooks/useSituacoes';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { useCreateTreinamento } from '@/hooks/useTreinamentosPrevisao';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
