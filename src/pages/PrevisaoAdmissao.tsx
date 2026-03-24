@@ -75,6 +75,7 @@ export default function PrevisaoAdmissao() {
   const updateFuncionario = useUpdateFuncionario();
   const deleteFuncionario = useDeleteFuncionario();
   const updateDocStatus = useUpdateDocumentoStatus();
+  const createTreinamento = useCreateTreinamento();
 
   const isParceria = isRealParceria(userRole.nome);
   const showDocStatus = canSeeDocStatus(userRole.nome, isAdmin);
