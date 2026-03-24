@@ -208,20 +208,23 @@ export default function PrevisaoAdmissao() {
 
         // Criar registro de treinamento/onboarding ao ativar funcionário
         try {
-          await createTreinamento.mutateAsync({
+          const treinamentoPayload = {
             funcionario_id: func.id,
             nome_completo: func.nome_completo,
-            matricula: func.matricula || null,
-            empresa: func.empresa || null,
+            matricula: func.matricula ?? null,
+            empresa: func.empresa ?? null,
             setor_nome: setorNome,
-            setor_grupo: setor?.grupo || null,
-            turma: func.turma || null,
-            cargo: func.cargo || null,
-            data_previsao: func.data_admissao || null,
-          });
-        } catch (err) {
-          console.error('Falha ao criar registro de treinamento:', err);
-          toast.error('Erro ao criar registro de treinamento');
+            setor_grupo: setor?.grupo ?? null,
+            turma: func.turma ?? null,
+            cargo: func.cargo ?? null,
+            data_previsao: func.data_admissao ?? null,
+          };
+          console.log('[Treinamento] Criando registro:', JSON.stringify(treinamentoPayload));
+          const result = await createTreinamento.mutateAsync(treinamentoPayload);
+          console.log('[Treinamento] Registro criado com sucesso:', result);
+        } catch (err: any) {
+          console.error('[Treinamento] Falha ao criar registro:', err?.message || err, err);
+          toast.error(`Erro ao criar registro de treinamento: ${err?.message || 'erro desconhecido'}`);
         }
 
         // Criar evento na central de notificações (não bloqueia ativação)
