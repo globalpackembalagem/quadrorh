@@ -1919,6 +1919,71 @@ export type Database = {
         }
         Relationships: []
       }
+      treinamentos_previsao: {
+        Row: {
+          ativo: boolean
+          cargo: string | null
+          created_at: string
+          data_previsao: string | null
+          empresa: string | null
+          funcionario_id: string
+          id: string
+          matricula: string | null
+          nome_completo: string
+          setor_grupo: string | null
+          setor_nome: string | null
+          status: string
+          treinamento_expiracao: string
+          treinamento_inicio: string
+          turma: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cargo?: string | null
+          created_at?: string
+          data_previsao?: string | null
+          empresa?: string | null
+          funcionario_id: string
+          id?: string
+          matricula?: string | null
+          nome_completo: string
+          setor_grupo?: string | null
+          setor_nome?: string | null
+          status?: string
+          treinamento_expiracao?: string
+          treinamento_inicio?: string
+          turma?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cargo?: string | null
+          created_at?: string
+          data_previsao?: string | null
+          empresa?: string | null
+          funcionario_id?: string
+          id?: string
+          matricula?: string | null
+          nome_completo?: string
+          setor_grupo?: string | null
+          setor_nome?: string | null
+          status?: string
+          treinamento_expiracao?: string
+          treinamento_inicio?: string
+          turma?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "treinamentos_previsao_funcionario_id_fkey"
+            columns: ["funcionario_id"]
+            isOneToOne: false
+            referencedRelation: "funcionarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trocas_turno: {
         Row: {
           created_at: string
