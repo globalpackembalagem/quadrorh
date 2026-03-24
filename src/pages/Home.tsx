@@ -8,6 +8,7 @@ import { useQuadroDecoracao } from '@/hooks/useQuadroDecoracao';
 import { useFuncionariosPrevisao } from '@/hooks/usePrevisoes';
 import { usePeriodosFaltas, useRegistrosFaltas, useFuncionariosFaltas } from '@/hooks/useFaltas';
 import { useAdmissaoRecente, agruparRecentesPorTurma } from '@/hooks/useAdmissaoRecente';
+import { useTreinamentosPrevisao, filterByGrupo } from '@/hooks/useTreinamentosPrevisao';
 import { useUsuario } from '@/contexts/UserContext';
 
 import { Button } from '@/components/ui/button';
