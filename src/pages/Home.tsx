@@ -286,9 +286,10 @@ export default function Home() {
         efetivos: funcs.filter(f => !isTemp(f)).length,
         temporarios: funcs.filter(f => isTemp(f)).length,
         recentes: recentesDecoMap[turmaKey] || null,
+        treinamentos: filterByGrupo(treinamentos, treinamentoLabels[turmaKey]),
       };
     });
-  }, [funcionariosDecoracao, quadroDecoracao, funcionariosPrevisao, recentesDecoMap]);
+  }, [funcionariosDecoracao, quadroDecoracao, funcionariosPrevisao, recentesDecoMap, treinamentos]);
 
   // ── Painel Geral totals ──
   const totalFuncionarios = funcionariosQuadro.length;
