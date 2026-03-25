@@ -97,8 +97,6 @@ const allRHNavigation: NavItem[] = [
   { name: 'DIVERGÊNCIAS', href: '/divergencias', icon: AlertTriangle },
   { name: 'TROCA DE TURNO', href: '/troca-turno', icon: RefreshCw },
   { name: 'ARMÁRIOS FEMININO', href: '/armarios-femininos', icon: DoorOpen },
-  { name: 'AGÊNCIA', href: '/agencia', icon: UserPlus },
-  { name: 'INTEGRAÇÕES', href: '/integracoes', icon: ClipboardCheck },
   { name: 'PRESTADORES', href: 'https://prestadoresglobal.lovable.app', icon: Building2 },
   { name: 'MENU QUADRO', href: 'https://quadrorh.lovable.app', icon: LayoutDashboard },
 ];
