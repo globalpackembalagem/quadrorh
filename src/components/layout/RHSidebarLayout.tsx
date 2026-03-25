@@ -21,7 +21,6 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardList,
-  ClipboardCheck,
   ListChecks,
   Menu,
   DoorOpen,
