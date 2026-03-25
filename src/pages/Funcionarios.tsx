@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Search, Users, Trash2, Plus, X, ArrowRightLeft, Upload, Undo2, History, ChevronDown, ChevronUp, Filter, Download, Type } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
@@ -1225,7 +1226,12 @@ export default function Funcionarios() {
                           <AlertDialogAction
                             onClick={async () => {
                               try {
-                                await updateFuncionario.mutateAsync({ id: editingFuncionario.id, situacao_id: sitPrevisao.id });
+                              await updateFuncionario.mutateAsync({ id: editingFuncionario.id, situacao_id: sitPrevisao.id });
+                                // Excluir registros de treinamento do funcionário
+                                await supabase
+                                  .from('treinamentos_previsao')
+                                  .delete()
+                                  .eq('funcionario_id', editingFuncionario.id);
                                 await registrarHistorico.mutateAsync({
                                   tabela: 'funcionarios',
                                   operacao: 'UPDATE',
@@ -1233,7 +1239,7 @@ export default function Funcionarios() {
                                   dados_anteriores: { nome: editingFuncionario.nome_completo, situacao: editingFuncionario.situacao?.nome } as Record<string, any>,
                                   dados_novos: { nome: editingFuncionario.nome_completo, situacao: 'PREVISÃO' } as Record<string, any>,
                                 });
-                                toast.success(`${editingFuncionario.nome_completo} retornado à PREVISÃO`);
+                                toast.success(`${editingFuncionario.nome_completo} retornado à PREVISÃO (treinamento excluído)`);
                                 setDialogOpen(false);
                                 resetForm();
                               } catch (err: any) {
