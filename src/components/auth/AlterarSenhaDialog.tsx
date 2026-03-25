@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Key, Save, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useUsuario } from '@/contexts/UserContext';
 import {
   Select,
   SelectContent,
