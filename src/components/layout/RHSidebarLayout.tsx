@@ -147,12 +147,6 @@ function getNavigationForUser(
     ];
   }
 
-  // PORTARIA: Acesso exclusivo ao módulo de Integrações
-  if (userName?.toUpperCase().includes('PORTARIA')) {
-    return [
-      { name: 'INTEGRAÇÕES', href: '/integracoes', icon: ClipboardCheck },
-    ];
-  }
 
   // Visualização: Dashboard + Controle de Faltas (apenas visualização)
   if (isVisualizacao) {
