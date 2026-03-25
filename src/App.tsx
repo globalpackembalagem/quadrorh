@@ -62,7 +62,7 @@ const Divergencias = lazyRetry(() => import("./pages/Divergencias"));
 const Sopro = lazyRetry(() => import("./pages/Sopro"));
 const QuadroGeral = lazyRetry(() => import("./pages/QuadroGeral"));
 const Decoracao = lazyRetry(() => import("./pages/Decoracao"));
-const Integracoes = lazyRetry(() => import("./pages/Integracoes"));
+
 const Setores = lazyRetry(() => import("./pages/admin/Setores"));
 const Situacoes = lazyRetry(() => import("./pages/admin/Situacoes"));
 const Periodos = lazyRetry(() => import("./pages/admin/Periodos"));
@@ -83,7 +83,7 @@ const ReferenciaComponentes = lazyRetry(() => import("./pages/admin/ReferenciaCo
 const MockupGate = lazyRetry(() => import("./pages/MockupGate"));
 const ArmariosFemininos = lazyRetry(() => import("./pages/ArmariosFemininos"));
 const ManualArmarios = lazyRetry(() => import("./pages/ManualArmarios"));
-const Agencia = lazyRetry(() => import("./pages/Agencia"));
+
 const HistoricoMovimentacaoPage = lazyRetry(() => import("./pages/HistoricoMovimentacao"));
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -177,7 +177,7 @@ function LayoutRouter() {
             <Route path="/faltas/integracao" element={<RotaProtegida requireFaltas><IntegracaoFaltas /></RotaProtegida>} />
             <Route path="/controle-faltas" element={<Navigate to="/faltas" replace />} />
             
-            <Route path="/integracoes" element={<RotaProtegida allowVisualizacao><Integracoes /></RotaProtegida>} />
+            
             <Route path="/sopro" element={<Sopro />} />
             <Route path="/decoracao" element={<Decoracao />} />
             <Route path="/quadro-geral" element={<QuadroGeral />} />
@@ -198,7 +198,7 @@ function LayoutRouter() {
             <Route path="/admin/referencia" element={<RotaProtegida requireAdmin><ReferenciaComponentes /></RotaProtegida>} />
             <Route path="/armarios-femininos" element={<RotaProtegida requireArmarios><ArmariosFemininos /></RotaProtegida>} />
             <Route path="/armarios-femininos/manual" element={<RotaProtegida requireArmarios><ManualArmarios /></RotaProtegida>} />
-            <Route path="/agencia" element={<RotaProtegida requireAgencia><Agencia /></RotaProtegida>} />
+            
             
             <Route path="/historico-movimentacao" element={<HistoricoMovimentacaoPage />} />
             <Route path="/manual" element={<ManualGestor />} />

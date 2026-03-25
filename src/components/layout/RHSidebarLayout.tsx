@@ -97,8 +97,6 @@ const allRHNavigation: NavItem[] = [
   { name: 'DIVERGÊNCIAS', href: '/divergencias', icon: AlertTriangle },
   { name: 'TROCA DE TURNO', href: '/troca-turno', icon: RefreshCw },
   { name: 'ARMÁRIOS FEMININO', href: '/armarios-femininos', icon: DoorOpen },
-  { name: 'AGÊNCIA', href: '/agencia', icon: UserPlus },
-  { name: 'INTEGRAÇÕES', href: '/integracoes', icon: ClipboardCheck },
   { name: 'PRESTADORES', href: 'https://prestadoresglobal.lovable.app', icon: Building2 },
   { name: 'MENU QUADRO', href: 'https://quadrorh.lovable.app', icon: LayoutDashboard },
 ];
@@ -149,12 +147,6 @@ function getNavigationForUser(
     ];
   }
 
-  // PORTARIA: Acesso exclusivo ao módulo de Integrações
-  if (userName?.toUpperCase().includes('PORTARIA')) {
-    return [
-      { name: 'INTEGRAÇÕES', href: '/integracoes', icon: ClipboardCheck },
-    ];
-  }
 
   // Visualização: Dashboard + Controle de Faltas (apenas visualização)
   if (isVisualizacao) {
@@ -284,8 +276,6 @@ function getNavigationForUser(
     items.push({ name: 'ARMÁRIOS FEMININO', href: '/armarios-femininos', icon: DoorOpen, viewOnly: perms && !perms.pode_editar_armarios });
   }
 
-  // Agência
-  items.push({ name: 'AGÊNCIA', href: '/agencia', icon: UserPlus });
 
   // Prestadores - apenas para administradores e usuários autorizados
   const nomeUpper = userName?.toUpperCase() || '';

@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { FileSpreadsheet, Clock, Users, RefreshCw } from 'lucide-react';
+import { FileSpreadsheet, Clock, Users } from 'lucide-react';
 import { ManualGestorPDF } from '@/components/manual/ManualGestorPDF';
 import { ManualAdminPDF } from '@/components/manual/ManualAdminPDF';
 import { useNavigate } from 'react-router-dom';
@@ -34,23 +34,6 @@ export function DashboardHeader({ isGestorSetor, isRHMode, podeExportar, onExpor
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        {isAdmin && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={() => {
-              if ('caches' in window) {
-                caches.keys().then(names => names.forEach(n => caches.delete(n)));
-              }
-              window.location.reload();
-            }}
-            title="Recarregar sistema (limpa cache)"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Atualizar
-          </Button>
-        )}
         {isAdmin && <ManualAdminPDF />}
         {isGestorSetor && <ManualGestorPDF />}
         <Button
