@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { FileSpreadsheet, Clock, Users, RefreshCw } from 'lucide-react';
+import { FileSpreadsheet, Clock, Users } from 'lucide-react';
 import { ManualGestorPDF } from '@/components/manual/ManualGestorPDF';
 import { ManualAdminPDF } from '@/components/manual/ManualAdminPDF';
 import { useNavigate } from 'react-router-dom';
