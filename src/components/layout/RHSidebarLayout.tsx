@@ -276,8 +276,6 @@ function getNavigationForUser(
     items.push({ name: 'ARMÁRIOS FEMININO', href: '/armarios-femininos', icon: DoorOpen, viewOnly: perms && !perms.pode_editar_armarios });
   }
 
-  // Agência
-  items.push({ name: 'AGÊNCIA', href: '/agencia', icon: UserPlus });
 
   // Prestadores - apenas para administradores e usuários autorizados
   const nomeUpper = userName?.toUpperCase() || '';
