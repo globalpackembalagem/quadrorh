@@ -419,6 +419,58 @@
     --chart-4: 0 72% 51%;
     --chart-5: 270 50% 50%;
   }
+
+  /* TEMA 9 — GOLD DARK (dourado premium escuro) */
+  .dark.gold-dark {
+    --background: 40 30% 4%;
+    --foreground: 40 50% 85%;
+
+    --card: 40 20% 10%;
+    --card-foreground: 40 50% 85%;
+
+    --popover: 40 20% 10%;
+    --popover-foreground: 40 50% 85%;
+
+    --primary: 43 72% 49%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 40 15% 16%;
+    --secondary-foreground: 40 50% 85%;
+
+    --muted: 40 15% 16%;
+    --muted-foreground: 40 20% 50%;
+
+    --accent: 40 20% 12%;
+    --accent-foreground: 40 50% 85%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 60% 45%;
+    --success-foreground: 0 0% 0%;
+
+    --warning: 38 90% 55%;
+    --warning-foreground: 0 0% 0%;
+
+    --border: 40 20% 18%;
+    --input: 40 20% 18%;
+    --ring: 43 72% 49%;
+
+    --sidebar-background: 40 25% 6%;
+    --sidebar-foreground: 40 40% 80%;
+    --sidebar-primary: 43 72% 49%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 40 20% 12%;
+    --sidebar-accent-foreground: 43 72% 49%;
+    --sidebar-border: 40 20% 18%;
+    --sidebar-ring: 43 72% 49%;
+
+    --chart-1: 43 72% 49%;
+    --chart-2: 142 60% 45%;
+    --chart-3: 20 80% 55%;
+    --chart-4: 0 72% 55%;
+    --chart-5: 200 70% 50%;
+  }
 }
 
 @layer base {
