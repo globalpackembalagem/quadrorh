@@ -232,7 +232,7 @@ export default function Usuarios() {
       // Se senha foi informada, hashear via Edge Function
       if (senha && senha.trim() !== '') {
         const { data: hashResult, error: hashError } = await supabase.functions.invoke('auth-handler', {
-          body: { action: 'admin_reset_password', user_id: id, nova_senha: senha },
+          body: { action: 'admin_reset_password', user_id: id, nova_senha: senha, admin_id: usuarioAtual.id },
         });
         if (hashError || hashResult?.error) {
           toast.error('Erro ao atualizar senha: ' + (hashResult?.error || 'erro desconhecido'));
