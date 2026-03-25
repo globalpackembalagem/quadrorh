@@ -55,6 +55,11 @@ export const THEME_OPTIONS: ThemeOption[] = [
     label: 'CLARO QUENTE',
     colors: { background: '#FDF8F3', sidebar: '#4A3728', card: '#FFFFFF', text: '#3D2B1F', primary: '#D97706' },
   },
+  {
+    id: 'gold-dark',
+    label: 'GOLD DARK',
+    colors: { background: '#0C0A06', sidebar: '#1A1508', card: '#1C1810', text: '#E8D5A3', primary: '#D4A528' },
+  },
 ];
 
 interface ThemeContextType {
