@@ -34,23 +34,6 @@ export function DashboardHeader({ isGestorSetor, isRHMode, podeExportar, onExpor
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        {isAdmin && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={() => {
-              if ('caches' in window) {
-                caches.keys().then(names => names.forEach(n => caches.delete(n)));
-              }
-              window.location.reload();
-            }}
-            title="Recarregar sistema (limpa cache)"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Atualizar
-          </Button>
-        )}
         {isAdmin && <ManualAdminPDF />}
         {isGestorSetor && <ManualGestorPDF />}
         <Button
