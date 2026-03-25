@@ -268,7 +268,7 @@ export function TopNavLayout({ children }: TopNavLayoutProps) {
             </Button>
             {isLoggedIn ? (
               <>
-                <SessionTimer />
+                
                 {isAdmin && (
                   <Button
                     variant="ghost"
