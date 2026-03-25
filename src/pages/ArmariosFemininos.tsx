@@ -742,22 +742,86 @@ export default function ArmariosFemininos() {
     return { total: totalFunc + prestadoresComArmario.length, comArmario: comArmario + prestadoresComArmario.length, semArmario: totalFunc - comArmario - naoTem, naoTem, prestadores: prestadoresComArmario.length };
   }, [funcionariasAtivas, prestadoresComArmario, isGestor, gestorSetoresIds]);
 
-  // Exportar lista principal
+  // Exportar lista COMPLETA de armários (todos os locais, vazios inclusos)
   const handleExport = useCallback(async () => {
     const XLSX = await import('xlsx-js-style');
-    const data = listaUnificada.map(f => ({
-      'Nº Armário': f.numero || '',
-      'Local': f.local ? localLabel(f.local) : '',
-      'Matrícula': f.matricula || '',
-      'Funcionária': f.nome,
-      'Setor': f.setor,
-      'Tipo': f.tipo === 'prestador' ? 'Prestador' : 'CLT',
-    }));
+
+    // Montar mapa de todos os armários ocupados/bloqueados/quebrados
+    const armarioMap = new Map<string, { nome: string; matricula: string; setor: string; tipo: string; status: string }>();
+    
+    // Funcionárias com armário
+    funcionariasAtivas.forEach(f => {
+      if (f.armario_numero && f.armario_numero > 0 && f.armario_local) {
+        armarioMap.set(`${f.armario_local}-${f.armario_numero}`, {
+          nome: f.nome_completo,
+          matricula: f.matricula || '',
+          setor: (f.setor as any)?.nome || '',
+          tipo: 'CLT',
+          status: 'Ocupado',
+        });
+      }
+    });
+
+    // Prestadores
+    prestadoresComArmario.forEach(p => {
+      armarioMap.set(`${p.local}-${p.numero}`, {
+        nome: p.nome_prestador || '',
+        matricula: p.matricula || '',
+        setor: p.setor_prestador || '',
+        tipo: 'Prestador',
+        status: 'Ocupado',
+      });
+    });
+
+    // Bloqueados e quebrados do mapa
+    armariosParaMapa.forEach(a => {
+      const key = `${a.local}-${a.numero}`;
+      if (a.quebrado && !armarioMap.has(key)) {
+        armarioMap.set(key, { nome: '', matricula: '', setor: '', tipo: '', status: 'Quebrado' });
+      } else if (a.bloqueado && !armarioMap.has(key)) {
+        armarioMap.set(key, { nome: '', matricula: '', setor: '', tipo: '', status: 'Não utilizar' });
+      }
+    });
+
+    // Gerar lista completa por local
+    const data: any[] = [];
+    const locaisExport = filtroLocal !== 'todos' ? [filtroLocal] : LOCAIS.map(l => l.value);
+    
+    locaisExport.forEach(local => {
+      const config = configLocais.find((c: any) => c.local === local);
+      const total = config ? (config as any).total : 100;
+      for (let i = 1; i <= total; i++) {
+        const key = `${local}-${i}`;
+        const info = armarioMap.get(key);
+        data.push({
+          'Nº Armário': i,
+          'Local': localLabel(local),
+          'Status': info?.status || 'Livre',
+          'Matrícula': info?.matricula || '',
+          'Funcionária': info?.nome || '',
+          'Setor': info?.setor || '',
+          'Tipo': info?.tipo || '',
+        });
+      }
+    });
+
+    if (data.length === 0) {
+      toast.error('Nenhum dado para exportar');
+      return;
+    }
+
     const ws = XLSX.utils.json_to_sheet(data);
+    
+    // Ajustar largura das colunas
+    ws['!cols'] = [
+      { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 35 }, { wch: 30 }, { wch: 12 },
+    ];
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Armários');
     XLSX.writeFile(wb, 'armarios_feminino.xlsx');
-  }, [listaUnificada]);
+    toast.success(`${data.length} armários exportados!`);
+  }, [funcionariasAtivas, prestadoresComArmario, armariosParaMapa, configLocais, filtroLocal]);
 
   const handleExportSemArmario = useCallback(async () => {
     const XLSX = await import('xlsx-js-style');
