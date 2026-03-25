@@ -176,6 +176,13 @@ export type Database = {
             referencedRelation: "user_roles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "avisos_movimentacao_lidos_user_role_id_fkey"
+            columns: ["user_role_id"]
+            isOneToOne: false
+            referencedRelation: "user_roles_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       comunicados: {
@@ -1301,6 +1308,13 @@ export type Database = {
             referencedRelation: "user_roles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "notificacoes_user_role_id_fkey"
+            columns: ["user_role_id"]
+            isOneToOne: false
+            referencedRelation: "user_roles_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       notificacoes_vistas: {
@@ -1338,6 +1352,13 @@ export type Database = {
             columns: ["user_role_id"]
             isOneToOne: false
             referencedRelation: "user_roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificacoes_vistas_user_role_id_fkey"
+            columns: ["user_role_id"]
+            isOneToOne: false
+            referencedRelation: "user_roles_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -2240,6 +2261,13 @@ export type Database = {
             referencedRelation: "user_roles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_roles_setores_user_role_id_fkey"
+            columns: ["user_role_id"]
+            isOneToOne: false
+            referencedRelation: "user_roles_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       usuarios: {
@@ -2313,7 +2341,110 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_roles_safe: {
+        Row: {
+          acesso_admin: boolean | null
+          ativo: boolean | null
+          created_at: string | null
+          email: string | null
+          id: string | null
+          nome: string | null
+          pode_criar_divergencias: boolean | null
+          pode_editar_armarios: boolean | null
+          pode_editar_coberturas: boolean | null
+          pode_editar_demissoes: boolean | null
+          pode_editar_faltas: boolean | null
+          pode_editar_funcionarios: boolean | null
+          pode_editar_homologacoes: boolean | null
+          pode_editar_previsao: boolean | null
+          pode_editar_troca_turno: boolean | null
+          pode_exportar_excel: boolean | null
+          pode_visualizar_armarios: boolean | null
+          pode_visualizar_coberturas: boolean | null
+          pode_visualizar_demissoes: boolean | null
+          pode_visualizar_divergencias: boolean | null
+          pode_visualizar_faltas: boolean | null
+          pode_visualizar_funcionarios: boolean | null
+          pode_visualizar_homologacoes: boolean | null
+          pode_visualizar_previsao: boolean | null
+          pode_visualizar_troca_turno: boolean | null
+          recebe_notificacoes: boolean | null
+          setor_id: string | null
+          tempo_inatividade: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          acesso_admin?: boolean | null
+          ativo?: boolean | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          nome?: string | null
+          pode_criar_divergencias?: boolean | null
+          pode_editar_armarios?: boolean | null
+          pode_editar_coberturas?: boolean | null
+          pode_editar_demissoes?: boolean | null
+          pode_editar_faltas?: boolean | null
+          pode_editar_funcionarios?: boolean | null
+          pode_editar_homologacoes?: boolean | null
+          pode_editar_previsao?: boolean | null
+          pode_editar_troca_turno?: boolean | null
+          pode_exportar_excel?: boolean | null
+          pode_visualizar_armarios?: boolean | null
+          pode_visualizar_coberturas?: boolean | null
+          pode_visualizar_demissoes?: boolean | null
+          pode_visualizar_divergencias?: boolean | null
+          pode_visualizar_faltas?: boolean | null
+          pode_visualizar_funcionarios?: boolean | null
+          pode_visualizar_homologacoes?: boolean | null
+          pode_visualizar_previsao?: boolean | null
+          pode_visualizar_troca_turno?: boolean | null
+          recebe_notificacoes?: boolean | null
+          setor_id?: string | null
+          tempo_inatividade?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          acesso_admin?: boolean | null
+          ativo?: boolean | null
+          created_at?: string | null
+          email?: string | null
+          id?: string | null
+          nome?: string | null
+          pode_criar_divergencias?: boolean | null
+          pode_editar_armarios?: boolean | null
+          pode_editar_coberturas?: boolean | null
+          pode_editar_demissoes?: boolean | null
+          pode_editar_faltas?: boolean | null
+          pode_editar_funcionarios?: boolean | null
+          pode_editar_homologacoes?: boolean | null
+          pode_editar_previsao?: boolean | null
+          pode_editar_troca_turno?: boolean | null
+          pode_exportar_excel?: boolean | null
+          pode_visualizar_armarios?: boolean | null
+          pode_visualizar_coberturas?: boolean | null
+          pode_visualizar_demissoes?: boolean | null
+          pode_visualizar_divergencias?: boolean | null
+          pode_visualizar_faltas?: boolean | null
+          pode_visualizar_funcionarios?: boolean | null
+          pode_visualizar_homologacoes?: boolean | null
+          pode_visualizar_previsao?: boolean | null
+          pode_visualizar_troca_turno?: boolean | null
+          recebe_notificacoes?: boolean | null
+          setor_id?: string | null
+          tempo_inatividade?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_setor_id_fkey"
+            columns: ["setor_id"]
+            isOneToOne: false
+            referencedRelation: "setores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_edit_demissoes: { Args: { _user_id: string }; Returns: boolean }

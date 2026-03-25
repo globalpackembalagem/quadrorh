@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Key, Save, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useUsuario } from '@/contexts/UserContext';
 import {
   Select,
   SelectContent,
@@ -26,6 +27,7 @@ interface AlterarSenhaDialogProps {
 
 export const AlterarSenhaDialog = forwardRef<HTMLDivElement, AlterarSenhaDialogProps>(
   function AlterarSenhaDialog({ open, onOpenChange }, ref) {
+  const { usuarioAtual } = useUsuario();
   const [usuarios, setUsuarios] = useState<UserRole[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -80,6 +82,7 @@ export const AlterarSenhaDialog = forwardRef<HTMLDivElement, AlterarSenhaDialogP
           action: 'admin_reset_password',
           user_id: usuarioId,
           nova_senha: novaSenha,
+          admin_id: usuarioAtual.id,
         },
       });
 

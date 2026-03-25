@@ -6,7 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Implementação bcrypt compatível com Deno Edge Functions
 async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
@@ -16,19 +15,30 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  // Se parece com bcrypt hash (começa com $2), não conseguimos verificar sem bcrypt
-  // Neste caso comparamos direto (texto simples) para compatibilidade
   if (hash.startsWith("$2")) {
-    // bcrypt hash: tenta comparar como texto simples também para migração
     return false;
   }
-  // SHA-256 hash
   if (hash.length === 64) {
     const computed = await hashPassword(password);
     return computed === hash;
   }
-  // Texto simples (legado)
   return password === hash;
+}
+
+// Verifica se o caller é um admin ativo
+async function verifyAdminById(supabase: any, adminId: string): Promise<boolean> {
+  if (!adminId) return false;
+  
+  const { data: admin, error } = await supabase
+    .from("user_roles")
+    .select("id, acesso_admin, ativo")
+    .eq("id", adminId)
+    .eq("ativo", true)
+    .eq("acesso_admin", true)
+    .single();
+
+  if (error || !admin) return false;
+  return true;
 }
 
 serve(async (req) => {
@@ -135,7 +145,19 @@ serve(async (req) => {
       }
 
       case "admin_reset_password": {
-        const { user_id, nova_senha } = params;
+        const { user_id, nova_senha, admin_id } = params;
+        
+        // ===== VERIFICAÇÃO DE AUTORIZAÇÃO =====
+        if (!admin_id) {
+          return jsonResponse({ error: "Identificação do administrador é obrigatória" }, 403);
+        }
+
+        const isAdmin = await verifyAdminById(supabase, admin_id);
+        if (!isAdmin) {
+          return jsonResponse({ error: "Acesso negado. Apenas administradores podem redefinir senhas." }, 403);
+        }
+        // ========================================
+
         if (!user_id || !nova_senha) {
           return jsonResponse({ error: "Dados incompletos" }, 400);
         }
@@ -155,6 +177,19 @@ serve(async (req) => {
       }
 
       case "hash_all_passwords": {
+        const { admin_id } = params;
+        
+        // ===== VERIFICAÇÃO DE AUTORIZAÇÃO =====
+        if (!admin_id) {
+          return jsonResponse({ error: "Identificação do administrador é obrigatória" }, 403);
+        }
+
+        const isAdmin = await verifyAdminById(supabase, admin_id);
+        if (!isAdmin) {
+          return jsonResponse({ error: "Acesso negado. Apenas administradores podem executar esta ação." }, 403);
+        }
+        // ========================================
+
         const { data: users, error } = await supabase
           .from("user_roles")
           .select("id, senha");
