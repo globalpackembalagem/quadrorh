@@ -82,6 +82,7 @@ export const AlterarSenhaDialog = forwardRef<HTMLDivElement, AlterarSenhaDialogP
           action: 'admin_reset_password',
           user_id: usuarioId,
           nova_senha: novaSenha,
+          admin_id: usuarioAtual.id,
         },
       });
 
