@@ -83,7 +83,7 @@ const ReferenciaComponentes = lazyRetry(() => import("./pages/admin/ReferenciaCo
 const MockupGate = lazyRetry(() => import("./pages/MockupGate"));
 const ArmariosFemininos = lazyRetry(() => import("./pages/ArmariosFemininos"));
 const ManualArmarios = lazyRetry(() => import("./pages/ManualArmarios"));
-const Agencia = lazyRetry(() => import("./pages/Agencia"));
+
 const HistoricoMovimentacaoPage = lazyRetry(() => import("./pages/HistoricoMovimentacao"));
 const queryClient = new QueryClient({
   defaultOptions: {
