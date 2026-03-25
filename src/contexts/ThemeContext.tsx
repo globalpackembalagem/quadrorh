@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-export type Theme = 'claro' | 'dark-tech' | 'dark-corporate' | 'global-blue' | 'premium-black' | 'hacker-neon' | 'midnight-blue' | 'claro-quente';
+export type Theme = 'claro' | 'dark-tech' | 'dark-corporate' | 'global-blue' | 'premium-black' | 'hacker-neon' | 'midnight-blue' | 'claro-quente' | 'gold-dark';
 
 export interface ThemeOption {
   id: Theme;
@@ -55,6 +55,11 @@ export const THEME_OPTIONS: ThemeOption[] = [
     label: 'CLARO QUENTE',
     colors: { background: '#FDF8F3', sidebar: '#4A3728', card: '#FFFFFF', text: '#3D2B1F', primary: '#D97706' },
   },
+  {
+    id: 'gold-dark',
+    label: 'GOLD DARK',
+    colors: { background: '#0C0A06', sidebar: '#1A1508', card: '#1C1810', text: '#E8D5A3', primary: '#D4A528' },
+  },
 ];
 
 interface ThemeContextType {
@@ -64,7 +69,7 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType>({ theme: 'claro', setTheme: () => {} });
 
-const ALL_THEMES: Theme[] = ['claro', 'dark-tech', 'dark-corporate', 'global-blue', 'premium-black', 'hacker-neon', 'midnight-blue', 'claro-quente'];
+const ALL_THEMES: Theme[] = ['claro', 'dark-tech', 'dark-corporate', 'global-blue', 'premium-black', 'hacker-neon', 'midnight-blue', 'claro-quente', 'gold-dark'];
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
@@ -74,7 +79,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove('dark', 'dark-tech', 'dark-corporate', 'global-blue', 'premium-black', 'hacker-neon', 'midnight-blue', 'claro-quente');
+    root.classList.remove('dark', 'dark-tech', 'dark-corporate', 'global-blue', 'premium-black', 'hacker-neon', 'midnight-blue', 'claro-quente', 'gold-dark');
     
     if (theme === 'global-blue') {
       root.classList.add('global-blue');
