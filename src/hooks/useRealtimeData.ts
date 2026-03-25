@@ -67,6 +67,7 @@ const CANAIS: CanalConfig[] = [
       previsao_documentos: ['previsao_documentos'],
       previsao_documentos_historico: ['previsao_documentos'],
       previsao_horarios_notificacao: ['previsao-horarios-notificacao'],
+      treinamentos_previsao: ['treinamentos_previsao'],
     },
   },
   {
