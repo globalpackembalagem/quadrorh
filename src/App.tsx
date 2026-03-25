@@ -177,7 +177,7 @@ function LayoutRouter() {
             <Route path="/faltas/integracao" element={<RotaProtegida requireFaltas><IntegracaoFaltas /></RotaProtegida>} />
             <Route path="/controle-faltas" element={<Navigate to="/faltas" replace />} />
             
-            <Route path="/integracoes" element={<RotaProtegida allowVisualizacao><Integracoes /></RotaProtegida>} />
+            
             <Route path="/sopro" element={<Sopro />} />
             <Route path="/decoracao" element={<Decoracao />} />
             <Route path="/quadro-geral" element={<QuadroGeral />} />
