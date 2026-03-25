@@ -62,7 +62,7 @@ const Divergencias = lazyRetry(() => import("./pages/Divergencias"));
 const Sopro = lazyRetry(() => import("./pages/Sopro"));
 const QuadroGeral = lazyRetry(() => import("./pages/QuadroGeral"));
 const Decoracao = lazyRetry(() => import("./pages/Decoracao"));
-const Integracoes = lazyRetry(() => import("./pages/Integracoes"));
+
 const Setores = lazyRetry(() => import("./pages/admin/Setores"));
 const Situacoes = lazyRetry(() => import("./pages/admin/Situacoes"));
 const Periodos = lazyRetry(() => import("./pages/admin/Periodos"));
