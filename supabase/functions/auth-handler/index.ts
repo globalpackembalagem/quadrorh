@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-admin-id",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 async function hashPassword(password: string): Promise<string> {
@@ -25,21 +25,20 @@ async function verifyPassword(password: string, hash: string): Promise<boolean> 
   return password === hash;
 }
 
-// Verifica se o caller é admin consultando user_roles
-async function verifyAdmin(supabase: any, adminId: string, adminSenha: string): Promise<boolean> {
-  if (!adminId || !adminSenha) return false;
+// Verifica se o caller é um admin ativo
+async function verifyAdminById(supabase: any, adminId: string): Promise<boolean> {
+  if (!adminId) return false;
   
   const { data: admin, error } = await supabase
     .from("user_roles")
-    .select("id, senha, acesso_admin")
+    .select("id, acesso_admin, ativo")
     .eq("id", adminId)
     .eq("ativo", true)
+    .eq("acesso_admin", true)
     .single();
 
-  if (error || !admin || !admin.acesso_admin) return false;
-
-  const isValid = await verifyPassword(adminSenha, admin.senha || "");
-  return isValid;
+  if (error || !admin) return false;
+  return true;
 }
 
 serve(async (req) => {
@@ -146,14 +145,14 @@ serve(async (req) => {
       }
 
       case "admin_reset_password": {
-        const { user_id, nova_senha, admin_id, admin_senha } = params;
+        const { user_id, nova_senha, admin_id } = params;
         
         // ===== VERIFICAÇÃO DE AUTORIZAÇÃO =====
-        if (!admin_id || !admin_senha) {
-          return jsonResponse({ error: "Credenciais de administrador são obrigatórias" }, 403);
+        if (!admin_id) {
+          return jsonResponse({ error: "Identificação do administrador é obrigatória" }, 403);
         }
 
-        const isAdmin = await verifyAdmin(supabase, admin_id, admin_senha);
+        const isAdmin = await verifyAdminById(supabase, admin_id);
         if (!isAdmin) {
           return jsonResponse({ error: "Acesso negado. Apenas administradores podem redefinir senhas." }, 403);
         }
@@ -178,14 +177,14 @@ serve(async (req) => {
       }
 
       case "hash_all_passwords": {
-        const { admin_id, admin_senha } = params;
+        const { admin_id } = params;
         
         // ===== VERIFICAÇÃO DE AUTORIZAÇÃO =====
-        if (!admin_id || !admin_senha) {
-          return jsonResponse({ error: "Credenciais de administrador são obrigatórias" }, 403);
+        if (!admin_id) {
+          return jsonResponse({ error: "Identificação do administrador é obrigatória" }, 403);
         }
 
-        const isAdmin = await verifyAdmin(supabase, admin_id, admin_senha);
+        const isAdmin = await verifyAdminById(supabase, admin_id);
         if (!isAdmin) {
           return jsonResponse({ error: "Acesso negado. Apenas administradores podem executar esta ação." }, 403);
         }
