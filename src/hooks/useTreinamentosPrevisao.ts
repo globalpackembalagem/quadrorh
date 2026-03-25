@@ -75,6 +75,19 @@ export function useCreateTreinamento() {
       cargo?: string | null;
       data_previsao?: string | null;
     }) => {
+      // Verificar se já existe registro ativo para este funcionário (evitar duplicatas)
+      const { data: existing } = await supabase
+        .from('treinamentos_previsao')
+        .select('id')
+        .eq('funcionario_id', record.funcionario_id)
+        .eq('ativo', true)
+        .maybeSingle();
+
+      if (existing) {
+        console.log('[Treinamento] Registro já existe para funcionário, ignorando duplicata:', record.funcionario_id);
+        return existing;
+      }
+
       const { data, error } = await supabase
         .from('treinamentos_previsao')
         .insert({
