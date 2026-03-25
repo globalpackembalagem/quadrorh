@@ -27,6 +27,7 @@ interface AlterarSenhaDialogProps {
 
 export const AlterarSenhaDialog = forwardRef<HTMLDivElement, AlterarSenhaDialogProps>(
   function AlterarSenhaDialog({ open, onOpenChange }, ref) {
+  const { usuarioAtual } = useUsuario();
   const [usuarios, setUsuarios] = useState<UserRole[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
