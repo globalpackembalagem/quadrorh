@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-export type Theme = 'claro' | 'dark-tech' | 'dark-corporate' | 'global-blue' | 'premium-black' | 'hacker-neon' | 'midnight-blue' | 'claro-quente';
+export type Theme = 'claro' | 'dark-tech' | 'dark-corporate' | 'global-blue' | 'premium-black' | 'hacker-neon' | 'midnight-blue' | 'claro-quente' | 'gold-dark';
 
 export interface ThemeOption {
   id: Theme;
