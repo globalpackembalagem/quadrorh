@@ -650,8 +650,6 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
             </>
           )}
 
-          {/* Timer de sessão */}
-          <SessionTimer />
         </div>
       </header>
 
