@@ -743,6 +743,35 @@ export default function ArmariosFemininos() {
     return { total: totalFunc + prestadoresComArmario.length, comArmario: comArmario + prestadoresComArmario.length, semArmario: totalFunc - comArmario - naoTem, naoTem, prestadores: prestadoresComArmario.length };
   }, [funcionariasAtivas, prestadoresComArmario, isGestor, gestorSetoresIds]);
 
+  // Stats por local selecionado (total de armários do config, ocupados, livres)
+  const statsLocal = useMemo(() => {
+    const locaisFiltro = filtroLocal !== 'todos' ? [filtroLocal] : LOCAIS.map(l => l.value);
+    let totalArmarios = 0;
+    let ocupados = 0;
+
+    const ocupadosSet = new Set(
+      armariosParaMapa
+        .filter(a => a.numero > 0 && (a.funcionario_id || a.nome_completo || a.bloqueado || a.quebrado))
+        .map(a => `${a.local}-${a.numero}`)
+    );
+
+    locaisFiltro.forEach(local => {
+      const config = configLocais.find((c: any) => c.local === local);
+      const total = config ? (config as any).total : 0;
+      totalArmarios += total;
+      for (let i = 1; i <= total; i++) {
+        if (ocupadosSet.has(`${local}-${i}`)) ocupados++;
+      }
+    });
+
+    return {
+      localLabel: filtroLocal !== 'todos' ? localLabel(filtroLocal) : 'Todos',
+      total: totalArmarios,
+      ocupados,
+      livres: totalArmarios - ocupados,
+    };
+  }, [filtroLocal, armariosParaMapa, configLocais]);
+
   // Exportar lista COMPLETA de armários (todos os locais, vazios inclusos)
   const handleExport = useCallback(async () => {
     const XLSX = await import('xlsx-js-style');
