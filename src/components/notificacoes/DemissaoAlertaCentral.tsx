@@ -21,13 +21,43 @@ export function DemissaoAlertaCentral() {
   const [visible, setVisible] = useState(false);
 
   const fecharAlerta = useCallback(async (id: string) => {
+    // 1. Marcar notificação como lida
     await supabase.from('notificacoes').update({ lida: true }).eq('id', id);
+    
+    // 2. Registrar na tabela notificacoes_vistas para rastreamento de ciência
+    const alerta = alertas.find(a => a.id === id);
+    if (alerta?.referencia_id && userRole?.id) {
+      await supabase.from('notificacoes_vistas').upsert({
+        evento_id: alerta.referencia_id,
+        user_role_id: userRole.id,
+        nome_gestor: userRole?.nome || 'DESCONHECIDO',
+      }, { onConflict: 'evento_id,user_role_id' });
+    } else if (userRole?.id) {
+      // Tentar encontrar evento pelo tipo
+      const tipoBase = alerta?.tipo?.replace('_lancada', '').replace('_lancado', '') || '';
+      if (tipoBase) {
+        const { data: eventoMatch } = await supabase
+          .from('eventos_sistema')
+          .select('id')
+          .eq('tipo', tipoBase)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        if (eventoMatch?.[0]) {
+          await supabase.from('notificacoes_vistas').upsert({
+            evento_id: eventoMatch[0].id,
+            user_role_id: userRole.id,
+            nome_gestor: userRole?.nome || 'DESCONHECIDO',
+          }, { onConflict: 'evento_id,user_role_id' });
+        }
+      }
+    }
+
     setAlertas(prev => {
       const next = prev.filter(a => a.id !== id);
       if (next.length === 0) setVisible(false);
       return next;
     });
-  }, []);
+  }, [alertas, userRole]);
 
   const verDetalhes = useCallback((alerta: DemissaoAlerta) => {
     fecharAlerta(alerta.id);
