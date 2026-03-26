@@ -658,7 +658,7 @@ export default function ArmariosFemininos() {
     // Quando busca por número: incluir armário ocupado, vazio ou bloqueado
     // Sem busca: apenas funcionárias com armário atribuído
 
-    const funcList = funcionarias
+    const funcList = (buscaEhNumero ? funcionarias : funcionariasAtivas)
       .filter(f => {
         if (isGestor && !gestorSetoresIds.includes(f.setor_id)) return false;
         
@@ -781,7 +781,7 @@ export default function ArmariosFemininos() {
     }
 
     return [...funcList, ...prestList, ...bloqList, ...vazioList];
-  }, [funcionariasAtivas, prestadoresComArmario, armariosBloqueados, filtrosAtivos, busca, isGestor, gestorSetoresIds, filtroLocal, filtroVazio, filtroOcupacao, armariosVazios, armariosParaMapa, configLocais]);
+  }, [funcionarias, funcionariasAtivas, prestadoresComArmario, armariosBloqueados, filtrosAtivos, busca, isGestor, gestorSetoresIds, filtroLocal, filtroVazio, filtroOcupacao, armariosVazios, armariosParaMapa, configLocais]);
 
   // Stats
   const stats = useMemo(() => {
