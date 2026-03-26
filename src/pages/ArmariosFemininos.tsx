@@ -733,7 +733,7 @@ export default function ArmariosFemininos() {
     }
 
     return [...funcList, ...prestList, ...bloqList, ...vazioList];
-  }, [funcionariasAtivas, prestadoresComArmario, armariosBloqueados, filtrosAtivos, busca, isGestor, gestorSetoresIds, filtroLocal, filtroVazio, armariosVazios, armariosParaMapa, configLocais]);
+  }, [funcionariasAtivas, prestadoresComArmario, armariosBloqueados, filtrosAtivos, busca, isGestor, gestorSetoresIds, filtroLocal, filtroVazio, filtroOcupacao, armariosVazios, armariosParaMapa, configLocais]);
 
   // Stats
   const stats = useMemo(() => {
