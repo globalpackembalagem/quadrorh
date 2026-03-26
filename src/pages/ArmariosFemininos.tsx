@@ -288,7 +288,7 @@ export default function ArmariosFemininos() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('armarios_femininos')
-        .select('id, numero, local, bloqueado')
+        .select('id, numero, local, bloqueado, quebrado')
         .eq('bloqueado', true)
         .order('numero');
       if (error) throw error;
