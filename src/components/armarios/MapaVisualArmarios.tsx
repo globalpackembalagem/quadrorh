@@ -278,7 +278,7 @@ export default function MapaVisualArmarios({ armarios, totalArmarios, onEditar, 
           </DialogHeader>
           <div className="space-y-2 text-sm">
             {selecionado?.quebrado ? (
-              <div className="p-3 rounded-md bg-red-700/10 border border-red-700/30 text-red-700 dark:text-red-400 text-center font-medium">
+              <div className="p-3 rounded-md bg-zinc-900 border border-zinc-700 text-white text-center font-medium">
                 🔧 Este armário está marcado como "QUEBRADO"
               </div>
             ) : selecionado?.bloqueado ? (
