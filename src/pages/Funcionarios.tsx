@@ -825,10 +825,16 @@ export default function Funcionarios() {
             <ExportarFuncionariosDialog funcionarios={funcionarios} setores={setores} situacoes={todasSituacoes} />
             {canEditFuncionarios && !isVisualizacao && <ImportarFuncionarios setores={setores} situacoes={todasSituacoes} />}
             {isAdmin && (
-              <Button size="sm" variant="outline" onClick={handleRemoverAcentos} className="gap-1">
-                <Type className="h-4 w-4" />
-                TIRAR ACENTOS
-              </Button>
+              <>
+                <Button size="sm" variant="outline" onClick={handleRemoverAcentos} className="gap-1">
+                  <Type className="h-4 w-4" />
+                  TIRAR ACENTOS
+                </Button>
+                <Button size="sm" variant="outline" onClick={handleMaiusculo} className="gap-1">
+                  <Type className="h-4 w-4" />
+                  MAIÚSCULO
+                </Button>
+              </>
             )}
           </div>
         </div>
