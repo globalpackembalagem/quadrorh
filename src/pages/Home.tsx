@@ -25,6 +25,8 @@ export default function Home() {
 
   return (
     <div className="space-y-6">
+      <h1 className="text-lg font-bold text-foreground tracking-wide">QUADRO DE FUNCIONÁRIOS</h1>
+
       {/* SOPRO Cards */}
       <MetricasTurmaCards
         grupo="SOPRO"
