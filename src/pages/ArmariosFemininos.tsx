@@ -658,7 +658,7 @@ export default function ArmariosFemininos() {
     // Quando busca por número: incluir armário ocupado, vazio ou bloqueado
     // Sem busca: apenas funcionárias com armário atribuído
 
-    const funcList = funcionarias
+    const funcList = (buscaEhNumero ? funcionarias : funcionariasAtivas)
       .filter(f => {
         if (isGestor && !gestorSetoresIds.includes(f.setor_id)) return false;
         
