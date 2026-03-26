@@ -184,6 +184,53 @@ export default function ArmariosFemininos() {
     },
   });
 
+  // Mutation para marcar/desmarcar armário como quebrado
+  const marcarQuebradoMutation = useMutation({
+    mutationFn: async ({ numero, local, quebrado }: { numero: number; local: string; quebrado: boolean }) => {
+      const { data: existente } = await supabase
+        .from('armarios_femininos')
+        .select('id, funcionario_id, nome_prestador')
+        .eq('numero', numero)
+        .eq('local', local)
+        .maybeSingle();
+
+      if (quebrado) {
+        if (existente && (existente.funcionario_id || existente.nome_prestador)) {
+          throw new Error(`Armário ${numero} (${localLabel(local)}) está ocupado. Libere primeiro.`);
+        }
+        if (existente) {
+          const { error } = await supabase
+            .from('armarios_femininos')
+            .update({ quebrado: true, bloqueado: true, funcionario_id: null, nome_prestador: null, setor_prestador: null })
+            .eq('id', existente.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('armarios_femininos')
+            .insert({ numero, local, quebrado: true, bloqueado: true });
+          if (error) throw error;
+        }
+      } else {
+        if (existente) {
+          const { error } = await supabase
+            .from('armarios_femininos')
+            .update({ quebrado: false, bloqueado: false })
+            .eq('id', existente.id);
+          if (error) throw error;
+        }
+      }
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['armarios-mapa-visual'] });
+      queryClient.invalidateQueries({ queryKey: ['armarios-funcionarias-todas'] });
+      queryClient.invalidateQueries({ queryKey: ['armarios-bloqueados'] });
+      toast.success(vars.quebrado ? 'Armário marcado como quebrado!' : 'Armário restaurado!');
+      setQuebradoNumero('');
+    },
+    onError: (err: any) => toast.error(err.message || 'Erro ao atualizar armário'),
+  });
+  });
+
   // Buscar funcionárias femininas - TODAS (incluindo demissão para aba especial)
   const { data: funcionarias = [], isLoading } = useQuery({
     queryKey: ['armarios-funcionarias-todas'],
