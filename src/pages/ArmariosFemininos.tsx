@@ -229,7 +229,6 @@ export default function ArmariosFemininos() {
     },
     onError: (err: any) => toast.error(err.message || 'Erro ao atualizar armário'),
   });
-  });
 
   // Buscar funcionárias femininas - TODAS (incluindo demissão para aba especial)
   const { data: funcionarias = [], isLoading } = useQuery({
