@@ -954,10 +954,10 @@ export default function ArmariosFemininos() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h1 className="text-2xl font-bold">Controle de Armários Feminino</h1>
-        <div className="flex gap-2">
+    <div className="space-y-4 min-w-0 overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold">Controle de Armários Feminino</h1>
+        <div className="flex flex-wrap gap-2">
            {canEdit && (
             <Button size="sm" onClick={() => {
               setCadastroDialog(true);
@@ -968,7 +968,7 @@ export default function ArmariosFemininos() {
               setCadastroLocal('SOPRO');
               setCadastroSetorId('');
             }}>
-              <UserPlus className="h-4 w-4 mr-1" /> Cadastrar
+              <UserPlus className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Cadastrar</span><span className="sm:hidden">+</span>
             </Button>
           )}
           {canEdit && (
@@ -983,7 +983,7 @@ export default function ArmariosFemininos() {
               setBuscaCadastro('');
               setCadastroFuncionarioId('');
             }}>
-              <HardHat className="h-4 w-4 mr-1" /> Prestador
+              <HardHat className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Prestador</span>
             </Button>
           )}
           {temAcessoTotalArmarios && (
@@ -997,12 +997,12 @@ export default function ArmariosFemininos() {
               setConfigTab('totais');
               setConfigDialog(true);
             }}>
-              <Settings className="h-4 w-4 mr-1" /> Configuração
+              <Settings className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Configuração</span>
             </Button>
           )}
           <ManualArmariosPDF />
           <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-1" /> Exportar
+            <Download className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Exportar</span>
           </Button>
         </div>
       </div>
