@@ -230,7 +230,7 @@ export default function MapaVisualArmarios({ armarios, totalArmarios, onEditar, 
                       w-full relative rounded-md px-3 py-3 text-center transition-all border cursor-pointer min-h-[72px] flex items-center justify-center
                       ${!highlighted ? 'opacity-20' : ''}
                       ${quebradoNum
-                        ? 'bg-red-700/20 border-red-700/60 hover:bg-red-700/30'
+                        ? 'bg-zinc-900 border-zinc-700 hover:bg-zinc-800 dark:bg-black dark:border-zinc-600 dark:hover:bg-zinc-900'
                         : bloqueadoNum
                           ? 'bg-amber-500/20 border-amber-500/60 hover:bg-amber-500/30'
                           : ocupado
@@ -242,8 +242,8 @@ export default function MapaVisualArmarios({ armarios, totalArmarios, onEditar, 
                   >
                     {quebradoNum ? (
                       <div className="space-y-0.5">
-                        <span className="text-xs font-bold text-red-700 dark:text-red-400">#{num}</span>
-                        <div className="text-[10px] leading-snug font-medium text-red-700 dark:text-red-400">🔧 QUEBRADO</div>
+                        <span className="text-xs font-bold text-white">#{num}</span>
+                        <div className="text-[10px] leading-snug font-medium text-white">🔧 QUEBRADO</div>
                       </div>
                     ) : bloqueadoNum ? (
                       <div className="space-y-0.5">
