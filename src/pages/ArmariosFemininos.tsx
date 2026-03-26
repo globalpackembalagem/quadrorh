@@ -557,7 +557,7 @@ export default function ArmariosFemininos() {
 
   // Gerar lista de armários vazios por local/config
   const armariosVazios = useMemo(() => {
-    if (!filtroVazio) return [];
+    if (!filtroVazio && filtroOcupacao !== 'livres') return [];
     const ocupados = new Set(
       armariosParaMapa
         .filter(a => a.numero > 0)
@@ -575,7 +575,7 @@ export default function ArmariosFemininos() {
       }
     });
     return result;
-  }, [filtroVazio, armariosParaMapa, configLocais, filtroLocal]);
+  }, [filtroVazio, filtroOcupacao, armariosParaMapa, configLocais, filtroLocal]);
 
   // Unificar funcionárias + prestadores para a lista principal
   const listaUnificada = useMemo(() => {
