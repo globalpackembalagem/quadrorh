@@ -1008,7 +1008,7 @@ export default function ArmariosFemininos() {
       </div>
 
       <Tabs defaultValue="funcionarias">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="funcionarias">Armários ({listaUnificada.length})</TabsTrigger>
           <TabsTrigger value="sem-armario">
             <UserX className="h-3.5 w-3.5 mr-1" />
