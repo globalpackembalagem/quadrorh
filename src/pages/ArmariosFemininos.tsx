@@ -79,6 +79,7 @@ export default function ArmariosFemininos() {
   const [filtrosAtivos, setFiltrosAtivos] = useState<string[]>(['todos']);
   const [filtroLocal, setFiltroLocal] = useState<string>('todos');
   const [filtroVazio, setFiltroVazio] = useState(false);
+  const [filtroOcupacao, setFiltroOcupacao] = useState<'todos' | 'ocupados' | 'livres'>('todos');
   const [editando, setEditando] = useState<any | null>(null);
   const [numeroArmario, setNumeroArmario] = useState('');
   const [localArmario, setLocalArmario] = useState('SOPRO');
@@ -97,7 +98,9 @@ export default function ArmariosFemininos() {
   const [filtroLocalPrestador, setFiltroLocalPrestador] = useState<string>('todos');
 
   const [configDialog, setConfigDialog] = useState(false);
-  const [configTab, setConfigTab] = useState<'totais' | 'setores'>('totais');
+  const [configTab, setConfigTab] = useState<'totais' | 'setores' | 'quebrados'>('totais');
+  const [quebradoNumero, setQuebradoNumero] = useState('');
+  const [quebradoLocal, setQuebradoLocal] = useState('SOPRO');
   const [configValues, setConfigValues] = useState<Record<string, number>>({});
   const [novoSetorPrestador, setNovoSetorPrestador] = useState('');
 
@@ -179,6 +182,52 @@ export default function ArmariosFemininos() {
       queryClient.invalidateQueries({ queryKey: ['armarios-setores-prestador'] });
       toast.success('Setor removido!');
     },
+  });
+
+  // Mutation para marcar/desmarcar armário como quebrado
+  const marcarQuebradoMutation = useMutation({
+    mutationFn: async ({ numero, local, quebrado }: { numero: number; local: string; quebrado: boolean }) => {
+      const { data: existente } = await supabase
+        .from('armarios_femininos')
+        .select('id, funcionario_id, nome_prestador')
+        .eq('numero', numero)
+        .eq('local', local)
+        .maybeSingle();
+
+      if (quebrado) {
+        if (existente && (existente.funcionario_id || existente.nome_prestador)) {
+          throw new Error(`Armário ${numero} (${localLabel(local)}) está ocupado. Libere primeiro.`);
+        }
+        if (existente) {
+          const { error } = await supabase
+            .from('armarios_femininos')
+            .update({ quebrado: true, bloqueado: true, funcionario_id: null, nome_prestador: null, setor_prestador: null })
+            .eq('id', existente.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from('armarios_femininos')
+            .insert({ numero, local, quebrado: true, bloqueado: true });
+          if (error) throw error;
+        }
+      } else {
+        if (existente) {
+          const { error } = await supabase
+            .from('armarios_femininos')
+            .update({ quebrado: false, bloqueado: false })
+            .eq('id', existente.id);
+          if (error) throw error;
+        }
+      }
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['armarios-mapa-visual'] });
+      queryClient.invalidateQueries({ queryKey: ['armarios-funcionarias-todas'] });
+      queryClient.invalidateQueries({ queryKey: ['armarios-bloqueados'] });
+      toast.success(vars.quebrado ? 'Armário marcado como quebrado!' : 'Armário restaurado!');
+      setQuebradoNumero('');
+    },
+    onError: (err: any) => toast.error(err.message || 'Erro ao atualizar armário'),
   });
 
   // Buscar funcionárias femininas - TODAS (incluindo demissão para aba especial)
@@ -556,7 +605,7 @@ export default function ArmariosFemininos() {
 
   // Gerar lista de armários vazios por local/config
   const armariosVazios = useMemo(() => {
-    if (!filtroVazio) return [];
+    if (!filtroVazio && filtroOcupacao !== 'livres') return [];
     const ocupados = new Set(
       armariosParaMapa
         .filter(a => a.numero > 0)
@@ -574,12 +623,12 @@ export default function ArmariosFemininos() {
       }
     });
     return result;
-  }, [filtroVazio, armariosParaMapa, configLocais, filtroLocal]);
+  }, [filtroVazio, filtroOcupacao, armariosParaMapa, configLocais, filtroLocal]);
 
   // Unificar funcionárias + prestadores para a lista principal
   const listaUnificada = useMemo(() => {
-    if (filtroVazio) {
-      // Mostrar apenas armários vazios
+    // Filtro "livres" — mostra apenas armários vazios
+    if (filtroVazio || filtroOcupacao === 'livres') {
       return armariosVazios
         .filter(a => {
           if (busca) return a.numero.toString().includes(busca.trim());
@@ -698,9 +747,9 @@ export default function ArmariosFemininos() {
         raw: b,
       }));
 
-    // Quando busca por número, mostrar também armários vazios que correspondem
+    // Quando busca por número, mostrar também armários vazios que correspondem (exceto se filtro é "ocupados")
     let vazioList: typeof funcList = [];
-    if (buscaEhNumero && q) {
+    if (buscaEhNumero && q && filtroOcupacao !== 'ocupados') {
       const ocupados = new Set(
         armariosParaMapa
           .filter(a => a.numero > 0)
@@ -732,7 +781,7 @@ export default function ArmariosFemininos() {
     }
 
     return [...funcList, ...prestList, ...bloqList, ...vazioList];
-  }, [funcionariasAtivas, prestadoresComArmario, armariosBloqueados, filtrosAtivos, busca, isGestor, gestorSetoresIds, filtroLocal, filtroVazio, armariosVazios, armariosParaMapa, configLocais]);
+  }, [funcionariasAtivas, prestadoresComArmario, armariosBloqueados, filtrosAtivos, busca, isGestor, gestorSetoresIds, filtroLocal, filtroVazio, filtroOcupacao, armariosVazios, armariosParaMapa, configLocais]);
 
   // Stats
   const stats = useMemo(() => {
@@ -741,6 +790,35 @@ export default function ArmariosFemininos() {
     const naoTem = funcionariasAtivas.filter(f => (!isGestor || gestorSetoresIds.includes(f.setor_id)) && f.armario_numero !== null && f.armario_numero !== undefined && f.armario_numero < 0).length;
     return { total: totalFunc + prestadoresComArmario.length, comArmario: comArmario + prestadoresComArmario.length, semArmario: totalFunc - comArmario - naoTem, naoTem, prestadores: prestadoresComArmario.length };
   }, [funcionariasAtivas, prestadoresComArmario, isGestor, gestorSetoresIds]);
+
+  // Stats por local selecionado (total de armários do config, ocupados, livres)
+  const statsLocal = useMemo(() => {
+    const locaisFiltro = filtroLocal !== 'todos' ? [filtroLocal] : LOCAIS.map(l => l.value);
+    let totalArmarios = 0;
+    let ocupados = 0;
+
+    const ocupadosSet = new Set(
+      armariosParaMapa
+        .filter(a => a.numero > 0 && (a.funcionario_id || a.nome_completo || a.bloqueado || a.quebrado))
+        .map(a => `${a.local}-${a.numero}`)
+    );
+
+    locaisFiltro.forEach(local => {
+      const config = configLocais.find((c: any) => c.local === local);
+      const total = config ? (config as any).total : 0;
+      totalArmarios += total;
+      for (let i = 1; i <= total; i++) {
+        if (ocupadosSet.has(`${local}-${i}`)) ocupados++;
+      }
+    });
+
+    return {
+      localLabel: filtroLocal !== 'todos' ? localLabel(filtroLocal) : 'Todos',
+      total: totalArmarios,
+      ocupados,
+      livres: totalArmarios - ocupados,
+    };
+  }, [filtroLocal, armariosParaMapa, configLocais]);
 
   // Exportar lista COMPLETA de armários (todos os locais, vazios inclusos)
   const handleExport = useCallback(async () => {
@@ -931,34 +1009,6 @@ export default function ArmariosFemininos() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-3">
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <div className="text-xs text-muted-foreground">Total</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="text-2xl font-bold text-primary">{stats.comArmario}</div>
-            <div className="text-xs text-muted-foreground">Com Armário</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="text-2xl font-bold text-destructive">{stats.semArmario}</div>
-            <div className="text-xs text-muted-foreground">Sem Armário</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="text-2xl font-bold text-muted-foreground">{prestadoresComArmario.length}</div>
-            <div className="text-xs text-muted-foreground">Prestadores</div>
-          </CardContent>
-        </Card>
-      </div>
-
       <Tabs defaultValue="funcionarias">
         <TabsList>
           <TabsTrigger value="funcionarias">Armários ({listaUnificada.length})</TabsTrigger>
@@ -979,26 +1029,67 @@ export default function ArmariosFemininos() {
         </TabsList>
 
         <TabsContent value="funcionarias" className="space-y-3 mt-3">
-          {/* Filtros por local + vazio */}
-          <div className="flex flex-wrap gap-1.5">
-            {[{ value: 'todos', label: 'Todos Locais' }, ...LOCAIS].map(l => (
+          {/* Filtros por local (esquerda) + Stats ocupação (direita) */}
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            {/* Local buttons */}
+            <div className="flex flex-wrap gap-1.5">
+              {LOCAIS.map(l => (
+                <Badge
+                  key={`local-${l.value}`}
+                  variant={filtroLocal === l.value ? 'default' : 'outline'}
+                  className="cursor-pointer select-none px-3 py-1 text-sm"
+                  onClick={() => {
+                    setFiltroLocal(prev => prev === l.value ? 'todos' : l.value);
+                    setFiltroOcupacao('todos');
+                    setFiltroVazio(false);
+                  }}
+                >
+                  {l.label}
+                </Badge>
+              ))}
+            </div>
+
+            {/* Stats badges como filtros */}
+            <div className="flex flex-wrap gap-1.5">
               <Badge
-                key={`local-${l.value}`}
-                variant={filtroLocal === l.value ? 'default' : 'outline'}
-                className="cursor-pointer select-none"
-                onClick={() => setFiltroLocal(l.value)}
+                variant="outline"
+                className="cursor-pointer select-none px-3 py-1 text-sm bg-muted/50"
+                onClick={() => {
+                  setFiltroOcupacao('todos');
+                  setFiltroVazio(false);
+                }}
               >
-                {l.label}
+                {statsLocal.localLabel}: {statsLocal.total} armários
               </Badge>
-            ))}
-            <span className="mx-1 border-l border-border" />
-            <Badge
-              variant={filtroVazio ? 'default' : 'outline'}
-              className={`cursor-pointer select-none ${filtroVazio ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'border-emerald-500 text-emerald-700 dark:text-emerald-400'}`}
-              onClick={() => setFiltroVazio(v => !v)}
-            >
-              🟢 Vazio
-            </Badge>
+              <Badge
+                variant={filtroOcupacao === 'ocupados' ? 'default' : 'outline'}
+                className={`cursor-pointer select-none px-3 py-1 text-sm ${
+                  filtroOcupacao === 'ocupados'
+                    ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground'
+                    : 'border-destructive/50 text-destructive hover:bg-destructive/10'
+                }`}
+                onClick={() => {
+                  setFiltroOcupacao(prev => prev === 'ocupados' ? 'todos' : 'ocupados');
+                  setFiltroVazio(false);
+                }}
+              >
+                Ocupados: {statsLocal.ocupados}
+              </Badge>
+              <Badge
+                variant={filtroOcupacao === 'livres' ? 'default' : 'outline'}
+                className={`cursor-pointer select-none px-3 py-1 text-sm ${
+                  filtroOcupacao === 'livres'
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    : 'border-emerald-500/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10'
+                }`}
+                onClick={() => {
+                  setFiltroOcupacao(prev => prev === 'livres' ? 'todos' : 'livres');
+                  setFiltroVazio(false);
+                }}
+              >
+                Livres: {statsLocal.livres}
+              </Badge>
+            </div>
           </div>
 
           {/* Busca */}
@@ -1968,6 +2059,7 @@ export default function ArmariosFemininos() {
           <Tabs value={configTab} onValueChange={v => setConfigTab(v as any)}>
             <TabsList className="w-full">
               <TabsTrigger value="totais" className="flex-1">Qtd. Armários</TabsTrigger>
+              <TabsTrigger value="quebrados" className="flex-1">Quebrados</TabsTrigger>
               <TabsTrigger value="setores" className="flex-1">Setores Prestador</TabsTrigger>
             </TabsList>
             <TabsContent value="totais" className="space-y-3 mt-3">
@@ -1991,6 +2083,73 @@ export default function ArmariosFemininos() {
               >
                 Salvar Totais
               </Button>
+            </TabsContent>
+            <TabsContent value="quebrados" className="space-y-3 mt-3">
+              <p className="text-xs text-muted-foreground">
+                Cadastre armários quebrados. Eles ficam indisponíveis para uso até serem restaurados.
+              </p>
+              <div className="flex gap-2">
+                <Select value={quebradoLocal} onValueChange={setQuebradoLocal}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LOCAIS.map(l => (
+                      <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  placeholder="Nº armário"
+                  value={quebradoNumero}
+                  onChange={e => setQuebradoNumero(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && quebradoNumero.trim()) {
+                      marcarQuebradoMutation.mutate({ numero: parseInt(quebradoNumero), local: quebradoLocal, quebrado: true });
+                    }
+                  }}
+                  className="w-28"
+                  min={1}
+                />
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => {
+                    if (quebradoNumero.trim()) {
+                      marcarQuebradoMutation.mutate({ numero: parseInt(quebradoNumero), local: quebradoLocal, quebrado: true });
+                    }
+                  }}
+                  disabled={!quebradoNumero.trim() || marcarQuebradoMutation.isPending}
+                >
+                  Marcar Quebrado
+                </Button>
+              </div>
+              {/* Lista de armários quebrados */}
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {armariosParaMapa.filter(a => a.quebrado).length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-2">Nenhum armário quebrado</p>
+                ) : (
+                  armariosParaMapa
+                    .filter(a => a.quebrado)
+                    .sort((a, b) => a.numero - b.numero)
+                    .map(a => (
+                      <div key={`q-${a.local}-${a.numero}`} className="flex items-center justify-between p-2 rounded border border-destructive/30 bg-destructive/5">
+                        <span className="text-sm font-medium">
+                          Nº {a.numero} — {localLabel(a.local)}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => marcarQuebradoMutation.mutate({ numero: a.numero, local: a.local, quebrado: false })}
+                        >
+                          Restaurar
+                        </Button>
+                      </div>
+                    ))
+                )}
+              </div>
             </TabsContent>
             <TabsContent value="setores" className="space-y-3 mt-3">
               <p className="text-xs text-muted-foreground">Cadastre os setores disponíveis para funcionárias prestadoras.</p>
