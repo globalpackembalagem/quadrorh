@@ -214,6 +214,7 @@ export default function Dashboard() {
         treinamentoPorTurma={data.grupoSelecionado === 'SOPRO' ? data.treinamentoData.sopro : data.treinamentoData.deco}
         mostrarSumidos={false}
         recentesPorTurma={recentesPorTurma}
+        treinamentosPrevisao={treinamentosPrevisao}
       />
 
       <DashboardTables
