@@ -2059,6 +2059,7 @@ export default function ArmariosFemininos() {
           <Tabs value={configTab} onValueChange={v => setConfigTab(v as any)}>
             <TabsList className="w-full">
               <TabsTrigger value="totais" className="flex-1">Qtd. Armários</TabsTrigger>
+              <TabsTrigger value="quebrados" className="flex-1">Quebrados</TabsTrigger>
               <TabsTrigger value="setores" className="flex-1">Setores Prestador</TabsTrigger>
             </TabsList>
             <TabsContent value="totais" className="space-y-3 mt-3">
@@ -2082,6 +2083,73 @@ export default function ArmariosFemininos() {
               >
                 Salvar Totais
               </Button>
+            </TabsContent>
+            <TabsContent value="quebrados" className="space-y-3 mt-3">
+              <p className="text-xs text-muted-foreground">
+                Cadastre armários quebrados. Eles ficam indisponíveis para uso até serem restaurados.
+              </p>
+              <div className="flex gap-2">
+                <Select value={quebradoLocal} onValueChange={setQuebradoLocal}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LOCAIS.map(l => (
+                      <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  placeholder="Nº armário"
+                  value={quebradoNumero}
+                  onChange={e => setQuebradoNumero(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && quebradoNumero.trim()) {
+                      marcarQuebradoMutation.mutate({ numero: parseInt(quebradoNumero), local: quebradoLocal, quebrado: true });
+                    }
+                  }}
+                  className="w-28"
+                  min={1}
+                />
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => {
+                    if (quebradoNumero.trim()) {
+                      marcarQuebradoMutation.mutate({ numero: parseInt(quebradoNumero), local: quebradoLocal, quebrado: true });
+                    }
+                  }}
+                  disabled={!quebradoNumero.trim() || marcarQuebradoMutation.isPending}
+                >
+                  Marcar Quebrado
+                </Button>
+              </div>
+              {/* Lista de armários quebrados */}
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {armariosParaMapa.filter(a => a.quebrado).length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-2">Nenhum armário quebrado</p>
+                ) : (
+                  armariosParaMapa
+                    .filter(a => a.quebrado)
+                    .sort((a, b) => a.numero - b.numero)
+                    .map(a => (
+                      <div key={`q-${a.local}-${a.numero}`} className="flex items-center justify-between p-2 rounded border border-destructive/30 bg-destructive/5">
+                        <span className="text-sm font-medium">
+                          Nº {a.numero} — {localLabel(a.local)}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs"
+                          onClick={() => marcarQuebradoMutation.mutate({ numero: a.numero, local: a.local, quebrado: false })}
+                        >
+                          Restaurar
+                        </Button>
+                      </div>
+                    ))
+                )}
+              </div>
             </TabsContent>
             <TabsContent value="setores" className="space-y-3 mt-3">
               <p className="text-xs text-muted-foreground">Cadastre os setores disponíveis para funcionárias prestadoras.</p>
