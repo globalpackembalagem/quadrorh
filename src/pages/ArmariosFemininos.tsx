@@ -79,6 +79,7 @@ export default function ArmariosFemininos() {
   const [filtrosAtivos, setFiltrosAtivos] = useState<string[]>(['todos']);
   const [filtroLocal, setFiltroLocal] = useState<string>('todos');
   const [filtroVazio, setFiltroVazio] = useState(false);
+  const [filtroOcupacao, setFiltroOcupacao] = useState<'todos' | 'ocupados' | 'livres'>('todos');
   const [editando, setEditando] = useState<any | null>(null);
   const [numeroArmario, setNumeroArmario] = useState('');
   const [localArmario, setLocalArmario] = useState('SOPRO');
