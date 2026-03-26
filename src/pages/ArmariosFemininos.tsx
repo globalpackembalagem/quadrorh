@@ -732,7 +732,7 @@ export default function ArmariosFemininos() {
       .map(b => ({
         key: `bloq-${b.id}`,
         id: b.id,
-        tipo: 'bloqueado' as const,
+        tipo: ((b as any).quebrado ? 'quebrado' : 'bloqueado') as any,
         numero: b.numero,
         local: b.local,
         matricula: '' as string | null,
