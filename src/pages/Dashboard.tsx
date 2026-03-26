@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 export default function Dashboard() {
   const data = useDashboardData();
   const { data: recentes = [] } = useAdmissaoRecente(data.grupoSelecionado);
+  const { data: treinamentosPrevisao = [] } = useTreinamentosPrevisao();
   const recentesPorTurma = useMemo(() => agruparRecentesPorTurma(recentes, data.grupoSelecionado), [recentes, data.grupoSelecionado]);
 
   const getTurmaLabel = (func: any, grupo: string): string => {
