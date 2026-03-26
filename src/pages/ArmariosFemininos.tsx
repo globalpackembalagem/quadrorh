@@ -961,34 +961,6 @@ export default function ArmariosFemininos() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-3">
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <div className="text-xs text-muted-foreground">Total</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="text-2xl font-bold text-primary">{stats.comArmario}</div>
-            <div className="text-xs text-muted-foreground">Com Armário</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="text-2xl font-bold text-destructive">{stats.semArmario}</div>
-            <div className="text-xs text-muted-foreground">Sem Armário</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 text-center">
-            <div className="text-2xl font-bold text-muted-foreground">{prestadoresComArmario.length}</div>
-            <div className="text-xs text-muted-foreground">Prestadores</div>
-          </CardContent>
-        </Card>
-      </div>
-
       <Tabs defaultValue="funcionarias">
         <TabsList>
           <TabsTrigger value="funcionarias">Armários ({listaUnificada.length})</TabsTrigger>
@@ -1009,26 +981,67 @@ export default function ArmariosFemininos() {
         </TabsList>
 
         <TabsContent value="funcionarias" className="space-y-3 mt-3">
-          {/* Filtros por local + vazio */}
-          <div className="flex flex-wrap gap-1.5">
-            {[{ value: 'todos', label: 'Todos Locais' }, ...LOCAIS].map(l => (
+          {/* Filtros por local (esquerda) + Stats ocupação (direita) */}
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            {/* Local buttons */}
+            <div className="flex flex-wrap gap-1.5">
+              {LOCAIS.map(l => (
+                <Badge
+                  key={`local-${l.value}`}
+                  variant={filtroLocal === l.value ? 'default' : 'outline'}
+                  className="cursor-pointer select-none px-3 py-1 text-sm"
+                  onClick={() => {
+                    setFiltroLocal(prev => prev === l.value ? 'todos' : l.value);
+                    setFiltroOcupacao('todos');
+                    setFiltroVazio(false);
+                  }}
+                >
+                  {l.label}
+                </Badge>
+              ))}
+            </div>
+
+            {/* Stats badges como filtros */}
+            <div className="flex flex-wrap gap-1.5">
               <Badge
-                key={`local-${l.value}`}
-                variant={filtroLocal === l.value ? 'default' : 'outline'}
-                className="cursor-pointer select-none"
-                onClick={() => setFiltroLocal(l.value)}
+                variant="outline"
+                className="cursor-pointer select-none px-3 py-1 text-sm bg-muted/50"
+                onClick={() => {
+                  setFiltroOcupacao('todos');
+                  setFiltroVazio(false);
+                }}
               >
-                {l.label}
+                {statsLocal.localLabel}: {statsLocal.total} armários
               </Badge>
-            ))}
-            <span className="mx-1 border-l border-border" />
-            <Badge
-              variant={filtroVazio ? 'default' : 'outline'}
-              className={`cursor-pointer select-none ${filtroVazio ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'border-emerald-500 text-emerald-700 dark:text-emerald-400'}`}
-              onClick={() => setFiltroVazio(v => !v)}
-            >
-              🟢 Vazio
-            </Badge>
+              <Badge
+                variant={filtroOcupacao === 'ocupados' ? 'default' : 'outline'}
+                className={`cursor-pointer select-none px-3 py-1 text-sm ${
+                  filtroOcupacao === 'ocupados'
+                    ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground'
+                    : 'border-destructive/50 text-destructive hover:bg-destructive/10'
+                }`}
+                onClick={() => {
+                  setFiltroOcupacao(prev => prev === 'ocupados' ? 'todos' : 'ocupados');
+                  setFiltroVazio(false);
+                }}
+              >
+                Ocupados: {statsLocal.ocupados}
+              </Badge>
+              <Badge
+                variant={filtroOcupacao === 'livres' ? 'default' : 'outline'}
+                className={`cursor-pointer select-none px-3 py-1 text-sm ${
+                  filtroOcupacao === 'livres'
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                    : 'border-emerald-500/50 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10'
+                }`}
+                onClick={() => {
+                  setFiltroOcupacao(prev => prev === 'livres' ? 'todos' : 'livres');
+                  setFiltroVazio(false);
+                }}
+              >
+                Livres: {statsLocal.livres}
+              </Badge>
+            </div>
           </div>
 
           {/* Busca */}
