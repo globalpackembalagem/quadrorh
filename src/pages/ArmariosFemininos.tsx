@@ -1137,7 +1137,7 @@ export default function ArmariosFemininos() {
                         className={canEdit ? 'cursor-pointer hover:bg-muted/50' : ''}
                         onClick={() => {
                           if (!canEdit) return;
-                          if (item.tipo === 'bloqueado') return;
+                          if (item.tipo === 'bloqueado' || item.tipo === 'quebrado') return;
                           if (item.tipo === 'vazio') {
                             setCadastroDialog(true);
                             setCadastroTipo('funcionaria');
