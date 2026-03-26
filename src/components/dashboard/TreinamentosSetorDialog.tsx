@@ -47,7 +47,7 @@ export function TreinamentosSetorDialog({ grupoLabel, treinamentos }: Treinament
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [filtroStatus, setFiltroStatus] = useState<string>('todos');
-  const [ordem, setOrdem] = useState<'newest' | 'oldest'>('newest');
+  const [ordem, setOrdem] = useState<'newest' | 'oldest'>('oldest');
 
   const enriched = useMemo(() => treinamentos.map(enrichStatus), [treinamentos]);
 
