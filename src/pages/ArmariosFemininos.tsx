@@ -1358,8 +1358,8 @@ export default function ArmariosFemininos() {
           </div>
 
           <Card>
-            <CardContent className="p-0 max-h-[65vh] overflow-y-auto">
-              <Table>
+            <CardContent className="p-0 max-h-[65vh] overflow-auto">
+              <Table className="min-w-[500px]">
                 <TableHeader className="sticky top-0 z-10 bg-card">
                    <TableRow>
                     <TableHead className="w-24">Matrícula</TableHead>
