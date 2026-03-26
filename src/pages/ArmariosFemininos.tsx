@@ -627,13 +627,10 @@ export default function ArmariosFemininos() {
 
   // Unificar funcionárias + prestadores para a lista principal
   const listaUnificada = useMemo(() => {
-    // Filtro "livres" — mostra apenas armários vazios
-    if (filtroVazio || filtroOcupacao === 'livres') {
+    // Filtro "livres" — mostra apenas armários vazios (mas só se não tem busca ativa)
+    if ((filtroVazio || filtroOcupacao === 'livres') && !busca.trim()) {
       return armariosVazios
-        .filter(a => {
-          if (busca) return a.numero.toString().includes(busca.trim());
-          return true;
-        })
+        .filter(a => true)
         .map(a => ({
           key: `vazio-${a.local}-${a.numero}`,
           id: `vazio-${a.local}-${a.numero}`,
