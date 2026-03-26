@@ -1,3 +1,5 @@
+import { Navigate } from 'react-router-dom';
+
 export default function Home() {
-  return <div className="min-h-screen w-full bg-white" />;
+  return <Navigate to="/dashboard" replace />;
 }
