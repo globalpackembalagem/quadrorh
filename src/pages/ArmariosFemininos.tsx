@@ -288,7 +288,7 @@ export default function ArmariosFemininos() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('armarios_femininos')
-        .select('id, numero, local, bloqueado')
+        .select('id, numero, local, bloqueado, quebrado')
         .eq('bloqueado', true)
         .order('numero');
       if (error) throw error;
@@ -732,7 +732,7 @@ export default function ArmariosFemininos() {
       .map(b => ({
         key: `bloq-${b.id}`,
         id: b.id,
-        tipo: 'bloqueado' as const,
+        tipo: ((b as any).quebrado ? 'quebrado' : 'bloqueado') as any,
         numero: b.numero,
         local: b.local,
         matricula: '' as string | null,
@@ -954,10 +954,10 @@ export default function ArmariosFemininos() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h1 className="text-2xl font-bold">Controle de Armários Feminino</h1>
-        <div className="flex gap-2">
+    <div className="space-y-4 min-w-0 overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold">Controle de Armários Feminino</h1>
+        <div className="flex flex-wrap gap-2">
            {canEdit && (
             <Button size="sm" onClick={() => {
               setCadastroDialog(true);
@@ -968,7 +968,7 @@ export default function ArmariosFemininos() {
               setCadastroLocal('SOPRO');
               setCadastroSetorId('');
             }}>
-              <UserPlus className="h-4 w-4 mr-1" /> Cadastrar
+              <UserPlus className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Cadastrar</span><span className="sm:hidden">+</span>
             </Button>
           )}
           {canEdit && (
@@ -983,7 +983,7 @@ export default function ArmariosFemininos() {
               setBuscaCadastro('');
               setCadastroFuncionarioId('');
             }}>
-              <HardHat className="h-4 w-4 mr-1" /> Prestador
+              <HardHat className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Prestador</span>
             </Button>
           )}
           {temAcessoTotalArmarios && (
@@ -997,18 +997,18 @@ export default function ArmariosFemininos() {
               setConfigTab('totais');
               setConfigDialog(true);
             }}>
-              <Settings className="h-4 w-4 mr-1" /> Configuração
+              <Settings className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Configuração</span>
             </Button>
           )}
           <ManualArmariosPDF />
           <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-1" /> Exportar
+            <Download className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Exportar</span>
           </Button>
         </div>
       </div>
 
       <Tabs defaultValue="funcionarias">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="funcionarias">Armários ({listaUnificada.length})</TabsTrigger>
           <TabsTrigger value="sem-armario">
             <UserX className="h-3.5 w-3.5 mr-1" />
@@ -1103,8 +1103,8 @@ export default function ArmariosFemininos() {
 
           {/* Tabela unificada */}
           <Card>
-            <CardContent className="p-0 max-h-[65vh] overflow-y-auto">
-              <Table>
+            <CardContent className="p-0 max-h-[65vh] overflow-auto">
+              <Table className="min-w-[700px]">
                 <TableHeader className="sticky top-0 z-10 bg-card">
                    <TableRow>
                      <TableHead className="w-24">Nº Armário</TableHead>
@@ -1137,7 +1137,7 @@ export default function ArmariosFemininos() {
                         className={canEdit ? 'cursor-pointer hover:bg-muted/50' : ''}
                         onClick={() => {
                           if (!canEdit) return;
-                          if (item.tipo === 'bloqueado') return;
+                          if (item.tipo === 'bloqueado' || item.tipo === 'quebrado') return;
                           if (item.tipo === 'vazio') {
                             setCadastroDialog(true);
                             setCadastroTipo('funcionaria');
@@ -1186,6 +1186,8 @@ export default function ArmariosFemininos() {
                           <div className="flex items-center gap-2">
                             {item.tipo === 'vazio' ? (
                               <Badge className="bg-emerald-500/90 hover:bg-emerald-500 text-white text-xs">🟢 LIVRE</Badge>
+                            ) : item.tipo === 'quebrado' ? (
+                              <Badge className="bg-zinc-900 hover:bg-zinc-800 text-white text-xs">🔧 QUEBRADO</Badge>
                             ) : item.tipo === 'bloqueado' ? (
                               <Badge className="bg-amber-500/90 hover:bg-amber-500 text-white text-xs">🚫 Não utiliza</Badge>
                             ) : (
@@ -1230,6 +1232,15 @@ export default function ArmariosFemininos() {
                                 onClick={() => bloquearArmarioMutation.mutate({ numero: item.numero, local: item.local || 'SOPRO', bloquear: false })}
                               >
                                 ✅ Liberar
+                              </Button>
+                            ) : item.tipo === 'quebrado' ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs gap-1"
+                                onClick={() => marcarQuebradoMutation.mutate({ numero: item.numero, local: item.local || 'SOPRO', quebrado: false })}
+                              >
+                                ✅ Restaurar
                               </Button>
                             ) : (
                             <div className="flex gap-1">
@@ -1347,8 +1358,8 @@ export default function ArmariosFemininos() {
           </div>
 
           <Card>
-            <CardContent className="p-0 max-h-[65vh] overflow-y-auto">
-              <Table>
+            <CardContent className="p-0 max-h-[65vh] overflow-auto">
+              <Table className="min-w-[500px]">
                 <TableHeader className="sticky top-0 z-10 bg-card">
                    <TableRow>
                     <TableHead className="w-24">Matrícula</TableHead>
@@ -1436,8 +1447,8 @@ export default function ArmariosFemininos() {
             ⚠️ Funcionárias desligadas que possuem armário. Libere o armário após a devolução.
           </div>
           <Card>
-            <CardContent className="p-0 max-h-[65vh] overflow-y-auto">
-              <Table>
+            <CardContent className="p-0 max-h-[65vh] overflow-auto">
+              <Table className="min-w-[600px]">
                 <TableHeader className="sticky top-0 z-10 bg-card">
                   <TableRow>
                     <TableHead className="w-24">Nº Armário</TableHead>
