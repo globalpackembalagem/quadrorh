@@ -1233,6 +1233,15 @@ export default function ArmariosFemininos() {
                               >
                                 ✅ Liberar
                               </Button>
+                            ) : item.tipo === 'quebrado' ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 text-xs gap-1"
+                                onClick={() => marcarQuebradoMutation.mutate({ numero: item.numero, local: item.local || 'SOPRO', quebrado: false })}
+                              >
+                                ✅ Restaurar
+                              </Button>
                             ) : (
                             <div className="flex gap-1">
                               {/* Botão Liberar para demitidas com armário */}
