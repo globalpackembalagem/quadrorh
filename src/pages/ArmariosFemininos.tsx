@@ -608,7 +608,7 @@ export default function ArmariosFemininos() {
     if (!filtroVazio && filtroOcupacao !== 'livres') return [];
     const ocupados = new Set(
       armariosParaMapa
-        .filter(a => a.numero > 0)
+        .filter(a => a.numero > 0 && (a.funcionario_id || a.nome_completo || a.bloqueado || a.quebrado))
         .map(a => `${a.local}-${a.numero}`)
     );
     const result: { numero: number; local: string }[] = [];
@@ -749,7 +749,7 @@ export default function ArmariosFemininos() {
     if (buscaEhNumero && q && filtroOcupacao !== 'ocupados') {
       const ocupados = new Set(
         armariosParaMapa
-          .filter(a => a.numero > 0)
+          .filter(a => a.numero > 0 && (a.funcionario_id || a.nome_completo || a.bloqueado || a.quebrado))
           .map(a => `${a.local}-${a.numero}`)
       );
       const locaisFiltro = filtroLocal !== 'todos' ? [filtroLocal] : LOCAIS.map(l => l.value);
