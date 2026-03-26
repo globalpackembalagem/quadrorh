@@ -200,7 +200,7 @@ export default function MapaVisualArmarios({ armarios, totalArmarios, onEditar, 
           <span className="text-muted-foreground">Não utilizar</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-4 h-4 rounded bg-red-700/20 border border-red-700/50" />
+          <div className="w-4 h-4 rounded bg-zinc-900 border border-zinc-700 dark:bg-black dark:border-zinc-600" />
           <span className="text-muted-foreground">Quebrado</span>
         </div>
       </div>
