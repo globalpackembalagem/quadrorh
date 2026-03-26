@@ -5,6 +5,7 @@ import { DashboardGroupSelector } from '@/components/dashboard/DashboardGroupSel
 import { DashboardTables } from '@/components/dashboard/DashboardTables';
 import { MetricasTurmaCards } from '@/components/dashboard/MetricasTurmaCards';
 import { useAdmissaoRecente, agruparRecentesPorTurma } from '@/hooks/useAdmissaoRecente';
+import { useTreinamentosPrevisao } from '@/hooks/useTreinamentosPrevisao';
 import { toast } from 'sonner';
 // xlsx-js-style loaded dynamically
 import { format } from 'date-fns';
