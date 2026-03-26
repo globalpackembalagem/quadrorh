@@ -598,6 +598,30 @@ export default function Funcionarios() {
     toast.success(`${count} nome(s) atualizado(s) com sucesso!`);
   };
 
+  const handleMaiusculo = async () => {
+    const comMinusculo = funcionarios.filter(f => f.nome_completo !== f.nome_completo.toUpperCase());
+    if (comMinusculo.length === 0) {
+      toast.info('Todos os nomes já estão em maiúsculo!');
+      return;
+    }
+    const confirmar = window.confirm(`Serão convertidos ${comMinusculo.length} nome(s) para MAIÚSCULO. Deseja continuar?`);
+    if (!confirmar) return;
+
+    let count = 0;
+    for (const f of comMinusculo) {
+      try {
+        await updateFuncionario.mutateAsync({
+          id: f.id,
+          nome_completo: f.nome_completo.toUpperCase(),
+        });
+        count++;
+      } catch {
+        // continua
+      }
+    }
+    toast.success(`${count} nome(s) convertido(s) para maiúsculo!`);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -801,10 +825,16 @@ export default function Funcionarios() {
             <ExportarFuncionariosDialog funcionarios={funcionarios} setores={setores} situacoes={todasSituacoes} />
             {canEditFuncionarios && !isVisualizacao && <ImportarFuncionarios setores={setores} situacoes={todasSituacoes} />}
             {isAdmin && (
-              <Button size="sm" variant="outline" onClick={handleRemoverAcentos} className="gap-1">
-                <Type className="h-4 w-4" />
-                TIRAR ACENTOS
-              </Button>
+              <>
+                <Button size="sm" variant="outline" onClick={handleRemoverAcentos} className="gap-1">
+                  <Type className="h-4 w-4" />
+                  TIRAR ACENTOS
+                </Button>
+                <Button size="sm" variant="outline" onClick={handleMaiusculo} className="gap-1">
+                  <Type className="h-4 w-4" />
+                  MAIÚSCULO
+                </Button>
+              </>
             )}
           </div>
         </div>
