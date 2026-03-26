@@ -98,7 +98,9 @@ export default function ArmariosFemininos() {
   const [filtroLocalPrestador, setFiltroLocalPrestador] = useState<string>('todos');
 
   const [configDialog, setConfigDialog] = useState(false);
-  const [configTab, setConfigTab] = useState<'totais' | 'setores'>('totais');
+  const [configTab, setConfigTab] = useState<'totais' | 'setores' | 'quebrados'>('totais');
+  const [quebradoNumero, setQuebradoNumero] = useState('');
+  const [quebradoLocal, setQuebradoLocal] = useState('SOPRO');
   const [configValues, setConfigValues] = useState<Record<string, number>>({});
   const [novoSetorPrestador, setNovoSetorPrestador] = useState('');
 
