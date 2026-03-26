@@ -5,6 +5,7 @@ import { DashboardGroupSelector } from '@/components/dashboard/DashboardGroupSel
 import { DashboardTables } from '@/components/dashboard/DashboardTables';
 import { MetricasTurmaCards } from '@/components/dashboard/MetricasTurmaCards';
 import { useAdmissaoRecente, agruparRecentesPorTurma } from '@/hooks/useAdmissaoRecente';
+import { useTreinamentosPrevisao } from '@/hooks/useTreinamentosPrevisao';
 import { toast } from 'sonner';
 // xlsx-js-style loaded dynamically
 import { format } from 'date-fns';
@@ -12,6 +13,7 @@ import { format } from 'date-fns';
 export default function Dashboard() {
   const data = useDashboardData();
   const { data: recentes = [] } = useAdmissaoRecente(data.grupoSelecionado);
+  const { data: treinamentosPrevisao = [] } = useTreinamentosPrevisao();
   const recentesPorTurma = useMemo(() => agruparRecentesPorTurma(recentes, data.grupoSelecionado), [recentes, data.grupoSelecionado]);
 
   const getTurmaLabel = (func: any, grupo: string): string => {
@@ -212,6 +214,7 @@ export default function Dashboard() {
         treinamentoPorTurma={data.grupoSelecionado === 'SOPRO' ? data.treinamentoData.sopro : data.treinamentoData.deco}
         mostrarSumidos={false}
         recentesPorTurma={recentesPorTurma}
+        treinamentosPrevisao={treinamentosPrevisao}
       />
 
       <DashboardTables
