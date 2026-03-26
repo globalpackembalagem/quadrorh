@@ -1,0 +1,27 @@
+---
+import ClientLayout from '../../layouts/ClientLayout.astro';
+import MarketplaceHome from '../../components/client/MarketplaceHome';
+---
+
+<ClientLayout title="Início">
+  <div class="animate-fade-in w-full">
+    <MarketplaceHome client:load />
+  </div>
+</ClientLayout>
+</ClientLayout>
+
+<style>
+  /* Base fade in animation for the page wrapper */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in {
+    animation: fadeIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+  
+  /* Ensure leaflet container renders correctly globally without layout blowouts */
+  :global(.leaflet-container) {
+    font-family: 'Inter', sans-serif;
+  }
+</style>

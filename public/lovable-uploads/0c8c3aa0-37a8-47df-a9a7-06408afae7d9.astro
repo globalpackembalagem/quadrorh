@@ -1,0 +1,36 @@
+---
+import '../styles/globals.css';
+import Sidebar from '../components/layout/Sidebar';
+import TopBar from '../components/layout/TopBar';
+
+interface Props {
+  title: string;
+  section?: string;
+}
+
+const { title, section = 'home' } = Astro.props;
+---
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={`${title} — Mais Melhor Dashboard`} />
+    <title>{title} · Mais Melhor</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <div class="flex h-screen overflow-hidden">
+      <!-- Sidebar -->
+      <Sidebar activeSection={section} client:load />
+
+      <!-- Main content area -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+        <TopBar title={title} client:load />
+        <main class="flex-1 overflow-y-auto p-6">
+          <slot />
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

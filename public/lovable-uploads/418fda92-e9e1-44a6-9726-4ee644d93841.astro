@@ -1,0 +1,11 @@
+---
+import ClientLayout from '../../layouts/ClientLayout.astro';
+import PromotionsFeed from '../../components/client/PromotionsFeed';
+---
+
+<ClientLayout title="Promoções" hideHeader={true}>
+  <!-- Full-bleed background for the immersive feed -->
+  <div class="fixed inset-0 w-full h-[100dvh] bg-black z-0">
+     <PromotionsFeed client:load />
+  </div>
+</ClientLayout>

@@ -1,0 +1,11 @@
+---
+import ClientLayout from '../../layouts/ClientLayout.astro';
+import InteractiveMap from '../../components/client/InteractiveMap';
+---
+
+<ClientLayout title="Mapa da Cidade">
+  {/* Ensure this container covers the entire viewport, overriding Layout constraints if needed */}
+  <div class="fixed inset-0 w-full h-[100dvh] z-50 bg-neutral-100 dark:bg-neutral-950">
+    <InteractiveMap client:only="react" />
+  </div>
+</ClientLayout>

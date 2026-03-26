@@ -1,0 +1,17 @@
+---
+import ClientLayout from '../../../layouts/ClientLayout.astro';
+import StoreDetailPage from '../../../components/client/StoreDetailPage';
+import { STORES } from '../../../lib/stores';
+
+export function getStaticPaths() {
+  return STORES.map((store) => ({
+    params: { slug: store.slug },
+  }));
+}
+
+const { slug } = Astro.params;
+---
+
+<ClientLayout title="Ver Loja" hideHeader={true}>
+  <StoreDetailPage slug={slug ?? ''} client:only="react" />
+</ClientLayout>

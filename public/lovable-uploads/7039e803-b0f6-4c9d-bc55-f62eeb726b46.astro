@@ -1,0 +1,8 @@
+---
+import ClientLayout from '../../layouts/ClientLayout.astro';
+import OrdersList from '../../components/client/OrdersList';
+---
+
+<ClientLayout title="Meus Pedidos">
+  <OrdersList client:load />
+</ClientLayout>

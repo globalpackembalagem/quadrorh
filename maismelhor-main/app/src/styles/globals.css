@@ -1,0 +1,186 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ────────────────────────────────────────────────
+   BASE
+─────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-neutral-950 text-neutral-100 min-h-screen;
+    background: radial-gradient(ellipse at top left, #1a0f00 0%, #0A0908 40%, #050403 100%);
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-neutral-700 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-neutral-600;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ────────────────────────────────────────────────
+   GLASSMORPHISM TOKENS
+─────────────────────────────────────────────── */
+@layer components {
+  /* Level 1 — light cards */
+  .glass-1 {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(12px) saturate(1.4);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 4px 16px rgba(0, 0, 0, 0.3),
+      0 1px 3px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  /* Level 2 — modals, main panels */
+  .glass-2 {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(20px) saturate(1.6);
+    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.4),
+      0 2px 8px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+  }
+
+  /* Level 3 — sidebar, dense overlays */
+  .glass-3 {
+    background: rgba(20, 18, 16, 0.75);
+    backdrop-filter: blur(32px) saturate(1.8);
+    -webkit-backdrop-filter: blur(32px) saturate(1.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 16px 48px rgba(0, 0, 0, 0.5),
+      0 4px 12px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  }
+
+  /* Brand glow */
+  .glow-brand {
+    box-shadow:
+      0 0 0 1px rgba(255, 107, 0, 0.3),
+      0 0 16px rgba(255, 107, 0, 0.15),
+      0 0 32px rgba(255, 107, 0, 0.08);
+    transition: box-shadow 0.3s ease;
+  }
+
+  .glow-brand:hover {
+    box-shadow:
+      0 0 0 1px rgba(255, 107, 0, 0.5),
+      0 0 24px rgba(255, 107, 0, 0.25),
+      0 0 48px rgba(255, 107, 0, 0.12);
+  }
+
+  /* Top edge light */
+  .highlight-top {
+    position: relative;
+  }
+  .highlight-top::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 10%; right: 10%;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.25) 50%,
+      transparent
+    );
+    border-radius: 1px;
+  }
+
+  /* Gradient text */
+  .text-gradient {
+    background: linear-gradient(135deg, #FF8C32, #FF6B00, #E05A00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Status badges */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  .badge-success { @apply bg-success/15 text-success border border-success/20; }
+  .badge-warning { @apply bg-warning/15 text-warning border border-warning/20; }
+  .badge-error   { @apply bg-error/15 text-error border border-error/20; }
+  .badge-info    { @apply bg-info/15 text-info border border-info/20; }
+  .badge-brand   { @apply bg-brand-500/15 text-brand-400 border border-brand-500/20; }
+  .badge-neutral { @apply bg-neutral-700/50 text-neutral-400 border border-neutral-600/30; }
+
+  /* Sidebar nav item */
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
+           text-neutral-400 transition-all duration-200 cursor-pointer
+           hover:text-neutral-100 hover:bg-white/5;
+  }
+  .nav-item.active {
+    @apply text-brand-400 bg-brand-500/10 border border-brand-500/20;
+  }
+
+  /* Button variants */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 h-10 rounded-xl
+           font-semibold text-sm bg-brand-500 text-white
+           hover:bg-brand-600 active:scale-95 transition-all duration-200
+           shadow-lg shadow-brand-500/25 focus-visible:outline-none
+           focus-visible:ring-2 focus-visible:ring-brand-500;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 h-10 rounded-xl
+           font-semibold text-sm glass-1 text-neutral-200
+           hover:bg-white/10 active:scale-95 transition-all duration-200
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-3 h-9 rounded-lg
+           text-sm text-neutral-400 hover:text-neutral-200 hover:bg-white/5
+           transition-all duration-200;
+  }
+
+  /* Form input style */
+  .input-glass {
+    @apply w-full h-11 px-4 rounded-xl border border-neutral-700/60
+           bg-neutral-900/50 backdrop-blur-sm text-sm text-neutral-100
+           placeholder:text-neutral-500 outline-none
+           focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20
+           transition-all duration-200;
+  }
+
+  /* Card wrapper */
+  .card {
+    @apply glass-2 rounded-2xl p-6 highlight-top;
+  }
+}
