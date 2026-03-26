@@ -1186,6 +1186,8 @@ export default function ArmariosFemininos() {
                           <div className="flex items-center gap-2">
                             {item.tipo === 'vazio' ? (
                               <Badge className="bg-emerald-500/90 hover:bg-emerald-500 text-white text-xs">🟢 LIVRE</Badge>
+                            ) : item.tipo === 'quebrado' ? (
+                              <Badge className="bg-zinc-900 hover:bg-zinc-800 text-white text-xs">🔧 QUEBRADO</Badge>
                             ) : item.tipo === 'bloqueado' ? (
                               <Badge className="bg-amber-500/90 hover:bg-amber-500 text-white text-xs">🚫 Não utiliza</Badge>
                             ) : (
