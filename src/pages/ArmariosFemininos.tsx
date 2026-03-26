@@ -744,9 +744,10 @@ export default function ArmariosFemininos() {
         raw: b,
       }));
 
-    // Quando busca por número, mostrar também armários vazios que correspondem (exceto se filtro é "ocupados")
+    // Quando busca por número, mostrar também armários vazios que correspondem
+    // Se tem busca ativa, ignora filtro de ocupação para garantir resultado
     let vazioList: typeof funcList = [];
-    if (buscaEhNumero && q && filtroOcupacao !== 'ocupados') {
+    if (buscaEhNumero && q) {
       const ocupados = new Set(
         armariosParaMapa
           .filter(a => a.numero > 0 && (a.funcionario_id || a.nome_completo || a.bloqueado || a.quebrado))
