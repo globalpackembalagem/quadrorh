@@ -61,6 +61,7 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   viewOnly?: boolean;
+  disabled?: boolean;
 }
 
 const adminNavigation = [
