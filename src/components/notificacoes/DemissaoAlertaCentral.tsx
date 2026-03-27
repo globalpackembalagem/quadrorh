@@ -52,6 +52,37 @@ export function DemissaoAlertaCentral() {
       }
     }
 
+    // Enviar notificação de retorno para Admin/RH
+    const eventoIdFinal = alerta?.referencia_id;
+    if (eventoIdFinal && userRole?.id && userRole?.nome) {
+      try {
+        const { data: adminsERH } = await supabase
+          .from('user_roles')
+          .select('id')
+          .eq('ativo', true)
+          .or('acesso_admin.eq.true,perfil.eq.rh_completo,perfil.eq.rh_demissoes');
+
+        if (adminsERH && adminsERH.length > 0) {
+          const tipoLabel = alerta?.tipo === 'pedido_demissao_lancado' ? 'PED. DEMISSÃO' : 'DEMISSÃO';
+          const notifRetorno = adminsERH
+            .filter((a: any) => a.id !== userRole.id)
+            .map((admin: any) => ({
+              user_role_id: admin.id,
+              tipo: 'ciencia_retorno',
+              titulo: `✅ CIÊNCIA — ${tipoLabel}`,
+              mensagem: `O gestor ${userRole.nome} deu CIÊNCIA na notificação:\n\n${alerta?.mensagem || tipoLabel}`,
+              referencia_id: eventoIdFinal,
+            }));
+
+          if (notifRetorno.length > 0) {
+            await supabase.from('notificacoes').insert(notifRetorno);
+          }
+        }
+      } catch (err) {
+        console.warn('[DEMISSAO ALERTA] Erro ao enviar notificação de retorno:', err);
+      }
+    }
+
     setAlertas(prev => {
       const next = prev.filter(a => a.id !== id);
       if (next.length === 0) setVisible(false);
