@@ -65,6 +65,7 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   subItems?: NavItem[];
   viewOnly?: boolean;
+  disabled?: boolean;
 }
 
 // Navegação base - será filtrada por permissões
