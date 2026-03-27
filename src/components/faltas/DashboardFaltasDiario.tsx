@@ -510,8 +510,8 @@ export function DashboardFaltasDiario({
           <Table>
             <TableHeader>
               <TableRow className="bg-card border-b-2 border-border">
-                <TableHead className="text-[13px] font-extrabold text-foreground sticky left-0 bg-card z-10 w-[180px] min-w-[180px] max-w-[180px] py-2 px-3 border-r border-border/50">SETOR</TableHead>
-                <TableHead className="text-[13px] font-extrabold text-foreground text-center w-[60px] min-w-[60px] py-2">QTD</TableHead>
+                <TableHead className="text-sm font-extrabold text-foreground sticky left-0 bg-card z-10 w-[190px] min-w-[190px] max-w-[190px] py-2.5 px-3 border-r border-border/50">SETOR</TableHead>
+                <TableHead className="text-sm font-extrabold text-foreground text-center w-[60px] min-w-[60px] py-2.5">QTD</TableHead>
                 {diasVisiveis.map((dia, colIndex) => {
                   const dataStr = format(dia, 'yyyy-MM-dd');
                   const isHoje = dataStr === hojeStr;
