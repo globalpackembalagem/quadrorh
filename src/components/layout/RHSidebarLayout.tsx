@@ -65,6 +65,7 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   subItems?: NavItem[];
   viewOnly?: boolean;
+  disabled?: boolean;
 }
 
 // Navegação base - será filtrada por permissões
@@ -196,6 +197,9 @@ function getNavigationForUser(
     if (!perms || perms.pode_visualizar_troca_turno) {
       gestorItems.push({ name: 'TROCA DE TURNO', href: '/troca-turno', icon: RefreshCw, viewOnly: !perms?.pode_editar_troca_turno });
     }
+
+    // Divergências - inativo para gestores
+    gestorItems.push({ name: 'DIVERGÊNCIAS', href: '/divergencias', icon: AlertTriangle, disabled: true });
 
     // Armários Femininos - para gestoras com permissão
     if (perms?.pode_visualizar_armarios || perms?.pode_editar_armarios) {
@@ -388,6 +392,21 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
           <item.icon className={cn(iconSize, 'shrink-0', iconColor)} />
           <span className="truncate">{item.name}</span>
         </a>
+      );
+    }
+
+    if (item.disabled) {
+      return (
+        <div
+          key={item.name}
+          className={cn(
+            'flex items-center gap-3.5 rounded-xl opacity-40 cursor-not-allowed',
+            textSize, padding, fontWeight, letterSpacing
+          )}
+        >
+          <item.icon className={cn(iconSize, 'shrink-0', iconColor)} />
+          <span className="truncate">{item.name}</span>
+        </div>
       );
     }
 

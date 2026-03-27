@@ -61,6 +61,7 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   viewOnly?: boolean;
+  disabled?: boolean;
 }
 
 const adminNavigation = [
@@ -115,7 +116,7 @@ export function TopNavLayout({ children }: TopNavLayoutProps) {
     ] : []),
     // Divergências
     ...(usuarioAtual.pode_visualizar_divergencias || usuarioAtual.pode_criar_divergencias ? [
-      { name: 'DIVERGÊNCIAS', href: '/divergencias', icon: AlertTriangle, viewOnly: !usuarioAtual.pode_criar_divergencias },
+      { name: 'DIVERGÊNCIAS', href: '/divergencias', icon: AlertTriangle, viewOnly: !usuarioAtual.pode_criar_divergencias, disabled: !isAdmin },
     ] : []),
     // Troca de Turno
     ...(usuarioAtual.pode_visualizar_troca_turno || usuarioAtual.pode_editar_troca_turno ? [
@@ -192,22 +193,31 @@ export function TopNavLayout({ children }: TopNavLayoutProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-56">
                   {rhNavigation.map((item) => (
-                    <DropdownMenuItem key={item.name} asChild>
-                      <Link
-                        to={item.href}
-                        className={cn(
-                          'flex items-center gap-2 justify-between',
-                          isActive(item.href) && 'bg-accent'
-                        )}
-                      >
-                        <div className="flex items-center gap-2">
-                          <item.icon className="h-4 w-4" />
-                          {item.name}
+                    <DropdownMenuItem key={item.name} asChild disabled={item.disabled}>
+                      {item.disabled ? (
+                        <div className="flex items-center gap-2 justify-between opacity-40 cursor-not-allowed">
+                          <div className="flex items-center gap-2">
+                            <item.icon className="h-4 w-4" />
+                            {item.name}
+                          </div>
                         </div>
-                        {item.viewOnly && (
-                          <Eye className="h-3 w-3 text-muted-foreground" />
-                        )}
-                      </Link>
+                      ) : (
+                        <Link
+                          to={item.href}
+                          className={cn(
+                            'flex items-center gap-2 justify-between',
+                            isActive(item.href) && 'bg-accent'
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <item.icon className="h-4 w-4" />
+                            {item.name}
+                          </div>
+                          {item.viewOnly && (
+                            <Eye className="h-3 w-3 text-muted-foreground" />
+                          )}
+                        </Link>
+                      )}
                     </DropdownMenuItem>
                   ))}
                   {/* Admin Section - só para admin, toggle */}
@@ -333,24 +343,34 @@ export function TopNavLayout({ children }: TopNavLayoutProps) {
                     {isAdmin ? 'RH' : 'LOGIN'}
                   </p>
                   {rhNavigation.map((item) => (
-                     <Link
-                      key={item.name}
-                      to={item.href}
-                      className={cn(
-                        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors justify-between',
-                        isActive(item.href)
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:bg-accent'
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
+                    item.disabled ? (
+                      <div
+                        key={item.name}
+                        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium opacity-40 cursor-not-allowed"
+                      >
                         <item.icon className="h-5 w-5" />
                         {item.name}
                       </div>
-                      {item.viewOnly && (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Link>
+                    ) : (
+                      <Link
+                        key={item.name}
+                        to={item.href}
+                        className={cn(
+                          'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors justify-between',
+                          isActive(item.href)
+                            ? 'bg-primary text-primary-foreground'
+                            : 'text-muted-foreground hover:bg-accent'
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon className="h-5 w-5" />
+                          {item.name}
+                        </div>
+                        {item.viewOnly && (
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </Link>
+                    )
                   ))}
                 </div>
               )}
