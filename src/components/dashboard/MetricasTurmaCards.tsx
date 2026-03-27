@@ -346,7 +346,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                   <button className="flex items-center justify-between gap-1.5 px-3 py-2 mt-1 mb-2 rounded-lg border border-info/30 bg-info/5 text-sm font-semibold text-info hover:bg-info/15 transition-colors cursor-pointer w-full">
                     <div className="flex items-center gap-2">
                       <Umbrella className="h-4 w-4 shrink-0" />
-                      <span>Cob. Férias</span>
+                      <span>COB. FÉRIAS</span>
                     </div>
                     <span className="text-lg font-bold">{cobFeriasPorTurma[turma].total}</span>
                   </button>
