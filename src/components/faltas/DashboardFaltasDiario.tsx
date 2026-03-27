@@ -411,7 +411,7 @@ export function DashboardFaltasDiario({
           !hasData && "text-muted-foreground/25"
         )}
       >
-        <span className="text-[12px]">-</span>
+        <span className="text-sm">-</span>
       </TableCell>
     );
   };
