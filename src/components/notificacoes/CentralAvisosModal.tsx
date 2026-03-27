@@ -44,6 +44,7 @@ const TIPO_BADGE_LABELS: Record<string, string> = {
   cobertura_treinamento_resposta: 'RESPOSTA COB/TREIN.',
   turma_pendente_consulta: 'TURMA PENDENTE',
   turma_pendente_resposta: 'RESPOSTA TURMA',
+  ciencia_retorno: 'CIÊNCIA DO GESTOR',
 };
 
 const TIPO_CONFIG: Record<string, { icon: typeof Bell; color: string; bgColor: string; borderColor: string; badgeClass: string }> = {
@@ -67,6 +68,7 @@ const TIPO_CONFIG: Record<string, { icon: typeof Bell; color: string; bgColor: s
   default: { icon: Bell, color: 'text-muted-foreground', bgColor: 'bg-muted/30', borderColor: 'border-border', badgeClass: 'bg-muted-foreground text-white' },
   turma_pendente_consulta: { icon: AlertTriangle, color: 'text-amber-600', bgColor: 'bg-amber-50 dark:bg-amber-950/30', borderColor: 'border-amber-200 dark:border-amber-800', badgeClass: 'bg-amber-600 text-white' },
   turma_pendente_resposta: { icon: CheckCircle2, color: 'text-teal-600', bgColor: 'bg-teal-50 dark:bg-teal-950/30', borderColor: 'border-teal-200 dark:border-teal-800', badgeClass: 'bg-teal-600 text-white' },
+  ciencia_retorno: { icon: CheckCheck, color: 'text-emerald-600', bgColor: 'bg-emerald-50 dark:bg-emerald-950/30', borderColor: 'border-emerald-200 dark:border-emerald-800', badgeClass: 'bg-emerald-600 text-white' },
 };
 
 function getTipoConfig(tipo: string) {
@@ -256,6 +258,38 @@ export function CentralAvisosModal() {
           console.error('[CIENTE] Erro ao registrar vista:', vistaError);
         } else {
           console.log('[CIENTE] Vista registrada:', { eventoId, gestor: userRole.nome });
+        }
+
+        // 4. Enviar notificação de retorno para Admin e RH (para todos os tipos simples)
+        const tiposComRespostaProprria = ['admissao_confirmacao', 'previsao_confirmacao', 'experiencia_consulta', 'cobertura_treinamento_consulta', 'turma_pendente_consulta'];
+        if (avisoTipo && !tiposComRespostaProprria.includes(avisoTipo)) {
+          try {
+            const { data: adminsERH } = await supabase
+              .from('user_roles')
+              .select('id')
+              .eq('ativo', true)
+              .or('acesso_admin.eq.true,perfil.eq.rh_completo,perfil.eq.rh_demissoes');
+
+            if (adminsERH && adminsERH.length > 0) {
+              const tipoLabel = TIPO_BADGE_LABELS[avisoTipo] || avisoTipo?.toUpperCase() || 'AVISO';
+              const notifRetorno = adminsERH
+                .filter((a: any) => a.id !== userRole.id)
+                .map((admin: any) => ({
+                  user_role_id: admin.id,
+                  tipo: 'ciencia_retorno',
+                  titulo: `✅ CIÊNCIA — ${tipoLabel}`,
+                  mensagem: `O gestor ${userRole.nome} deu CIÊNCIA na notificação:\n\n${aviso?.mensagem || tipoLabel}`,
+                  referencia_id: eventoId,
+                }));
+
+              if (notifRetorno.length > 0) {
+                await supabase.from('notificacoes').insert(notifRetorno);
+                console.log('[CIENTE] Notificação de retorno enviada para', notifRetorno.length, 'admin/RH');
+              }
+            }
+          } catch (err) {
+            console.warn('[CIENTE] Erro ao enviar notificação de retorno:', err);
+          }
         }
       } else {
         console.warn('[CIENTE] Não foi possível registrar vista - dados faltando:', { eventoId, userId: userRole?.id, nome: userRole?.nome });
@@ -675,6 +709,45 @@ export function CentralAvisosModal() {
               console.error('[CIENTE TODOS] Erro ao registrar vistas:', vistaError);
             } else {
               console.log('[CIENTE TODOS] Vistas registradas:', vistas.length, 'para', userRole.nome);
+            }
+
+            // Enviar notificação de retorno para Admin/RH
+            try {
+              const tiposComRespostaProprria = ['admissao_confirmacao', 'previsao_confirmacao', 'experiencia_consulta', 'cobertura_treinamento_consulta', 'turma_pendente_consulta'];
+              const avisosSimples = podeFechar.filter(a => !tiposComRespostaProprria.includes(a.tipo));
+              
+              if (avisosSimples.length > 0) {
+                const { data: adminsERH } = await supabase
+                  .from('user_roles')
+                  .select('id')
+                  .eq('ativo', true)
+                  .or('acesso_admin.eq.true,perfil.eq.rh_completo,perfil.eq.rh_demissoes');
+
+                if (adminsERH && adminsERH.length > 0) {
+                  const notifRetorno: any[] = [];
+                  avisosSimples.forEach(aviso => {
+                    const tipoLabel = TIPO_BADGE_LABELS[aviso.tipo] || aviso.tipo?.toUpperCase() || 'AVISO';
+                    adminsERH
+                      .filter((a: any) => a.id !== userRole.id)
+                      .forEach((admin: any) => {
+                        notifRetorno.push({
+                          user_role_id: admin.id,
+                          tipo: 'ciencia_retorno',
+                          titulo: `✅ CIÊNCIA — ${tipoLabel}`,
+                          mensagem: `O gestor ${userRole.nome} deu CIÊNCIA na notificação:\n\n${aviso.mensagem || tipoLabel}`,
+                          referencia_id: aviso.referencia_id,
+                        });
+                      });
+                  });
+
+                  if (notifRetorno.length > 0) {
+                    await supabase.from('notificacoes').insert(notifRetorno);
+                    console.log('[CIENTE TODOS] Notificações de retorno enviadas:', notifRetorno.length);
+                  }
+                }
+              }
+            } catch (err) {
+              console.warn('[CIENTE TODOS] Erro ao enviar notificações de retorno:', err);
             }
           } else {
             console.warn('[CIENTE TODOS] Nenhuma vista para registrar - avisosComRef:', avisosComRef.length);
