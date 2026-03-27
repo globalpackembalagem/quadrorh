@@ -44,6 +44,7 @@ const TIPO_BADGE_LABELS: Record<string, string> = {
   cobertura_treinamento_resposta: 'RESPOSTA COB/TREIN.',
   turma_pendente_consulta: 'TURMA PENDENTE',
   turma_pendente_resposta: 'RESPOSTA TURMA',
+  ciencia_retorno: 'CIÊNCIA DO GESTOR',
 };
 
 const TIPO_CONFIG: Record<string, { icon: typeof Bell; color: string; bgColor: string; borderColor: string; badgeClass: string }> = {
