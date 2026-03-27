@@ -198,6 +198,9 @@ function getNavigationForUser(
       gestorItems.push({ name: 'TROCA DE TURNO', href: '/troca-turno', icon: RefreshCw, viewOnly: !perms?.pode_editar_troca_turno });
     }
 
+    // Divergências - inativo para gestores
+    gestorItems.push({ name: 'DIVERGÊNCIAS', href: '/divergencias', icon: AlertTriangle, disabled: true });
+
     // Armários Femininos - para gestoras com permissão
     if (perms?.pode_visualizar_armarios || perms?.pode_editar_armarios) {
       gestorItems.push({ name: 'ARMÁRIOS FEMININO', href: '/armarios-femininos', icon: DoorOpen, viewOnly: !perms?.pode_editar_armarios });
