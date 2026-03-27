@@ -481,27 +481,27 @@ export function DashboardFaltasDiario({
         {/* Legenda compacta */}
         <div className="flex items-center gap-4 mt-2">
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[20px] h-[16px] rounded-md bg-foreground text-background font-bold text-[9px]">F</span>
-            <span className="text-[10px] text-muted-foreground font-medium">FALTA</span>
+            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-foreground text-background font-bold text-xs">F</span>
+            <span className="text-xs text-muted-foreground font-medium">FALTA</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[20px] h-[16px] rounded-md bg-warning text-warning-foreground font-bold text-[9px]">A</span>
-            <span className="text-[10px] text-muted-foreground font-medium">ATESTADO</span>
+            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-warning text-warning-foreground font-bold text-xs">A</span>
+            <span className="text-xs text-muted-foreground font-medium">ATESTADO</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[20px] h-[16px] rounded-md bg-info text-info-foreground font-bold text-[9px]">DA</span>
-            <span className="text-[10px] text-muted-foreground font-medium">DAY OFF</span>
+            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-info text-info-foreground font-bold text-xs">DA</span>
+            <span className="text-xs text-muted-foreground font-medium">DAY OFF</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-[14px]">🛏️</span>
-            <span className="text-[10px] text-muted-foreground font-medium">FOLGA ESCALA</span>
+            <span className="text-base">🛏️</span>
+            <span className="text-xs text-muted-foreground font-medium">FOLGA ESCALA</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[20px] h-[16px] rounded-md bg-success text-success-foreground font-bold text-[9px]">S</span>
-            <span className="text-[10px] text-muted-foreground font-medium">SALDO (SOBRA + RSV - AUS)</span>
+            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-success text-success-foreground font-bold text-xs">S</span>
+            <span className="text-xs text-muted-foreground font-medium">SALDO (SOBRA + RSV - AUS)</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-muted-foreground/70 italic">Clique na célula para ver nomes</span>
+            <span className="text-xs text-muted-foreground/70 italic">Clique na célula para ver nomes</span>
           </div>
         </div>
       </CardHeader>
