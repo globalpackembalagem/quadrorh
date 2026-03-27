@@ -50,7 +50,7 @@ import { TrocaUnificadaDialog } from '@/components/funcionarios/TrocaUnificadaDi
 import { useCriarDivergenciaAuto, devecriarDivergencia } from '@/hooks/useDivergenciasAuto';
 
 import { Funcionario, SexoTipo, EmpresaTipo } from '@/types/database';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 // xlsx-js-style loaded dynamically
 import { toast } from 'sonner';
