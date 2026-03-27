@@ -325,7 +325,7 @@ export default function TrocaTurno() {
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-bold text-base truncate">{t.funcionario?.nome_completo || 'Funcionário'}</h3>
-                <span className="text-xs text-muted-foreground font-mono">{t.funcionario?.matricula || ''}</span>
+                <span className="text-xs text-muted-foreground font-mono">{(t.funcionario as any)?.matricula || ''}</span>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
