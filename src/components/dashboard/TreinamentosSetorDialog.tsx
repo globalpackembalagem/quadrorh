@@ -100,7 +100,7 @@ export function TreinamentosSetorDialog({ grupoLabel, treinamentos }: Treinament
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <GraduationCap className="h-5 w-5" />
-            Treinamentos - {grupoLabel}
+            ADMITIDOS EM TREINAMENTO - {grupoLabel}
           </DialogTitle>
         </DialogHeader>
 

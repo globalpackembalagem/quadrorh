@@ -345,7 +345,7 @@ export function DashboardFaltasDiario({
             <span className="text-[10px] opacity-60" title="Folga">🛏️</span>
           )}
            {badgeF > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[24px] h-[20px] rounded-md bg-destructive text-destructive-foreground font-bold text-[12px] px-1.5 shadow-sm">
+            <span className="inline-flex items-center justify-center min-w-[24px] h-[20px] rounded-md bg-foreground text-background font-bold text-[12px] px-1.5 shadow-sm">
               {badgeF}F
             </span>
           )}
