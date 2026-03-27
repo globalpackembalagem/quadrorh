@@ -31,6 +31,7 @@ export interface TrocaTurno {
   funcionario?: {
     id: string;
     nome_completo: string;
+    matricula: string | null;
     turma: string | null;
     setor: { nome: string } | null;
   };
