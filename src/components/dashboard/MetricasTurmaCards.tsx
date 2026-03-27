@@ -269,7 +269,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
               ) : (
                 <>
                   <Minus className="h-4 w-4" />
-                  <span>Quadro ok</span>
+                  <span>QUADRO OK</span>
                 </>
               )}
             </div>
