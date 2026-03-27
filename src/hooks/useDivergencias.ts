@@ -23,6 +23,7 @@ export interface Divergencia {
     matricula: string | null;
     turma: string | null;
     setor: {
+      id: string;
       nome: string;
       grupo: string | null;
     } | null;
