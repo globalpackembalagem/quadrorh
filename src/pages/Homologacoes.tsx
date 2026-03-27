@@ -74,9 +74,11 @@ export default function Homologacoes() {
     hora_exame_demissional: '',
   });
   
-  const { data: demissoes = [], isLoading } = useDemissoes();
+  const { data: todasDemissoes = [], isLoading } = useDemissoes();
   const updateDemissao = useUpdateDemissao();
   const { canEditHomologacoes } = useAuth();
+  const { filtrarPorSetorCustom } = useSetorFilter();
+  const demissoes = useMemo(() => filtrarPorSetorCustom(todasDemissoes, d => d.funcionario?.setor?.id || null), [todasDemissoes, filtrarPorSetorCustom]);
 
   const isAfterMinDate = (d: Demissao) => {
     return (
