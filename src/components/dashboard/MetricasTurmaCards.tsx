@@ -288,7 +288,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                 </PopoverTrigger>
                 <PopoverContent className="w-80 p-3" align="start">
                   <div className="space-y-1">
-                    <h4 className="font-semibold text-sm mb-2">Previsão de Admissão - {TURMAS_LABELS[turma]}</h4>
+                    <h4 className="font-semibold text-sm mb-2">PREVISÃO DE ADMISSÃO - {TURMAS_LABELS[turma]}</h4>
                     <div className="max-h-48 overflow-y-auto space-y-1.5">
                       {metricas.previsoesLista.map(f => (
                         <div key={f.id} className="text-xs p-2 rounded-md bg-muted/50 border">
