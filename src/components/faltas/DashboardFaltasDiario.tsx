@@ -506,9 +506,9 @@ export function DashboardFaltasDiario({
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-card border-b-2 border-border">
-                <TableHead className="text-sm font-extrabold text-foreground sticky left-0 bg-card z-10 w-[190px] min-w-[190px] max-w-[190px] py-2.5 px-3 border-r border-border/50">SETOR</TableHead>
-                <TableHead className="text-sm font-extrabold text-foreground text-center w-[60px] min-w-[60px] py-2.5">QTD</TableHead>
+              <TableRow className="bg-muted/30 border-b border-border/60">
+                <TableHead className="text-xs font-bold text-foreground/80 sticky left-0 bg-muted/30 z-10 w-[180px] min-w-[180px] max-w-[180px] py-2 px-3 border-r border-border/40">SETOR</TableHead>
+                <TableHead className="text-xs font-bold text-foreground/80 text-center w-[50px] min-w-[50px] py-2">QTD</TableHead>
                 {diasVisiveis.map((dia, colIndex) => {
                   const dataStr = format(dia, 'yyyy-MM-dd');
                   const isHoje = dataStr === hojeStr;
@@ -519,19 +519,19 @@ export function DashboardFaltasDiario({
                     <TableHead
                       key={dataStr}
                       className={cn(
-                        "text-center min-w-[78px] px-1.5 py-2.5",
-                        isHoje && "bg-green-100 dark:bg-green-900/30",
-                        !isHoje && isAlternate && "bg-muted/90",
-                        isDomingo && "text-destructive"
+                        "text-center min-w-[72px] px-1 py-2",
+                        isHoje && "bg-emerald-50/80 dark:bg-emerald-900/20",
+                        !isHoje && isAlternate && "bg-muted/40",
+                        isDomingo && "text-red-400 dark:text-red-500"
                       )}
                     >
-                      <div className="text-sm font-extrabold">{format(dia, 'dd')}</div>
-                      <div className="text-xs font-semibold uppercase tracking-wide">{diaSemana}</div>
+                      <div className="text-xs font-bold">{format(dia, 'dd')}</div>
+                      <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{diaSemana}</div>
                     </TableHead>
                   );
                 })}
-                <TableHead className="text-sm font-extrabold text-destructive text-center min-w-[44px] py-2.5">∑F</TableHead>
-                <TableHead className="text-sm font-extrabold text-warning text-center min-w-[44px] py-2.5">∑A</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground text-center min-w-[40px] py-2">∑F</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground text-center min-w-[40px] py-2">∑A</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
