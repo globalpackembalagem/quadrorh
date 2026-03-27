@@ -71,7 +71,7 @@ interface NavItem {
 const allRHNavigation: NavItem[] = [
   { name: 'QUADRO DE FUNCIONÁRIOS', href: '/', icon: LayoutDashboard },
   { name: 'HISTÓRICO MOVIMENTAÇÃO', href: '/historico-movimentacao', icon: History },
-  { name: 'EXPERIÊNCIA GERAL', href: '/experiencia-geral', icon: Building2 },
+  
   { name: 'FUNCIONÁRIOS', href: '/funcionarios', icon: Users },
   { name: 'PREVISÃO ADMISSÃO', href: '/previsao-admissao', icon: UserPlus },
   { name: 'COB. FÉRIAS / TREINAMENTO', href: '/coberturas-treinamentos', icon: UserCheck },
