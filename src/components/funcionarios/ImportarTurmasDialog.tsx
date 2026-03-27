@@ -358,8 +358,8 @@ export function ImportarTurmasDialog({ open, onOpenChange, onSuccess }: Importar
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-xs">NOME</TableHead>
                     <TableHead className="text-xs">MATRÍCULA</TableHead>
+                    <TableHead className="text-xs">NOME</TableHead>
                     <TableHead className="text-xs">SETOR</TableHead>
                     <TableHead className="text-xs">TURMA</TableHead>
                     <TableHead className="text-xs">STATUS</TableHead>
