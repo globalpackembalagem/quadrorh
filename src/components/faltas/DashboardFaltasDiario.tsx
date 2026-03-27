@@ -417,7 +417,7 @@ export function DashboardFaltasDiario({
   };
 
   return (
-    <Card className="shadow-sm border-border/60">
+    <Card className="shadow-sm border-border/40 bg-card">
       <CardHeader className="pb-3 pt-5 px-5">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3 flex-wrap">
