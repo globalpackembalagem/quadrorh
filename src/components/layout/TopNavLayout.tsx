@@ -116,7 +116,7 @@ export function TopNavLayout({ children }: TopNavLayoutProps) {
     ] : []),
     // Divergências
     ...(usuarioAtual.pode_visualizar_divergencias || usuarioAtual.pode_criar_divergencias ? [
-      { name: 'DIVERGÊNCIAS', href: '/divergencias', icon: AlertTriangle, viewOnly: !usuarioAtual.pode_criar_divergencias },
+      { name: 'DIVERGÊNCIAS', href: '/divergencias', icon: AlertTriangle, viewOnly: !usuarioAtual.pode_criar_divergencias, disabled: !isAdmin },
     ] : []),
     // Troca de Turno
     ...(usuarioAtual.pode_visualizar_troca_turno || usuarioAtual.pode_editar_troca_turno ? [
