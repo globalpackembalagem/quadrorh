@@ -158,8 +158,8 @@ export function TreinamentosSetorDialog({ grupoLabel, treinamentos }: Treinament
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-xs">Nome</TableHead>
                 <TableHead className="text-xs">Matrícula</TableHead>
+                <TableHead className="text-xs">Nome</TableHead>
                 <TableHead className="text-xs">Cargo</TableHead>
                 <TableHead className="text-xs">Turma</TableHead>
                 <TableHead className="text-xs">Início</TableHead>
