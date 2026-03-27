@@ -17,13 +17,18 @@ export default function GateAcesso() {
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    if (!nome.trim() || !senha) return;
+    const nomeLimpo = nome.trim().substring(0, 100); // Limitar tamanho
+    if (!nomeLimpo || !senha) return;
+    if (senha.length > 128) {
+      setErro('Senha inválida');
+      return;
+    }
     setErro('');
     setCarregando(true);
 
     try {
       const { data, error } = await supabase.functions.invoke('auth-handler', {
-        body: { action: 'login', nome: nome.trim(), senha },
+        body: { action: 'login', nome: nomeLimpo, senha },
       });
       if (error) throw error;
       if (data.error) {
