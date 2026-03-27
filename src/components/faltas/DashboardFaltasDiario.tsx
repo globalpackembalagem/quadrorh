@@ -528,8 +528,8 @@ export function DashboardFaltasDiario({
                         isDomingo && "text-destructive"
                       )}
                     >
-                      <div className="text-[13px] font-extrabold">{format(dia, 'dd')}</div>
-                      <div className="text-[10px] font-semibold uppercase tracking-wide">{diaSemana}</div>
+                      <div className="text-sm font-extrabold">{format(dia, 'dd')}</div>
+                      <div className="text-xs font-semibold uppercase tracking-wide">{diaSemana}</div>
                     </TableHead>
                   );
                 })}
