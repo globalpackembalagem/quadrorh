@@ -680,6 +680,7 @@ export default function Funcionarios() {
                 <table className="data-table text-xs w-full">
                   <thead>
                     <tr>
+                      <th className="w-[80px]">Matrícula</th>
                       <th>Nome</th>
                       <th className="w-[100px]">Turma</th>
                       <th className="w-[130px]">Setor</th>
