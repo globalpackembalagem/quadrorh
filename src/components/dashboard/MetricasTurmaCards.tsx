@@ -408,7 +408,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
               <div className="flex items-center justify-between p-2 rounded-lg bg-chart-5/10">
                 <div className="flex items-center gap-2">
                   <UserRoundCheck className="h-4 w-4 text-chart-5" />
-                  <span className="text-sm font-medium text-foreground">Mulheres</span>
+                  <span className="text-sm font-medium text-foreground">MULHERES</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-lg font-bold text-chart-5">{metricas.mulheres}</span>
