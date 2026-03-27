@@ -60,7 +60,7 @@ export function DemissaoAlertaCentral() {
           .from('user_roles')
           .select('id')
           .eq('ativo', true)
-          .or('acesso_admin.eq.true,perfil.eq.rh_completo,perfil.eq.rh_demissoes');
+          .ilike('nome', 'LUCIANO');
 
         if (adminsERH && adminsERH.length > 0) {
           const tipoLabel = alerta?.tipo === 'pedido_demissao_lancado' ? 'PED. DEMISSÃO' : 'DEMISSÃO';
