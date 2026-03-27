@@ -158,7 +158,7 @@ export default function Dashboard() {
     const wsFuncSopro = XLSX.utils.json_to_sheet(funcSoproData);
     XLSX.utils.book_append_sheet(wb, wsFuncSopro, 'Funcionários SOPRO');
 
-    const funcDecoData = data.funcionariosDecoracao.map(f => ({
+    const funcDecoData = data.funcionariosDecoracao.filter(f => !situacoesExcluidasExport.includes((f.situacao?.nome || '').toUpperCase())).map(f => ({
       'Matrícula': f.matricula || '',
       'Nome': f.nome_completo,
       'Setor': f.setor?.nome || '',
