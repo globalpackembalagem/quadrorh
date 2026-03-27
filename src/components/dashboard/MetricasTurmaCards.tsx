@@ -380,7 +380,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                 </PopoverTrigger>
                 <PopoverContent className="w-72 p-3" align="start">
                   <div className="space-y-1">
-                     <h4 className="font-semibold text-sm mb-2 text-warning">Treinamento - {TURMAS_LABELS[turma]}</h4>
+                     <h4 className="font-semibold text-sm mb-2 text-warning">TREINAMENTO - {TURMAS_LABELS[turma]}</h4>
                      <div className="max-h-48 overflow-y-auto space-y-1.5">
                        {treinamentoPorTurma[turma].nomes.map((nome, i) => (
                          <div key={i} className="text-xs p-2 rounded-md bg-warning/5 border border-warning/20">
