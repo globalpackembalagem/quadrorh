@@ -259,17 +259,17 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
               {diferenca > 0 ? (
                 <>
                   <TrendingUp className="h-4 w-4" />
-                  <span>+{diferenca} sobra</span>
+                  <span>+{diferenca} SOBRA</span>
                 </>
               ) : diferenca < 0 ? (
                 <>
                   <TrendingDown className="h-4 w-4" />
-                  <span>{diferenca} desfalque</span>
+                  <span>{diferenca} DESFALQUE</span>
                 </>
               ) : (
                 <>
                   <Minus className="h-4 w-4" />
-                  <span>Quadro ok</span>
+                  <span>QUADRO OK</span>
                 </>
               )}
             </div>
@@ -281,14 +281,14 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                   <button className="flex items-center justify-between gap-1.5 px-3 py-2 mt-2 mb-3 rounded-lg border border-primary/30 bg-primary/5 text-sm font-semibold text-primary hover:bg-primary/15 transition-colors cursor-pointer w-full">
                     <div className="flex items-center gap-2">
                       <UserPlus className="h-4 w-4 shrink-0" />
-                      <span>Previsão</span>
+                      <span>PREVISÃO</span>
                     </div>
                     <span className="text-lg font-bold">+{metricas.previsoes}</span>
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80 p-3" align="start">
                   <div className="space-y-1">
-                    <h4 className="font-semibold text-sm mb-2">Previsão de Admissão - {TURMAS_LABELS[turma]}</h4>
+                    <h4 className="font-semibold text-sm mb-2">PREVISÃO DE ADMISSÃO - {TURMAS_LABELS[turma]}</h4>
                     <div className="max-h-48 overflow-y-auto space-y-1.5">
                       {metricas.previsoesLista.map(f => (
                         <div key={f.id} className="text-xs p-2 rounded-md bg-muted/50 border">
@@ -306,7 +306,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
               <div className="flex items-center justify-between gap-1.5 px-3 py-2 mt-2 mb-3 rounded-lg border border-muted bg-muted/30 text-sm font-semibold text-muted-foreground w-full">
                 <div className="flex items-center gap-2">
                   <UserPlus className="h-4 w-4 shrink-0" />
-                  <span>Previsão</span>
+                  <span>PREVISÃO</span>
                 </div>
                 <span className="text-lg font-bold">0</span>
               </div>
@@ -319,14 +319,14 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                   <button className="flex items-center justify-between gap-1.5 px-3 py-2 mt-1 mb-2 rounded-lg border border-destructive/30 bg-destructive/5 text-sm font-semibold text-destructive hover:bg-destructive/15 transition-colors cursor-pointer w-full">
                     <div className="flex items-center gap-2">
                       <UserX className="h-4 w-4 shrink-0" />
-                      <span>Sumidos</span>
+                      <span>SUMIDOS</span>
                     </div>
                     <span className="text-lg font-bold">{sumidosPorTurma[turma].total}</span>
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-72 p-3" align="start">
                   <div className="space-y-1">
-                    <h4 className="font-semibold text-sm mb-2 text-destructive">Sumidos - {TURMAS_LABELS[turma]}</h4>
+                    <h4 className="font-semibold text-sm mb-2 text-destructive">SUMIDOS - {TURMAS_LABELS[turma]}</h4>
                     <div className="max-h-48 overflow-y-auto space-y-1.5">
                       {sumidosPorTurma[turma].nomes.map((nome, i) => (
                         <div key={i} className="text-xs p-2 rounded-md bg-destructive/5 border border-destructive/20">
@@ -346,14 +346,14 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                   <button className="flex items-center justify-between gap-1.5 px-3 py-2 mt-1 mb-2 rounded-lg border border-info/30 bg-info/5 text-sm font-semibold text-info hover:bg-info/15 transition-colors cursor-pointer w-full">
                     <div className="flex items-center gap-2">
                       <Umbrella className="h-4 w-4 shrink-0" />
-                      <span>Cob. Férias</span>
+                      <span>COB. FÉRIAS</span>
                     </div>
                     <span className="text-lg font-bold">{cobFeriasPorTurma[turma].total}</span>
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-72 p-3" align="start">
                   <div className="space-y-1">
-                     <h4 className="font-semibold text-sm mb-2 text-info">Cob. Férias - {TURMAS_LABELS[turma]}</h4>
+                     <h4 className="font-semibold text-sm mb-2 text-info">COB. FÉRIAS - {TURMAS_LABELS[turma]}</h4>
                      <div className="max-h-48 overflow-y-auto space-y-1.5">
                        {cobFeriasPorTurma[turma].nomes.map((nome, i) => (
                          <div key={i} className="text-xs p-2 rounded-md bg-info/5 border border-info/20">
@@ -373,14 +373,14 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                   <button className="flex items-center justify-between gap-1.5 px-3 py-2 mt-1 mb-2 rounded-lg border border-warning/30 bg-warning/5 text-sm font-semibold text-warning hover:bg-warning/15 transition-colors cursor-pointer w-full">
                     <div className="flex items-center gap-2">
                       <GraduationCap className="h-4 w-4 shrink-0" />
-                      <span>Treinamento</span>
+                      <span>TREINAMENTO</span>
                     </div>
                     <span className="text-lg font-bold">{treinamentoPorTurma[turma].total}</span>
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-72 p-3" align="start">
                   <div className="space-y-1">
-                     <h4 className="font-semibold text-sm mb-2 text-warning">Treinamento - {TURMAS_LABELS[turma]}</h4>
+                     <h4 className="font-semibold text-sm mb-2 text-warning">TREINAMENTO - {TURMAS_LABELS[turma]}</h4>
                      <div className="max-h-48 overflow-y-auto space-y-1.5">
                        {treinamentoPorTurma[turma].nomes.map((nome, i) => (
                          <div key={i} className="text-xs p-2 rounded-md bg-warning/5 border border-warning/20">
@@ -397,7 +397,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
               <div className="flex items-center justify-between p-2 rounded-lg bg-chart-1/10">
                 <div className="flex items-center gap-2">
                   <UserRound className="h-4 w-4 text-chart-1" />
-                  <span className="text-sm font-medium text-foreground">Homens</span>
+                  <span className="text-sm font-medium text-foreground">HOMENS</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-lg font-bold text-chart-1">{metricas.homens}</span>
@@ -408,7 +408,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
               <div className="flex items-center justify-between p-2 rounded-lg bg-chart-5/10">
                 <div className="flex items-center gap-2">
                   <UserRoundCheck className="h-4 w-4 text-chart-5" />
-                  <span className="text-sm font-medium text-foreground">Mulheres</span>
+                  <span className="text-sm font-medium text-foreground">MULHERES</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-lg font-bold text-chart-5">{metricas.mulheres}</span>

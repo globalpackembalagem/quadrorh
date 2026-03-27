@@ -85,7 +85,7 @@ export function TreinamentosSetorDialog({ grupoLabel, treinamentos }: Treinament
       <DialogTrigger asChild>
         <button
           className="relative flex items-center justify-center h-8 w-8 rounded-full bg-muted/60 hover:bg-muted transition-colors cursor-pointer"
-          title={`Treinamentos - ${grupoLabel}`}
+          title={`ADMITIDOS EM TREINAMENTO - ${grupoLabel}`}
         >
           <GraduationCap className="h-4 w-4 text-foreground" />
           <div className={cn('absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-card', INDICATOR_COLORS[indicator])} />
@@ -100,7 +100,7 @@ export function TreinamentosSetorDialog({ grupoLabel, treinamentos }: Treinament
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <GraduationCap className="h-5 w-5" />
-            Treinamentos - {grupoLabel}
+            ADMITIDOS EM TREINAMENTO - {grupoLabel}
           </DialogTitle>
         </DialogHeader>
 
