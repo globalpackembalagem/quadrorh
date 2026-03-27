@@ -3,6 +3,7 @@ import {
   useDivergencias, 
   Divergencia 
 } from '@/hooks/useDivergencias';
+import { useSetorFilter } from '@/hooks/useSetorFilter';
 import { useUsuario } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
 import { inserirEventoSemDuplicata } from '@/hooks/useEventosSistema';
