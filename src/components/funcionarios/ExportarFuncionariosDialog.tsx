@@ -46,11 +46,16 @@ export function ExportarFuncionariosDialog({
     return situacoes.filter(s => s.ativa);
   }, [situacoes]);
 
-  // Inicializar seleção com TODOS os setores ativos e TODAS as situações ativas
+  // Inicializar seleção com TODOS os setores ativos e situações ativas (exceto demissão)
+  const situacoesExcluidas = ['DEMISSÃO', 'DEMISSAO', 'PED. DEMISSÃO', 'PED. DEMISSAO'];
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
       setSetoresSelecionados(new Set(setores.filter(s => s.ativo).map(s => s.id)));
-      setSituacoesSelecionadas(new Set(todasSituacoesAtivas.map(s => s.id)));
+      setSituacoesSelecionadas(new Set(
+        todasSituacoesAtivas
+          .filter(s => !situacoesExcluidas.includes(s.nome.toUpperCase()))
+          .map(s => s.id)
+      ));
     }
     setOpen(isOpen);
   };
