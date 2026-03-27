@@ -626,41 +626,6 @@ export default function Funcionarios() {
 
   // ── Vista do Gestor (logado, não admin) ──────────────────────────────────────
 
-  // Funcionários filtrados para gestor: ordem alfabética + filtros
-  const gestorFuncionariosFiltrados = useMemo(() => {
-    let result = funcionarios.filter(f => {
-      const sitNome = f.situacao?.nome?.toUpperCase() || '';
-      return sitNome !== 'DEMISSÃO' && sitNome !== 'PED. DEMISSÃO';
-    });
-
-    if (gestorGrupo === 'SOPRO') {
-      if (gestorTurmaFilter !== 'TODOS') {
-        result = result.filter(f => f.turma === gestorTurmaFilter);
-      }
-    } else if (gestorGrupo === 'DECORACAO') {
-      if (gestorTurnoFilter !== 'TODOS') {
-        const setorNomeUpper = gestorTurnoFilter.toUpperCase();
-        result = result.filter(f => {
-          const nome = f.setor?.nome?.toUpperCase() || '';
-          return nome.includes(setorNomeUpper);
-        });
-      }
-      if (gestorTurmaFilter !== 'TODOS') {
-        result = result.filter(f => f.turma === gestorTurmaFilter);
-      }
-    }
-
-    if (debouncedSearch) {
-      const s = debouncedSearch.toLowerCase();
-      result = result.filter(f =>
-        f.nome_completo.toLowerCase().includes(s) ||
-        f.matricula?.toLowerCase().includes(s)
-      );
-    }
-
-    return result.sort((a, b) => a.nome_completo.localeCompare(b.nome_completo));
-  }, [funcionarios, gestorGrupo, gestorTurmaFilter, gestorTurnoFilter, debouncedSearch]);
-
   if (isGestor) {
     return (
       <div className="space-y-4">
