@@ -601,7 +601,8 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
             <div className="hidden lg:flex items-center gap-2 ml-10 pl-6 border-l border-sidebar-border/60">
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               <span className="text-[11px] font-bold uppercase tracking-wider">
-                SESSÃO: <span className="text-white">{userRole.nome}</span>
+                <span className="text-sidebar-foreground/60">SESSÃO:</span>
+                <span className="ml-1 text-white">{userRole.nome}</span>
               </span>
             </div>
           )}
