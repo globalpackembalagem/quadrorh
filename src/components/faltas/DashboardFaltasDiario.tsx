@@ -328,12 +328,12 @@ export function DashboardFaltasDiario({
           key={`${setor}-${dataStr}`}
           className={cn(
             "text-center py-1.5 px-1",
-            isHoje && "!bg-green-100 dark:!bg-green-900/30",
-            !isHoje && isAlternateCol && "bg-muted/90",
-            !isHoje && !isAlternateCol && "bg-violet-50/50 dark:bg-violet-950/20",
+            isHoje && "!bg-emerald-50/80 dark:!bg-emerald-900/20",
+            !isHoje && isAlternateCol && "bg-muted/30",
+            !isHoje && !isAlternateCol && "bg-muted/10",
           )}
         >
-          <span className="text-[14px]" title="Folga escala Panamá">🛏️</span>
+          <span className="text-[13px] opacity-60" title="Folga escala Panamá">🛏️</span>
         </TableCell>
       );
     }
