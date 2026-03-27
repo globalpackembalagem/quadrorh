@@ -259,7 +259,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
               {diferenca > 0 ? (
                 <>
                   <TrendingUp className="h-4 w-4" />
-                  <span>+{diferenca} sobra</span>
+                  <span>+{diferenca} SOBRA</span>
                 </>
               ) : diferenca < 0 ? (
                 <>
