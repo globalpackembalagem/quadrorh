@@ -344,20 +344,20 @@ export function DashboardFaltasDiario({
           {folga && (
             <span className="text-[10px] opacity-60" title="Folga">🛏️</span>
           )}
-           {badgeF > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[24px] h-[20px] rounded-md bg-foreground text-background font-bold text-[12px] px-1.5 shadow-sm">
+          {badgeF > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-md bg-foreground text-background font-bold text-sm px-2 shadow-sm">
               {badgeF}F
             </span>
           )}
           {badgeA > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[24px] h-[20px] rounded-md bg-warning text-warning-foreground font-bold text-[12px] px-1.5 shadow-sm">
+            <span className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-md bg-warning text-warning-foreground font-bold text-sm px-2 shadow-sm">
               {badgeA}A
             </span>
           )}
         </div>
         {saldo != null && (
           <span className={cn(
-           "inline-flex items-center justify-center h-[14px] rounded font-bold text-[9px] px-1 shadow-sm whitespace-nowrap",
+           "inline-flex items-center justify-center h-[18px] rounded font-bold text-xs px-1.5 shadow-sm whitespace-nowrap",
             saldo > 0 ? "bg-success text-success-foreground" : saldo < 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"
           )}>
             {saldo > 0 ? `+${saldo}` : saldo} SALDO
@@ -411,7 +411,7 @@ export function DashboardFaltasDiario({
           !hasData && "text-muted-foreground/25"
         )}
       >
-        <span className="text-[12px]">-</span>
+        <span className="text-sm">-</span>
       </TableCell>
     );
   };
@@ -481,27 +481,27 @@ export function DashboardFaltasDiario({
         {/* Legenda compacta */}
         <div className="flex items-center gap-4 mt-2">
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[20px] h-[16px] rounded-md bg-foreground text-background font-bold text-[9px]">F</span>
-            <span className="text-[10px] text-muted-foreground font-medium">FALTA</span>
+            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-foreground text-background font-bold text-xs">F</span>
+            <span className="text-xs text-muted-foreground font-medium">FALTA</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[20px] h-[16px] rounded-md bg-warning text-warning-foreground font-bold text-[9px]">A</span>
-            <span className="text-[10px] text-muted-foreground font-medium">ATESTADO</span>
+            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-warning text-warning-foreground font-bold text-xs">A</span>
+            <span className="text-xs text-muted-foreground font-medium">ATESTADO</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[20px] h-[16px] rounded-md bg-info text-info-foreground font-bold text-[9px]">DA</span>
-            <span className="text-[10px] text-muted-foreground font-medium">DAY OFF</span>
+            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-info text-info-foreground font-bold text-xs">DA</span>
+            <span className="text-xs text-muted-foreground font-medium">DAY OFF</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-[14px]">🛏️</span>
-            <span className="text-[10px] text-muted-foreground font-medium">FOLGA ESCALA</span>
+            <span className="text-base">🛏️</span>
+            <span className="text-xs text-muted-foreground font-medium">FOLGA ESCALA</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[20px] h-[16px] rounded-md bg-success text-success-foreground font-bold text-[9px]">S</span>
-            <span className="text-[10px] text-muted-foreground font-medium">SALDO (SOBRA + RSV - AUS)</span>
+            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-success text-success-foreground font-bold text-xs">S</span>
+            <span className="text-xs text-muted-foreground font-medium">SALDO (SOBRA + RSV - AUS)</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] text-muted-foreground/70 italic">Clique na célula para ver nomes</span>
+            <span className="text-xs text-muted-foreground/70 italic">Clique na célula para ver nomes</span>
           </div>
         </div>
       </CardHeader>
@@ -510,8 +510,8 @@ export function DashboardFaltasDiario({
           <Table>
             <TableHeader>
               <TableRow className="bg-card border-b-2 border-border">
-                <TableHead className="text-[13px] font-extrabold text-foreground sticky left-0 bg-card z-10 w-[180px] min-w-[180px] max-w-[180px] py-2 px-3 border-r border-border/50">SETOR</TableHead>
-                <TableHead className="text-[13px] font-extrabold text-foreground text-center w-[60px] min-w-[60px] py-2">QTD</TableHead>
+                <TableHead className="text-sm font-extrabold text-foreground sticky left-0 bg-card z-10 w-[190px] min-w-[190px] max-w-[190px] py-2.5 px-3 border-r border-border/50">SETOR</TableHead>
+                <TableHead className="text-sm font-extrabold text-foreground text-center w-[60px] min-w-[60px] py-2.5">QTD</TableHead>
                 {diasVisiveis.map((dia, colIndex) => {
                   const dataStr = format(dia, 'yyyy-MM-dd');
                   const isHoje = dataStr === hojeStr;
@@ -522,19 +522,19 @@ export function DashboardFaltasDiario({
                     <TableHead
                       key={dataStr}
                       className={cn(
-                        "text-center min-w-[72px] px-1 py-2",
+                        "text-center min-w-[78px] px-1.5 py-2.5",
                         isHoje && "bg-green-100 dark:bg-green-900/30",
                         !isHoje && isAlternate && "bg-muted/90",
                         isDomingo && "text-destructive"
                       )}
                     >
-                      <div className="text-[13px] font-extrabold">{format(dia, 'dd')}</div>
-                      <div className="text-[10px] font-semibold uppercase tracking-wide">{diaSemana}</div>
+                      <div className="text-sm font-extrabold">{format(dia, 'dd')}</div>
+                      <div className="text-xs font-semibold uppercase tracking-wide">{diaSemana}</div>
                     </TableHead>
                   );
                 })}
-                <TableHead className="text-[13px] font-extrabold text-destructive text-center min-w-[40px] py-2">∑F</TableHead>
-                <TableHead className="text-[13px] font-extrabold text-warning text-center min-w-[40px] py-2">∑A</TableHead>
+                <TableHead className="text-sm font-extrabold text-destructive text-center min-w-[44px] py-2.5">∑F</TableHead>
+                <TableHead className="text-sm font-extrabold text-warning text-center min-w-[44px] py-2.5">∑A</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -551,8 +551,8 @@ export function DashboardFaltasDiario({
 
                 return (
                   <TableRow key={setor} className={cn("hover:bg-accent/30 transition-colors", isEven ? "bg-card/50" : "bg-card")}>
-                    <TableCell className={cn("text-[13px] font-semibold py-2 px-3 sticky left-0 z-10 whitespace-nowrap border-r border-border/50 w-[180px] min-w-[180px] max-w-[180px]", isEven ? "bg-card" : "bg-card")}>{setor}</TableCell>
-                    <TableCell className="text-[13px] font-bold text-center py-2 text-muted-foreground w-[60px] min-w-[60px]">{qtdBase}</TableCell>
+                    <TableCell className={cn("text-sm font-semibold py-2.5 px-3 sticky left-0 z-10 whitespace-nowrap border-r border-border/50 w-[190px] min-w-[190px] max-w-[190px]", isEven ? "bg-card" : "bg-card")}>{setor}</TableCell>
+                    <TableCell className="text-sm font-bold text-center py-2.5 text-muted-foreground w-[60px] min-w-[60px]">{qtdBase}</TableCell>
                     {diasVisiveis.map((dia, colIndex) => {
                       const dataStr = format(dia, 'yyyy-MM-dd');
                       const d = setorData[dataStr];
@@ -573,15 +573,15 @@ export function DashboardFaltasDiario({
                       }
                       return renderCelula(f, a, dataStr === hojeStr, dataStr, setor, setorNomes[dataStr], false, colIndex % 2 === 1, d?.folga || false, saldo, da);
                     })}
-                    <TableCell className="text-[13px] font-bold text-destructive text-center py-2">{totalFaltas || '-'}</TableCell>
-                    <TableCell className="text-[13px] font-bold text-warning text-center py-2">{totalAtestados || '-'}</TableCell>
+                    <TableCell className="text-sm font-bold text-destructive text-center py-2.5">{totalFaltas || '-'}</TableCell>
+                    <TableCell className="text-sm font-bold text-warning text-center py-2.5">{totalAtestados || '-'}</TableCell>
                   </TableRow>
                 );
               })}
               {/* Linha TOTAL */}
               <TableRow className="border-t-2 border-border bg-card">
-                <TableCell className="text-[13px] font-extrabold py-2 px-3 sticky left-0 bg-card z-10 border-r border-border/50 w-[180px] min-w-[180px] max-w-[180px]">TOTAL</TableCell>
-                <TableCell className="text-[13px] font-extrabold text-center py-2 w-[60px] min-w-[60px]">
+                <TableCell className="text-sm font-extrabold py-2.5 px-3 sticky left-0 bg-card z-10 border-r border-border/50 w-[190px] min-w-[190px] max-w-[190px]">TOTAL</TableCell>
+                <TableCell className="text-sm font-extrabold text-center py-2.5 w-[60px] min-w-[60px]">
                   {Object.values(totaisPorDia)[0]?.total || 0}
                 </TableCell>
                 {diasVisiveis.map((dia, colIndex) => {
@@ -592,10 +592,10 @@ export function DashboardFaltasDiario({
                   const da = d?.dayoff || 0;
                   return renderCelula(f, a, dataStr === hojeStr, dataStr, 'TOTAL', nomesTotaisPorDia[dataStr], true, colIndex % 2 === 1, false, undefined, da);
                 })}
-                <TableCell className="text-[13px] font-extrabold text-destructive text-center py-2">
+                <TableCell className="text-sm font-extrabold text-destructive text-center py-2.5">
                   {Object.values(totaisPorDia).reduce((s, d) => s + d.faltas, 0) || '-'}
                 </TableCell>
-                <TableCell className="text-[13px] font-extrabold text-warning text-center py-2">
+                <TableCell className="text-sm font-extrabold text-warning text-center py-2.5">
                   {Object.values(totaisPorDia).reduce((s, d) => s + d.atestados, 0) || '-'}
                 </TableCell>
               </TableRow>
