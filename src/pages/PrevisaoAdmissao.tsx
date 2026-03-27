@@ -5,6 +5,7 @@ import { UserPlus, Check, Search, Pencil, Trash2, Download, FileCheck, FileX, Cl
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 // xlsx-js-style loaded dynamically
 import { useFuncionarios, useUpdateFuncionario, useDeleteFuncionario } from '@/hooks/useFuncionarios';
+import { useSetorFilter } from '@/hooks/useSetorFilter';
 import { criarEventoSistema } from '@/hooks/useEventosSistema';
 import { useCreateTreinamento } from '@/hooks/useTreinamentosPrevisao';
 import { useSituacoesAtivas } from '@/hooks/useSituacoes';
