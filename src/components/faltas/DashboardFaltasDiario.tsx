@@ -522,7 +522,7 @@ export function DashboardFaltasDiario({
                     <TableHead
                       key={dataStr}
                       className={cn(
-                        "text-center min-w-[72px] px-1 py-2",
+                        "text-center min-w-[78px] px-1.5 py-2.5",
                         isHoje && "bg-green-100 dark:bg-green-900/30",
                         !isHoje && isAlternate && "bg-muted/90",
                         isDomingo && "text-destructive"
