@@ -328,39 +328,39 @@ export function DashboardFaltasDiario({
           key={`${setor}-${dataStr}`}
           className={cn(
             "text-center py-1.5 px-1",
-            isHoje && "!bg-green-100 dark:!bg-green-900/30",
-            !isHoje && isAlternateCol && "bg-muted/90",
-            !isHoje && !isAlternateCol && "bg-violet-50/50 dark:bg-violet-950/20",
+            isHoje && "!bg-emerald-50/80 dark:!bg-emerald-900/20",
+            !isHoje && isAlternateCol && "bg-muted/30",
+            !isHoje && !isAlternateCol && "bg-muted/10",
           )}
         >
-          <span className="text-[14px]" title="Folga escala Panamá">🛏️</span>
+          <span className="text-[13px] opacity-60" title="Folga escala Panamá">🛏️</span>
         </TableCell>
       );
     }
 
     const cellContent = (
-      <div className="flex flex-col items-center justify-center gap-0.5">
+      <div className="flex flex-col items-center justify-center gap-1">
         <div className="flex items-center justify-center gap-1">
           {folga && (
-            <span className="text-[10px] opacity-60" title="Folga">🛏️</span>
+            <span className="text-[10px] opacity-50" title="Folga">🛏️</span>
           )}
           {badgeF > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-md bg-foreground text-background font-bold text-sm px-2 shadow-sm">
+            <span className="inline-flex items-center justify-center min-w-[26px] h-[20px] rounded bg-muted-foreground/80 text-background font-semibold text-xs px-1.5">
               {badgeF}F
             </span>
           )}
           {badgeA > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-md bg-warning text-warning-foreground font-bold text-sm px-2 shadow-sm">
+            <span className="inline-flex items-center justify-center min-w-[26px] h-[20px] rounded bg-muted-foreground/80 text-background font-semibold text-xs px-1.5">
               {badgeA}A
             </span>
           )}
         </div>
         {saldo != null && (
           <span className={cn(
-           "inline-flex items-center justify-center h-[18px] rounded font-bold text-xs px-1.5 shadow-sm whitespace-nowrap",
-            saldo > 0 ? "bg-success text-success-foreground" : saldo < 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"
+           "inline-flex items-center justify-center h-[18px] rounded font-bold text-[11px] px-1.5 whitespace-nowrap",
+            saldo > 0 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : saldo < 0 ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300" : "bg-muted text-muted-foreground"
           )}>
-            {saldo > 0 ? `+${saldo}` : saldo} SALDO
+            {saldo > 0 ? `+${saldo}` : saldo}
           </span>
         )}
       </div>
@@ -372,19 +372,19 @@ export function DashboardFaltasDiario({
           key={`${setor}-${dataStr}`}
           className={cn(
             "text-center py-0 px-0",
-            isHoje && "!bg-green-100 dark:!bg-green-900/30",
-            !isHoje && isAlternateCol && !isTotalRow && "bg-muted/90",
-            isTotalRow && !isHoje && "bg-muted/50",
-            isTotalRow && !isHoje && isAlternateCol && "bg-muted/60",
-            folga && "bg-violet-50/30 dark:bg-violet-950/10",
+            isHoje && "!bg-emerald-50/80 dark:!bg-emerald-900/20",
+            !isHoje && isAlternateCol && !isTotalRow && "bg-muted/30",
+            isTotalRow && !isHoje && "bg-muted/15",
+            isTotalRow && !isHoje && isAlternateCol && "bg-muted/25",
+            folga && "bg-muted/10",
           )}
         >
           <Popover>
             <PopoverTrigger asChild>
               <button
                 className={cn(
-                  "w-full h-full cursor-pointer hover:bg-accent/50 rounded transition-colors py-1.5 px-1",
-                  isHoje && "bg-green-100 dark:bg-green-900/30"
+                  "w-full h-full cursor-pointer hover:bg-accent/30 rounded transition-colors py-1.5 px-1",
+                  isHoje && "bg-emerald-50/80 dark:bg-emerald-900/20"
                 )}
                 type="button"
               >
@@ -404,20 +404,20 @@ export function DashboardFaltasDiario({
         key={`${setor}-${dataStr}`}
         className={cn(
           "text-center py-1.5 px-1",
-          isHoje && "!bg-green-100 dark:!bg-green-900/30",
-            !isHoje && isAlternateCol && !isTotalRow && "bg-muted/90",
-            isTotalRow && !isHoje && "bg-muted/50",
-            isTotalRow && !isHoje && isAlternateCol && "bg-muted/60",
-          !hasData && "text-muted-foreground/25"
+          isHoje && "!bg-emerald-50/80 dark:!bg-emerald-900/20",
+            !isHoje && isAlternateCol && !isTotalRow && "bg-muted/30",
+            isTotalRow && !isHoje && "bg-muted/15",
+            isTotalRow && !isHoje && isAlternateCol && "bg-muted/25",
+          !hasData && "text-muted-foreground/30"
         )}
       >
-        <span className="text-sm">-</span>
+        <span className="text-xs text-muted-foreground/40">—</span>
       </TableCell>
     );
   };
 
   return (
-    <Card className="shadow-sm border-border/60">
+    <Card className="shadow-sm border-border/40 bg-card">
       <CardHeader className="pb-3 pt-5 px-5">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3 flex-wrap">
@@ -479,39 +479,36 @@ export function DashboardFaltasDiario({
           )}
         </div>
         {/* Legenda compacta */}
-        <div className="flex items-center gap-4 mt-2">
+        <div className="flex items-center gap-5 mt-2.5 flex-wrap">
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-foreground text-background font-bold text-xs">F</span>
-            <span className="text-xs text-muted-foreground font-medium">FALTA</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-warning text-warning-foreground font-bold text-xs">A</span>
-            <span className="text-xs text-muted-foreground font-medium">ATESTADO</span>
+            <span className="inline-flex items-center justify-center w-[20px] h-[18px] rounded bg-muted-foreground/80 text-background font-semibold text-[11px]">F</span>
+            <span className="text-xs text-muted-foreground">FALTA</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-info text-info-foreground font-bold text-xs">DA</span>
-            <span className="text-xs text-muted-foreground font-medium">DAY OFF</span>
+            <span className="inline-flex items-center justify-center w-[20px] h-[18px] rounded bg-muted-foreground/80 text-background font-semibold text-[11px]">A</span>
+            <span className="text-xs text-muted-foreground">ATESTADO / FÉRIAS / DAY OFF</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-base">🛏️</span>
-            <span className="text-xs text-muted-foreground font-medium">FOLGA ESCALA</span>
+            <span className="text-sm">🛏️</span>
+            <span className="text-xs text-muted-foreground">FOLGA ESCALA</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-success text-success-foreground font-bold text-xs">S</span>
-            <span className="text-xs text-muted-foreground font-medium">SALDO (SOBRA + RSV - AUS)</span>
+            <span className="inline-flex items-center justify-center h-[18px] rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 font-bold text-[11px] px-1.5">+N</span>
+            <span className="text-[11px] text-emerald-600 dark:text-emerald-400">POSITIVO</span>
+            <span className="inline-flex items-center justify-center h-[18px] rounded bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 font-bold text-[11px] px-1.5">-N</span>
+            <span className="text-[11px] text-red-600 dark:text-red-400">NEGATIVO</span>
+            <span className="text-xs text-muted-foreground ml-0.5">= SALDO</span>
           </div>
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-muted-foreground/70 italic">Clique na célula para ver nomes</span>
-          </div>
+          <span className="text-[11px] text-muted-foreground/60 italic ml-auto">Clique na célula para ver nomes</span>
         </div>
       </CardHeader>
       <CardContent className="px-0 pb-3">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-card border-b-2 border-border">
-                <TableHead className="text-sm font-extrabold text-foreground sticky left-0 bg-card z-10 w-[190px] min-w-[190px] max-w-[190px] py-2.5 px-3 border-r border-border/50">SETOR</TableHead>
-                <TableHead className="text-sm font-extrabold text-foreground text-center w-[60px] min-w-[60px] py-2.5">QTD</TableHead>
+              <TableRow className="bg-muted/30 border-b border-border/60">
+                <TableHead className="text-xs font-bold text-foreground/80 sticky left-0 bg-muted/30 z-10 w-[180px] min-w-[180px] max-w-[180px] py-2 px-3 border-r border-border/40">SETOR</TableHead>
+                <TableHead className="text-xs font-bold text-foreground/80 text-center w-[50px] min-w-[50px] py-2">QTD</TableHead>
                 {diasVisiveis.map((dia, colIndex) => {
                   const dataStr = format(dia, 'yyyy-MM-dd');
                   const isHoje = dataStr === hojeStr;
@@ -522,19 +519,19 @@ export function DashboardFaltasDiario({
                     <TableHead
                       key={dataStr}
                       className={cn(
-                        "text-center min-w-[78px] px-1.5 py-2.5",
-                        isHoje && "bg-green-100 dark:bg-green-900/30",
-                        !isHoje && isAlternate && "bg-muted/90",
-                        isDomingo && "text-destructive"
+                        "text-center min-w-[72px] px-1 py-2",
+                        isHoje && "bg-emerald-50/80 dark:bg-emerald-900/20",
+                        !isHoje && isAlternate && "bg-muted/40",
+                        isDomingo && "text-red-400 dark:text-red-500"
                       )}
                     >
-                      <div className="text-sm font-extrabold">{format(dia, 'dd')}</div>
-                      <div className="text-xs font-semibold uppercase tracking-wide">{diaSemana}</div>
+                      <div className="text-xs font-bold">{format(dia, 'dd')}</div>
+                      <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{diaSemana}</div>
                     </TableHead>
                   );
                 })}
-                <TableHead className="text-sm font-extrabold text-destructive text-center min-w-[44px] py-2.5">∑F</TableHead>
-                <TableHead className="text-sm font-extrabold text-warning text-center min-w-[44px] py-2.5">∑A</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground text-center min-w-[40px] py-2">∑F</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground text-center min-w-[40px] py-2">∑A</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -550,9 +547,9 @@ export function DashboardFaltasDiario({
                 const sobra = sobraPorSetor[setor];
 
                 return (
-                  <TableRow key={setor} className={cn("hover:bg-accent/30 transition-colors", isEven ? "bg-card/50" : "bg-card")}>
-                    <TableCell className={cn("text-sm font-semibold py-2.5 px-3 sticky left-0 z-10 whitespace-nowrap border-r border-border/50 w-[190px] min-w-[190px] max-w-[190px]", isEven ? "bg-card" : "bg-card")}>{setor}</TableCell>
-                    <TableCell className="text-sm font-bold text-center py-2.5 text-muted-foreground w-[60px] min-w-[60px]">{qtdBase}</TableCell>
+                  <TableRow key={setor} className={cn("hover:bg-accent/20 transition-colors", isEven ? "bg-card" : "bg-muted/15")}>
+                    <TableCell className={cn("text-xs font-semibold py-2 px-3 sticky left-0 z-10 whitespace-nowrap border-r border-border/30 w-[180px] min-w-[180px] max-w-[180px]", isEven ? "bg-card" : "bg-card")}>{setor}</TableCell>
+                    <TableCell className="text-xs font-bold text-center py-2 text-muted-foreground w-[50px] min-w-[50px]">{qtdBase}</TableCell>
                     {diasVisiveis.map((dia, colIndex) => {
                       const dataStr = format(dia, 'yyyy-MM-dd');
                       const d = setorData[dataStr];
@@ -560,11 +557,8 @@ export function DashboardFaltasDiario({
                       const a = d?.atestados || 0;
                       const da = d?.dayoff || 0;
                       const totalAusencias = f + a + da;
-                      // SOPRO: no fim de semana (sáb/dom) sobra divide por 3 (3 turmas, 1 trabalha)
                       const isSopro = setor.toUpperCase().includes('SOPRO');
                       const isFimDeSemana = dia.getDay() === 0 || dia.getDay() === 6;
-                      // Saldo = Sobra + Reserva - Ausências
-                      // No fim de semana do SOPRO: Sobra/4 + Reserva/4 - Ausências
                       let saldo: number | undefined;
                       if (reserva != null || sobra != null) {
                         const sobraEfetiva = isSopro && isFimDeSemana ? Math.round((sobra || 0) / 4) : (sobra || 0);
@@ -573,15 +567,15 @@ export function DashboardFaltasDiario({
                       }
                       return renderCelula(f, a, dataStr === hojeStr, dataStr, setor, setorNomes[dataStr], false, colIndex % 2 === 1, d?.folga || false, saldo, da);
                     })}
-                    <TableCell className="text-sm font-bold text-destructive text-center py-2.5">{totalFaltas || '-'}</TableCell>
-                    <TableCell className="text-sm font-bold text-warning text-center py-2.5">{totalAtestados || '-'}</TableCell>
+                    <TableCell className="text-xs font-bold text-muted-foreground text-center py-2">{totalFaltas || '-'}</TableCell>
+                    <TableCell className="text-xs font-bold text-muted-foreground text-center py-2">{totalAtestados || '-'}</TableCell>
                   </TableRow>
                 );
               })}
               {/* Linha TOTAL */}
-              <TableRow className="border-t-2 border-border bg-card">
-                <TableCell className="text-sm font-extrabold py-2.5 px-3 sticky left-0 bg-card z-10 border-r border-border/50 w-[190px] min-w-[190px] max-w-[190px]">TOTAL</TableCell>
-                <TableCell className="text-sm font-extrabold text-center py-2.5 w-[60px] min-w-[60px]">
+              <TableRow className="border-t border-border/60 bg-muted/20">
+                <TableCell className="text-xs font-bold py-2 px-3 sticky left-0 bg-muted/20 z-10 border-r border-border/30 w-[180px] min-w-[180px] max-w-[180px]">TOTAL</TableCell>
+                <TableCell className="text-xs font-bold text-center py-2 w-[50px] min-w-[50px]">
                   {Object.values(totaisPorDia)[0]?.total || 0}
                 </TableCell>
                 {diasVisiveis.map((dia, colIndex) => {
@@ -592,10 +586,10 @@ export function DashboardFaltasDiario({
                   const da = d?.dayoff || 0;
                   return renderCelula(f, a, dataStr === hojeStr, dataStr, 'TOTAL', nomesTotaisPorDia[dataStr], true, colIndex % 2 === 1, false, undefined, da);
                 })}
-                <TableCell className="text-sm font-extrabold text-destructive text-center py-2.5">
+                <TableCell className="text-xs font-bold text-muted-foreground text-center py-2">
                   {Object.values(totaisPorDia).reduce((s, d) => s + d.faltas, 0) || '-'}
                 </TableCell>
-                <TableCell className="text-sm font-extrabold text-warning text-center py-2.5">
+                <TableCell className="text-xs font-bold text-muted-foreground text-center py-2">
                   {Object.values(totaisPorDia).reduce((s, d) => s + d.atestados, 0) || '-'}
                 </TableCell>
               </TableRow>
