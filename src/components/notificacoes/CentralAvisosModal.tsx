@@ -708,6 +708,45 @@ export function CentralAvisosModal() {
             } else {
               console.log('[CIENTE TODOS] Vistas registradas:', vistas.length, 'para', userRole.nome);
             }
+
+            // Enviar notificação de retorno para Admin/RH
+            try {
+              const tiposComRespostaProprria = ['admissao_confirmacao', 'previsao_confirmacao', 'experiencia_consulta', 'cobertura_treinamento_consulta', 'turma_pendente_consulta'];
+              const avisosSimples = podeFechar.filter(a => !tiposComRespostaProprria.includes(a.tipo));
+              
+              if (avisosSimples.length > 0) {
+                const { data: adminsERH } = await supabase
+                  .from('user_roles')
+                  .select('id')
+                  .eq('ativo', true)
+                  .or('acesso_admin.eq.true,perfil.eq.rh_completo,perfil.eq.rh_demissoes');
+
+                if (adminsERH && adminsERH.length > 0) {
+                  const notifRetorno: any[] = [];
+                  avisosSimples.forEach(aviso => {
+                    const tipoLabel = TIPO_BADGE_LABELS[aviso.tipo] || aviso.tipo?.toUpperCase() || 'AVISO';
+                    adminsERH
+                      .filter((a: any) => a.id !== userRole.id)
+                      .forEach((admin: any) => {
+                        notifRetorno.push({
+                          user_role_id: admin.id,
+                          tipo: 'ciencia_retorno',
+                          titulo: `✅ CIÊNCIA — ${tipoLabel}`,
+                          mensagem: `O gestor ${userRole.nome} deu CIÊNCIA na notificação:\n\n${aviso.mensagem || tipoLabel}`,
+                          referencia_id: aviso.referencia_id,
+                        });
+                      });
+                  });
+
+                  if (notifRetorno.length > 0) {
+                    await supabase.from('notificacoes').insert(notifRetorno);
+                    console.log('[CIENTE TODOS] Notificações de retorno enviadas:', notifRetorno.length);
+                  }
+                }
+              }
+            } catch (err) {
+              console.warn('[CIENTE TODOS] Erro ao enviar notificações de retorno:', err);
+            }
           } else {
             console.warn('[CIENTE TODOS] Nenhuma vista para registrar - avisosComRef:', avisosComRef.length);
           }
