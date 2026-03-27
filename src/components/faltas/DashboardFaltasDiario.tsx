@@ -551,8 +551,8 @@ export function DashboardFaltasDiario({
 
                 return (
                   <TableRow key={setor} className={cn("hover:bg-accent/30 transition-colors", isEven ? "bg-card/50" : "bg-card")}>
-                    <TableCell className={cn("text-[13px] font-semibold py-2 px-3 sticky left-0 z-10 whitespace-nowrap border-r border-border/50 w-[180px] min-w-[180px] max-w-[180px]", isEven ? "bg-card" : "bg-card")}>{setor}</TableCell>
-                    <TableCell className="text-[13px] font-bold text-center py-2 text-muted-foreground w-[60px] min-w-[60px]">{qtdBase}</TableCell>
+                    <TableCell className={cn("text-sm font-semibold py-2.5 px-3 sticky left-0 z-10 whitespace-nowrap border-r border-border/50 w-[190px] min-w-[190px] max-w-[190px]", isEven ? "bg-card" : "bg-card")}>{setor}</TableCell>
+                    <TableCell className="text-sm font-bold text-center py-2.5 text-muted-foreground w-[60px] min-w-[60px]">{qtdBase}</TableCell>
                     {diasVisiveis.map((dia, colIndex) => {
                       const dataStr = format(dia, 'yyyy-MM-dd');
                       const d = setorData[dataStr];
