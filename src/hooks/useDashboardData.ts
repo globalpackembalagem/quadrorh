@@ -42,21 +42,9 @@ export function useDashboardData() {
     }
   }, [isGestorSetor, temAcessoSopro, temAcessoDecoracao, setoresNomes]);
 
-  const filtrarPorSetorUsuario = (funcionarios: typeof funcionariosQuadro, grupoAtual: string) => {
-    if (!isGestorSetor) return funcionarios;
-    const setoresDoUsuario = setoresUsuario.map(id => setoresNomes.get(id) || '');
-    const isGestorSopro = setoresDoUsuario.some(nome => nome.includes('SOPRO'));
-    const isGestorDecoracao = setoresDoUsuario.some(nome =>
-      nome.includes('DECORAÇÃO') || nome.includes('DECORACAO')
-    );
-    if (isGestorSopro && grupoAtual === 'SOPRO') {
-      // Filtrar apenas pelos setores específicos do gestor
-      return funcionarios.filter(f => setoresUsuario.includes(f.setor_id));
-    }
-    if (isGestorDecoracao && grupoAtual === 'DECORAÇÃO') {
-      return funcionarios.filter(f => setoresUsuario.includes(f.setor_id));
-    }
-    return [];
+  // Dashboard e métricas: todos os usuários veem todos os setores
+  const filtrarPorSetorUsuario = (funcionarios: typeof funcionariosQuadro, _grupoAtual: string) => {
+    return funcionarios;
   };
 
   const funcionariosSopro = useMemo(() => {
