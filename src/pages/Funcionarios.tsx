@@ -682,8 +682,8 @@ export default function Funcionarios() {
                     <tr>
                       <th className="w-[80px]">Matrícula</th>
                       <th>Nome</th>
-                      <th className="w-[100px]">Turma</th>
                       <th className="w-[130px]">Setor</th>
+                      <th className="w-[100px]">Turma</th>
                       <th className="w-[120px]">Situação</th>
                     </tr>
                   </thead>
@@ -696,8 +696,8 @@ export default function Funcionarios() {
                       >
                         <td className="text-muted-foreground">{func.matricula || '-'}</td>
                         <td className="font-medium">{func.nome_completo}</td>
-                        <td>{func.turma || <span className="text-muted-foreground">-</span>}</td>
                         <td className="text-xs text-muted-foreground">{func.setor?.nome}</td>
+                        <td>{func.turma || <span className="text-muted-foreground">-</span>}</td>
                         <td>
                           <Badge className="text-white border-0 text-[10px]" style={{ backgroundColor: 'hsl(var(--primary))' }}>
                             {func.situacao?.nome}
