@@ -43,6 +43,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useDemissoes, useRealizarDemissao, useDeleteDemissao, useToggleLancadoApdata, useImportDemissoesDoCadastro } from '@/hooks/useDemissoes';
+import { useSetorFilter } from '@/hooks/useSetorFilter';
 import { useSituacoesAtivas } from '@/hooks/useSituacoes';
 import { useAuth } from '@/hooks/useAuth';
 import { NovaDemissaoForm } from '@/components/demissoes/NovaDemissaoForm';
