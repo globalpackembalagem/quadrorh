@@ -31,6 +31,7 @@ export interface TrocaTurno {
   funcionario?: {
     id: string;
     nome_completo: string;
+    matricula: string | null;
     turma: string | null;
     setor: { nome: string } | null;
   };
@@ -40,7 +41,7 @@ export interface TrocaTurno {
 
 const selectQuery = `
   *,
-  funcionario:funcionarios(id, nome_completo, turma, setor:setores!setor_id(nome)),
+  funcionario:funcionarios(id, nome_completo, matricula, turma, setor:setores!setor_id(nome)),
   setor_origem:setores!setor_origem_id(nome),
   setor_destino:setores!setor_destino_id(nome)
 `;
