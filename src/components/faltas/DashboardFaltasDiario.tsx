@@ -573,8 +573,8 @@ export function DashboardFaltasDiario({
                       }
                       return renderCelula(f, a, dataStr === hojeStr, dataStr, setor, setorNomes[dataStr], false, colIndex % 2 === 1, d?.folga || false, saldo, da);
                     })}
-                    <TableCell className="text-[13px] font-bold text-destructive text-center py-2">{totalFaltas || '-'}</TableCell>
-                    <TableCell className="text-[13px] font-bold text-warning text-center py-2">{totalAtestados || '-'}</TableCell>
+                    <TableCell className="text-sm font-bold text-destructive text-center py-2.5">{totalFaltas || '-'}</TableCell>
+                    <TableCell className="text-sm font-bold text-warning text-center py-2.5">{totalAtestados || '-'}</TableCell>
                   </TableRow>
                 );
               })}
