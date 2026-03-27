@@ -210,8 +210,6 @@ function getNavigationForUser(
     { name: 'QUADRO DE FUNCIONÁRIOS', href: '/', icon: LayoutDashboard },
   ];
 
-  // Experiência Geral (precisa de requireRH → só para RH)
-  items.push({ name: 'EXPERIÊNCIA GERAL', href: '/experiencia-geral', icon: Building2 });
 
   // Funcionários
   if (!perms || perms.pode_visualizar_funcionarios) {
