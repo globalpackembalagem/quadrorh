@@ -36,7 +36,7 @@ const DIVERGENCIA_SELECT = `
     nome_completo,
     matricula,
     turma,
-    setor:setores!setor_id(nome, grupo)
+    setor:setores!setor_id(id, nome, grupo)
   )
 `;
 
