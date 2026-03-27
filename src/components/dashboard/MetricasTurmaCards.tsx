@@ -264,7 +264,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
               ) : diferenca < 0 ? (
                 <>
                   <TrendingDown className="h-4 w-4" />
-                  <span>{diferenca} desfalque</span>
+                  <span>{diferenca} DESFALQUE</span>
                 </>
               ) : (
                 <>
