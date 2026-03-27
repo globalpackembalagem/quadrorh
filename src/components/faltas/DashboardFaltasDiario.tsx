@@ -573,9 +573,9 @@ export function DashboardFaltasDiario({
                 );
               })}
               {/* Linha TOTAL */}
-              <TableRow className="border-t-2 border-border bg-card">
-                <TableCell className="text-sm font-extrabold py-2.5 px-3 sticky left-0 bg-card z-10 border-r border-border/50 w-[190px] min-w-[190px] max-w-[190px]">TOTAL</TableCell>
-                <TableCell className="text-sm font-extrabold text-center py-2.5 w-[60px] min-w-[60px]">
+              <TableRow className="border-t border-border/60 bg-muted/20">
+                <TableCell className="text-xs font-bold py-2 px-3 sticky left-0 bg-muted/20 z-10 border-r border-border/30 w-[180px] min-w-[180px] max-w-[180px]">TOTAL</TableCell>
+                <TableCell className="text-xs font-bold text-center py-2 w-[50px] min-w-[50px]">
                   {Object.values(totaisPorDia)[0]?.total || 0}
                 </TableCell>
                 {diasVisiveis.map((dia, colIndex) => {
@@ -586,10 +586,10 @@ export function DashboardFaltasDiario({
                   const da = d?.dayoff || 0;
                   return renderCelula(f, a, dataStr === hojeStr, dataStr, 'TOTAL', nomesTotaisPorDia[dataStr], true, colIndex % 2 === 1, false, undefined, da);
                 })}
-                <TableCell className="text-sm font-extrabold text-destructive text-center py-2.5">
+                <TableCell className="text-xs font-bold text-muted-foreground text-center py-2">
                   {Object.values(totaisPorDia).reduce((s, d) => s + d.faltas, 0) || '-'}
                 </TableCell>
-                <TableCell className="text-sm font-extrabold text-warning text-center py-2.5">
+                <TableCell className="text-xs font-bold text-muted-foreground text-center py-2">
                   {Object.values(totaisPorDia).reduce((s, d) => s + d.atestados, 0) || '-'}
                 </TableCell>
               </TableRow>
