@@ -35,6 +35,7 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { useDemissoes, useUpdateDemissao } from '@/hooks/useDemissoes';
+import { useSetorFilter } from '@/hooks/useSetorFilter';
 import { Demissao } from '@/types/demissao';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
