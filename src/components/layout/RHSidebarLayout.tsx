@@ -173,7 +173,7 @@ function getNavigationForUser(
   if (canEditFaltas) {
     const gestorItems: NavItem[] = [
       { name: 'QUADRO DE FUNCIONÁRIOS', href: '/', icon: LayoutDashboard },
-      { name: 'EXPERIÊNCIA GERAL', href: '/experiencia-geral', icon: Building2, viewOnly: true },
+      
     ];
 
     if (!perms || perms.pode_visualizar_funcionarios) {
