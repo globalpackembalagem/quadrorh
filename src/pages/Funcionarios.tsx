@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, Users, Trash2, Plus, X, ArrowRightLeft, Upload, Undo2, History, ChevronDown, ChevronUp, Filter, Download, Type } from 'lucide-react';
+import { Search, Users, Trash2, Plus, X, ArrowRightLeft, Upload, Undo2, ChevronDown, ChevronUp, Filter, Download, Type, Clock } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 import { useFuncionarios, useUpdateFuncionario, useDeleteFuncionario, useCreateFuncionario } from '@/hooks/useFuncionarios';
