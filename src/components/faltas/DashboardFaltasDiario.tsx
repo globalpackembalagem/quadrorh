@@ -404,14 +404,14 @@ export function DashboardFaltasDiario({
         key={`${setor}-${dataStr}`}
         className={cn(
           "text-center py-1.5 px-1",
-          isHoje && "!bg-green-100 dark:!bg-green-900/30",
-            !isHoje && isAlternateCol && !isTotalRow && "bg-muted/90",
-            isTotalRow && !isHoje && "bg-muted/50",
-            isTotalRow && !isHoje && isAlternateCol && "bg-muted/60",
-          !hasData && "text-muted-foreground/25"
+          isHoje && "!bg-emerald-50/80 dark:!bg-emerald-900/20",
+            !isHoje && isAlternateCol && !isTotalRow && "bg-muted/30",
+            isTotalRow && !isHoje && "bg-muted/15",
+            isTotalRow && !isHoje && isAlternateCol && "bg-muted/25",
+          !hasData && "text-muted-foreground/30"
         )}
       >
-        <span className="text-sm">-</span>
+        <span className="text-xs text-muted-foreground/40">—</span>
       </TableCell>
     );
   };
