@@ -10,7 +10,6 @@ import { useSetores, useSetoresAtivos } from '@/hooks/useSetores';
 import { useSituacoes, useSituacoesAtivas } from '@/hooks/useSituacoes';
 import { useAuth } from '@/hooks/useAuth';
 import { useRegistrarHistoricoFuncionario, formatarDadosFuncionario } from '@/hooks/useHistoricoFuncionarios';
-import { useHistoricoAuditoria } from '@/hooks/useHistorico';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
