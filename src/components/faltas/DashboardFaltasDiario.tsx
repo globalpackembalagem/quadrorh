@@ -350,7 +350,7 @@ export function DashboardFaltasDiario({
             </span>
           )}
           {badgeA > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-md bg-warning text-warning-foreground font-bold text-sm px-2 shadow-sm">
+            <span className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-md bg-foreground text-background font-bold text-sm px-2 shadow-sm">
               {badgeA}A
             </span>
           )}
