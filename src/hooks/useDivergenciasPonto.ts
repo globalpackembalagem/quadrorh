@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useFiltroSetor } from '@/hooks/useFiltroSetor';
 
 export interface DivergenciaPonto {
   id: string;
@@ -32,20 +33,28 @@ export interface DivergenciaPonto {
 }
 
 export function useDivergenciasPonto(periodoId?: string) {
+  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
+  const deveFiltrar = aplicarFiltroSetor;
+
   return useQuery({
-    queryKey: ['divergencias_ponto', periodoId],
+    queryKey: ['divergencias_ponto', periodoId, deveFiltrar ? setoresIds : 'all'],
     queryFn: async () => {
+      if (deveFiltrar && setoresIds.length === 0) return [];
       let query = supabase
         .from('divergencias_ponto')
         .select(`
           *,
-          funcionario:funcionarios(id, nome_completo, setor:setores!setor_id(id, nome)),
+          funcionario:funcionarios!inner(id, nome_completo, setor:setores!setor_id(id, nome)),
           periodo:periodos_ponto(id, data_inicio, data_fim)
         `)
         .order('created_at', { ascending: false });
       
       if (periodoId) {
         query = query.eq('periodo_id', periodoId);
+      }
+
+      if (deveFiltrar) {
+        query = query.in('funcionario.setor_id', setoresIds);
       }
       
       const { data, error } = await query;
@@ -57,18 +66,28 @@ export function useDivergenciasPonto(periodoId?: string) {
 }
 
 export function useDivergenciasPontoPendentes() {
+  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
+  const deveFiltrar = aplicarFiltroSetor;
+
   return useQuery({
-    queryKey: ['divergencias_ponto', 'pendentes'],
+    queryKey: ['divergencias_ponto', 'pendentes', deveFiltrar ? setoresIds : 'all'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (deveFiltrar && setoresIds.length === 0) return [];
+      let query = supabase
         .from('divergencias_ponto')
         .select(`
           *,
-          funcionario:funcionarios(id, nome_completo, setor:setores!setor_id(id, nome)),
+          funcionario:funcionarios!inner(id, nome_completo, setor:setores!setor_id(id, nome)),
           periodo:periodos_ponto(id, data_inicio, data_fim)
         `)
         .eq('resolvido', false)
         .order('created_at', { ascending: false });
+
+      if (deveFiltrar) {
+        query = query.in('funcionario.setor_id', setoresIds);
+      }
+
+      const { data, error } = await query;
       
       if (error) throw error;
       return data as unknown as DivergenciaPonto[];

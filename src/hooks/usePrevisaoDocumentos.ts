@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useFiltroSetor } from '@/hooks/useFiltroSetor';
 
 export interface PrevisaoDocumento {
   id: string;
@@ -20,12 +21,22 @@ export interface PrevisaoDocumentoHistorico {
 }
 
 export function usePrevisaoDocumentos() {
+  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
+  const deveFiltrar = aplicarFiltroSetor;
+
   return useQuery({
-    queryKey: ['previsao_documentos'],
+    queryKey: ['previsao_documentos', deveFiltrar ? setoresIds : 'all'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (deveFiltrar && setoresIds.length === 0) return [];
+      let query = supabase
         .from('previsao_documentos')
-        .select('*');
+        .select('*, funcionario:funcionarios!inner(setor_id)');
+
+      if (deveFiltrar) {
+        query = query.in('funcionario.setor_id', setoresIds);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data || []) as PrevisaoDocumento[];
     },
@@ -33,16 +44,24 @@ export function usePrevisaoDocumentos() {
 }
 
 export function usePrevisaoDocumentosHistorico(funcionarioId?: string) {
+  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
+  const deveFiltrar = aplicarFiltroSetor;
+
   return useQuery({
-    queryKey: ['previsao_documentos_historico', funcionarioId],
+    queryKey: ['previsao_documentos_historico', funcionarioId, deveFiltrar ? setoresIds : 'all'],
     queryFn: async () => {
+      if (deveFiltrar && setoresIds.length === 0) return [];
       let query = supabase
         .from('previsao_documentos_historico')
-        .select('*')
+        .select('*, funcionario:funcionarios!inner(setor_id)')
         .order('created_at', { ascending: false });
       
       if (funcionarioId) {
         query = query.eq('funcionario_id', funcionarioId);
+      }
+
+      if (deveFiltrar) {
+        query = query.in('funcionario.setor_id', setoresIds);
       }
       
       const { data, error } = await query;

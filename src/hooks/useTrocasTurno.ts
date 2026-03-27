@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { criarEventoENotificar, inserirEventoSemDuplicata } from '@/hooks/useEventosSistema';
+import { useFiltroSetor } from '@/hooks/useFiltroSetor';
 
 export interface TrocaTurno {
   id: string;
@@ -46,13 +47,24 @@ const selectQuery = `
 `;
 
 export function useTrocasTurno() {
+  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
+  const deveFiltrar = aplicarFiltroSetor;
+
   return useQuery({
-    queryKey: ['trocas_turno'],
+    queryKey: ['trocas_turno', deveFiltrar ? setoresIds : 'all'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (deveFiltrar && setoresIds.length === 0) return [];
+      let query = supabase
         .from('trocas_turno')
         .select(selectQuery)
         .order('created_at', { ascending: false });
+
+      if (deveFiltrar) {
+        const setorList = setoresIds.map(id => `"${id}"`).join(',');
+        query = query.or(`setor_origem_id.in.(${setorList}),setor_destino_id.in.(${setorList})`);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as unknown as TrocaTurno[];
@@ -61,15 +73,26 @@ export function useTrocasTurno() {
 }
 
 export function useTrocasTurnoPendentes() {
+  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
+  const deveFiltrar = aplicarFiltroSetor;
+
   return useQuery({
-    queryKey: ['trocas_turno', 'pendentes'],
+    queryKey: ['trocas_turno', 'pendentes', deveFiltrar ? setoresIds : 'all'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (deveFiltrar && setoresIds.length === 0) return [];
+      let query = supabase
         .from('trocas_turno')
         .select(selectQuery)
         .in('status', ['pendente_rh'])
         .eq('efetivada', false)
         .order('created_at', { ascending: false });
+
+      if (deveFiltrar) {
+        const setorList = setoresIds.map(id => `"${id}"`).join(',');
+        query = query.or(`setor_origem_id.in.(${setorList}),setor_destino_id.in.(${setorList})`);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as unknown as TrocaTurno[];

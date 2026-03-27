@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { PeriodoPonto, RegistroPonto, PontoTipo, PeriodoStatus } from '@/types/database';
 import { toast } from 'sonner';
 import { addMonths, format, parseISO } from 'date-fns';
+import { useFiltroSetor } from '@/hooks/useFiltroSetor';
 
 export function usePeriodosFaltas() {
   return useQuery({
@@ -115,9 +116,13 @@ export function useUpdatePeriodoStatus() {
 }
 
 export function useRegistrosFaltas(periodoId?: string) {
+  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
+  const deveFiltrar = aplicarFiltroSetor;
+
   return useQuery({
-    queryKey: ['registros_faltas', periodoId],
+    queryKey: ['registros_faltas', periodoId, deveFiltrar ? setoresIds : 'all'],
     queryFn: async () => {
+      if (deveFiltrar && setoresIds.length === 0) return [];
       const pageSize = 1000;
       let allData: RegistroPonto[] = [];
       let page = 0;
@@ -131,10 +136,14 @@ export function useRegistrosFaltas(periodoId?: string) {
           .from('registros_ponto')
           .select(`
             *,
-            funcionario:funcionarios(*, setor:setores!setor_id(*), situacao:situacoes(*))
+            funcionario:funcionarios!inner(*, setor:setores!setor_id(*), situacao:situacoes(*))
           `)
           .order('data', { ascending: true })
           .range(from, to);
+
+        if (deveFiltrar) {
+          query = query.in('funcionario.setor_id', setoresIds);
+        }
 
         if (periodoId) {
           query = query.eq('periodo_id', periodoId);
@@ -239,9 +248,13 @@ export function useDeleteRegistroFalta() {
 
 // Hook para buscar funcionários elegíveis para o período (Ativos, Férias e Sumidos)
 export function useFuncionariosFaltas(periodoId?: string, periodo?: PeriodoPonto) {
+  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
+  const deveFiltrar = aplicarFiltroSetor;
+
   return useQuery({
-    queryKey: ['funcionarios_faltas', periodoId],
+    queryKey: ['funcionarios_faltas', periodoId, deveFiltrar ? setoresIds : 'all'],
     queryFn: async () => {
+      if (deveFiltrar && setoresIds.length === 0) return [];
       // Buscar situações que entram no ponto (Ativo e Férias)
       const { data: situacoesNoPonto, error: sitError } = await supabase
         .from('situacoes')
@@ -278,12 +291,18 @@ export function useFuncionariosFaltas(periodoId?: string, periodo?: PeriodoPonto
         const from = page * pageSize;
         const to = from + pageSize - 1;
         
-        const { data, error } = await supabase
+        let query = supabase
           .from('funcionarios')
           .select('*, setor:setores!setor_id(*), situacao:situacoes(*)')
           .in('situacao_id', situacaoIds)
           .order('nome_completo')
           .range(from, to);
+
+        if (deveFiltrar) {
+          query = query.in('setor_id', setoresIds);
+        }
+
+        const { data, error } = await query;
         
         if (error) throw error;
         

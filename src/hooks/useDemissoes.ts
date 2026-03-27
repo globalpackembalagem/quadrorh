@@ -3,18 +3,23 @@ import { supabase } from '@/integrations/supabase/client';
 import { Demissao, PeriodoDemissao } from '@/types/demissao';
 import { toast } from 'sonner';
 import { criarEventoENotificar } from '@/hooks/useEventosSistema';
+import { useFiltroSetor } from '@/hooks/useFiltroSetor';
 
 // Eventos são registrados automaticamente na central de notificações
 
-export function useDemissoes() {
+export function useDemissoes(options?: { ignorarFiltroSetor?: boolean }) {
+  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
+  const deveFiltrar = aplicarFiltroSetor && !options?.ignorarFiltroSetor;
+
   return useQuery({
-    queryKey: ['demissoes'],
+    queryKey: ['demissoes', deveFiltrar ? setoresIds : 'all'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (deveFiltrar && setoresIds.length === 0) return [];
+      let query = supabase
         .from('demissoes')
         .select(`
           *,
-          funcionario:funcionarios(
+          funcionario:funcionarios!inner(
             id,
             nome_completo,
             matricula,
@@ -24,6 +29,12 @@ export function useDemissoes() {
             setor:setores!setor_id(id, nome, grupo)
           )
         `);
+
+      if (deveFiltrar) {
+        query = query.in('funcionario.setor_id', setoresIds);
+      }
+
+      const { data, error } = await query;
       
       if (error) throw error;
       return data as Demissao[];
@@ -31,15 +42,19 @@ export function useDemissoes() {
   });
 }
 
-export function useDemissoesPendentes() {
+export function useDemissoesPendentes(options?: { ignorarFiltroSetor?: boolean }) {
+  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
+  const deveFiltrar = aplicarFiltroSetor && !options?.ignorarFiltroSetor;
+
   return useQuery({
-    queryKey: ['demissoes', 'pendentes'],
+    queryKey: ['demissoes', 'pendentes', deveFiltrar ? setoresIds : 'all'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (deveFiltrar && setoresIds.length === 0) return [];
+      let query = supabase
         .from('demissoes')
         .select(`
           *,
-          funcionario:funcionarios(
+          funcionario:funcionarios!inner(
             id,
             nome_completo,
             matricula,
@@ -52,6 +67,12 @@ export function useDemissoesPendentes() {
         .eq('realizado', false)
         .neq('tipo_desligamento', 'Pedido de Demissão')
         .order('data_prevista', { ascending: true });
+
+      if (deveFiltrar) {
+        query = query.in('funcionario.setor_id', setoresIds);
+      }
+
+      const { data, error } = await query;
       
       if (error) throw error;
       return data as Demissao[];
@@ -59,15 +80,19 @@ export function useDemissoesPendentes() {
   });
 }
 
-export function useDemissoesRealizadas() {
+export function useDemissoesRealizadas(options?: { ignorarFiltroSetor?: boolean }) {
+  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
+  const deveFiltrar = aplicarFiltroSetor && !options?.ignorarFiltroSetor;
+
   return useQuery({
-    queryKey: ['demissoes', 'realizadas'],
+    queryKey: ['demissoes', 'realizadas', deveFiltrar ? setoresIds : 'all'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (deveFiltrar && setoresIds.length === 0) return [];
+      let query = supabase
         .from('demissoes')
         .select(`
           *,
-          funcionario:funcionarios(
+          funcionario:funcionarios!inner(
             id,
             nome_completo,
             matricula,
@@ -79,6 +104,12 @@ export function useDemissoesRealizadas() {
         `)
         .eq('realizado', true)
         .order('data_prevista', { ascending: false });
+
+      if (deveFiltrar) {
+        query = query.in('funcionario.setor_id', setoresIds);
+      }
+
+      const { data, error } = await query;
       
       if (error) throw error;
       return data as Demissao[];

@@ -12,7 +12,7 @@ import { format } from 'date-fns';
 
 export default function Dashboard() {
   const data = useDashboardData();
-  const { data: recentes = [] } = useAdmissaoRecente(data.grupoSelecionado);
+  const { data: recentes = [] } = useAdmissaoRecente(data.grupoSelecionado, { ignorarFiltroSetor: true });
   const { data: treinamentosPrevisao = [] } = useTreinamentosPrevisao();
   const recentesPorTurma = useMemo(() => agruparRecentesPorTurma(recentes, data.grupoSelecionado), [recentes, data.grupoSelecionado]);
 

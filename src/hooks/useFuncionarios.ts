@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Funcionario, SexoTipo } from '@/types/database';
 import { toast } from 'sonner';
 import { criarEventoENotificar } from '@/hooks/useEventosSistema';
+import { useFiltroSetor } from '@/hooks/useFiltroSetor';
 
 export function useDeleteFuncionario() {
   const queryClient = useQueryClient();
@@ -30,10 +31,14 @@ export function useDeleteFuncionario() {
   });
 }
 
-export function useFuncionarios() {
+export function useFuncionarios(options?: { ignorarFiltroSetor?: boolean }) {
+  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
+  const deveFiltrar = aplicarFiltroSetor && !options?.ignorarFiltroSetor;
+
   return useQuery({
-    queryKey: ['funcionarios'],
+    queryKey: ['funcionarios', deveFiltrar ? setoresIds : 'all'],
     queryFn: async () => {
+      if (deveFiltrar && setoresIds.length === 0) return [];
       // Buscar todos os funcionários em lotes para superar limite de 1000
       const pageSize = 1000;
       let allData: Funcionario[] = [];
@@ -44,7 +49,7 @@ export function useFuncionarios() {
         const from = page * pageSize;
         const to = from + pageSize - 1;
         
-        const { data, error } = await supabase
+        let query = supabase
           .from('funcionarios')
           .select(`
             *,
@@ -53,6 +58,12 @@ export function useFuncionarios() {
           `)
           .order('nome_completo')
           .range(from, to);
+
+        if (deveFiltrar) {
+          query = query.in('setor_id', setoresIds);
+        }
+
+        const { data, error } = await query;
         
         if (error) throw error;
         
@@ -70,10 +81,14 @@ export function useFuncionarios() {
   });
 }
 
-export function useFuncionariosNoQuadro() {
+export function useFuncionariosNoQuadro(options?: { ignorarFiltroSetor?: boolean }) {
+  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
+  const deveFiltrar = aplicarFiltroSetor && !options?.ignorarFiltroSetor;
+
   return useQuery({
-    queryKey: ['funcionarios', 'quadro'],
+    queryKey: ['funcionarios', 'quadro', deveFiltrar ? setoresIds : 'all'],
     queryFn: async () => {
+      if (deveFiltrar && setoresIds.length === 0) return [];
       // Buscar em lotes para suportar mais de 1000 registros
       const pageSize = 1000;
       let allData: Funcionario[] = [];
@@ -84,7 +99,7 @@ export function useFuncionariosNoQuadro() {
         const from = page * pageSize;
         const to = from + pageSize - 1;
         
-        const { data, error } = await supabase
+        let query = supabase
           .from('funcionarios')
           .select(`
             *,
@@ -97,6 +112,12 @@ export function useFuncionariosNoQuadro() {
           .eq('situacao.ativa', true)
           .order('nome_completo')
           .range(from, to);
+
+        if (deveFiltrar) {
+          query = query.in('setor_id', setoresIds);
+        }
+
+        const { data, error } = await query;
         
         if (error) throw error;
         
@@ -115,9 +136,13 @@ export function useFuncionariosNoQuadro() {
 }
 
 export function useFuncionariosNoPonto() {
+  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
+  const deveFiltrar = aplicarFiltroSetor;
+
   return useQuery({
-    queryKey: ['funcionarios', 'ponto'],
+    queryKey: ['funcionarios', 'ponto', deveFiltrar ? setoresIds : 'all'],
     queryFn: async () => {
+      if (deveFiltrar && setoresIds.length === 0) return [];
       // Buscar em lotes para suportar mais de 1000 registros
       const pageSize = 1000;
       let allData: Funcionario[] = [];
@@ -128,7 +153,7 @@ export function useFuncionariosNoPonto() {
         const from = page * pageSize;
         const to = from + pageSize - 1;
         
-        const { data, error } = await supabase
+        let query = supabase
           .from('funcionarios')
           .select(`
             *,
@@ -139,6 +164,12 @@ export function useFuncionariosNoPonto() {
           .eq('situacao.ativa', true)
           .order('nome_completo')
           .range(from, to);
+
+        if (deveFiltrar) {
+          query = query.in('setor_id', setoresIds);
+        }
+
+        const { data, error } = await query;
         
         if (error) throw error;
         
