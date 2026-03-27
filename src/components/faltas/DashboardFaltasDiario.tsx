@@ -339,28 +339,28 @@ export function DashboardFaltasDiario({
     }
 
     const cellContent = (
-      <div className="flex flex-col items-center justify-center gap-0.5">
+      <div className="flex flex-col items-center justify-center gap-1">
         <div className="flex items-center justify-center gap-1">
           {folga && (
-            <span className="text-[10px] opacity-60" title="Folga">🛏️</span>
+            <span className="text-[10px] opacity-50" title="Folga">🛏️</span>
           )}
           {badgeF > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-md bg-foreground text-background font-bold text-sm px-2 shadow-sm">
+            <span className="inline-flex items-center justify-center min-w-[26px] h-[20px] rounded bg-muted-foreground/80 text-background font-semibold text-xs px-1.5">
               {badgeF}F
             </span>
           )}
           {badgeA > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-md bg-warning text-warning-foreground font-bold text-sm px-2 shadow-sm">
+            <span className="inline-flex items-center justify-center min-w-[26px] h-[20px] rounded bg-muted-foreground/80 text-background font-semibold text-xs px-1.5">
               {badgeA}A
             </span>
           )}
         </div>
         {saldo != null && (
           <span className={cn(
-           "inline-flex items-center justify-center h-[18px] rounded font-bold text-xs px-1.5 shadow-sm whitespace-nowrap",
-            saldo > 0 ? "bg-success text-success-foreground" : saldo < 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"
+           "inline-flex items-center justify-center h-[18px] rounded font-bold text-[11px] px-1.5 whitespace-nowrap",
+            saldo > 0 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : saldo < 0 ? "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300" : "bg-muted text-muted-foreground"
           )}>
-            {saldo > 0 ? `+${saldo}` : saldo} SALDO
+            {saldo > 0 ? `+${saldo}` : saldo}
           </span>
         )}
       </div>
