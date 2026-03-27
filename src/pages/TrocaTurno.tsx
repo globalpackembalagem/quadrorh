@@ -315,89 +315,116 @@ export default function TrocaTurno() {
   const renderCard = (t: TrocaTurnoType, showActions: boolean) => {
     const st = statusLabels[t.status] || { label: t.status, variant: 'outline' as const };
     const tipo = tipoLabels[t.tipo] || tipoLabels['troca_turno'];
-    const isSimulando = idsSimulando.has(t.id);
     const isProgramado = !!t.data_programada && !t.efetivada;
 
     return (
-      <Card key={t.id} className={`overflow-hidden border-l-4 border-l-primary/60 ${isSimulando || isProgramado ? 'bg-primary/15' : ''}`}>
+      <Card key={t.id} className={`overflow-hidden transition-all ${isProgramado ? 'ring-1 ring-primary/30' : ''}`}>
         <CardContent className="p-0">
-          {/* Header */}
-          <div className="grid grid-cols-[1fr_auto] items-center gap-2 px-4 py-3 bg-muted/30">
-            <div className="flex items-center gap-3 min-w-0">
-              <ArrowRightLeft className="h-4 w-4 text-primary shrink-0" />
-              <div className="min-w-0">
-                <p className="font-bold text-sm truncate">{t.funcionario?.nome_completo || 'Funcionário'}</p>
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                  <span>{t.setor_origem?.nome}{t.turma_origem ? ` (${t.turma_origem})` : ''}</span>
-                  <span className="text-primary font-bold">→</span>
-                  <span className="inline-flex items-center gap-1 bg-primary/15 text-primary font-bold px-2 py-0.5 rounded-md border border-primary/30">
-                    {t.setor_destino?.nome}
-                    {t.turma_destino && (
-                      <span className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0.5 rounded font-bold ml-1">
-                        {t.turma_destino}
-                      </span>
-                    )}
-                  </span>
-                </div>
+          {/* ── Header: Nome + Badges ── */}
+          <div className="px-5 pt-4 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-bold text-base truncate">{t.funcionario?.nome_completo || 'Funcionário'}</h3>
+                <span className="text-xs text-muted-foreground font-mono">{t.funcionario?.matricula || ''}</span>
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Badge variant="outline" className="text-[10px]">
-                {tipo.icon} <span className="ml-1">{tipo.label}</span>
+              <Badge variant="outline" className="text-[10px] gap-1 font-medium">
+                {tipo.icon} {tipo.label}
               </Badge>
-              <Badge variant={st.variant} className="text-[10px] whitespace-nowrap">{st.label}</Badge>
-              <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                por {t.criado_por} • {format(new Date(t.created_at), 'dd/MM/yy HH:mm', { locale: ptBR })}
-              </span>
+              <Badge
+                variant={st.variant}
+                className={`text-[10px] font-semibold ${
+                  t.status === 'pendente_rh' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-300 dark:border-amber-700' :
+                  t.status === 'aprovado' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700' :
+                  t.status === 'cancelado' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-300 dark:border-red-700' : ''
+                }`}
+              >
+                {st.label}
+              </Badge>
             </div>
           </div>
 
-          {/* Details */}
-          <div className="px-4 py-2 space-y-1.5">
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
-              <span>📅 Criado: {format(new Date(t.created_at), 'dd/MM/yyyy', { locale: ptBR })}</span>
-              {t.data_programada && (
-                <span className={`font-medium ${!t.efetivada ? 'text-primary' : ''}`}>
-                  🗓️ Programada: {format(parseISO(t.data_programada), 'dd/MM/yyyy', { locale: ptBR })}
-                </span>
-              )}
-              {t.data_efetivada && (
-                <span className="font-medium text-primary">
-                  ✅ Efetivada: {format(parseISO(t.data_efetivada), 'dd/MM/yyyy', { locale: ptBR })}
-                </span>
-              )}
+          {/* ── Body: Setor Atual → Destino ── */}
+          <div className="px-5 pb-4">
+            <div className="rounded-lg border bg-muted/20 p-3">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                {/* Origem */}
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Origem</p>
+                  <p className="text-sm font-medium truncate">{t.setor_origem?.nome || '-'}</p>
+                  {t.turma_origem && (
+                    <Badge variant="secondary" className="text-[10px] mt-1">{t.turma_origem}</Badge>
+                  )}
+                </div>
+
+                {/* Arrow */}
+                <div className="flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                    <ArrowRightLeft className="h-4 w-4 text-primary" />
+                  </div>
+                </div>
+
+                {/* Destino */}
+                <div className="min-w-0 text-right">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Destino</p>
+                  <p className="text-sm font-medium text-primary truncate">{t.setor_destino?.nome || '-'}</p>
+                  {t.turma_destino && (
+                    <Badge className="text-[10px] mt-1 bg-primary text-primary-foreground">{t.turma_destino}</Badge>
+                  )}
+                </div>
+              </div>
             </div>
 
             {t.observacoes && (
-              <p className="text-[11px] text-muted-foreground italic truncate" title={t.observacoes}>💬 {t.observacoes}</p>
+              <p className="text-xs text-muted-foreground mt-3 italic line-clamp-2" title={t.observacoes}>
+                💬 {t.observacoes}
+              </p>
             )}
 
             {t.status === 'cancelado' && (
-              <p className="text-[11px] text-destructive font-medium">
-                ❌ CANCELADA {t.recusado_por ? `POR ${t.recusado_por}` : ''}
+              <p className="text-xs text-destructive font-medium mt-2">
+                ❌ Cancelada{t.recusado_por ? ` por ${t.recusado_por}` : ''}
               </p>
             )}
           </div>
 
-          {/* Actions */}
+          {/* ── Footer: Metadados ── */}
+          <div className="px-5 py-2.5 border-t bg-muted/15 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+            <span>Criado em {format(new Date(t.created_at), 'dd/MM/yyyy', { locale: ptBR })}</span>
+            <span>por <strong>{t.criado_por}</strong></span>
+            {t.data_programada && (
+              <span className={`font-medium ${!t.efetivada ? 'text-primary' : ''}`}>
+                📅 Programada: {format(parseISO(t.data_programada), 'dd/MM/yyyy', { locale: ptBR })}
+              </span>
+            )}
+            {t.data_efetivada && (
+              <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                ✅ Efetivada: {format(parseISO(t.data_efetivada), 'dd/MM/yyyy', { locale: ptBR })}
+              </span>
+            )}
+          </div>
+
+          {/* ── Actions ── */}
           {showActions && (
-            <div className="px-4 py-2 border-t bg-muted/20 flex items-center gap-2 flex-wrap">
+            <div className="px-5 py-3 border-t flex items-center gap-2 flex-wrap">
               {canEfetivar ? (
                 <>
-                  <Button size="sm" className="h-7 text-xs gap-1" onClick={() => handleEfetivar(t)} disabled={efetivarTroca.isPending}>
-                    <CheckCircle className="h-3 w-3" /> TRANSFERÊNCIA
+                  <Button size="sm" className="h-8 text-xs gap-1.5" onClick={() => handleEfetivar(t)} disabled={efetivarTroca.isPending}>
+                    <CheckCircle className="h-3.5 w-3.5" /> Efetivar
                   </Button>
-                  <Button size="sm" variant="secondary" className="h-7 text-xs gap-1" onClick={() => handleAbrirEditar(t)}>
-                    <Pencil className="h-3 w-3" /> Editar
+                  <Button size="sm" variant="secondary" className="h-8 text-xs gap-1.5" onClick={() => handleAbrirEditar(t)}>
+                    <Pencil className="h-3.5 w-3.5" /> Editar
                   </Button>
-                  <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleEnviarNotificacao(t)}>
-                    <Bell className="h-3 w-3" /> Notificar
+                  <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5" onClick={() => handleEnviarNotificacao(t)}>
+                    <Bell className="h-3.5 w-3.5" /> Notificar
                   </Button>
-                  <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleCancelar(t)} disabled={cancelarTroca.isPending}>
-                    <Ban className="h-3 w-3" /> Cancelar
+                  <div className="flex-1" />
+                  <Button size="sm" variant="ghost" className="h-8 text-xs gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => handleCancelar(t)} disabled={cancelarTroca.isPending}>
+                    <Ban className="h-3.5 w-3.5" /> Cancelar
                   </Button>
-                  <Button size="sm" variant="destructive" className="h-7 text-xs gap-1" onClick={() => { setTrocaExcluir(t); setExcluirDialogOpen(true); }}>
-                    <Trash2 className="h-3 w-3" /> Excluir
+                  <Button size="sm" variant="ghost" className="h-8 text-xs gap-1.5 text-destructive hover:text-destructive" onClick={() => { setTrocaExcluir(t); setExcluirDialogOpen(true); }}>
+                    <Trash2 className="h-3.5 w-3.5" /> Excluir
                   </Button>
                 </>
               ) : (
@@ -408,11 +435,10 @@ export default function TrocaTurno() {
             </div>
           )}
 
-          {/* Notification button for history cards too */}
           {!showActions && canEfetivar && (
-            <div className="px-4 py-1.5 border-t bg-muted/20 flex items-center gap-2">
-              <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={() => handleEnviarNotificacao(t)}>
-                <Bell className="h-2.5 w-2.5" /> Notificar
+            <div className="px-5 py-2 border-t flex items-center">
+              <Button size="sm" variant="ghost" className="h-7 text-[10px] gap-1.5 text-muted-foreground hover:text-foreground" onClick={() => handleEnviarNotificacao(t)}>
+                <Bell className="h-3 w-3" /> Notificar
               </Button>
             </div>
           )}
