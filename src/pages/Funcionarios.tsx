@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, Users, Trash2, Plus, X, ArrowRightLeft, Upload, Undo2, History, ChevronDown, ChevronUp, Filter, Download, Type } from 'lucide-react';
+import { Search, Users, Trash2, Plus, X, ArrowRightLeft, Upload, Undo2, ChevronDown, ChevronUp, Filter, Download, Type, Clock } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 import { useFuncionarios, useUpdateFuncionario, useDeleteFuncionario, useCreateFuncionario } from '@/hooks/useFuncionarios';
@@ -10,7 +10,6 @@ import { useSetores, useSetoresAtivos } from '@/hooks/useSetores';
 import { useSituacoes, useSituacoesAtivas } from '@/hooks/useSituacoes';
 import { useAuth } from '@/hooks/useAuth';
 import { useRegistrarHistoricoFuncionario, formatarDadosFuncionario } from '@/hooks/useHistoricoFuncionarios';
-import { useHistoricoAuditoria } from '@/hooks/useHistorico';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -50,156 +49,100 @@ import { TrocaUnificadaDialog } from '@/components/funcionarios/TrocaUnificadaDi
 import { useCriarDivergenciaAuto, devecriarDivergencia } from '@/hooks/useDivergenciasAuto';
 
 import { Funcionario, SexoTipo, EmpresaTipo } from '@/types/database';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 // xlsx-js-style loaded dynamically
 import { toast } from 'sonner';
 
-// ─── Componente de Histórico ──────────────────────────────────────────────────
-function HistoricoTab() {
-  const { data: historico = [], isLoading } = useHistoricoAuditoria('funcionarios');
+// ─── Componente de Temporários ──────────────────────────────────────────────────
+function TemporariosTab({ funcionarios }: { funcionarios: Funcionario[] }) {
   const [search, setSearch] = useState('');
-  const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
-  const [filtroTurma, setFiltroTurma] = useState(false);
 
-  const toggleExpandido = (id: string) => setExpandidos(prev => ({ ...prev, [id]: !prev[id] }));
+  const temporarios = useMemo(() => {
+    return funcionarios.filter(f => {
+      const mat = f.matricula?.toUpperCase() || '';
+      return mat.startsWith('TEMP');
+    });
+  }, [funcionarios]);
 
-  const filteredHistorico = historico.filter(h => {
-    const dadosNovos = h.dados_novos as Record<string, unknown> | null;
-    const dadosAnteriores = h.dados_anteriores as Record<string, unknown> | null;
-
-    if (filtroTurma) {
-      const turmaAnterior = dadosAnteriores?.turma;
-      const turmaNova = dadosNovos?.turma;
-      if (JSON.stringify(turmaAnterior) === JSON.stringify(turmaNova)) return false;
-    }
-
-    if (!search) return true;
+  const filtrados = useMemo(() => {
+    if (!search.trim()) return temporarios;
     const s = search.toLowerCase();
-    const nomeNovo = dadosNovos?.nome as string || '';
-    const nomeAnterior = dadosAnteriores?.nome as string || '';
-    return (
-      h.usuario_nome?.toLowerCase().includes(s) ||
-      h.operacao.toLowerCase().includes(s) ||
-      nomeNovo.toLowerCase().includes(s) ||
-      nomeAnterior.toLowerCase().includes(s)
+    return temporarios.filter(f =>
+      f.nome_completo.toLowerCase().includes(s) ||
+      f.matricula?.toLowerCase().includes(s) ||
+      f.setor?.nome?.toLowerCase().includes(s) ||
+      f.turma?.toLowerCase().includes(s)
     );
-  });
-
-  const exportarExcel = async () => {
-    if (!filteredHistorico.length) return;
-    const XLSX = await import('xlsx-js-style');
-    const dados = filteredHistorico.map(h => {
-      const n = h.dados_novos as Record<string, unknown> | null;
-      const a = h.dados_anteriores as Record<string, unknown> | null;
-      return {
-        'Data': format(parseISO(h.created_at), 'dd/MM/yyyy HH:mm'),
-        'Usuário': h.usuario_nome || '',
-        'Operação': h.operacao,
-        'Funcionário': (n?.nome || a?.nome || '') as string,
-        'Turma Anterior': (a?.turma || '') as string,
-        'Turma Nova': (n?.turma || '') as string,
-        'Setor Anterior': (a?.setor || '') as string,
-        'Setor Novo': (n?.setor || '') as string,
-      };
-    });
-    const ws = XLSX.utils.json_to_sheet(dados);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Histórico');
-    XLSX.writeFile(wb, `Historico_Funcionarios_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);
-  };
-
-  const getOpLabel = (op: string) => ({ INSERT: 'Criação', UPDATE: 'Edição', DELETE: 'Exclusão', TRANSFERENCIA: 'Transferência' }[op] || op);
-  const getOpVariant = (op: string): 'default' | 'secondary' | 'destructive' | 'outline' =>
-    ({ INSERT: 'default', UPDATE: 'secondary', DELETE: 'destructive', TRANSFERENCIA: 'outline' } as Record<string, 'default' | 'secondary' | 'destructive' | 'outline'>)[op] || 'outline';
-
-  const formatarValor = (valor: unknown): string => {
-    if (valor === null || valor === undefined) return '-';
-    if (typeof valor === 'boolean') return valor ? 'Sim' : 'Não';
-    if (typeof valor === 'string' && valor.match(/^\d{4}-\d{2}-\d{2}$/)) return format(parseISO(valor), 'dd/MM/yyyy');
-    return String(valor);
-  };
-
-  const renderDiferencas = (ant: Record<string, unknown> | null, nov: Record<string, unknown> | null) => {
-    if (!ant && !nov) return null;
-    const campos = new Set([...Object.keys(ant || {}), ...Object.keys(nov || {})]);
-    const diffs: Array<{ campo: string; anterior: unknown; novo: unknown }> = [];
-    campos.forEach(campo => {
-      const vAnt = ant?.[campo], vNov = nov?.[campo];
-      if (JSON.stringify(vAnt) !== JSON.stringify(vNov)) diffs.push({ campo, anterior: vAnt, novo: vNov });
-    });
-    if (!diffs.length) return null;
-    const labels: Record<string, string> = { nome: 'Nome', empresa: 'Empresa', matricula: 'Matrícula', setor: 'Setor', turma: 'Turma', situacao: 'Situação', cargo: 'Cargo', sexo: 'Sexo', data_admissao: 'Data Admissão', data_demissao: 'Data Demissão', observacoes: 'Observações' };
-    return (
-      <div className="mt-2 space-y-1 text-xs">
-        {diffs.map(({ campo, anterior, novo }) => (
-          <div key={campo} className="flex flex-wrap gap-1 items-center">
-            <span className="font-medium text-muted-foreground">{labels[campo] || campo}:</span>
-            {anterior != null && <span className="line-through text-destructive">{formatarValor(anterior)}</span>}
-            {anterior != null && novo != null && <span className="text-muted-foreground">→</span>}
-            {novo != null && <span className="text-primary font-medium">{formatarValor(novo)}</span>}
-          </div>
-        ))}
-      </div>
-    );
-  };
+  }, [temporarios, search]);
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Buscar por nome, usuário..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
-        </div>
-        <Button size="sm" variant={filtroTurma ? 'default' : 'outline'} onClick={() => setFiltroTurma(!filtroTurma)} className="gap-1">
-          <Filter className="h-3 w-3" /> SÓ TURMAS
-        </Button>
-        <Button size="sm" variant="outline" onClick={exportarExcel} disabled={!filteredHistorico.length}>
-          <Download className="h-3 w-3 mr-1" /> EXCEL
-        </Button>
-      </div>
-
-      <div className="space-y-2 max-h-[500px] overflow-y-auto">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          </div>
-        ) : filteredHistorico.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <History className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>Nenhum histórico encontrado</p>
-          </div>
-        ) : (
-          filteredHistorico.map(h => {
-            const dadosNovos = h.dados_novos as Record<string, unknown> | null;
-            const dadosAnteriores = h.dados_anteriores as Record<string, unknown> | null;
-            const nomeFuncionario = (dadosNovos?.nome || dadosAnteriores?.nome || 'Funcionário') as string;
-            const isExp = expandidos[h.id];
-            return (
-              <div key={h.id} className="rounded-lg border bg-card p-3 hover:bg-muted/30 transition-colors">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant={getOpVariant(h.operacao)}>{getOpLabel(h.operacao)}</Badge>
-                      <span className="font-medium truncate">{nomeFuncionario}</span>
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      <span className="font-medium">{h.usuario_nome}</span>
-                      <span className="mx-1">•</span>
-                      <span>{format(parseISO(h.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
-                    </div>
-                    {isExp && renderDiferencas(dadosAnteriores, dadosNovos)}
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => toggleExpandido(h.id)} className="shrink-0">
-                    {isExp ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                  </Button>
-                </div>
-              </div>
-            );
-          })
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input placeholder="Buscar por nome, matrícula, setor..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 pr-8" />
+        {search && (
+          <Button variant="ghost" size="sm" onClick={() => setSearch('')} className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0">
+            <X className="h-3 w-3" />
+          </Button>
         )}
       </div>
-      <div className="text-xs text-muted-foreground text-center">Exibindo últimos 100 registros</div>
+
+      <div className="rounded-lg border bg-card overflow-x-auto">
+        <table className="data-table text-xs w-full">
+          <thead>
+            <tr>
+              <th className="w-[80px]">Matrícula</th>
+              <th>Nome</th>
+              <th className="w-[130px]">Setor</th>
+              <th className="w-[80px]">Turma</th>
+              <th className="w-[100px]">Admissão</th>
+              <th className="w-[100px]">Data 90 Dias</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtrados.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>Nenhum temporário encontrado</p>
+                </td>
+              </tr>
+            ) : (
+              filtrados.map(func => {
+                const dataAdm = func.data_admissao ? parseISO(func.data_admissao) : null;
+                const data90 = dataAdm ? addDays(dataAdm, 90) : null;
+                const hoje = new Date();
+                const vencido = data90 && data90 <= hoje;
+
+                return (
+                  <tr key={func.id} className="hover:bg-muted/50">
+                    <td className="text-muted-foreground">{func.matricula || '-'}</td>
+                    <td className="font-medium">{func.nome_completo}</td>
+                    <td className="text-xs text-muted-foreground">{func.setor?.nome || '-'}</td>
+                    <td>{func.turma || '-'}</td>
+                    <td>{dataAdm ? format(dataAdm, 'dd/MM/yyyy') : '-'}</td>
+                    <td>
+                      {data90 ? (
+                        <Badge
+                          className="text-white border-0 text-[10px]"
+                          style={{ backgroundColor: vencido ? 'hsl(var(--destructive))' : 'hsl(var(--primary))' }}
+                        >
+                          {format(data90, 'dd/MM/yyyy')}
+                        </Badge>
+                      ) : '-'}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="text-sm text-muted-foreground">
+        Total: {filtrados.length} temporário(s)
+      </div>
     </div>
   );
 }
@@ -650,9 +593,9 @@ export default function Funcionarios() {
         <Tabs defaultValue="turmas">
           <TabsList className="h-auto flex-wrap">
             <TabsTrigger value="turmas">POR TURMA</TabsTrigger>
-            <TabsTrigger value="historico" className="gap-1">
-              <History className="h-3 w-3" />
-              HISTÓRICO
+            <TabsTrigger value="temporarios" className="gap-1">
+              <Clock className="h-3 w-3" />
+              TEMPORÁRIOS
             </TabsTrigger>
           </TabsList>
 
@@ -773,9 +716,9 @@ export default function Funcionarios() {
             </div>
           </TabsContent>
 
-          {/* Aba: Histórico */}
-          <TabsContent value="historico" className="mt-4">
-            <HistoricoTab />
+          {/* Aba: Temporários */}
+          <TabsContent value="temporarios" className="mt-4">
+            <TemporariosTab funcionarios={funcionarios} />
           </TabsContent>
         </Tabs>
 
@@ -850,9 +793,9 @@ export default function Funcionarios() {
       <Tabs defaultValue="lista">
         <TabsList className="h-auto flex-wrap">
           <TabsTrigger value="lista">LISTA</TabsTrigger>
-          <TabsTrigger value="historico" className="gap-1">
-            <History className="h-3 w-3" />
-            HISTÓRICO
+          <TabsTrigger value="temporarios" className="gap-1">
+            <Clock className="h-3 w-3" />
+            TEMPORÁRIOS
           </TabsTrigger>
         </TabsList>
 
@@ -1043,8 +986,8 @@ export default function Funcionarios() {
           </div>
         </TabsContent>
 
-        <TabsContent value="historico" className="mt-4">
-          <HistoricoTab />
+        <TabsContent value="temporarios" className="mt-4">
+          <TemporariosTab funcionarios={funcionarios} />
         </TabsContent>
       </Tabs>
 
