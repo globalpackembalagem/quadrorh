@@ -716,9 +716,9 @@ export default function Funcionarios() {
             </div>
           </TabsContent>
 
-          {/* Aba: Histórico */}
-          <TabsContent value="historico" className="mt-4">
-            <HistoricoTab />
+          {/* Aba: Temporários */}
+          <TabsContent value="temporarios" className="mt-4">
+            <TemporariosTab funcionarios={funcionarios} />
           </TabsContent>
         </Tabs>
 
