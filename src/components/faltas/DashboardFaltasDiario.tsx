@@ -479,30 +479,27 @@ export function DashboardFaltasDiario({
           )}
         </div>
         {/* Legenda compacta */}
-        <div className="flex items-center gap-4 mt-2">
+        <div className="flex items-center gap-5 mt-2.5 flex-wrap">
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-foreground text-background font-bold text-xs">F</span>
-            <span className="text-xs text-muted-foreground font-medium">FALTA</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-warning text-warning-foreground font-bold text-xs">A</span>
-            <span className="text-xs text-muted-foreground font-medium">ATESTADO</span>
+            <span className="inline-flex items-center justify-center w-[20px] h-[18px] rounded bg-muted-foreground/80 text-background font-semibold text-[11px]">F</span>
+            <span className="text-xs text-muted-foreground">FALTA</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-info text-info-foreground font-bold text-xs">DA</span>
-            <span className="text-xs text-muted-foreground font-medium">DAY OFF</span>
+            <span className="inline-flex items-center justify-center w-[20px] h-[18px] rounded bg-muted-foreground/80 text-background font-semibold text-[11px]">A</span>
+            <span className="text-xs text-muted-foreground">ATESTADO / FÉRIAS / DAY OFF</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-base">🛏️</span>
-            <span className="text-xs text-muted-foreground font-medium">FOLGA ESCALA</span>
+            <span className="text-sm">🛏️</span>
+            <span className="text-xs text-muted-foreground">FOLGA ESCALA</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-success text-success-foreground font-bold text-xs">S</span>
-            <span className="text-xs text-muted-foreground font-medium">SALDO (SOBRA + RSV - AUS)</span>
+            <span className="inline-flex items-center justify-center h-[18px] rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 font-bold text-[11px] px-1.5">+N</span>
+            <span className="text-[11px] text-emerald-600 dark:text-emerald-400">POSITIVO</span>
+            <span className="inline-flex items-center justify-center h-[18px] rounded bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 font-bold text-[11px] px-1.5">-N</span>
+            <span className="text-[11px] text-red-600 dark:text-red-400">NEGATIVO</span>
+            <span className="text-xs text-muted-foreground ml-0.5">= SALDO</span>
           </div>
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-muted-foreground/70 italic">Clique na célula para ver nomes</span>
-          </div>
+          <span className="text-[11px] text-muted-foreground/60 italic ml-auto">Clique na célula para ver nomes</span>
         </div>
       </CardHeader>
       <CardContent className="px-0 pb-3">
