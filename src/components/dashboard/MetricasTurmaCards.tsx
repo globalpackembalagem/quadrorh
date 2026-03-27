@@ -306,7 +306,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
               <div className="flex items-center justify-between gap-1.5 px-3 py-2 mt-2 mb-3 rounded-lg border border-muted bg-muted/30 text-sm font-semibold text-muted-foreground w-full">
                 <div className="flex items-center gap-2">
                   <UserPlus className="h-4 w-4 shrink-0" />
-                  <span>Previsão</span>
+                  <span>PREVISÃO</span>
                 </div>
                 <span className="text-lg font-bold">0</span>
               </div>
