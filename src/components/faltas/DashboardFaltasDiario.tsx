@@ -372,19 +372,19 @@ export function DashboardFaltasDiario({
           key={`${setor}-${dataStr}`}
           className={cn(
             "text-center py-0 px-0",
-            isHoje && "!bg-green-100 dark:!bg-green-900/30",
-            !isHoje && isAlternateCol && !isTotalRow && "bg-muted/90",
-            isTotalRow && !isHoje && "bg-muted/50",
-            isTotalRow && !isHoje && isAlternateCol && "bg-muted/60",
-            folga && "bg-violet-50/30 dark:bg-violet-950/10",
+            isHoje && "!bg-emerald-50/80 dark:!bg-emerald-900/20",
+            !isHoje && isAlternateCol && !isTotalRow && "bg-muted/30",
+            isTotalRow && !isHoje && "bg-muted/15",
+            isTotalRow && !isHoje && isAlternateCol && "bg-muted/25",
+            folga && "bg-muted/10",
           )}
         >
           <Popover>
             <PopoverTrigger asChild>
               <button
                 className={cn(
-                  "w-full h-full cursor-pointer hover:bg-accent/50 rounded transition-colors py-1.5 px-1",
-                  isHoje && "bg-green-100 dark:bg-green-900/30"
+                  "w-full h-full cursor-pointer hover:bg-accent/30 rounded transition-colors py-1.5 px-1",
+                  isHoje && "bg-emerald-50/80 dark:bg-emerald-900/20"
                 )}
                 type="button"
               >
