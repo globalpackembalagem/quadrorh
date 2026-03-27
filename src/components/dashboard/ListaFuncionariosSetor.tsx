@@ -170,7 +170,9 @@ export function ListaFuncionariosSetor({ grupo, funcionarios, disabled = false }
   // Exportar para Excel
   const exportarExcel = async () => {
     const XLSX = await import('xlsx-js-style');
-    const dados = funcionariosFiltrados.map(f => ({
+    const situacoesExcluidas = ['DEMISSÃO', 'DEMISSAO', 'PED. DEMISSÃO', 'PED. DEMISSAO'];
+    const dadosExport = funcionariosFiltrados.filter(f => !situacoesExcluidas.includes((f.situacao?.nome || '').toUpperCase()));
+    const dados = dadosExport.map(f => ({
       'Empresa': f.empresa || '',
       'Matrícula': f.matricula || '',
       'Nome': f.nome_completo,
