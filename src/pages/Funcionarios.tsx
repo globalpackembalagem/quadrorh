@@ -4,6 +4,7 @@ import { Search, Users, Trash2, Plus, X, ArrowRightLeft, Upload, Undo2, History,
 import { useDebounce } from '@/hooks/useDebounce';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 import { useFuncionarios, useUpdateFuncionario, useDeleteFuncionario, useCreateFuncionario } from '@/hooks/useFuncionarios';
+import { useSetorFilter } from '@/hooks/useSetorFilter';
 import { useCreateDemissao } from '@/hooks/useDemissoes';
 import { useSetores, useSetoresAtivos } from '@/hooks/useSetores';
 import { useSituacoes, useSituacoesAtivas } from '@/hooks/useSituacoes';
@@ -205,7 +206,9 @@ function HistoricoTab() {
 
 // ─── Página Principal ─────────────────────────────────────────────────────────
 export default function Funcionarios() {
-  const { data: funcionarios = [], isLoading } = useFuncionarios();
+  const { data: todosFuncionarios = [], isLoading } = useFuncionarios();
+  const { filtrarPorSetor } = useSetorFilter();
+  const funcionarios = useMemo(() => filtrarPorSetor(todosFuncionarios), [todosFuncionarios, filtrarPorSetor]);
   const { data: setores = [] } = useSetores();
   const { data: setoresAtivos = [] } = useSetoresAtivos();
   const { data: todasSituacoes = [] } = useSituacoes();

@@ -35,6 +35,7 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { useDemissoes, useUpdateDemissao } from '@/hooks/useDemissoes';
+import { useSetorFilter } from '@/hooks/useSetorFilter';
 import { Demissao } from '@/types/demissao';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -73,9 +74,11 @@ export default function Homologacoes() {
     hora_exame_demissional: '',
   });
   
-  const { data: demissoes = [], isLoading } = useDemissoes();
+  const { data: todasDemissoes = [], isLoading } = useDemissoes();
   const updateDemissao = useUpdateDemissao();
   const { canEditHomologacoes } = useAuth();
+  const { filtrarPorSetorCustom } = useSetorFilter();
+  const demissoes = useMemo(() => filtrarPorSetorCustom(todasDemissoes, d => d.funcionario?.setor?.id || null), [todasDemissoes, filtrarPorSetorCustom]);
 
   const isAfterMinDate = (d: Demissao) => {
     return (

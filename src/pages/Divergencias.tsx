@@ -3,6 +3,7 @@ import {
   useDivergencias, 
   Divergencia 
 } from '@/hooks/useDivergencias';
+import { useSetorFilter } from '@/hooks/useSetorFilter';
 import { useUsuario } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
 import { inserirEventoSemDuplicata } from '@/hooks/useEventosSistema';
@@ -33,8 +34,14 @@ import { ptBR } from 'date-fns/locale';
 import { Plus, AlertTriangle, CheckCircle, Clock, Filter, Hourglass, Bell, Eye, RotateCcw } from 'lucide-react';
 
 export default function Divergencias() {
-  const { data: divergencias = [], isLoading } = useDivergencias();
+  const { data: todasDivergencias = [], isLoading } = useDivergencias();
   const { usuarioAtual, isAdmin, canEditDemissoes } = useUsuario();
+  const { filtrarPorSetorCustom } = useSetorFilter();
+  const divergencias = useMemo(() => filtrarPorSetorCustom(todasDivergencias, d => {
+    // Extrair setor_id do funcionário associado - buscar pelo nome do setor
+    // As divergências não têm setor_id direto, filtramos pelo setor do funcionário
+    return (d.funcionario as any)?.setor?.id || null;
+  }), [todasDivergencias, filtrarPorSetorCustom]);
   
   const [novaDialogOpen, setNovaDialogOpen] = useState(false);
   const [acaoDialogOpen, setAcaoDialogOpen] = useState(false);

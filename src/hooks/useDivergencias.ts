@@ -23,6 +23,7 @@ export interface Divergencia {
     matricula: string | null;
     turma: string | null;
     setor: {
+      id: string;
       nome: string;
       grupo: string | null;
     } | null;
@@ -36,7 +37,7 @@ const DIVERGENCIA_SELECT = `
     nome_completo,
     matricula,
     turma,
-    setor:setores!setor_id(nome, grupo)
+    setor:setores!setor_id(id, nome, grupo)
   )
 `;
 
