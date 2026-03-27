@@ -158,8 +158,8 @@ export function TreinamentosSetorDialog({ grupoLabel, treinamentos }: Treinament
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-xs">Nome</TableHead>
                 <TableHead className="text-xs">Matrícula</TableHead>
+                <TableHead className="text-xs">Nome</TableHead>
                 <TableHead className="text-xs">Cargo</TableHead>
                 <TableHead className="text-xs">Turma</TableHead>
                 <TableHead className="text-xs">Início</TableHead>
@@ -170,8 +170,8 @@ export function TreinamentosSetorDialog({ grupoLabel, treinamentos }: Treinament
             <TableBody>
               {filtered.map(t => (
                 <TableRow key={t.id} className="text-xs">
-                  <TableCell className="font-medium py-1.5">{t.nome_completo}</TableCell>
                   <TableCell className="py-1.5">{t.matricula || '-'}</TableCell>
+                  <TableCell className="font-medium py-1.5">{t.nome_completo}</TableCell>
                   <TableCell className="py-1.5">{t.cargo || '-'}</TableCell>
                   <TableCell className="py-1.5">{t.turma || '-'}</TableCell>
                   <TableCell className="py-1.5">
