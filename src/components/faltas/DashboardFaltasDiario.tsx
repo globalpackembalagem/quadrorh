@@ -481,7 +481,7 @@ export function DashboardFaltasDiario({
         {/* Legenda compacta */}
         <div className="flex items-center gap-4 mt-2">
           <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[20px] h-[16px] rounded-md bg-destructive text-destructive-foreground font-bold text-[9px]">F</span>
+            <span className="inline-flex items-center justify-center w-[20px] h-[16px] rounded-md bg-foreground text-background font-bold text-[9px]">F</span>
             <span className="text-[10px] text-muted-foreground font-medium">FALTA</span>
           </div>
           <div className="flex items-center gap-1.5">
