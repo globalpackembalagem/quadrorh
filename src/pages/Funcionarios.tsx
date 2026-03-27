@@ -568,6 +568,54 @@ export default function Funcionarios() {
     toast.success(`${count} nome(s) convertido(s) para maiúsculo!`);
   };
 
+  // Detectar grupo do gestor pelo setor dos funcionários
+  const gestorGrupo = useMemo(() => {
+    for (const f of funcionarios) {
+      const grupo = (f.setor as any)?.grupo?.toUpperCase() || '';
+      if (grupo.startsWith('SOPRO')) return 'SOPRO';
+      if (grupo.startsWith('DECORAÇ') || grupo.startsWith('DECORAC')) return 'DECORACAO';
+    }
+    return 'OUTROS';
+  }, [funcionarios]);
+
+  const [gestorTurmaFilter, setGestorTurmaFilter] = useState('TODOS');
+  const [gestorTurnoFilter, setGestorTurnoFilter] = useState('TODOS');
+
+  // Funcionários filtrados para gestor: ordem alfabética + filtros
+  const gestorFuncionariosFiltrados = useMemo(() => {
+    let result = funcionarios.filter(f => {
+      const sitNome = f.situacao?.nome?.toUpperCase() || '';
+      return sitNome !== 'DEMISSÃO' && sitNome !== 'PED. DEMISSÃO';
+    });
+
+    if (gestorGrupo === 'SOPRO') {
+      if (gestorTurmaFilter !== 'TODOS') {
+        result = result.filter(f => f.turma === gestorTurmaFilter);
+      }
+    } else if (gestorGrupo === 'DECORACAO') {
+      if (gestorTurnoFilter !== 'TODOS') {
+        const setorNomeUpper = gestorTurnoFilter.toUpperCase();
+        result = result.filter(f => {
+          const nome = f.setor?.nome?.toUpperCase() || '';
+          return nome.includes(setorNomeUpper);
+        });
+      }
+      if (gestorTurmaFilter !== 'TODOS') {
+        result = result.filter(f => f.turma === gestorTurmaFilter);
+      }
+    }
+
+    if (debouncedSearch) {
+      const s = debouncedSearch.toLowerCase();
+      result = result.filter(f =>
+        f.nome_completo.toLowerCase().includes(s) ||
+        f.matricula?.toLowerCase().includes(s)
+      );
+    }
+
+    return result.sort((a, b) => a.nome_completo.localeCompare(b.nome_completo));
+  }, [funcionarios, gestorGrupo, gestorTurmaFilter, gestorTurnoFilter, debouncedSearch]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -577,6 +625,7 @@ export default function Funcionarios() {
   }
 
   // ── Vista do Gestor (logado, não admin) ──────────────────────────────────────
+
   if (isGestor) {
     return (
       <div className="space-y-4">
@@ -590,17 +639,16 @@ export default function Funcionarios() {
           </div>
         </div>
 
-        <Tabs defaultValue="turmas">
+        <Tabs defaultValue="lista">
           <TabsList className="h-auto flex-wrap">
-            <TabsTrigger value="turmas">POR TURMA</TabsTrigger>
+            <TabsTrigger value="lista">LISTA</TabsTrigger>
             <TabsTrigger value="temporarios" className="gap-1">
               <Clock className="h-3 w-3" />
               TEMPORÁRIOS
             </TabsTrigger>
           </TabsList>
 
-          {/* Aba: Por Turma */}
-          <TabsContent value="turmas" className="mt-4 space-y-4">
+          <TabsContent value="lista" className="mt-4 space-y-4">
             {/* Busca */}
             <div className="relative max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -617,106 +665,109 @@ export default function Funcionarios() {
               )}
             </div>
 
-            {search ? (
-              // Com busca: mostra lista plana
-              <div className="rounded-lg border bg-card overflow-x-auto">
-                <table className="data-table text-xs w-full">
-                  <thead>
+            {/* Filtros por turma/turno */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              {gestorGrupo === 'SOPRO' && (
+                <>
+                  {['TODOS', '1A', '1B', '2A', '2B'].map(t => (
+                    <Button
+                      key={t}
+                      size="sm"
+                      variant={gestorTurmaFilter === t ? 'default' : 'outline'}
+                      onClick={() => setGestorTurmaFilter(t)}
+                      className="h-8 px-3 text-xs font-bold"
+                    >
+                      {t}
+                    </Button>
+                  ))}
+                </>
+              )}
+              {gestorGrupo === 'DECORACAO' && (
+                <>
+                  <span className="text-xs font-bold text-muted-foreground">TURNO:</span>
+                  {['TODOS', 'DIA', 'NOITE'].map(t => (
+                    <Button
+                      key={t}
+                      size="sm"
+                      variant={gestorTurnoFilter === t ? 'default' : 'outline'}
+                      onClick={() => setGestorTurnoFilter(t)}
+                      className="h-8 px-3 text-xs font-bold"
+                    >
+                      {t}
+                    </Button>
+                  ))}
+                  <span className="text-xs font-bold text-muted-foreground ml-2">TURMA:</span>
+                  {['TODOS', 'T1', 'T2'].map(t => (
+                    <Button
+                      key={t}
+                      size="sm"
+                      variant={gestorTurmaFilter === t ? 'default' : 'outline'}
+                      onClick={() => setGestorTurmaFilter(t)}
+                      className="h-8 px-3 text-xs font-bold"
+                    >
+                      {t}
+                    </Button>
+                  ))}
+                </>
+              )}
+            </div>
+
+            {/* Lista única em ordem alfabética */}
+            <div className="rounded-lg border bg-card overflow-x-auto">
+              <table className="data-table text-xs w-full">
+                <thead>
+                  <tr>
+                    <th className="w-[80px]">MATRÍCULA</th>
+                    <th>NOME</th>
+                    <th className="w-[130px]">SETOR</th>
+                    <th className="w-[100px]">TURMA</th>
+                    <th className="w-[120px]">SITUAÇÃO</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {gestorFuncionariosFiltrados.length === 0 ? (
                     <tr>
-                      <th className="w-[80px]">Matrícula</th>
-                      <th>Nome</th>
-                      <th className="w-[130px]">Setor</th>
-                      <th className="w-[100px]">Turma</th>
-                      <th className="w-[120px]">Situação</th>
+                      <td colSpan={5} className="text-center py-8 text-muted-foreground">
+                        <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>Nenhum funcionário encontrado</p>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {filteredFuncionarios.map(func => (
-                      <tr
-                        key={func.id}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => openEdit(func)}
-                      >
-                        <td className="text-muted-foreground">{func.matricula || '-'}</td>
-                        <td className="font-medium">{func.nome_completo}</td>
-                        <td className="text-xs text-muted-foreground">{func.setor?.nome}</td>
-                        <td>{func.turma || '-'}</td>
-                        <td>
-                          <Badge className="text-white border-0 text-[10px]" style={{ backgroundColor: 'hsl(var(--primary))' }}>
-                            {func.situacao?.nome}
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              // Sem busca: separado por turma
-              <div className="space-y-4">
-                {funcionariosPorTurma.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                    <p>Nenhum funcionário encontrado</p>
-                  </div>
-                ) : (
-                  funcionariosPorTurma.map(([turmaLabel, funcs]) => (
-                    <div key={turmaLabel} className="rounded-lg border bg-card overflow-x-auto">
-                      <div className="bg-muted/50 px-4 py-2 flex items-center justify-between border-b">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm">{turmaLabel}</span>
-                          <Badge variant="secondary" className="text-xs">{funcs.length} funcionário(s)</Badge>
-                        </div>
-                      </div>
-                      <table className="data-table text-xs w-full">
-                        <thead>
-                          <tr>
-                            <th className="w-[80px]">Matrícula</th>
-                            <th>Nome</th>
-                            <th className="w-[130px]">Setor</th>
-                            <th className="w-[100px]">Turma</th>
-                            <th className="w-[120px]">Situação</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {funcs.map(func => {
-                            const sitNome = func.situacao?.nome?.toUpperCase() || '';
-                            const isAtivoOuFerias = sitNome === 'ATIVO' || sitNome === 'FÉRIAS';
-                            return (
-                              <tr
-                                key={func.id}
-                                className="cursor-pointer hover:bg-muted/50"
-                                onClick={() => openEdit(func)}
-                              >
-                                <td className="text-muted-foreground">{func.matricula || '-'}</td>
-                                <td className="font-medium">{func.nome_completo}</td>
-                                <td className="text-xs text-muted-foreground">{func.setor?.nome}</td>
-                                <td>{func.turma || '-'}</td>
-                                <td>
-                                  <Badge
-                                    className="text-white border-0 text-[10px]"
-                                    style={{ backgroundColor: isAtivoOuFerias ? 'hsl(var(--primary))' : 'hsl(var(--warning))' }}
-                                  >
-                                    {func.situacao?.nome}
-                                  </Badge>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
+                  ) : (
+                    gestorFuncionariosFiltrados.map(func => {
+                      const sitNome = func.situacao?.nome?.toUpperCase() || '';
+                      const isAtivoOuFerias = sitNome === 'ATIVO' || sitNome === 'FÉRIAS';
+                      return (
+                        <tr
+                          key={func.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => openEdit(func)}
+                        >
+                          <td className="text-muted-foreground">{func.matricula || '-'}</td>
+                          <td className="font-medium">{func.nome_completo}</td>
+                          <td className="text-xs text-muted-foreground">{func.setor?.nome}</td>
+                          <td>{func.turma || '-'}</td>
+                          <td>
+                            <Badge
+                              className="text-white border-0 text-[10px]"
+                              style={{ backgroundColor: isAtivoOuFerias ? 'hsl(var(--primary))' : 'hsl(var(--warning))' }}
+                            >
+                              {func.situacao?.nome}
+                            </Badge>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
 
             <div className="text-sm text-muted-foreground">
-              Total: {funcionariosAtivosParaContagem.length} funcionário(s) ativos
+              Total: {gestorFuncionariosFiltrados.length} funcionário(s)
             </div>
           </TabsContent>
 
-          {/* Aba: Temporários */}
           <TabsContent value="temporarios" className="mt-4">
             <TemporariosTab funcionarios={funcionarios} />
           </TabsContent>
@@ -726,21 +777,21 @@ export default function Funcionarios() {
         <Dialog open={dialogOpen} onOpenChange={open => { setDialogOpen(open); if (!open) resetForm(); }}>
           <DialogContent className="sm:max-w-[480px]">
             <DialogHeader>
-              <DialogTitle>Editar Turma — {editingFuncionario?.nome_completo}</DialogTitle>
+              <DialogTitle>EDITAR TURMA — {editingFuncionario?.nome_completo}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 pt-2">
               <div className="rounded-lg border bg-muted/30 p-3 space-y-1 text-sm">
-                <p><strong>Matrícula:</strong> {editingFuncionario?.matricula || 'TEMP'}</p>
-                <p><strong>Setor:</strong> {editingFuncionario?.setor?.nome}</p>
-                <p><strong>Situação:</strong> {editingFuncionario?.situacao?.nome}</p>
+                <p><strong>MATRÍCULA:</strong> {editingFuncionario?.matricula || 'TEMP'}</p>
+                <p><strong>SETOR:</strong> {editingFuncionario?.setor?.nome}</p>
+                <p><strong>SITUAÇÃO:</strong> {editingFuncionario?.situacao?.nome}</p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="turma">Turma</Label>
+                <Label htmlFor="turma">TURMA</Label>
                 <Input id="turma" value={turma} onChange={e => setTurma(e.target.value.toUpperCase())} placeholder="Ex: 1A, 2B, T1, T2" />
               </div>
               <div className="flex justify-end gap-3 pt-2">
-                <Button type="button" variant="outline" onClick={() => { setDialogOpen(false); resetForm(); }}>Cancelar</Button>
-                <Button type="submit" disabled={updateFuncionario.isPending}>Salvar Turma</Button>
+                <Button type="button" variant="outline" onClick={() => { setDialogOpen(false); resetForm(); }}>CANCELAR</Button>
+                <Button type="submit" disabled={updateFuncionario.isPending}>SALVAR TURMA</Button>
               </div>
             </form>
           </DialogContent>
