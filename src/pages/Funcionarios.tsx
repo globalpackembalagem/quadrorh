@@ -593,9 +593,9 @@ export default function Funcionarios() {
         <Tabs defaultValue="turmas">
           <TabsList className="h-auto flex-wrap">
             <TabsTrigger value="turmas">POR TURMA</TabsTrigger>
-            <TabsTrigger value="historico" className="gap-1">
-              <History className="h-3 w-3" />
-              HISTÓRICO
+            <TabsTrigger value="temporarios" className="gap-1">
+              <Clock className="h-3 w-3" />
+              TEMPORÁRIOS
             </TabsTrigger>
           </TabsList>
 
