@@ -71,7 +71,9 @@ export default function TrocaTurno() {
   
   // Gestor: filtrar trocas apenas dos seus setores (origem OU destino)
   const trocas = useMemo(() => {
-    if (isAdmin || !usuarioAtual.setoresIds || usuarioAtual.setoresIds.length === 0) return trocasRaw;
+    if (isAdmin) return trocasRaw;
+    // Gestor sem setores vinculados não vê nenhuma troca
+    if (!usuarioAtual.setoresIds || usuarioAtual.setoresIds.length === 0) return [];
     return trocasRaw.filter(t => 
       usuarioAtual.setoresIds.includes(t.setor_origem_id) || 
       usuarioAtual.setoresIds.includes(t.setor_destino_id)
