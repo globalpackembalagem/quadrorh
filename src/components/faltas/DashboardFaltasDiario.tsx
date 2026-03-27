@@ -533,8 +533,8 @@ export function DashboardFaltasDiario({
                     </TableHead>
                   );
                 })}
-                <TableHead className="text-[13px] font-extrabold text-destructive text-center min-w-[40px] py-2">∑F</TableHead>
-                <TableHead className="text-[13px] font-extrabold text-warning text-center min-w-[40px] py-2">∑A</TableHead>
+                <TableHead className="text-sm font-extrabold text-destructive text-center min-w-[44px] py-2.5">∑F</TableHead>
+                <TableHead className="text-sm font-extrabold text-warning text-center min-w-[44px] py-2.5">∑A</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
