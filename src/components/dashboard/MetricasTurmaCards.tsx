@@ -319,7 +319,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                   <button className="flex items-center justify-between gap-1.5 px-3 py-2 mt-1 mb-2 rounded-lg border border-destructive/30 bg-destructive/5 text-sm font-semibold text-destructive hover:bg-destructive/15 transition-colors cursor-pointer w-full">
                     <div className="flex items-center gap-2">
                       <UserX className="h-4 w-4 shrink-0" />
-                      <span>Sumidos</span>
+                      <span>SUMIDOS</span>
                     </div>
                     <span className="text-lg font-bold">{sumidosPorTurma[turma].total}</span>
                   </button>
