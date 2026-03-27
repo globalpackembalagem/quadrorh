@@ -592,10 +592,10 @@ export function DashboardFaltasDiario({
                   const da = d?.dayoff || 0;
                   return renderCelula(f, a, dataStr === hojeStr, dataStr, 'TOTAL', nomesTotaisPorDia[dataStr], true, colIndex % 2 === 1, false, undefined, da);
                 })}
-                <TableCell className="text-[13px] font-extrabold text-destructive text-center py-2">
+                <TableCell className="text-sm font-extrabold text-destructive text-center py-2.5">
                   {Object.values(totaisPorDia).reduce((s, d) => s + d.faltas, 0) || '-'}
                 </TableCell>
-                <TableCell className="text-[13px] font-extrabold text-warning text-center py-2">
+                <TableCell className="text-sm font-extrabold text-warning text-center py-2.5">
                   {Object.values(totaisPorDia).reduce((s, d) => s + d.atestados, 0) || '-'}
                 </TableCell>
               </TableRow>
