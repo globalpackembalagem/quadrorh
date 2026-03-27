@@ -38,7 +38,9 @@ export default function Dashboard() {
   const exportarExcelPorTurma = async () => {
     const XLSX = await import('xlsx-js-style');
     const grupo = data.grupoSelecionado;
-    const funcionarios = grupo === 'SOPRO' ? data.funcionariosSopro : data.funcionariosDecoracao;
+    const situacoesExcluidas = ['DEMISSÃO', 'DEMISSAO', 'PED. DEMISSÃO', 'PED. DEMISSAO'];
+    const funcionarios = (grupo === 'SOPRO' ? data.funcionariosSopro : data.funcionariosDecoracao)
+      .filter(f => !situacoesExcluidas.includes((f.situacao?.nome || '').toUpperCase()));
 
     if (funcionarios.length === 0) {
       toast.error('Nenhum funcionário para exportar');
