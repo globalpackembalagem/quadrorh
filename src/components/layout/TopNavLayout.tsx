@@ -193,22 +193,31 @@ export function TopNavLayout({ children }: TopNavLayoutProps) {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-56">
                   {rhNavigation.map((item) => (
-                    <DropdownMenuItem key={item.name} asChild>
-                      <Link
-                        to={item.href}
-                        className={cn(
-                          'flex items-center gap-2 justify-between',
-                          isActive(item.href) && 'bg-accent'
-                        )}
-                      >
-                        <div className="flex items-center gap-2">
-                          <item.icon className="h-4 w-4" />
-                          {item.name}
+                    <DropdownMenuItem key={item.name} asChild disabled={item.disabled}>
+                      {item.disabled ? (
+                        <div className="flex items-center gap-2 justify-between opacity-40 cursor-not-allowed">
+                          <div className="flex items-center gap-2">
+                            <item.icon className="h-4 w-4" />
+                            {item.name}
+                          </div>
                         </div>
-                        {item.viewOnly && (
-                          <Eye className="h-3 w-3 text-muted-foreground" />
-                        )}
-                      </Link>
+                      ) : (
+                        <Link
+                          to={item.href}
+                          className={cn(
+                            'flex items-center gap-2 justify-between',
+                            isActive(item.href) && 'bg-accent'
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <item.icon className="h-4 w-4" />
+                            {item.name}
+                          </div>
+                          {item.viewOnly && (
+                            <Eye className="h-3 w-3 text-muted-foreground" />
+                          )}
+                        </Link>
+                      )}
                     </DropdownMenuItem>
                   ))}
                   {/* Admin Section - só para admin, toggle */}
