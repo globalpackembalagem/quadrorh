@@ -368,8 +368,8 @@ export function ImportarTurmasDialog({ open, onOpenChange, onSuccess }: Importar
                 <TableBody>
                   {linhasProcessadas.map((l, i) => (
                     <TableRow key={i} className={l.status !== 'ok' ? 'bg-destructive/5' : ''}>
-                      <TableCell className="text-xs">{l.nome || '-'}</TableCell>
                       <TableCell className="text-xs font-mono">{l.matricula}</TableCell>
+                      <TableCell className="text-xs">{l.nome || '-'}</TableCell>
                       <TableCell className="text-xs">{l.setor || '-'}</TableCell>
                       <TableCell className="text-xs font-bold">{l.turma}</TableCell>
                       <TableCell className="text-xs">

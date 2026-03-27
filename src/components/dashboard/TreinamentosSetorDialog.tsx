@@ -170,8 +170,8 @@ export function TreinamentosSetorDialog({ grupoLabel, treinamentos }: Treinament
             <TableBody>
               {filtered.map(t => (
                 <TableRow key={t.id} className="text-xs">
-                  <TableCell className="font-medium py-1.5">{t.nome_completo}</TableCell>
                   <TableCell className="py-1.5">{t.matricula || '-'}</TableCell>
+                  <TableCell className="font-medium py-1.5">{t.nome_completo}</TableCell>
                   <TableCell className="py-1.5">{t.cargo || '-'}</TableCell>
                   <TableCell className="py-1.5">{t.turma || '-'}</TableCell>
                   <TableCell className="py-1.5">

@@ -744,8 +744,8 @@ export default function Funcionarios() {
                                 className="cursor-pointer hover:bg-muted/50"
                                 onClick={() => openEdit(func)}
                               >
-                                <td className="font-medium">{func.nome_completo}</td>
                                 <td className="text-muted-foreground">{func.matricula || '-'}</td>
+                                <td className="font-medium">{func.nome_completo}</td>
                                 <td className="text-xs text-muted-foreground">{func.setor?.nome}</td>
                                 <td>
                                   <Badge
