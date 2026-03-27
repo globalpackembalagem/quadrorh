@@ -88,9 +88,11 @@ export default function Demissoes() {
   const [filtroTurma, setFiltroTurma] = useState('todas');
   const [confirmImportOpen, setConfirmImportOpen] = useState(false);
   
-  const { data: demissoes = [], isLoading } = useDemissoes();
+  const { data: todasDemissoes = [], isLoading } = useDemissoes();
   const { data: situacoes = [] } = useSituacoesAtivas();
   const { canEditDemissoes, isAdmin, userRole } = useAuth();
+  const { filtrarPorSetorCustom } = useSetorFilter();
+  const demissoes = useMemo(() => filtrarPorSetorCustom(todasDemissoes, d => d.funcionario?.setor?.id || null), [todasDemissoes, filtrarPorSetorCustom]);
   const realizarDemissao = useRealizarDemissao();
   const deleteDemissao = useDeleteDemissao();
   const toggleApdata = useToggleLancadoApdata();

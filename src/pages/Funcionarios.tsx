@@ -206,7 +206,9 @@ function HistoricoTab() {
 
 // ─── Página Principal ─────────────────────────────────────────────────────────
 export default function Funcionarios() {
-  const { data: funcionarios = [], isLoading } = useFuncionarios();
+  const { data: todosFuncionarios = [], isLoading } = useFuncionarios();
+  const { filtrarPorSetor } = useSetorFilter();
+  const funcionarios = useMemo(() => filtrarPorSetor(todosFuncionarios), [todosFuncionarios, filtrarPorSetor]);
   const { data: setores = [] } = useSetores();
   const { data: setoresAtivos = [] } = useSetoresAtivos();
   const { data: todasSituacoes = [] } = useSituacoes();

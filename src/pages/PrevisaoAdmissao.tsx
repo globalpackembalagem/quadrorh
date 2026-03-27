@@ -68,7 +68,9 @@ export default function PrevisaoAdmissao() {
   const [selectedFuncionario, setSelectedFuncionario] = useState<Funcionario | null>(null);
   const [actionsDialogOpen, setActionsDialogOpen] = useState(false);
   const [confirmExcluirOpen, setConfirmExcluirOpen] = useState(false);
-  const { data: funcionarios = [], isLoading } = useFuncionarios();
+  const { data: todosFuncionarios = [], isLoading } = useFuncionarios();
+  const { filtrarPorSetor } = useSetorFilter();
+  const funcionarios = useMemo(() => filtrarPorSetor(todosFuncionarios), [todosFuncionarios, filtrarPorSetor]);
   const { data: situacoes = [] } = useSituacoesAtivas();
   const { data: setores = [] } = useSetoresAtivos();
   const { data: documentos = [] } = usePrevisaoDocumentos();
