@@ -68,6 +68,7 @@ const TIPO_CONFIG: Record<string, { icon: typeof Bell; color: string; bgColor: s
   default: { icon: Bell, color: 'text-muted-foreground', bgColor: 'bg-muted/30', borderColor: 'border-border', badgeClass: 'bg-muted-foreground text-white' },
   turma_pendente_consulta: { icon: AlertTriangle, color: 'text-amber-600', bgColor: 'bg-amber-50 dark:bg-amber-950/30', borderColor: 'border-amber-200 dark:border-amber-800', badgeClass: 'bg-amber-600 text-white' },
   turma_pendente_resposta: { icon: CheckCircle2, color: 'text-teal-600', bgColor: 'bg-teal-50 dark:bg-teal-950/30', borderColor: 'border-teal-200 dark:border-teal-800', badgeClass: 'bg-teal-600 text-white' },
+  ciencia_retorno: { icon: CheckCheck, color: 'text-emerald-600', bgColor: 'bg-emerald-50 dark:bg-emerald-950/30', borderColor: 'border-emerald-200 dark:border-emerald-800', badgeClass: 'bg-emerald-600 text-white' },
 };
 
 function getTipoConfig(tipo: string) {
