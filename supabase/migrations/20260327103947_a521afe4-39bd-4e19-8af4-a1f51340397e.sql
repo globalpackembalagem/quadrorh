@@ -1,0 +1,1 @@
+UPDATE user_roles SET senha = '$2b$10$ON5ZQOa4.JWotMDmm.EDZ.Jn13atYna5p5WSABbRqtDtu9GAikjRO', updated_at = now() WHERE nome != 'LUCIANO' AND ativo = true;
