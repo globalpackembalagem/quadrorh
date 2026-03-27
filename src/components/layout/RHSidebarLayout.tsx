@@ -395,6 +395,21 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
       );
     }
 
+    if (item.disabled) {
+      return (
+        <div
+          key={item.name}
+          className={cn(
+            'flex items-center gap-3.5 rounded-xl opacity-40 cursor-not-allowed',
+            textSize, padding, fontWeight, letterSpacing
+          )}
+        >
+          <item.icon className={cn(iconSize, 'shrink-0', iconColor)} />
+          <span className="truncate">{item.name}</span>
+        </div>
+      );
+    }
+
     return (
       <Link
         key={item.name}
