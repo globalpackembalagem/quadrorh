@@ -344,13 +344,13 @@ export function DashboardFaltasDiario({
           {folga && (
             <span className="text-[10px] opacity-60" title="Folga">🛏️</span>
           )}
-           {badgeF > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[24px] h-[20px] rounded-md bg-foreground text-background font-bold text-[12px] px-1.5 shadow-sm">
+          {badgeF > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-md bg-foreground text-background font-bold text-sm px-2 shadow-sm">
               {badgeF}F
             </span>
           )}
           {badgeA > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[24px] h-[20px] rounded-md bg-warning text-warning-foreground font-bold text-[12px] px-1.5 shadow-sm">
+            <span className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-md bg-warning text-warning-foreground font-bold text-sm px-2 shadow-sm">
               {badgeA}A
             </span>
           )}
