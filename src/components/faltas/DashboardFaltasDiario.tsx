@@ -580,8 +580,8 @@ export function DashboardFaltasDiario({
               })}
               {/* Linha TOTAL */}
               <TableRow className="border-t-2 border-border bg-card">
-                <TableCell className="text-[13px] font-extrabold py-2 px-3 sticky left-0 bg-card z-10 border-r border-border/50 w-[180px] min-w-[180px] max-w-[180px]">TOTAL</TableCell>
-                <TableCell className="text-[13px] font-extrabold text-center py-2 w-[60px] min-w-[60px]">
+                <TableCell className="text-sm font-extrabold py-2.5 px-3 sticky left-0 bg-card z-10 border-r border-border/50 w-[190px] min-w-[190px] max-w-[190px]">TOTAL</TableCell>
+                <TableCell className="text-sm font-extrabold text-center py-2.5 w-[60px] min-w-[60px]">
                   {Object.values(totaisPorDia)[0]?.total || 0}
                 </TableCell>
                 {diasVisiveis.map((dia, colIndex) => {
