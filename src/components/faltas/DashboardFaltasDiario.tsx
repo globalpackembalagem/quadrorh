@@ -547,9 +547,9 @@ export function DashboardFaltasDiario({
                 const sobra = sobraPorSetor[setor];
 
                 return (
-                  <TableRow key={setor} className={cn("hover:bg-accent/30 transition-colors", isEven ? "bg-card/50" : "bg-card")}>
-                    <TableCell className={cn("text-sm font-semibold py-2.5 px-3 sticky left-0 z-10 whitespace-nowrap border-r border-border/50 w-[190px] min-w-[190px] max-w-[190px]", isEven ? "bg-card" : "bg-card")}>{setor}</TableCell>
-                    <TableCell className="text-sm font-bold text-center py-2.5 text-muted-foreground w-[60px] min-w-[60px]">{qtdBase}</TableCell>
+                  <TableRow key={setor} className={cn("hover:bg-accent/20 transition-colors", isEven ? "bg-card" : "bg-muted/15")}>
+                    <TableCell className={cn("text-xs font-semibold py-2 px-3 sticky left-0 z-10 whitespace-nowrap border-r border-border/30 w-[180px] min-w-[180px] max-w-[180px]", isEven ? "bg-card" : "bg-card")}>{setor}</TableCell>
+                    <TableCell className="text-xs font-bold text-center py-2 text-muted-foreground w-[50px] min-w-[50px]">{qtdBase}</TableCell>
                     {diasVisiveis.map((dia, colIndex) => {
                       const dataStr = format(dia, 'yyyy-MM-dd');
                       const d = setorData[dataStr];
@@ -557,11 +557,8 @@ export function DashboardFaltasDiario({
                       const a = d?.atestados || 0;
                       const da = d?.dayoff || 0;
                       const totalAusencias = f + a + da;
-                      // SOPRO: no fim de semana (sáb/dom) sobra divide por 3 (3 turmas, 1 trabalha)
                       const isSopro = setor.toUpperCase().includes('SOPRO');
                       const isFimDeSemana = dia.getDay() === 0 || dia.getDay() === 6;
-                      // Saldo = Sobra + Reserva - Ausências
-                      // No fim de semana do SOPRO: Sobra/4 + Reserva/4 - Ausências
                       let saldo: number | undefined;
                       if (reserva != null || sobra != null) {
                         const sobraEfetiva = isSopro && isFimDeSemana ? Math.round((sobra || 0) / 4) : (sobra || 0);
@@ -570,8 +567,8 @@ export function DashboardFaltasDiario({
                       }
                       return renderCelula(f, a, dataStr === hojeStr, dataStr, setor, setorNomes[dataStr], false, colIndex % 2 === 1, d?.folga || false, saldo, da);
                     })}
-                    <TableCell className="text-sm font-bold text-destructive text-center py-2.5">{totalFaltas || '-'}</TableCell>
-                    <TableCell className="text-sm font-bold text-warning text-center py-2.5">{totalAtestados || '-'}</TableCell>
+                    <TableCell className="text-xs font-bold text-muted-foreground text-center py-2">{totalFaltas || '-'}</TableCell>
+                    <TableCell className="text-xs font-bold text-muted-foreground text-center py-2">{totalAtestados || '-'}</TableCell>
                   </TableRow>
                 );
               })}
