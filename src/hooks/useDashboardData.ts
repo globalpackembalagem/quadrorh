@@ -15,20 +15,21 @@ export type GrupoType = typeof GRUPOS[number];
 
 export function useDashboardData() {
   const [grupoSelecionado, setGrupoSelecionado] = useState<GrupoType>('SOPRO');
-  const { canExportExcel, isRHMode } = useUsuario();
+  const { usuarioAtual, canExportExcel, isAdmin, isRHMode } = useUsuario();
   const { setoresNomes, isGestorSetor, temAcessoSopro, temAcessoDecoracao } = useSetoresUsuario();
 
-  const { data: funcionariosQuadro = [], isLoading: loadingFunc } = useFuncionariosNoQuadro({ ignorarFiltroSetor: true });
-  const { data: todosFuncionarios = [] } = useFuncionarios({ ignorarFiltroSetor: true });
+  const { data: funcionariosQuadro = [], isLoading: loadingFunc } = useFuncionariosNoQuadro();
+  const { data: todosFuncionarios = [] } = useFuncionarios();
   const { data: setores = [], isLoading: loadingSetores } = useSetoresAtivos();
   const { data: situacoes = [], isLoading: loadingSituacoes } = useSituacoesAtivas();
   const { data: quadroPlanejado = [], isLoading: loadingQuadro } = useQuadroPlanejado('SOPRO');
   const { data: quadroDecoracao = [], isLoading: loadingDecoracao } = useQuadroDecoracao();
-  const { data: demissoesPendentes = [] } = useDemissoesPendentes({ ignorarFiltroSetor: true });
+  const { data: demissoesPendentes = [] } = useDemissoesPendentes();
   const { data: periodos = [] } = usePeriodosDemissao();
-  const { data: funcionariosPrevisao = [] } = useFuncionariosPrevisao({ ignorarFiltroSetor: true });
+  const { data: funcionariosPrevisao = [] } = useFuncionariosPrevisao();
 
   const isLoading = loadingFunc || loadingSetores || loadingSituacoes || loadingQuadro || loadingDecoracao;
+  const setoresUsuario = usuarioAtual?.setoresIds || [];
 
   // Ajustar grupo selecionado se gestor só tem acesso a um
   useEffect(() => {
@@ -41,39 +42,64 @@ export function useDashboardData() {
     }
   }, [isGestorSetor, temAcessoSopro, temAcessoDecoracao, setoresNomes]);
 
-  const filtrarPorSetorUsuario = (funcionarios: typeof funcionariosQuadro) => funcionarios;
+  const filtrarPorSetorUsuario = (funcionarios: typeof funcionariosQuadro, grupoAtual: string) => {
+    if (!isGestorSetor) return funcionarios;
+    const setoresDoUsuario = setoresUsuario.map(id => setoresNomes.get(id) || '');
+    const isGestorSopro = setoresDoUsuario.some(nome => nome.includes('SOPRO'));
+    const isGestorDecoracao = setoresDoUsuario.some(nome =>
+      nome.includes('DECORAÇÃO') || nome.includes('DECORACAO')
+    );
+    if (isGestorSopro && grupoAtual === 'SOPRO') {
+      // Filtrar apenas pelos setores específicos do gestor
+      return funcionarios.filter(f => setoresUsuario.includes(f.setor_id));
+    }
+    if (isGestorDecoracao && grupoAtual === 'DECORAÇÃO') {
+      return funcionarios.filter(f => setoresUsuario.includes(f.setor_id));
+    }
+    return [];
+  };
 
   const funcionariosSopro = useMemo(() => {
     const filtered = funcionariosQuadro.filter(f => {
       const setorNome = f.setor?.nome?.toUpperCase() || '';
       return setorNome.includes('SOPRO');
     });
-    return filtrarPorSetorUsuario(filtered);
-  }, [funcionariosQuadro]);
+    return filtrarPorSetorUsuario(filtered, 'SOPRO');
+  }, [funcionariosQuadro, isGestorSetor, setoresUsuario, setoresNomes]);
 
   const funcionariosDecoracao = useMemo(() => {
     const filtered = funcionariosQuadro.filter(f => {
       const setorNome = f.setor?.nome?.toUpperCase() || '';
       return setorNome.includes('DECORAÇÃO') || setorNome.includes('DECORACAO');
     });
-    return filtrarPorSetorUsuario(filtered);
-  }, [funcionariosQuadro]);
+    return filtrarPorSetorUsuario(filtered, 'DECORAÇÃO');
+  }, [funcionariosQuadro, isGestorSetor, setoresUsuario, setoresNomes]);
 
   const todosSopro = useMemo(() => {
     const filtered = todosFuncionarios.filter(f => {
       const setorNome = f.setor?.nome?.toUpperCase() || '';
       return setorNome.includes('SOPRO');
     });
-    return filtered;
-  }, [todosFuncionarios]);
+    if (!isGestorSetor) return filtered;
+    const setoresDoUsuario = setoresUsuario.map(id => setoresNomes.get(id) || '');
+    const isGestorSopro = setoresDoUsuario.some(nome => nome.includes('SOPRO'));
+    if (isGestorSopro) return filtered.filter(f => setoresUsuario.includes(f.setor_id));
+    return [];
+  }, [todosFuncionarios, isGestorSetor, setoresUsuario, setoresNomes]);
 
   const todosDecoracao = useMemo(() => {
     const filtered = todosFuncionarios.filter(f => {
       const setorNome = f.setor?.nome?.toUpperCase() || '';
       return setorNome.includes('DECORAÇÃO') || setorNome.includes('DECORACAO');
     });
-    return filtered;
-  }, [todosFuncionarios]);
+    if (!isGestorSetor) return filtered;
+    const setoresDoUsuario = setoresUsuario.map(id => setoresNomes.get(id) || '');
+    const isGestorDecoracao = setoresDoUsuario.some(nome =>
+      nome.includes('DECORAÇÃO') || nome.includes('DECORACAO')
+    );
+    if (isGestorDecoracao) return filtered.filter(f => setoresUsuario.includes(f.setor_id));
+    return [];
+  }, [todosFuncionarios, isGestorSetor, setoresUsuario, setoresNomes]);
 
   // Sumidos por turma
   const sumidosSopro = useMemo(() => {

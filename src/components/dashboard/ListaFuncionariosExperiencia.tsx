@@ -173,9 +173,9 @@ export function ListaFuncionariosExperiencia({ funcionarios, grupo, disabled = f
       'Tipo': f.isTemporario ? 'Temporário' : 'Efetivo',
       'Setor': f.setor?.nome || '',
       'Turma': f.turma || '',
+      'Matrícula': f.matricula || '',
       'Nome': f.nome_completo,
       'Empresa': f.empresa || '',
-      'Matrícula': f.matricula || '',
       // data_admissao vem como YYYY-MM-DD; parseISO evita problema de fuso do new Date().
       'Data Admissão': f.data_admissao ? format(parseISO(f.data_admissao), 'dd/MM/yyyy') : '',
       'Dias na Empresa': f.diasDesdeAdmissao,

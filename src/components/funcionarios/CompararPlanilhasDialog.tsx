@@ -394,8 +394,8 @@ export function CompararPlanilhasDialog() {
       resultado.camposDiferentes[campo].forEach(dif => {
         resumoData.push({
           'Campo': label,
-          'Nome': dif.nome,
           'Matrícula': dif.matricula,
+          'Nome': dif.nome,
           'Valor Sistema': dif.valorSistema || '(vazio)',
           'Valor APDATA': dif.valorApdata || '(vazio)',
         });
@@ -410,8 +410,8 @@ export function CompararPlanilhasDialog() {
       if (difs.length === 0) return;
       const label = CAMPOS_DISPONIVEIS.find(c => c.key === campo)?.label || campo;
       const data = difs.map(d => ({
-        'Nome': d.nome,
         'Matrícula': d.matricula,
+        'Nome': d.nome,
         [`${label} Sistema`]: d.valorSistema || '(vazio)',
         [`${label} APDATA`]: d.valorApdata || '(vazio)',
       }));
@@ -420,7 +420,7 @@ export function CompararPlanilhasDialog() {
 
     if (resultado.apenasNoSistema.length > 0) {
       const data = resultado.apenasNoSistema.map(r => ({
-        'Nome': r.nome, 'Matrícula': r.matricula, 'Setor': r.setor,
+        'Matrícula': r.matricula, 'Nome': r.nome, 'Setor': r.setor,
         'Empresa': r.empresa, 'Turma': r.turma, 'Situação': r.situacao,
       }));
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), 'Só no Sistema');
@@ -428,7 +428,7 @@ export function CompararPlanilhasDialog() {
 
     if (resultado.apenasNaApdata.length > 0) {
       const data = resultado.apenasNaApdata.map(r => ({
-        'Nome': r.nome, 'Matrícula': r.matricula, 'Setor': r.setor,
+        'Matrícula': r.matricula, 'Nome': r.nome, 'Setor': r.setor,
         'Empresa': r.empresa, 'Turma': r.turma, 'Situação': r.situacao,
       }));
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), 'Só na APDATA');
@@ -715,8 +715,8 @@ export function CompararPlanilhasDialog() {
                                     onCheckedChange={() => selecionarTodosCampo(campo)}
                                   />
                                 </th>
-                                <th className="p-2 text-left">Nome</th>
                                 <th className="p-2 text-left">Matrícula</th>
+                                <th className="p-2 text-left">Nome</th>
                                 <th className="p-2 text-left">Setor</th>
                                 <th className="p-2 text-left text-red-500">Sistema (atual)</th>
                                 <th className="p-2 text-center w-10">→</th>
@@ -734,8 +734,8 @@ export function CompararPlanilhasDialog() {
                                         onCheckedChange={() => toggleSelecao(campo, dif.chave)}
                                       />
                                     </td>
-                                    <td className="p-2 font-medium">{dif.nome}</td>
                                     <td className="p-2 text-muted-foreground">{dif.matricula || '-'}</td>
+                                    <td className="p-2 font-medium">{dif.nome}</td>
                                     <td className="p-2 text-muted-foreground text-xs">
                                       {(() => {
                                         const mapa2 = new Map<string, RegistroPlanilha>();
@@ -775,8 +775,8 @@ export function CompararPlanilhasDialog() {
                     <table className="w-full text-sm">
                       <thead className="bg-muted sticky top-0">
                         <tr>
-                          <th className="p-2 text-left">Nome</th>
                           <th className="p-2 text-left">Matrícula</th>
+                          <th className="p-2 text-left">Nome</th>
                           <th className="p-2 text-left">Setor</th>
                           <th className="p-2 text-left">Empresa</th>
                           <th className="p-2 text-left">Turma</th>
@@ -786,8 +786,8 @@ export function CompararPlanilhasDialog() {
                       <tbody>
                         {resultado.apenasNoSistema.map((reg, idx) => (
                           <tr key={idx} className="border-t hover:bg-muted/50">
-                            <td className="p-2 font-medium">{reg.nome}</td>
                             <td className="p-2 text-muted-foreground">{reg.matricula || '-'}</td>
+                            <td className="p-2 font-medium">{reg.nome}</td>
                             <td className="p-2">{reg.setor}</td>
                             <td className="p-2">{reg.empresa}</td>
                             <td className="p-2">{reg.turma}</td>
@@ -812,8 +812,8 @@ export function CompararPlanilhasDialog() {
                     <table className="w-full text-sm">
                       <thead className="bg-muted sticky top-0">
                         <tr>
-                          <th className="p-2 text-left">Nome</th>
                           <th className="p-2 text-left">Matrícula</th>
+                          <th className="p-2 text-left">Nome</th>
                           <th className="p-2 text-left">Setor</th>
                           <th className="p-2 text-left">Empresa</th>
                           <th className="p-2 text-left">Turma</th>
@@ -823,8 +823,8 @@ export function CompararPlanilhasDialog() {
                       <tbody>
                         {resultado.apenasNaApdata.map((reg, idx) => (
                           <tr key={idx} className="border-t hover:bg-muted/50">
-                            <td className="p-2 font-medium">{reg.nome}</td>
                             <td className="p-2 text-muted-foreground">{reg.matricula || '-'}</td>
+                            <td className="p-2 font-medium">{reg.nome}</td>
                             <td className="p-2">{reg.setor}</td>
                             <td className="p-2">{reg.empresa}</td>
                             <td className="p-2">{reg.turma}</td>

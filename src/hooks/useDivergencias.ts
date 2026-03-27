@@ -2,7 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { inserirEventoSemDuplicata } from '@/hooks/useEventosSistema';
 import { toast } from 'sonner';
-import { useFiltroSetor } from '@/hooks/useFiltroSetor';
 
 export interface Divergencia {
   id: string;
@@ -24,6 +23,7 @@ export interface Divergencia {
     matricula: string | null;
     turma: string | null;
     setor: {
+      id: string;
       nome: string;
       grupo: string | null;
     } | null;
@@ -32,33 +32,23 @@ export interface Divergencia {
 
 const DIVERGENCIA_SELECT = `
   *,
-  funcionario:funcionarios!inner(
+  funcionario:funcionarios(
     id,
     nome_completo,
     matricula,
     turma,
-    setor:setores!setor_id(nome, grupo)
+    setor:setores!setor_id(id, nome, grupo)
   )
 `;
 
 export function useDivergencias() {
-  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
-  const deveFiltrar = aplicarFiltroSetor;
-
   return useQuery({
-    queryKey: ['divergencias', deveFiltrar ? setoresIds : 'all'],
+    queryKey: ['divergencias'],
     queryFn: async () => {
-      if (deveFiltrar && setoresIds.length === 0) return [];
-      let query = supabase
+      const { data, error } = await supabase
         .from('divergencias_quadro')
         .select(DIVERGENCIA_SELECT)
         .order('created_at', { ascending: false });
-
-      if (deveFiltrar) {
-        query = query.in('funcionario.setor_id', setoresIds);
-      }
-
-      const { data, error } = await query;
       
       if (error) throw error;
       return data as Divergencia[];
@@ -67,24 +57,14 @@ export function useDivergencias() {
 }
 
 export function useDivergenciasPendentes() {
-  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
-  const deveFiltrar = aplicarFiltroSetor;
-
   return useQuery({
-    queryKey: ['divergencias', 'pendentes', deveFiltrar ? setoresIds : 'all'],
+    queryKey: ['divergencias', 'pendentes'],
     queryFn: async () => {
-      if (deveFiltrar && setoresIds.length === 0) return [];
-      let query = supabase
+      const { data, error } = await supabase
         .from('divergencias_quadro')
         .select(DIVERGENCIA_SELECT)
         .eq('resolvido', false)
         .order('created_at', { ascending: false });
-
-      if (deveFiltrar) {
-        query = query.in('funcionario.setor_id', setoresIds);
-      }
-
-      const { data, error } = await query;
       
       if (error) throw error;
       return data as Divergencia[];

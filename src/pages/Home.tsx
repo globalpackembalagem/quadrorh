@@ -8,8 +8,8 @@ import { HomeFaltasMetrics } from '@/components/home/HomeFaltasMetrics';
 
 export default function Home() {
   const data = useDashboardData();
-  const { data: recentesSopro = [] } = useAdmissaoRecente('SOPRO', { ignorarFiltroSetor: true });
-  const { data: recentesDeco = [] } = useAdmissaoRecente('DECORAÇÃO', { ignorarFiltroSetor: true });
+  const { data: recentesSopro = [] } = useAdmissaoRecente('SOPRO');
+  const { data: recentesDeco = [] } = useAdmissaoRecente('DECORAÇÃO');
   const { data: treinamentosPrevisao = [] } = useTreinamentosPrevisao();
 
   const recentesPorTurmaSopro = useMemo(() => agruparRecentesPorTurma(recentesSopro, 'SOPRO'), [recentesSopro]);

@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useFiltroSetor } from '@/hooks/useFiltroSetor';
 
 export interface HistoricoFalta {
   id: string;
@@ -16,22 +15,14 @@ export interface HistoricoFalta {
 }
 
 export function useHistoricoFaltas(periodoId?: string) {
-  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
-  const deveFiltrar = aplicarFiltroSetor;
-
   return useQuery({
-    queryKey: ['historico_faltas', periodoId, deveFiltrar ? setoresIds : 'all'],
+    queryKey: ['historico_faltas', periodoId],
     queryFn: async () => {
-      if (deveFiltrar && setoresIds.length === 0) return [];
       let query = supabase
         .from('historico_faltas')
-        .select('*, funcionario:funcionarios!inner(setor_id)')
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(200);
-
-      if (deveFiltrar) {
-        query = query.in('funcionario.setor_id', setoresIds);
-      }
       
       if (periodoId) {
         query = query.eq('periodo_id', periodoId);

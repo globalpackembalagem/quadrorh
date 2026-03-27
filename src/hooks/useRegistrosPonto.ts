@@ -2,16 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { RegistroPonto, PontoTipo } from '@/types/database';
 import { toast } from 'sonner';
-import { useFiltroSetor } from '@/hooks/useFiltroSetor';
 
 export function useRegistrosPonto(periodoId?: string) {
-  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
-  const deveFiltrar = aplicarFiltroSetor;
-
   return useQuery({
-    queryKey: ['registros_ponto', periodoId, deveFiltrar ? setoresIds : 'all'],
+    queryKey: ['registros_ponto', periodoId],
     queryFn: async () => {
-      if (deveFiltrar && setoresIds.length === 0) return [];
       const pageSize = 1000;
       let allData: RegistroPonto[] = [];
       let page = 0;
@@ -23,13 +18,9 @@ export function useRegistrosPonto(periodoId?: string) {
 
         let query = supabase
           .from('registros_ponto')
-          .select(`*, funcionario:funcionarios!inner(*, setor:setores!setor_id(*), situacao:situacoes(*))`)
+          .select(`*, funcionario:funcionarios(*, setor:setores!setor_id(*), situacao:situacoes(*))`)
           .order('data', { ascending: false })
           .range(from, to);
-
-        if (deveFiltrar) {
-          query = query.in('funcionario.setor_id', setoresIds);
-        }
 
         if (periodoId) {
           query = query.eq('periodo_id', periodoId);
@@ -54,23 +45,14 @@ export function useRegistrosPonto(periodoId?: string) {
 }
 
 export function useRegistrosPontoHoje() {
-  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
-  const deveFiltrar = aplicarFiltroSetor;
   const hoje = new Date().toISOString().split('T')[0];
   return useQuery({
-    queryKey: ['registros_ponto', 'hoje', deveFiltrar ? setoresIds : 'all'],
+    queryKey: ['registros_ponto', 'hoje'],
     queryFn: async () => {
-      if (deveFiltrar && setoresIds.length === 0) return [];
-      let query = supabase
+      const { data, error } = await supabase
         .from('registros_ponto')
-        .select(`*, funcionario:funcionarios!inner(*, setor:setores!setor_id(*), situacao:situacoes(*))`)
+        .select(`*, funcionario:funcionarios(*, setor:setores!setor_id(*), situacao:situacoes(*))`)
         .eq('data', hoje);
-
-      if (deveFiltrar) {
-        query = query.in('funcionario.setor_id', setoresIds);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
       return data as RegistroPonto[];
     },

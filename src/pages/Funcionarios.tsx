@@ -554,12 +554,12 @@ export default function Funcionarios() {
     if (!funcionarios.length) { toast.error('Nenhum funcionário para exportar'); return; }
     const XLSX = await import('xlsx-js-style');
     const dados = funcionarios.map(f => ({
+      'Matrícula': f.matricula || '',
       'Nome': f.nome_completo,
       'Sexo': f.sexo === 'masculino' ? 'M' : 'F',
       'Setor': f.setor?.nome || '',
       'Situação': f.situacao?.nome || '',
       'Empresa': f.empresa || '',
-      'Matrícula': f.matricula || '',
       'Data Admissão': f.data_admissao ? format(parseISO(f.data_admissao), 'dd/MM/yyyy') : '',
       'Cargo': f.cargo || '',
       'Turma': f.turma || '',
@@ -680,10 +680,9 @@ export default function Funcionarios() {
                 <table className="data-table text-xs w-full">
                   <thead>
                     <tr>
-                      <th className="w-[80px]">Matrícula</th>
                       <th>Nome</th>
-                      <th className="w-[130px]">Setor</th>
                       <th className="w-[100px]">Turma</th>
+                      <th className="w-[130px]">Setor</th>
                       <th className="w-[120px]">Situação</th>
                     </tr>
                   </thead>
@@ -694,10 +693,9 @@ export default function Funcionarios() {
                         className="cursor-pointer hover:bg-muted/50"
                         onClick={() => openEdit(func)}
                       >
-                        <td className="text-muted-foreground">{func.matricula || '-'}</td>
                         <td className="font-medium">{func.nome_completo}</td>
-                        <td className="text-xs text-muted-foreground">{func.setor?.nome}</td>
                         <td>{func.turma || <span className="text-muted-foreground">-</span>}</td>
+                        <td className="text-xs text-muted-foreground">{func.setor?.nome}</td>
                         <td>
                           <Badge className="text-white border-0 text-[10px]" style={{ backgroundColor: 'hsl(var(--primary))' }}>
                             {func.situacao?.nome}
@@ -718,7 +716,7 @@ export default function Funcionarios() {
                   </div>
                 ) : (
                   funcionariosPorTurma.map(([turmaLabel, funcs]) => (
-                    <div key={turmaLabel} className="rounded-lg border bg-card overflow-hidden">
+                    <div key={turmaLabel} className="rounded-lg border bg-card overflow-x-auto">
                       <div className="bg-muted/50 px-4 py-2 flex items-center justify-between border-b">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-sm">{turmaLabel}</span>

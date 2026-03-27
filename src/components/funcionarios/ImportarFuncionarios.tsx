@@ -372,6 +372,7 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
   const exportarConfirmacao = async (registros: FuncionarioImport[]) => {
     const XLSX = await import('xlsx-js-style');
     const dadosExport = registros.map(item => ({
+      'Matrícula': item.matricula || '',
       'Nome': item.nome_completo,
       'Sexo': item.sexo === 'masculino' ? 'M' : 'F',
       'Setor Original': item.setor_original || '(vazio)',
@@ -379,7 +380,6 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
       'Situação Original': item.situacao_original || '(vazio)',
       'Situação Usada': item.situacao_nome,
       'Empresa': item.empresa || '',
-      'Matrícula': item.matricula || '',
       'Admissão': item.data_admissao || '',
       'Cargo': item.cargo || '',
       'Turma': item.turma || '',

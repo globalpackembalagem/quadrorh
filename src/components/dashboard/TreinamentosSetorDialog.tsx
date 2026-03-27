@@ -155,40 +155,42 @@ export function TreinamentosSetorDialog({ grupoLabel, treinamentos }: Treinament
             Nenhum registro de treinamento encontrado.
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-xs">Matrícula</TableHead>
-                <TableHead className="text-xs">Nome</TableHead>
-                <TableHead className="text-xs">Cargo</TableHead>
-                <TableHead className="text-xs">Turma</TableHead>
-                <TableHead className="text-xs">Início</TableHead>
-                <TableHead className="text-xs">Expiração</TableHead>
-                <TableHead className="text-xs">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map(t => (
-                <TableRow key={t.id} className="text-xs">
-                  <TableCell className="py-1.5">{t.matricula || '-'}</TableCell>
-                  <TableCell className="font-medium py-1.5">{t.nome_completo}</TableCell>
-                  <TableCell className="py-1.5">{t.cargo || '-'}</TableCell>
-                  <TableCell className="py-1.5">{t.turma || '-'}</TableCell>
-                  <TableCell className="py-1.5">
-                    {format(new Date(t.treinamento_inicio), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                  </TableCell>
-                  <TableCell className="py-1.5">
-                    {format(new Date(t.treinamento_expiracao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                  </TableCell>
-                  <TableCell className="py-1.5">
-                    <Badge variant="outline" className={cn('text-[10px] px-1.5 py-0', STATUS_COLORS[t.statusReal] || '')}>
-                      {t.statusReal}
-                    </Badge>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-xs">Matrícula</TableHead>
+                  <TableHead className="text-xs">Nome</TableHead>
+                  <TableHead className="text-xs">Cargo</TableHead>
+                  <TableHead className="text-xs">Turma</TableHead>
+                  <TableHead className="text-xs">Início</TableHead>
+                  <TableHead className="text-xs">Expiração</TableHead>
+                  <TableHead className="text-xs">Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filtered.map(t => (
+                  <TableRow key={t.id} className="text-xs">
+                    <TableCell className="py-1.5">{t.matricula || '-'}</TableCell>
+                    <TableCell className="font-medium py-1.5">{t.nome_completo}</TableCell>
+                    <TableCell className="py-1.5">{t.cargo || '-'}</TableCell>
+                    <TableCell className="py-1.5">{t.turma || '-'}</TableCell>
+                    <TableCell className="py-1.5">
+                      {format(new Date(t.treinamento_inicio), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                    </TableCell>
+                    <TableCell className="py-1.5">
+                      {format(new Date(t.treinamento_expiracao), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                    </TableCell>
+                    <TableCell className="py-1.5">
+                      <Badge variant="outline" className={cn('text-[10px] px-1.5 py-0', STATUS_COLORS[t.statusReal] || '')}>
+                        {t.statusReal}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </DialogContent>
     </Dialog>

@@ -1,35 +1,24 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useFiltroSetor } from '@/hooks/useFiltroSetor';
 
 /**
  * Hook que busca funcionários admitidos nos últimos 2 dias
  * em situação TREINAMENTO ou ATIVO, agrupados por turma.
  */
-export function useAdmissaoRecente(grupo?: 'SOPRO' | 'DECORAÇÃO', options?: { ignorarFiltroSetor?: boolean }) {
-  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
-  const deveFiltrar = aplicarFiltroSetor && !options?.ignorarFiltroSetor;
-
+export function useAdmissaoRecente(grupo?: 'SOPRO' | 'DECORAÇÃO') {
   return useQuery({
-    queryKey: ['admissao-recente', grupo, deveFiltrar ? setoresIds : 'all'],
+    queryKey: ['admissao-recente', grupo],
     queryFn: async () => {
-      if (deveFiltrar && setoresIds.length === 0) return [];
       const hoje = new Date();
       const doisDiasAtras = new Date(hoje);
       doisDiasAtras.setDate(doisDiasAtras.getDate() - 2);
       const dataLimite = doisDiasAtras.toISOString().split('T')[0];
 
-      let query = supabase
+      const { data, error } = await supabase
         .from('funcionarios')
         .select('id, nome_completo, data_admissao, turma, setor:setores(nome, grupo), situacao:situacoes(nome)')
         .gte('data_admissao', dataLimite)
         .order('data_admissao', { ascending: false });
-
-      if (deveFiltrar) {
-        query = query.in('setor_id', setoresIds);
-      }
-
-      const { data, error } = await query;
 
       if (error) throw error;
 

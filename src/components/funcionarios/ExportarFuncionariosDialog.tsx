@@ -167,12 +167,12 @@ export function ExportarFuncionariosDialog({
       const turmaQuadro = calcularTurmaQuadro(f);
       
       return {
+        'Matrícula': f.matricula || '',
         'Nome': f.nome_completo,
         'Sexo': f.sexo === 'masculino' ? 'M' : 'F',
         'Setor': f.setor?.nome || '',
         'Situação': f.situacao?.nome || '',
         'Empresa': f.empresa || '',
-        'Matrícula': f.matricula || '',
         'Data Admissão': f.data_admissao ? format(new Date(f.data_admissao), 'dd/MM/yyyy') : '',
         'Cargo': f.cargo || '',
         'Turma': f.turma || '',

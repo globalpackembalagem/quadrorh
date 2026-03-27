@@ -307,13 +307,13 @@ export default function IntegracaoFaltas() {
           <p>Não há funcionários com ocorrências para os filtros selecionados</p>
         </div>
       ) : (
-        <div className="rounded-lg border bg-card">
+        <div className="rounded-lg border bg-card overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>SETOR</TableHead>
-                <TableHead>FUNCIONÁRIO</TableHead>
                 <TableHead>MATRÍCULA</TableHead>
+                <TableHead>FUNCIONÁRIO</TableHead>
                 <TableHead className="text-center">FALTAS</TableHead>
                 <TableHead className="text-center">ATESTADOS</TableHead>
                 <TableHead className="text-center">FÉRIAS</TableHead>
@@ -332,10 +332,10 @@ export default function IntegracaoFaltas() {
                     <TableCell className="font-medium text-xs">
                       {func.setor?.nome?.toUpperCase() || '-'}
                     </TableCell>
+                    <TableCell>{func.matricula || '-'}</TableCell>
                     <TableCell className="font-medium">
                       {func.nome_completo.toUpperCase()}
                     </TableCell>
-                    <TableCell>{func.matricula || '-'}</TableCell>
                     <TableCell className="text-center">
                       {totais.faltas > 0 ? (
                         <Badge variant="destructive">{totais.faltas}</Badge>

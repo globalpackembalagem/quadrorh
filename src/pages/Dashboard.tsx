@@ -12,7 +12,7 @@ import { format } from 'date-fns';
 
 export default function Dashboard() {
   const data = useDashboardData();
-  const { data: recentes = [] } = useAdmissaoRecente(data.grupoSelecionado, { ignorarFiltroSetor: true });
+  const { data: recentes = [] } = useAdmissaoRecente(data.grupoSelecionado);
   const { data: treinamentosPrevisao = [] } = useTreinamentosPrevisao();
   const recentesPorTurma = useMemo(() => agruparRecentesPorTurma(recentes, data.grupoSelecionado), [recentes, data.grupoSelecionado]);
 
@@ -75,15 +75,15 @@ export default function Dashboard() {
       );
       const dadosAba = funcs.map((f, idx) => ({
         'Nº': idx + 1,
-        'Nome': f.nome_completo,
         'Matrícula': f.matricula || '',
+        'Nome': f.nome_completo,
         'Situação': f.situacao?.nome || '',
         'Cargo': f.cargo || '',
         'Empresa': f.empresa || '',
         'Admissão': f.data_admissao ? format(new Date(f.data_admissao), 'dd/MM/yyyy') : '',
       }));
       const ws = XLSX.utils.json_to_sheet(dadosAba);
-      ws['!cols'] = [{ wch: 5 }, { wch: 35 }, { wch: 12 }, { wch: 18 }, { wch: 25 }, { wch: 14 }, { wch: 12 }];
+      ws['!cols'] = [{ wch: 5 }, { wch: 12 }, { wch: 35 }, { wch: 18 }, { wch: 25 }, { wch: 14 }, { wch: 12 }];
       const nomeAba = turma.length > 31 ? turma.substring(0, 31) : turma;
       XLSX.utils.book_append_sheet(wb, ws, nomeAba);
     });
@@ -144,8 +144,8 @@ export default function Dashboard() {
     XLSX.utils.book_append_sheet(wb, wsDeco, 'Resumo DECORAÇÃO');
 
     const funcSoproData = data.funcionariosSopro.map(f => ({
-      'Nome': f.nome_completo,
       'Matrícula': f.matricula || '',
+      'Nome': f.nome_completo,
       'Setor': f.setor?.nome || '',
       'Turma': f.turma || '',
       'Situação': f.situacao?.nome || '',
@@ -156,8 +156,8 @@ export default function Dashboard() {
     XLSX.utils.book_append_sheet(wb, wsFuncSopro, 'Funcionários SOPRO');
 
     const funcDecoData = data.funcionariosDecoracao.map(f => ({
-      'Nome': f.nome_completo,
       'Matrícula': f.matricula || '',
+      'Nome': f.nome_completo,
       'Setor': f.setor?.nome || '',
       'Turma': f.turma || '',
       'Situação': f.situacao?.nome || '',

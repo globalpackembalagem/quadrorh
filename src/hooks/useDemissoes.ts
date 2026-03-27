@@ -3,23 +3,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { Demissao, PeriodoDemissao } from '@/types/demissao';
 import { toast } from 'sonner';
 import { criarEventoENotificar } from '@/hooks/useEventosSistema';
-import { useFiltroSetor } from '@/hooks/useFiltroSetor';
 
 // Eventos são registrados automaticamente na central de notificações
 
-export function useDemissoes(options?: { ignorarFiltroSetor?: boolean }) {
-  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
-  const deveFiltrar = aplicarFiltroSetor && !options?.ignorarFiltroSetor;
-
+export function useDemissoes() {
   return useQuery({
-    queryKey: ['demissoes', deveFiltrar ? setoresIds : 'all'],
+    queryKey: ['demissoes'],
     queryFn: async () => {
-      if (deveFiltrar && setoresIds.length === 0) return [];
-      let query = supabase
+      const { data, error } = await supabase
         .from('demissoes')
         .select(`
           *,
-          funcionario:funcionarios!inner(
+          funcionario:funcionarios(
             id,
             nome_completo,
             matricula,
@@ -29,12 +24,6 @@ export function useDemissoes(options?: { ignorarFiltroSetor?: boolean }) {
             setor:setores!setor_id(id, nome, grupo)
           )
         `);
-
-      if (deveFiltrar) {
-        query = query.in('funcionario.setor_id', setoresIds);
-      }
-
-      const { data, error } = await query;
       
       if (error) throw error;
       return data as Demissao[];
@@ -42,19 +31,15 @@ export function useDemissoes(options?: { ignorarFiltroSetor?: boolean }) {
   });
 }
 
-export function useDemissoesPendentes(options?: { ignorarFiltroSetor?: boolean }) {
-  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
-  const deveFiltrar = aplicarFiltroSetor && !options?.ignorarFiltroSetor;
-
+export function useDemissoesPendentes() {
   return useQuery({
-    queryKey: ['demissoes', 'pendentes', deveFiltrar ? setoresIds : 'all'],
+    queryKey: ['demissoes', 'pendentes'],
     queryFn: async () => {
-      if (deveFiltrar && setoresIds.length === 0) return [];
-      let query = supabase
+      const { data, error } = await supabase
         .from('demissoes')
         .select(`
           *,
-          funcionario:funcionarios!inner(
+          funcionario:funcionarios(
             id,
             nome_completo,
             matricula,
@@ -67,12 +52,6 @@ export function useDemissoesPendentes(options?: { ignorarFiltroSetor?: boolean }
         .eq('realizado', false)
         .neq('tipo_desligamento', 'Pedido de Demissão')
         .order('data_prevista', { ascending: true });
-
-      if (deveFiltrar) {
-        query = query.in('funcionario.setor_id', setoresIds);
-      }
-
-      const { data, error } = await query;
       
       if (error) throw error;
       return data as Demissao[];
@@ -80,19 +59,15 @@ export function useDemissoesPendentes(options?: { ignorarFiltroSetor?: boolean }
   });
 }
 
-export function useDemissoesRealizadas(options?: { ignorarFiltroSetor?: boolean }) {
-  const { aplicarFiltroSetor, setoresIds } = useFiltroSetor();
-  const deveFiltrar = aplicarFiltroSetor && !options?.ignorarFiltroSetor;
-
+export function useDemissoesRealizadas() {
   return useQuery({
-    queryKey: ['demissoes', 'realizadas', deveFiltrar ? setoresIds : 'all'],
+    queryKey: ['demissoes', 'realizadas'],
     queryFn: async () => {
-      if (deveFiltrar && setoresIds.length === 0) return [];
-      let query = supabase
+      const { data, error } = await supabase
         .from('demissoes')
         .select(`
           *,
-          funcionario:funcionarios!inner(
+          funcionario:funcionarios(
             id,
             nome_completo,
             matricula,
@@ -104,12 +79,6 @@ export function useDemissoesRealizadas(options?: { ignorarFiltroSetor?: boolean 
         `)
         .eq('realizado', true)
         .order('data_prevista', { ascending: false });
-
-      if (deveFiltrar) {
-        query = query.in('funcionario.setor_id', setoresIds);
-      }
-
-      const { data, error } = await query;
       
       if (error) throw error;
       return data as Demissao[];

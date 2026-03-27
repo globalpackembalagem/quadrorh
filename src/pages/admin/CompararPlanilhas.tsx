@@ -403,8 +403,8 @@ export default function CompararPlanilhas() {
       resultado.camposDiferentes[campo].forEach(dif => {
         resumoData.push({
           'Campo': label,
-          'Nome': dif.nome,
           'Matrícula': dif.matricula,
+          'Nome': dif.nome,
           'Valor Sistema': dif.valorSistema || '(vazio)',
           'Valor APDATA': dif.valorApdata || '(vazio)',
         });
@@ -419,8 +419,8 @@ export default function CompararPlanilhas() {
       if (difs.length === 0) return;
       const label = CAMPOS_DISPONIVEIS.find(c => c.key === campo)?.label || campo;
       const data = difs.map(d => ({
-        'Nome': d.nome,
         'Matrícula': d.matricula,
+        'Nome': d.nome,
         [`${label} Sistema`]: d.valorSistema || '(vazio)',
         [`${label} APDATA`]: d.valorApdata || '(vazio)',
       }));
@@ -429,7 +429,7 @@ export default function CompararPlanilhas() {
 
     if (resultado.apenasNoSistema.length > 0) {
       const data = resultado.apenasNoSistema.map(r => ({
-        'Nome': r.nome, 'Matrícula': r.matricula, 'Setor': r.setor,
+        'Matrícula': r.matricula, 'Nome': r.nome, 'Setor': r.setor,
         'Empresa': r.empresa, 'Turma': r.turma, 'Situação': r.situacao,
       }));
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), 'Só no Sistema');
@@ -437,7 +437,7 @@ export default function CompararPlanilhas() {
 
     if (resultado.apenasNaApdata.length > 0) {
       const data = resultado.apenasNaApdata.map(r => ({
-        'Nome': r.nome, 'Matrícula': r.matricula, 'Setor': r.setor,
+        'Matrícula': r.matricula, 'Nome': r.nome, 'Setor': r.setor,
         'Empresa': r.empresa, 'Turma': r.turma, 'Situação': r.situacao,
       }));
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), 'Só na APDATA');
@@ -772,8 +772,8 @@ export default function CompararPlanilhas() {
                                   <th className="p-2 w-10">
                                     <Checkbox checked={allSelected} onCheckedChange={() => selecionarTodosCampo(campo)} />
                                   </th>
-                                  <th className="p-2 text-left">Nome</th>
                                   <th className="p-2 text-left">Matrícula</th>
+                                  <th className="p-2 text-left">Nome</th>
                                   <th className="p-2 text-left">Setor</th>
                                   <th className="p-2 text-left text-red-500">Sistema (atual)</th>
                                   <th className="p-2 text-center w-10">→</th>
@@ -790,8 +790,8 @@ export default function CompararPlanilhas() {
                                       <td className="p-2" onClick={(e) => e.stopPropagation()}>
                                         <Checkbox checked={isSelected} onCheckedChange={() => toggleSelecao(campo, dif.chave)} />
                                       </td>
-                                      <td className="p-2 font-medium">{dif.nome}</td>
                                       <td className="p-2 text-muted-foreground">{dif.matricula || '-'}</td>
+                                      <td className="p-2 font-medium">{dif.nome}</td>
                                       <td className="p-2 text-muted-foreground text-xs">
                                         {(() => {
                                           const mapa2Map = new Map<string, RegistroPlanilha>();
@@ -831,16 +831,16 @@ export default function CompararPlanilhas() {
                           <table className="w-full text-sm">
                             <thead className="bg-muted sticky top-0 z-10">
                               <tr>
-                                <th className="p-2 text-left">Nome</th>
                                 <th className="p-2 text-left">Matrícula</th>
+                                <th className="p-2 text-left">Nome</th>
                                 <th className="p-2 text-left">{label} (igual)</th>
                               </tr>
                             </thead>
                             <tbody>
                               {corretos.map((reg, idx) => (
                                 <tr key={idx} className="border-t hover:bg-muted/50">
-                                  <td className="p-2 font-medium">{reg.nome}</td>
                                   <td className="p-2 text-muted-foreground">{reg.matricula || '-'}</td>
+                                  <td className="p-2 font-medium">{reg.nome}</td>
                                   <td className="p-2">
                                     <span className="bg-green-100 dark:bg-green-950/40 text-green-700 dark:text-green-400 px-1.5 py-0.5 rounded text-xs font-medium">
                                       {reg.valor || '(vazio)'}
@@ -871,8 +871,8 @@ export default function CompararPlanilhas() {
                     <table className="w-full text-sm">
                       <thead className="bg-muted sticky top-0 z-10">
                         <tr>
-                          <th className="p-2 text-left">Nome</th>
                           <th className="p-2 text-left">Matrícula</th>
+                          <th className="p-2 text-left">Nome</th>
                           <th className="p-2 text-left">Setor</th>
                           <th className="p-2 text-left">Empresa</th>
                           <th className="p-2 text-left">Turma</th>
@@ -882,8 +882,8 @@ export default function CompararPlanilhas() {
                       <tbody>
                         {resultado.apenasNoSistema.map((reg, idx) => (
                           <tr key={idx} className="border-t hover:bg-muted/50">
-                            <td className="p-2 font-medium">{reg.nome}</td>
                             <td className="p-2 text-muted-foreground">{reg.matricula || '-'}</td>
+                            <td className="p-2 font-medium">{reg.nome}</td>
                             <td className="p-2">{reg.setor}</td>
                             <td className="p-2">{reg.empresa}</td>
                             <td className="p-2">{reg.turma}</td>
@@ -910,8 +910,8 @@ export default function CompararPlanilhas() {
                     <table className="w-full text-sm">
                       <thead className="bg-muted sticky top-0 z-10">
                         <tr>
-                          <th className="p-2 text-left">Nome</th>
                           <th className="p-2 text-left">Matrícula</th>
+                          <th className="p-2 text-left">Nome</th>
                           <th className="p-2 text-left">Setor</th>
                           <th className="p-2 text-left">Empresa</th>
                           <th className="p-2 text-left">Turma</th>
@@ -921,8 +921,8 @@ export default function CompararPlanilhas() {
                       <tbody>
                         {resultado.apenasNaApdata.map((reg, idx) => (
                           <tr key={idx} className="border-t hover:bg-muted/50">
-                            <td className="p-2 font-medium">{reg.nome}</td>
                             <td className="p-2 text-muted-foreground">{reg.matricula || '-'}</td>
+                            <td className="p-2 font-medium">{reg.nome}</td>
                             <td className="p-2">{reg.setor}</td>
                             <td className="p-2">{reg.empresa}</td>
                             <td className="p-2">{reg.turma}</td>
@@ -967,12 +967,12 @@ export default function CompararPlanilhas() {
                       <thead className="bg-muted sticky top-0 z-10">
                         <tr>
                           <th className="p-1.5 text-left">#</th>
-                          <th className="p-1.5 text-left">Nome</th>
+                          <th className="p-1.5 text-left">Matrícula</th>
                           <th className="p-1.5 text-left">Sexo</th>
                           <th className="p-1.5 text-left">Setor</th>
                           <th className="p-1.5 text-left">Situação</th>
                           <th className="p-1.5 text-left">Empresa</th>
-                          <th className="p-1.5 text-left">Matrícula</th>
+                          <th className="p-1.5 text-left">Nome</th>
                           <th className="p-1.5 text-left">Turma</th>
                           <th className="p-1.5 text-left">Cargo</th>
                         </tr>
@@ -981,12 +981,12 @@ export default function CompararPlanilhas() {
                         {dadosPlanilha1.map((reg, idx) => (
                           <tr key={idx} className="border-t hover:bg-muted/50">
                             <td className="p-1.5 text-muted-foreground">{idx + 1}</td>
-                            <td className="p-1.5 font-medium">{reg.nome}</td>
+                            <td className="p-1.5">{reg.matricula}</td>
                             <td className="p-1.5">{reg.sexo}</td>
                             <td className="p-1.5">{reg.setor}</td>
                             <td className="p-1.5">{reg.situacao}</td>
                             <td className="p-1.5">{reg.empresa}</td>
-                            <td className="p-1.5">{reg.matricula}</td>
+                            <td className="p-1.5 font-medium">{reg.nome}</td>
                             <td className="p-1.5">{reg.turma}</td>
                             <td className="p-1.5">{reg.cargo}</td>
                           </tr>
@@ -1007,12 +1007,12 @@ export default function CompararPlanilhas() {
                       <thead className="bg-muted sticky top-0 z-10">
                         <tr>
                           <th className="p-1.5 text-left">#</th>
-                          <th className="p-1.5 text-left">Nome</th>
+                          <th className="p-1.5 text-left">Matrícula</th>
                           <th className="p-1.5 text-left">Sexo</th>
                           <th className="p-1.5 text-left">Setor</th>
                           <th className="p-1.5 text-left">Situação</th>
                           <th className="p-1.5 text-left">Empresa</th>
-                          <th className="p-1.5 text-left">Matrícula</th>
+                          <th className="p-1.5 text-left">Nome</th>
                           <th className="p-1.5 text-left">Turma</th>
                           <th className="p-1.5 text-left">Cargo</th>
                         </tr>
@@ -1021,12 +1021,12 @@ export default function CompararPlanilhas() {
                         {dadosPlanilha2.map((reg, idx) => (
                           <tr key={idx} className="border-t hover:bg-muted/50">
                             <td className="p-1.5 text-muted-foreground">{idx + 1}</td>
-                            <td className="p-1.5 font-medium">{reg.nome}</td>
+                            <td className="p-1.5">{reg.matricula}</td>
                             <td className="p-1.5">{reg.sexo}</td>
                             <td className="p-1.5">{reg.setor}</td>
                             <td className="p-1.5">{reg.situacao}</td>
                             <td className="p-1.5">{reg.empresa}</td>
-                            <td className="p-1.5">{reg.matricula}</td>
+                            <td className="p-1.5 font-medium">{reg.nome}</td>
                             <td className="p-1.5">{reg.turma}</td>
                             <td className="p-1.5">{reg.cargo}</td>
                           </tr>
