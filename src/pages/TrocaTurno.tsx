@@ -483,105 +483,117 @@ export default function TrocaTurno() {
         </TabsList>
 
         <TabsContent value="pendentes" className="mt-4">
-          {/* Filtros */}
+          {/* Filtros reorganizados */}
           {trocasPendentes.length > 0 && (
-            <div className="mb-4 space-y-2">
-              {/* ATUAL / DESTINO toggle */}
-              <div className="flex flex-wrap gap-2 items-center">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Filtrar por:</span>
-                <button
-                  onClick={() => { setFiltroModo('atual'); setFiltroGrupo(''); setFiltroTurno(''); }}
-                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${filtroModo === 'atual' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border hover:bg-muted'}`}
-                >
-                  📍 ATUAL (Origem)
-                </button>
-                <button
-                  onClick={() => { setFiltroModo('destino'); setFiltroGrupo(''); setFiltroTurno(''); }}
-                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${filtroModo === 'destino' ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border hover:bg-muted'}`}
-                >
-                  🎯 DESTINO
-                </button>
-              </div>
-
-              {/* Grupo */}
-              <div className="flex flex-wrap gap-2 items-center">
-                <button
-                  onClick={() => { setFiltroGrupo(''); setFiltroTurno(''); }}
-                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${!filtroGrupo && !filtroTurno ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border hover:bg-muted'}`}
-                >
-                  Todos ({trocasPendentes.length})
-                </button>
-                {['SOPRO', 'DECORAÇÃO'].map(g => {
-                  const count = trocasPendentes.filter(t => {
-                    const setorId = filtroModo === 'atual' ? t.setor_origem_id : t.setor_destino_id;
-                    const grupo = getGrupoFromSetor(setorId);
-                    if (g === 'SOPRO') return grupo.startsWith('SOPRO');
-                    if (g === 'DECORAÇÃO') return grupo.includes('DECORAÇÃO') || grupo.includes('DECORACAO');
-                    return false;
-                  }).length;
-                  return (
-                    <button
-                      key={g}
-                      onClick={() => { setFiltroGrupo(filtroGrupo === g ? '' : g); setFiltroTurno(''); }}
-                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${filtroGrupo === g ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border hover:bg-muted'}`}
-                    >
-                      {g} ({count})
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Sub-filtros: Turno (DIA/NOITE) e Sub-grupo (A/B/C) - só aparece quando SOPRO está selecionado */}
-              {filtroGrupo === 'SOPRO' && (
-                <div className="flex flex-wrap gap-2 items-center">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Turno:</span>
+            <div className="mb-5 rounded-xl border bg-card p-4 space-y-4">
+              {/* Linha 1: Tipo de filtro (Origem / Destino) */}
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Filtrar por</span>
+                <div className="flex gap-2">
                   <button
-                    onClick={() => setFiltroTurno('')}
-                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${!filtroTurno ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border hover:bg-muted'}`}
+                    onClick={() => { setFiltroModo('atual'); setFiltroGrupo(''); setFiltroTurno(''); }}
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${filtroModo === 'atual' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted/50 text-muted-foreground hover:bg-muted border border-border'}`}
                   >
-                    Todos
+                    📍 Atual (Origem)
                   </button>
-                  {['DIA', 'NOITE', 'A', 'B', 'C'].map(turno => (
+                  <button
+                    onClick={() => { setFiltroModo('destino'); setFiltroGrupo(''); setFiltroTurno(''); }}
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${filtroModo === 'destino' ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted/50 text-muted-foreground hover:bg-muted border border-border'}`}
+                  >
+                    🎯 Destino
+                  </button>
+                </div>
+              </div>
+
+              {/* Separador */}
+              <div className="border-t" />
+
+              {/* Linha 2: Setor */}
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Setor</span>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => { setFiltroGrupo(''); setFiltroTurno(''); }}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${!filtroGrupo ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}
+                  >
+                    Todos ({trocasPendentes.length})
+                  </button>
+                  {['SOPRO', 'DECORAÇÃO'].map(g => {
+                    const count = trocasPendentes.filter(t => {
+                      const setorId = filtroModo === 'atual' ? t.setor_origem_id : t.setor_destino_id;
+                      const grupo = getGrupoFromSetor(setorId);
+                      if (g === 'SOPRO') return grupo.startsWith('SOPRO');
+                      if (g === 'DECORAÇÃO') return grupo.includes('DECORAÇÃO') || grupo.includes('DECORACAO');
+                      return false;
+                    }).length;
+                    return (
+                      <button
+                        key={g}
+                        onClick={() => { setFiltroGrupo(filtroGrupo === g ? '' : g); setFiltroTurno(''); }}
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filtroGrupo === g ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}
+                      >
+                        {g} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Linha 3: Sub-filtro turno (condicional) */}
+              {filtroGrupo === 'SOPRO' && (
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Turno</span>
+                  <div className="flex flex-wrap gap-1.5">
                     <button
-                      key={turno}
-                      onClick={() => setFiltroTurno(filtroTurno === turno ? '' : turno)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${filtroTurno === turno ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border hover:bg-muted'}`}
+                      onClick={() => setFiltroTurno('')}
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${!filtroTurno ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted'}`}
                     >
-                      {turno}
+                      Todos
                     </button>
-                  ))}
+                    {['A', 'B', 'C'].map(turno => (
+                      <button
+                        key={turno}
+                        onClick={() => setFiltroTurno(filtroTurno === turno ? '' : turno)}
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filtroTurno === turno ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted'}`}
+                      >
+                        {turno}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
               {filtroGrupo === 'DECORAÇÃO' && (
-                <div className="flex flex-wrap gap-2 items-center">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Turno:</span>
-                  <button
-                    onClick={() => setFiltroTurno('')}
-                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${!filtroTurno ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border hover:bg-muted'}`}
-                  >
-                    Todos
-                  </button>
-                  {['DIA', 'NOITE'].map(turno => (
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Turno</span>
+                  <div className="flex flex-wrap gap-1.5">
                     <button
-                      key={turno}
-                      onClick={() => setFiltroTurno(filtroTurno === turno ? '' : turno)}
-                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${filtroTurno === turno ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border hover:bg-muted'}`}
+                      onClick={() => setFiltroTurno('')}
+                      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${!filtroTurno ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted'}`}
                     >
-                      {turno}
+                      Todos
                     </button>
-                  ))}
+                    {['DIA', 'NOITE'].map(turno => (
+                      <button
+                        key={turno}
+                        onClick={() => setFiltroTurno(filtroTurno === turno ? '' : turno)}
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${filtroTurno === turno ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted'}`}
+                      >
+                        {turno}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
               {/* Resumo filtros ativos */}
               {(filtroGrupo || filtroTurno) && (
-                <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/10 border border-primary/20">
-                  <span className="text-xs text-primary font-medium">
-                    {filtroModo === 'atual' ? '📍' : '🎯'} {filtroModo === 'atual' ? 'ATUAL' : 'DESTINO'} • {filtroGrupo}{filtroTurno ? ` • ${filtroTurno}` : ''} — {trocasPendentesFiltradas.length} resultado(s)
+                <div className="flex items-center justify-between gap-2 pt-2 border-t">
+                  <span className="text-xs text-muted-foreground">
+                    <strong className="text-foreground">{trocasPendentesFiltradas.length}</strong> resultado(s) — {filtroModo === 'atual' ? 'Origem' : 'Destino'} › {filtroGrupo}{filtroTurno ? ` › ${filtroTurno}` : ''}
                   </span>
-                  <button onClick={() => { setFiltroGrupo(''); setFiltroTurno(''); }} className="ml-auto text-xs text-primary underline hover:text-primary/80">
-                    <X className="h-3 w-3 inline mr-1" />Limpar
+                  <button onClick={() => { setFiltroGrupo(''); setFiltroTurno(''); }} className="text-xs text-destructive hover:underline flex items-center gap-1">
+                    <X className="h-3 w-3" /> Limpar
                   </button>
                 </div>
               )}
