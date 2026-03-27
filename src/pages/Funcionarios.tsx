@@ -568,15 +568,6 @@ export default function Funcionarios() {
     toast.success(`${count} nome(s) convertido(s) para maiúsculo!`);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
-    );
-  }
-
-  // ── Vista do Gestor (logado, não admin) ──────────────────────────────────────
   // Detectar grupo do gestor pelo setor dos funcionários
   const gestorGrupo = useMemo(() => {
     for (const f of funcionarios) {
@@ -589,6 +580,51 @@ export default function Funcionarios() {
 
   const [gestorTurmaFilter, setGestorTurmaFilter] = useState('TODOS');
   const [gestorTurnoFilter, setGestorTurnoFilter] = useState('TODOS');
+
+  // Funcionários filtrados para gestor: ordem alfabética + filtros
+  const gestorFuncionariosFiltrados = useMemo(() => {
+    let result = funcionarios.filter(f => {
+      const sitNome = f.situacao?.nome?.toUpperCase() || '';
+      return sitNome !== 'DEMISSÃO' && sitNome !== 'PED. DEMISSÃO';
+    });
+
+    if (gestorGrupo === 'SOPRO') {
+      if (gestorTurmaFilter !== 'TODOS') {
+        result = result.filter(f => f.turma === gestorTurmaFilter);
+      }
+    } else if (gestorGrupo === 'DECORACAO') {
+      if (gestorTurnoFilter !== 'TODOS') {
+        const setorNomeUpper = gestorTurnoFilter.toUpperCase();
+        result = result.filter(f => {
+          const nome = f.setor?.nome?.toUpperCase() || '';
+          return nome.includes(setorNomeUpper);
+        });
+      }
+      if (gestorTurmaFilter !== 'TODOS') {
+        result = result.filter(f => f.turma === gestorTurmaFilter);
+      }
+    }
+
+    if (debouncedSearch) {
+      const s = debouncedSearch.toLowerCase();
+      result = result.filter(f =>
+        f.nome_completo.toLowerCase().includes(s) ||
+        f.matricula?.toLowerCase().includes(s)
+      );
+    }
+
+    return result.sort((a, b) => a.nome_completo.localeCompare(b.nome_completo));
+  }, [funcionarios, gestorGrupo, gestorTurmaFilter, gestorTurnoFilter, debouncedSearch]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  // ── Vista do Gestor (logado, não admin) ──────────────────────────────────────
 
   // Funcionários filtrados para gestor: ordem alfabética + filtros
   const gestorFuncionariosFiltrados = useMemo(() => {
