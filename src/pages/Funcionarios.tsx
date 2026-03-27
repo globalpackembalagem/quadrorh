@@ -728,9 +728,10 @@ export default function Funcionarios() {
                       <table className="data-table text-xs w-full">
                         <thead>
                           <tr>
-                            <th className="w-[100px]">Matrícula</th>
+                            <th className="w-[80px]">Matrícula</th>
                             <th>Nome</th>
                             <th className="w-[130px]">Setor</th>
+                            <th className="w-[100px]">Turma</th>
                             <th className="w-[120px]">Situação</th>
                           </tr>
                         </thead>
@@ -747,6 +748,7 @@ export default function Funcionarios() {
                                 <td className="text-muted-foreground">{func.matricula || '-'}</td>
                                 <td className="font-medium">{func.nome_completo}</td>
                                 <td className="text-xs text-muted-foreground">{func.setor?.nome}</td>
+                                <td>{func.turma || '-'}</td>
                                 <td>
                                   <Badge
                                     className="text-white border-0 text-[10px]"
