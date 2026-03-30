@@ -16,6 +16,7 @@ interface FuncionarioBase {
   matricula?: string | null;
   data_admissao: string | null;
   data_demissao: string | null;
+  situacao_conta_no_quadro?: boolean;
 }
 
 interface RegistroBase {
@@ -181,12 +182,13 @@ export function DashboardFaltasDiario({
 
   // Métricas por setor por dia
   const metricasPorSetorDia = useMemo(() => {
-    const result: Record<string, Record<string, { total: number; faltas: number; atestados: number; dayoff: number; folga: boolean }>> = {};
+    const result: Record<string, Record<string, { total: number; totalQuadro: number; faltas: number; atestados: number; dayoff: number; folga: boolean }>> = {};
     funcionariosAgrupados.forEach(({ setor, funcionarios }) => {
       result[setor] = {};
       diasPeriodo.forEach(dia => {
         const dataStr = format(dia, 'yyyy-MM-dd');
         const ativos = funcionarios.filter(f => funcionarioAtivoNaData(f, dia));
+        const ativosQuadro = ativos.filter(f => f.situacao_conta_no_quadro !== false);
         const folga = isFolgaSetorDia(setor, dia);
         let faltas = 0, atestados = 0, dayoff = 0;
         ativos.forEach(func => {
@@ -195,7 +197,7 @@ export function DashboardFaltasDiario({
           else if (tipo === 'A' || tipo === 'FE') atestados++;
           else if (tipo === 'DA' || tipo === 'DF') dayoff++;
         });
-        result[setor][dataStr] = { total: ativos.length, faltas, atestados, dayoff, folga };
+        result[setor][dataStr] = { total: ativos.length, totalQuadro: ativosQuadro.length, faltas, atestados, dayoff, folga };
       });
     });
     return result;
@@ -546,7 +548,7 @@ export function DashboardFaltasDiario({
                 const totalFaltas = Object.values(setorData).reduce((s, d) => s + d.faltas, 0);
                 const totalAtestados = Object.values(setorData).reduce((s, d) => s + d.atestados, 0);
                 // QTD: mostrar total de HOJE (ou último dia disponível)
-                const qtdHoje = setorData[hojeStr]?.total ?? Object.values(setorData).pop()?.total ?? 0;
+                const qtdHoje = setorData[hojeStr]?.totalQuadro ?? Object.values(setorData).pop()?.totalQuadro ?? 0;
                 const setorNomes = nomesPorSetorDia[setor] || {};
                 const isEven = idx % 2 === 0;
                 const reserva = reservaFaltasPorSetor[setor];
@@ -566,11 +568,10 @@ export function DashboardFaltasDiario({
                       const totalAusencias = f + a + da;
                       const isSopro = setor.toUpperCase().includes('SOPRO');
                       const isFimDeSemana = dia.getDay() === 0 || dia.getDay() === 6;
-                      // SALDO dinâmico: usa total do DIA para calcular sobra real daquele dia
+                      // SALDO dinâmico: usa totalQuadro (apenas conta_no_quadro) para calcular sobra real
                       let saldo: number | undefined;
                       if (necessario != null && reserva != null) {
-                        // Sobra dinâmica = headcount do dia - necessário (planejado)
-                        const sobraDia = (d?.total || 0) - necessario;
+                        const sobraDia = (d?.totalQuadro || 0) - necessario;
                         const sobraEfetiva = isSopro && isFimDeSemana ? Math.round(sobraDia / 4) : sobraDia;
                         const reservaEfetiva = isSopro && isFimDeSemana ? Math.round(reserva / 4) : reserva;
                         saldo = totalAusencias > 0 ? sobraEfetiva + reservaEfetiva - totalAusencias : undefined;
@@ -591,7 +592,14 @@ export function DashboardFaltasDiario({
               <TableRow className="border-t-2 border-border bg-card">
                 <TableCell className="text-sm font-extrabold py-2.5 px-3 sticky left-0 bg-card z-10 border-r border-border/50 w-[190px] min-w-[190px] max-w-[190px]">TOTAL</TableCell>
                 <TableCell className="text-sm font-extrabold text-center py-2.5 w-[60px] min-w-[60px]">
-                  {totaisPorDia[hojeStr]?.total ?? Object.values(totaisPorDia).pop()?.total ?? 0}
+                  {(() => {
+                    let sum = 0;
+                    funcionariosAgrupsFiltrados.forEach(({ setor }) => {
+                      const sd = metricasPorSetorDia[setor];
+                      if (sd) { const d = sd[hojeStr]; sum += d ? d.totalQuadro : (Object.values(sd).pop()?.totalQuadro ?? 0); }
+                    });
+                    return sum;
+                  })()}
                 </TableCell>
                 {diasVisiveis.map((dia, colIndex) => {
                   const dataStr = format(dia, 'yyyy-MM-dd');
@@ -649,7 +657,7 @@ export function DashboardFaltasDiario({
                         const sobra = sobraPorSetor[setor] ?? 0;
                         const isSopro = setor.toUpperCase().includes('SOPRO');
                         const setorData = metricasPorSetorDia[setor];
-                        const qtdHoje = setorData ? (setorData[hojeStr]?.total ?? Object.values(setorData).pop()?.total ?? 0) : 0;
+                        const qtdHoje = setorData ? (setorData[hojeStr]?.totalQuadro ?? Object.values(setorData).pop()?.totalQuadro ?? 0) : 0;
                         const necessario = necessarioPorSetor[setor] ?? 0;
                         const sobraDinamica = qtdHoje - necessario;
                         const baseSemana = sobraDinamica + reserva;
