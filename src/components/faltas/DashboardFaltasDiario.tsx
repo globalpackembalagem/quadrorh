@@ -545,16 +545,18 @@ export function DashboardFaltasDiario({
                 if (!setorData) return null;
                 const totalFaltas = Object.values(setorData).reduce((s, d) => s + d.faltas, 0);
                 const totalAtestados = Object.values(setorData).reduce((s, d) => s + d.atestados, 0);
-                const qtdBase = Object.values(setorData)[0]?.total || 0;
+                // QTD: mostrar total de HOJE (ou último dia disponível)
+                const qtdHoje = setorData[hojeStr]?.total ?? Object.values(setorData).pop()?.total ?? 0;
                 const setorNomes = nomesPorSetorDia[setor] || {};
                 const isEven = idx % 2 === 0;
                 const reserva = reservaFaltasPorSetor[setor];
                 const sobra = sobraPorSetor[setor];
+                const necessario = necessarioPorSetor[setor];
 
                 return (
                   <TableRow key={setor} className={cn("hover:bg-accent/30 transition-colors", isEven ? "bg-card/50" : "bg-card")}>
                     <TableCell className={cn("text-sm font-semibold py-2.5 px-3 sticky left-0 z-10 whitespace-nowrap border-r border-border/50 w-[190px] min-w-[190px] max-w-[190px]", isEven ? "bg-card" : "bg-card")}>{setor}</TableCell>
-                    <TableCell className="text-sm font-bold text-center py-2.5 text-muted-foreground w-[60px] min-w-[60px]">{qtdBase}</TableCell>
+                    <TableCell className="text-sm font-bold text-center py-2.5 text-muted-foreground w-[60px] min-w-[60px]">{qtdHoje}</TableCell>
                     {diasVisiveis.map((dia, colIndex) => {
                       const dataStr = format(dia, 'yyyy-MM-dd');
                       const d = setorData[dataStr];
@@ -562,13 +564,18 @@ export function DashboardFaltasDiario({
                       const a = d?.atestados || 0;
                       const da = d?.dayoff || 0;
                       const totalAusencias = f + a + da;
-                      // SOPRO: no fim de semana (sáb/dom) sobra divide por 3 (3 turmas, 1 trabalha)
                       const isSopro = setor.toUpperCase().includes('SOPRO');
                       const isFimDeSemana = dia.getDay() === 0 || dia.getDay() === 6;
-                      // Saldo = Sobra + Reserva - Ausências
-                      // No fim de semana do SOPRO: Sobra/4 + Reserva/4 - Ausências
+                      // SALDO dinâmico: usa total do DIA para calcular sobra real daquele dia
                       let saldo: number | undefined;
-                      if (reserva != null || sobra != null) {
+                      if (necessario != null && reserva != null) {
+                        // Sobra dinâmica = headcount do dia - necessário (planejado)
+                        const sobraDia = (d?.total || 0) - necessario;
+                        const sobraEfetiva = isSopro && isFimDeSemana ? Math.round(sobraDia / 4) : sobraDia;
+                        const reservaEfetiva = isSopro && isFimDeSemana ? Math.round(reserva / 4) : reserva;
+                        saldo = totalAusencias > 0 ? sobraEfetiva + reservaEfetiva - totalAusencias : undefined;
+                      } else if (reserva != null || sobra != null) {
+                        // Fallback: usar sobra estática se necessário não estiver disponível
                         const sobraEfetiva = isSopro && isFimDeSemana ? Math.round((sobra || 0) / 4) : (sobra || 0);
                         const reservaEfetiva = isSopro && isFimDeSemana ? Math.round((reserva || 0) / 4) : (reserva || 0);
                         saldo = totalAusencias > 0 ? sobraEfetiva + reservaEfetiva - totalAusencias : undefined;
