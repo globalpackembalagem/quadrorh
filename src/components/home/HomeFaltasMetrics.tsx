@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { eachDayOfInterval, parseISO, format } from 'date-fns';
 import { usePeriodosFaltas, useRegistrosFaltas, useFuncionariosFaltas } from '@/hooks/useFaltas';
-import { useFuncionariosNoQuadro } from '@/hooks/useFuncionarios';
 import { useQuadroPlanejado } from '@/hooks/useQuadroPlanejado';
 import { useQuadroDecoracao } from '@/hooks/useQuadroDecoracao';
 import { DashboardFaltasDiario } from '@/components/faltas/DashboardFaltasDiario';
