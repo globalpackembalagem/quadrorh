@@ -284,6 +284,10 @@ function getNavigationForUser(
   const nomeUpper = userName?.toUpperCase() || '';
   if (isAdmin || ['KARINA', 'ELIANE', 'SONIA'].some(n => nomeUpper.includes(n))) {
     items.push({ name: 'PRESTADORES', href: 'https://prestadoresglobal.lovable.app', icon: Building2 });
+  }
+
+  // Recrutamento - admins + usuários específicos
+  if (isAdmin || ['PORTARIA', 'REAL PARCERIA', 'MICHELLI', 'SILVANA', 'SONIA'].some(n => nomeUpper.includes(n))) {
     items.push({ name: 'RECRUTAMENTO', href: 'https://recrutamentoglobal.lovable.app', icon: UserPlus });
   }
 
