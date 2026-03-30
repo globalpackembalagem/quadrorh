@@ -246,7 +246,16 @@ export function CentralAvisosModal() {
     // Registrar CIENTE imediatamente (sem setTimeout) para garantir gravação
     try {
       // 1. Marcar notificação como lida
-      await supabase.from('notificacoes').update({ lida: true }).eq('id', id);
+      const { error: erroMarcarLida } = await supabase
+        .from('notificacoes')
+        .update({ lida: true })
+        .eq('id', id);
+
+      if (erroMarcarLida) {
+        console.error('[CIENTE] Erro ao marcar notificação como lida:', erroMarcarLida);
+        toast.error('Não foi possível confirmar ciência. Tente novamente.');
+        return;
+      }
       
       // 2. Resolver evento_id
       let eventoId = referenciaId;
@@ -701,7 +710,16 @@ export function CentralAvisosModal() {
     if (podeFechar.length > 0) {
       try {
         const ids = podeFechar.map(a => a.id);
-        await supabase.from('notificacoes').update({ lida: true }).in('id', ids);
+        const { error: erroMarcarTodasLidas } = await supabase
+          .from('notificacoes')
+          .update({ lida: true })
+          .in('id', ids);
+
+        if (erroMarcarTodasLidas) {
+          console.error('[CIENTE TODOS] Erro ao marcar notificações como lidas:', erroMarcarTodasLidas);
+          toast.error('Não foi possível concluir "CIENTE DE TODOS".');
+          return;
+        }
         
         // Registrar CIENTE para os que podem fechar
         if (userRole?.id && userRole?.nome) {
