@@ -548,7 +548,7 @@ export function DashboardFaltasDiario({
                 const totalFaltas = Object.values(setorData).reduce((s, d) => s + d.faltas, 0);
                 const totalAtestados = Object.values(setorData).reduce((s, d) => s + d.atestados, 0);
                 // QTD: mostrar total de HOJE (ou último dia disponível)
-                const qtdHoje = setorData[hojeStr]?.total ?? Object.values(setorData).pop()?.total ?? 0;
+                const qtdHoje = setorData[hojeStr]?.totalQuadro ?? Object.values(setorData).pop()?.totalQuadro ?? 0;
                 const setorNomes = nomesPorSetorDia[setor] || {};
                 const isEven = idx % 2 === 0;
                 const reserva = reservaFaltasPorSetor[setor];
