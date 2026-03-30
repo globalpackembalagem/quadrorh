@@ -650,7 +650,7 @@ export function DashboardFaltasDiario({
                         const sobra = sobraPorSetor[setor] ?? 0;
                         const isSopro = setor.toUpperCase().includes('SOPRO');
                         const setorData = metricasPorSetorDia[setor];
-                        const qtdHoje = setorData ? (setorData[hojeStr]?.total ?? Object.values(setorData).pop()?.total ?? 0) : 0;
+                        const qtdHoje = setorData ? (setorData[hojeStr]?.totalQuadro ?? Object.values(setorData).pop()?.totalQuadro ?? 0) : 0;
                         const necessario = necessarioPorSetor[setor] ?? 0;
                         const sobraDinamica = qtdHoje - necessario;
                         const baseSemana = sobraDinamica + reserva;
