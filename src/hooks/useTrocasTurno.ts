@@ -305,7 +305,7 @@ export function useEfetivarTrocaTurno() {
 
       if (fErr) throw fErr;
 
-      // 3. Registrar no histórico com dados detalhados
+      // 4. Registrar no histórico com dados detalhados
       const setorOrigemNome = (funcAtual?.setor as any)?.nome || 'Desconhecido';
       const setorDestinoNome = setorDestino?.nome || 'Desconhecido';
 
