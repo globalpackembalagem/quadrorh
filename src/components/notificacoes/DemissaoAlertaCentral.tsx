@@ -14,6 +14,30 @@ interface DemissaoAlerta {
   tipo: string;
 }
 
+const extrairResumoDemissao = (mensagem?: string) => {
+  if (!mensagem) return '';
+
+  const linhasLimpas = mensagem
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .filter((l) => !/^o gestor\b/i.test(l))
+    .filter((l) => !/ci[eê]ncia/i.test(l));
+
+  const colaborador = linhasLimpas.find((l) => !l.startsWith('📍') && !l.startsWith('📅'));
+  const setor = linhasLimpas.find((l) => l.startsWith('📍'));
+  const data = linhasLimpas.find((l) => l.startsWith('📅'));
+
+  return [colaborador, setor, data].filter(Boolean).join('\n');
+};
+
+const montarMensagemRetornoCiencia = (nomeGestor: string, tipoLabel: string, mensagemOrigem?: string) => {
+  const resumo = extrairResumoDemissao(mensagemOrigem);
+  return resumo
+    ? `${nomeGestor} deu CIÊNCIA em ${tipoLabel}:\n${resumo}`
+    : `${nomeGestor} deu CIÊNCIA em ${tipoLabel}.`;
+};
+
 export function DemissaoAlertaCentral() {
   const { userRole, isVisualizacao } = useAuth();
   const navigate = useNavigate();
@@ -26,7 +50,19 @@ export function DemissaoAlertaCentral() {
     
     // 2. Registrar na tabela notificacoes_vistas para rastreamento de ciência
     const alerta = alertas.find(a => a.id === id);
+    let jaTinhaCiencia = false;
+
     if (alerta?.referencia_id && userRole?.id) {
+      const { data: vistaExistente } = await supabase
+        .from('notificacoes_vistas')
+        .select('id')
+        .eq('evento_id', alerta.referencia_id)
+        .eq('user_role_id', userRole.id)
+        .limit(1)
+        .maybeSingle();
+
+      jaTinhaCiencia = !!vistaExistente;
+
       await supabase.from('notificacoes_vistas').upsert({
         evento_id: alerta.referencia_id,
         user_role_id: userRole.id,
@@ -43,6 +79,16 @@ export function DemissaoAlertaCentral() {
           .order('created_at', { ascending: false })
           .limit(1);
         if (eventoMatch?.[0]) {
+          const { data: vistaExistente } = await supabase
+            .from('notificacoes_vistas')
+            .select('id')
+            .eq('evento_id', eventoMatch[0].id)
+            .eq('user_role_id', userRole.id)
+            .limit(1)
+            .maybeSingle();
+
+          jaTinhaCiencia = !!vistaExistente;
+
           await supabase.from('notificacoes_vistas').upsert({
             evento_id: eventoMatch[0].id,
             user_role_id: userRole.id,
@@ -54,7 +100,10 @@ export function DemissaoAlertaCentral() {
 
     // Enviar notificação de retorno para Admin/RH
     const eventoIdFinal = alerta?.referencia_id;
-    if (eventoIdFinal && userRole?.id && userRole?.nome) {
+    const tiposDemissaoRetorno = ['demissao_lancada', 'pedido_demissao_lancado'];
+    const deveEnviarRetorno = !!alerta?.tipo && tiposDemissaoRetorno.includes(alerta.tipo);
+
+    if (eventoIdFinal && userRole?.id && userRole?.nome && !jaTinhaCiencia && deveEnviarRetorno) {
       try {
         const { data: adminsERH } = await supabase
           .from('user_roles')
@@ -70,7 +119,7 @@ export function DemissaoAlertaCentral() {
               user_role_id: admin.id,
               tipo: 'ciencia_retorno',
               titulo: `✅ CIÊNCIA — ${tipoLabel}`,
-              mensagem: `${userRole.nome} visualizou notificação de ${tipoLabel}:\n\n${alerta?.mensagem || tipoLabel}`,
+              mensagem: montarMensagemRetornoCiencia(userRole.nome, tipoLabel, alerta?.mensagem),
               referencia_id: eventoIdFinal,
             }));
 
