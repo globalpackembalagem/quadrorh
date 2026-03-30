@@ -562,6 +562,40 @@ export default function ControleFaltas() {
     return map;
   }, [funcionariosQuadro, quadroPlanejadoSopro, quadroDecoracaoData]);
 
+  // Calcular o total NECESSÁRIO (planejado) por setor - usado para SALDO dinâmico por dia
+  const necessarioPorSetor = useMemo(() => {
+    const map: Record<string, number> = {};
+    const calcPlanSopro = (d: any) => {
+      const rrI = Math.round(d.aux_maquina_industria / 6);
+      const rrGP = Math.round(d.aux_maquina_gp / 6);
+      return d.aux_maquina_industria + d.reserva_ferias_industria + rrI +
+        d.reserva_faltas_industria + d.amarra_pallets + d.revisao_frasco +
+        d.mod_sindicalista + d.controle_praga + d.aux_maquina_gp +
+        d.reserva_faltas_gp + rrGP + d.reserva_ferias_gp + d.aumento_quadro;
+    };
+    const calcPlanDeco = (d: any) => {
+      const rr = Math.ceil(d.aux_maquina / 3);
+      return d.aux_maquina + rr + d.reserva_faltas +
+        d.reserva_ferias + d.apoio_topografia + d.reserva_afastadas + d.reserva_covid;
+    };
+
+    ['A', 'B', 'C'].forEach(turma => {
+      const planejado = quadroPlanejadoSopro.find(q => q.turma === turma);
+      if (planejado) map[`SOPRO ${turma}`] = calcPlanSopro(planejado);
+    });
+
+    const decoLabels: Record<string, string> = {
+      'DIA-T1': 'DECORAÇÃO DIA - T1', 'DIA-T2': 'DECORAÇÃO DIA - T2',
+      'NOITE-T1': 'DECORAÇÃO NOITE - T1', 'NOITE-T2': 'DECORAÇÃO NOITE - T2',
+    };
+    Object.keys(decoLabels).forEach(turmaKey => {
+      const planejado = quadroDecoracaoData.find(q => q.turma === turmaKey);
+      if (planejado) map[decoLabels[turmaKey]] = calcPlanDeco(planejado);
+    });
+
+    return map;
+  }, [quadroPlanejadoSopro, quadroDecoracaoData]);
+
   const totaisPorDia = useMemo(() => {
     const funcionariosIds = new Set(funcionariosFiltrados.map(f => f.id));
     const result: Record<string, { faltas: number; atestados: number; dayoff: number }> = {};
@@ -1113,6 +1147,7 @@ export default function ControleFaltas() {
           periodo={periodo}
           reservaFaltasPorSetor={reservaFaltasPorSetor}
           sobraPorSetor={sobraPorSetor}
+          necessarioPorSetor={necessarioPorSetor}
         />
       )}
 
