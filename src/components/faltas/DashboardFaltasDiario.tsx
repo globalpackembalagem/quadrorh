@@ -16,6 +16,7 @@ interface FuncionarioBase {
   matricula?: string | null;
   data_admissao: string | null;
   data_demissao: string | null;
+  situacao_conta_no_quadro?: boolean;
 }
 
 interface RegistroBase {
