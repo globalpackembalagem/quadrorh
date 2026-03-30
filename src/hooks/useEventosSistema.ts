@@ -317,6 +317,8 @@ export function useEnviarNotificacaoEventos() {
           
           const isRH = ur.perfil === 'rh_completo' || ur.perfil === 'rh_demissoes';
           
+          // RH não recebe notificações
+          if (isRH) return;
           // Setor do gestor (principal + adicionais)
           const setoresDoUsuario = new Set<string>();
           if (ur.setor_id) setoresDoUsuario.add(ur.setor_id);

@@ -184,29 +184,46 @@ export default function Demissoes() {
     });
 
     try {
-      const { data: rhUsers } = await supabase
-        .from('user_roles')
-        .select('id, nome')
-        .eq('ativo', true)
-        .in('perfil', ['admin', 'rh_completo', 'rh_demissoes']);
+      // Enviar notificação apenas para o GESTOR do setor do funcionário
+      const setorId = demissao.funcionario?.setor?.id;
+      if (setorId) {
+        // Buscar gestores vinculados ao setor
+        const { data: gestoresDoSetor } = await supabase
+          .from('user_roles')
+          .select('id, nome, setor_id')
+          .eq('ativo', true)
+          .eq('perfil', 'gestor_setor');
 
-      if (rhUsers && rhUsers.length > 0) {
-        const notificacoes = rhUsers
-          .filter(u => u.id !== userRole?.id)
-          .map(u => ({
-            user_role_id: u.id,
-            tipo: 'demissao_lancada',
-            titulo: `${isTemp ? '🏭 TEMPORÁRIO' : '📋 DEMISSÃO'} — ${tipoLabel.toUpperCase()}`,
-            mensagem: `${nomeFunc.toUpperCase()}\n📍 ${demissao.funcionario?.setor?.nome?.toUpperCase() || 'SEM SETOR'}${demissao.funcionario?.turma ? ` — ${demissao.funcionario.turma}` : ''}\n📅 Data: ${dataDemissao}`,
-            referencia_id: demissao.id,
-          }));
+        // Buscar setores adicionais dos gestores
+        const { data: setoresAdicionais } = await supabase
+          .from('user_roles_setores')
+          .select('user_role_id, setor_id');
 
-        if (notificacoes.length > 0) {
-          await supabase.from('notificacoes').insert(notificacoes);
+        const gestoresIds = new Set<string>();
+        gestoresDoSetor?.forEach(g => {
+          if (g.setor_id === setorId) gestoresIds.add(g.id);
+          const extras = setoresAdicionais?.filter(s => s.user_role_id === g.id) || [];
+          if (extras.some(s => s.setor_id === setorId)) gestoresIds.add(g.id);
+        });
+
+        if (gestoresIds.size > 0) {
+          const notificacoes = [...gestoresIds]
+            .filter(id => id !== userRole?.id)
+            .map(gestorId => ({
+              user_role_id: gestorId,
+              tipo: tipoEvento === 'pedido_demissao' ? 'pedido_demissao_lancado' : 'demissao_lancada' as string,
+              titulo: `${isTemp ? '🏭 TEMPORÁRIO' : '📋 DEMISSÃO'} — ${tipoLabel.toUpperCase()}`,
+              mensagem: `${nomeFunc.toUpperCase()}\n📍 ${demissao.funcionario?.setor?.nome?.toUpperCase() || 'SEM SETOR'}${demissao.funcionario?.turma ? ` — ${demissao.funcionario.turma}` : ''}\n📅 Data: ${dataDemissao}`,
+              referencia_id: demissao.id,
+            }));
+
+          if (notificacoes.length > 0) {
+            await supabase.from('notificacoes').insert(notificacoes);
+          }
         }
       }
     } catch (e) {
-      console.error('Erro ao notificar RH:', e);
+      console.error('Erro ao notificar gestor:', e);
     }
     
     toast.success('Enviado para a central e notificado todo o RH!');

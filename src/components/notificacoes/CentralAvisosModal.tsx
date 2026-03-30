@@ -260,9 +260,9 @@ export function CentralAvisosModal() {
           console.log('[CIENTE] Vista registrada:', { eventoId, gestor: userRole.nome });
         }
 
-        // 4. Enviar notificação de retorno para Admin e RH (para todos os tipos simples)
-        const tiposComRespostaProprria = ['admissao_confirmacao', 'previsao_confirmacao', 'experiencia_consulta', 'cobertura_treinamento_consulta', 'turma_pendente_consulta'];
-        if (avisoTipo && !tiposComRespostaProprria.includes(avisoTipo)) {
+        // 4. Enviar notificação de retorno APENAS para demissão/pedido de demissão
+        const tiposDemissao = ['demissao_lancada', 'pedido_demissao_lancado'];
+        if (avisoTipo && tiposDemissao.includes(avisoTipo)) {
           try {
             const { data: adminsERH } = await supabase
               .from('user_roles')
@@ -271,20 +271,19 @@ export function CentralAvisosModal() {
               .ilike('nome', 'LUCIANO');
 
             if (adminsERH && adminsERH.length > 0) {
-              const tipoLabel = TIPO_BADGE_LABELS[avisoTipo] || avisoTipo?.toUpperCase() || 'AVISO';
+              const tipoLabel = avisoTipo === 'pedido_demissao_lancado' ? 'PEDIDO DE DEMISSÃO' : 'DEMISSÃO';
               const notifRetorno = adminsERH
                 .filter((a: any) => a.id !== userRole.id)
                 .map((admin: any) => ({
                   user_role_id: admin.id,
                   tipo: 'ciencia_retorno',
                   titulo: `✅ CIÊNCIA — ${tipoLabel}`,
-                  mensagem: `O gestor ${userRole.nome} deu CIÊNCIA na notificação:\n\n${aviso?.mensagem || tipoLabel}`,
+                  mensagem: `${userRole.nome} visualizou notificação de ${tipoLabel}:\n\n${aviso?.mensagem || tipoLabel}`,
                   referencia_id: eventoId,
                 }));
 
               if (notifRetorno.length > 0) {
                 await supabase.from('notificacoes').insert(notifRetorno);
-                console.log('[CIENTE] Notificação de retorno enviada para', notifRetorno.length, 'admin/RH');
               }
             }
           } catch (err) {
