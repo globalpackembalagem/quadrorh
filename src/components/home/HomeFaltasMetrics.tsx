@@ -160,14 +160,14 @@ export function HomeFaltasMetrics() {
     return null;
   }
 
-  return (
+    return (
     <DashboardFaltasDiario
       funcionariosAgrupados={funcionariosAgrupados}
       registros={registros}
       diasPeriodo={diasPeriodo}
       periodo={periodoAtivo}
       reservaFaltasPorSetor={reservaFaltasPorSetor}
-      sobraPorSetor={sobraPorSetor}
+      necessarioPorSetor={necessarioPorSetor}
     />
   );
 }
