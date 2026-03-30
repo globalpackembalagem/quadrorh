@@ -10,6 +10,7 @@ import { useMemo } from 'react';
 import { HomeFaltasMetrics } from '@/components/home/HomeFaltasMetrics';
 
 export default function Home() {
+  const navigate = useNavigate();
   const data = useDashboardData();
   const { data: recentesSopro = [] } = useAdmissaoRecente('SOPRO');
   const { data: recentesDeco = [] } = useAdmissaoRecente('DECORAÇÃO');
