@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { eachDayOfInterval, parseISO, format } from 'date-fns';
 import { usePeriodosFaltas, useRegistrosFaltas, useFuncionariosFaltas } from '@/hooks/useFaltas';
-import { useFuncionariosNoQuadro } from '@/hooks/useFuncionarios';
 import { useQuadroPlanejado } from '@/hooks/useQuadroPlanejado';
 import { useQuadroDecoracao } from '@/hooks/useQuadroDecoracao';
 import { DashboardFaltasDiario } from '@/components/faltas/DashboardFaltasDiario';
@@ -56,7 +55,7 @@ export function HomeFaltasMetrics() {
   const { data: periodos = [], isLoading: loadingPeriodos } = usePeriodosFaltas();
   const { data: quadroPlanejadoSopro = [] } = useQuadroPlanejado('SOPRO');
   const { data: quadroDecoracaoData = [] } = useQuadroDecoracao();
-  const { data: funcionariosQuadro = [] } = useFuncionariosNoQuadro();
+  
 
   // Auto-select active period (oldest open)
   const periodoAtivo = useMemo(() => {
@@ -122,7 +121,8 @@ export function HomeFaltasMetrics() {
     return map;
   }, [quadroPlanejadoSopro, quadroDecoracaoData]);
 
-  const sobraPorSetor = useMemo(() => {
+  // Calcular o total NECESSÁRIO (planejado) por setor - usado para SALDO dinâmico por dia
+  const necessarioPorSetor = useMemo(() => {
     const map: Record<string, number> = {};
     const calcPlanSopro = (d: any) => {
       const rrI = Math.round(d.aux_maquina_industria / 6);
@@ -139,49 +139,34 @@ export function HomeFaltasMetrics() {
     };
 
     ['A', 'B', 'C'].forEach(turma => {
-      const grupoEsperado = `SOPRO ${turma}`;
-      const total = funcionariosQuadro.filter(f => f.setor?.grupo?.toUpperCase() === grupoEsperado).length;
       const planejado = quadroPlanejadoSopro.find(q => q.turma === turma);
-      map[grupoEsperado] = total - (planejado ? calcPlanSopro(planejado) : 0);
+      if (planejado) map[`SOPRO ${turma}`] = calcPlanSopro(planejado);
     });
 
     const decoLabels: Record<string, string> = {
       'DIA-T1': 'DECORAÇÃO DIA - T1', 'DIA-T2': 'DECORAÇÃO DIA - T2',
       'NOITE-T1': 'DECORAÇÃO NOITE - T1', 'NOITE-T2': 'DECORAÇÃO NOITE - T2',
     };
-    const funcsDeco = funcionariosQuadro.filter(f => {
-      const n = f.setor?.nome?.toUpperCase() || '';
-      return n.includes('DECORAÇÃO') || n.includes('DECORACAO');
-    });
     Object.keys(decoLabels).forEach(turmaKey => {
-      const funcs = funcsDeco.filter(f => {
-        const t = f.turma?.toUpperCase();
-        const sn = f.setor?.nome?.toUpperCase() || '';
-        const isDia = sn.includes('DIA');
-        const isNoite = sn.includes('NOITE');
-        if (t === 'T1' || t === '1') return (isDia && turmaKey === 'DIA-T1') || (isNoite && turmaKey === 'NOITE-T1');
-        if (t === 'T2' || t === '2') return (isDia && turmaKey === 'DIA-T2') || (isNoite && turmaKey === 'NOITE-T2');
-        return false;
-      });
       const planejado = quadroDecoracaoData.find(q => q.turma === turmaKey);
-      map[decoLabels[turmaKey]] = funcs.length - (planejado ? calcPlanDeco(planejado) : 0);
+      if (planejado) map[decoLabels[turmaKey]] = calcPlanDeco(planejado);
     });
 
     return map;
-  }, [funcionariosQuadro, quadroPlanejadoSopro, quadroDecoracaoData]);
+  }, [quadroPlanejadoSopro, quadroDecoracaoData]);
 
   if (loadingPeriodos || !periodoAtivo || funcionariosAgrupados.length === 0) {
     return null;
   }
 
-  return (
+    return (
     <DashboardFaltasDiario
       funcionariosAgrupados={funcionariosAgrupados}
       registros={registros}
       diasPeriodo={diasPeriodo}
       periodo={periodoAtivo}
       reservaFaltasPorSetor={reservaFaltasPorSetor}
-      sobraPorSetor={sobraPorSetor}
+      necessarioPorSetor={necessarioPorSetor}
     />
   );
 }
