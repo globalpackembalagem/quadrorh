@@ -127,6 +127,19 @@ export function CentralAvisosModal() {
   const [filtroTurma, setFiltroTurma] = useState<string | null>(null);
   const [filtroStatus, setFiltroStatus] = useState<'todas' | 'enviada' | 'vista'>('todas');
 
+  const removerAvisoDaTela = useCallback((id: string) => {
+    setAvisos(prev => {
+      const next = prev.filter(a => a.id !== id);
+      if (next.length === 0) setVisible(false);
+      return next;
+    });
+    setCienteIds(prev => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }, []);
+
   // Extrair turma do título/mensagem da notificação
   const extrairTurma = (aviso: AvisoNotificacao): string | null => {
     const texto = `${aviso.titulo} ${aviso.mensagem}`;
@@ -242,6 +255,7 @@ export function CentralAvisosModal() {
     const avisoTipo = aviso?.tipo;
     
     setCienteIds(prev => new Set([...prev, id]));
+    removerAvisoDaTela(id);
     
     // Registrar CIENTE imediatamente (sem setTimeout) para garantir gravação
     try {
@@ -253,7 +267,7 @@ export function CentralAvisosModal() {
 
       if (erroMarcarLida) {
         console.error('[CIENTE] Erro ao marcar notificação como lida:', erroMarcarLida);
-        toast.error('Não foi possível confirmar ciência. Tente novamente.');
+        toast.error('Não foi possível salvar o CIENTE no servidor (pode reaparecer).');
         return;
       }
       
@@ -338,20 +352,9 @@ export function CentralAvisosModal() {
       }
     } catch (err) {
       console.error('[CIENTE] Erro geral ao marcar ciente:', err);
+      toast.error('Falha ao processar CIENTE (pode reaparecer após atualizar).');
     }
-    
-    // 4. Remover da lista visual
-    setAvisos(prev => {
-      const next = prev.filter(a => a.id !== id);
-      if (next.length === 0) setVisible(false);
-      return next;
-    });
-    setCienteIds(prev => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
-  }, [avisos, userRole?.id, userRole?.nome]);
+  }, [avisos, userRole?.id, userRole?.nome, removerAvisoDaTela]);
 
 
   // Handler para confirmação de previsão (SIM/NÃO)
