@@ -182,12 +182,13 @@ export function DashboardFaltasDiario({
 
   // Métricas por setor por dia
   const metricasPorSetorDia = useMemo(() => {
-    const result: Record<string, Record<string, { total: number; faltas: number; atestados: number; dayoff: number; folga: boolean }>> = {};
+    const result: Record<string, Record<string, { total: number; totalQuadro: number; faltas: number; atestados: number; dayoff: number; folga: boolean }>> = {};
     funcionariosAgrupados.forEach(({ setor, funcionarios }) => {
       result[setor] = {};
       diasPeriodo.forEach(dia => {
         const dataStr = format(dia, 'yyyy-MM-dd');
         const ativos = funcionarios.filter(f => funcionarioAtivoNaData(f, dia));
+        const ativosQuadro = ativos.filter(f => f.situacao_conta_no_quadro !== false);
         const folga = isFolgaSetorDia(setor, dia);
         let faltas = 0, atestados = 0, dayoff = 0;
         ativos.forEach(func => {
@@ -196,7 +197,7 @@ export function DashboardFaltasDiario({
           else if (tipo === 'A' || tipo === 'FE') atestados++;
           else if (tipo === 'DA' || tipo === 'DF') dayoff++;
         });
-        result[setor][dataStr] = { total: ativos.length, faltas, atestados, dayoff, folga };
+        result[setor][dataStr] = { total: ativos.length, totalQuadro: ativosQuadro.length, faltas, atestados, dayoff, folga };
       });
     });
     return result;
