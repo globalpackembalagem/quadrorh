@@ -157,6 +157,20 @@ export function useCreateDemissao() {
         .single();
       
       if (error) throw error;
+
+      // Remover registros de falta após a data da demissão
+      if (demissao.data_prevista) {
+        const { error: deleteError } = await supabase
+          .from('registros_ponto')
+          .delete()
+          .eq('funcionario_id', demissao.funcionario_id)
+          .gt('data', demissao.data_prevista);
+        
+        if (deleteError) {
+          console.error('Erro ao limpar faltas pós-demissão:', deleteError);
+        }
+      }
+
       return data;
     },
     onSuccess: async (data, variables) => {
@@ -255,7 +269,14 @@ export function useRealizarDemissao() {
       criadoPorNome?: string;
       skipSituacaoUpdate?: boolean;
     }) => {
-      // 1. Marcar demissão como realizada
+      // 1. Buscar data_prevista da demissão
+      const { data: demissaoData } = await supabase
+        .from('demissoes')
+        .select('data_prevista, funcionario_id')
+        .eq('id', demissaoId)
+        .single();
+
+      // 2. Marcar demissão como realizada
       const { error: demissaoError } = await supabase
         .from('demissoes')
         .update({ realizado: true })
@@ -263,7 +284,7 @@ export function useRealizarDemissao() {
       
       if (demissaoError) throw demissaoError;
 
-      // 2. Só atualiza situação se não for para pular
+      // 3. Só atualiza situação se não for para pular
       if (!skipSituacaoUpdate) {
         const { error: funcError } = await supabase
           .from('funcionarios')
@@ -274,6 +295,19 @@ export function useRealizarDemissao() {
           .eq('id', funcionarioId);
         
         if (funcError) throw funcError;
+      }
+
+      // 4. Remover registros de falta após a data da demissão
+      if (demissaoData?.data_prevista) {
+        const { error: deleteError } = await supabase
+          .from('registros_ponto')
+          .delete()
+          .eq('funcionario_id', funcionarioId)
+          .gt('data', demissaoData.data_prevista);
+        
+        if (deleteError) {
+          console.error('Erro ao limpar faltas pós-demissão:', deleteError);
+        }
       }
     },
     onSuccess: async (_, variables) => {

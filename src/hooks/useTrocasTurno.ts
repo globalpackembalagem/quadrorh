@@ -271,7 +271,26 @@ export function useEfetivarTrocaTurno() {
 
       if (tErr) throw tErr;
 
-      // 2. Atualizar funcionário
+      // 2. Remover registros de falta após a data programada da transferência
+      const { data: trocaInfo } = await supabase
+        .from('trocas_turno')
+        .select('data_programada')
+        .eq('id', params.id)
+        .single();
+
+      if (trocaInfo?.data_programada) {
+        const { error: delFaltasErr } = await supabase
+          .from('registros_ponto')
+          .delete()
+          .eq('funcionario_id', params.funcionario_id)
+          .gt('data', trocaInfo.data_programada);
+        
+        if (delFaltasErr) {
+          console.error('Erro ao limpar faltas pós-transferência:', delFaltasErr);
+        }
+      }
+
+      // 3. Atualizar funcionário
       const updateFunc: Record<string, unknown> = {
         setor_id: params.setor_destino_id,
       };
@@ -286,7 +305,7 @@ export function useEfetivarTrocaTurno() {
 
       if (fErr) throw fErr;
 
-      // 3. Registrar no histórico com dados detalhados
+      // 4. Registrar no histórico com dados detalhados
       const setorOrigemNome = (funcAtual?.setor as any)?.nome || 'Desconhecido';
       const setorDestinoNome = setorDestino?.nome || 'Desconhecido';
 
@@ -308,7 +327,7 @@ export function useEfetivarTrocaTurno() {
         },
       });
 
-      // 4. Buscar dados completos da troca para notificação
+      // 5. Buscar dados completos da troca para notificação
       const { data: trocaData } = await supabase
         .from('trocas_turno')
         .select('funcionario:funcionarios!funcionario_id(nome_completo), setor_origem_id, setor_destino_id, turma_origem, turma_destino')
@@ -318,7 +337,7 @@ export function useEfetivarTrocaTurno() {
       const funcNome = (trocaData?.funcionario as any)?.nome_completo || 'Funcionário';
       const turmaDestinoStr = params.turma_destino ? ` turma ${params.turma_destino}` : '';
 
-      // 5. Criar evento na Central de Notificações (não enviar direto ao gestor)
+      // 6. Criar evento na Central de Notificações (não enviar direto ao gestor)
       await inserirEventoSemDuplicata({
         tipo: 'transferencia',
         descricao: `TRANSFERÊNCIA REALIZADA — ${funcNome.toUpperCase()}`,
