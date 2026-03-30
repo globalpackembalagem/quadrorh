@@ -592,7 +592,14 @@ export function DashboardFaltasDiario({
               <TableRow className="border-t-2 border-border bg-card">
                 <TableCell className="text-sm font-extrabold py-2.5 px-3 sticky left-0 bg-card z-10 border-r border-border/50 w-[190px] min-w-[190px] max-w-[190px]">TOTAL</TableCell>
                 <TableCell className="text-sm font-extrabold text-center py-2.5 w-[60px] min-w-[60px]">
-                  {totaisPorDia[hojeStr]?.total ?? Object.values(totaisPorDia).pop()?.total ?? 0}
+                  {(() => {
+                    let sum = 0;
+                    funcionariosAgrupsFiltrados.forEach(({ setor }) => {
+                      const sd = metricasPorSetorDia[setor];
+                      if (sd) { const d = sd[hojeStr]; sum += d ? d.totalQuadro : (Object.values(sd).pop()?.totalQuadro ?? 0); }
+                    });
+                    return sum;
+                  })()}
                 </TableCell>
                 {diasVisiveis.map((dia, colIndex) => {
                   const dataStr = format(dia, 'yyyy-MM-dd');
