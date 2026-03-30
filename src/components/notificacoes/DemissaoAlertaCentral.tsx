@@ -100,7 +100,10 @@ export function DemissaoAlertaCentral() {
 
     // Enviar notificação de retorno para Admin/RH
     const eventoIdFinal = alerta?.referencia_id;
-    if (eventoIdFinal && userRole?.id && userRole?.nome && !jaTinhaCiencia) {
+    const tiposDemissaoRetorno = ['demissao_lancada', 'pedido_demissao_lancado'];
+    const deveEnviarRetorno = !!alerta?.tipo && tiposDemissaoRetorno.includes(alerta.tipo);
+
+    if (eventoIdFinal && userRole?.id && userRole?.nome && !jaTinhaCiencia && deveEnviarRetorno) {
       try {
         const { data: adminsERH } = await supabase
           .from('user_roles')
