@@ -1,5 +1,8 @@
 import { Suspense, lazy } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import { Button } from '@/components/ui/button';
+import { LayoutDashboard } from 'lucide-react';
 import { MetricasTurmaCards } from '@/components/dashboard/MetricasTurmaCards';
 import { useAdmissaoRecente, agruparRecentesPorTurma } from '@/hooks/useAdmissaoRecente';
 import { useTreinamentosPrevisao } from '@/hooks/useTreinamentosPrevisao';
