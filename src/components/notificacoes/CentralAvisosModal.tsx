@@ -710,12 +710,12 @@ export function CentralAvisosModal() {
               console.log('[CIENTE TODOS] Vistas registradas:', vistas.length, 'para', userRole.nome);
             }
 
-            // Enviar notificação de retorno para Admin/RH
+            // Enviar notificação de retorno APENAS para demissão/pedido de demissão
             try {
-              const tiposComRespostaProprria = ['admissao_confirmacao', 'previsao_confirmacao', 'experiencia_consulta', 'cobertura_treinamento_consulta', 'turma_pendente_consulta'];
-              const avisosSimples = podeFechar.filter(a => !tiposComRespostaProprria.includes(a.tipo));
+              const tiposDemissaoRetorno = ['demissao_lancada', 'pedido_demissao_lancado'];
+              const avisosDemissao = podeFechar.filter(a => tiposDemissaoRetorno.includes(a.tipo) && a.referencia_id);
               
-              if (avisosSimples.length > 0) {
+              if (avisosDemissao.length > 0) {
                 const { data: adminsERH } = await supabase
                   .from('user_roles')
                   .select('id')
@@ -724,8 +724,8 @@ export function CentralAvisosModal() {
 
                 if (adminsERH && adminsERH.length > 0) {
                   const notifRetorno: any[] = [];
-                  avisosSimples.forEach(aviso => {
-                    const tipoLabel = TIPO_BADGE_LABELS[aviso.tipo] || aviso.tipo?.toUpperCase() || 'AVISO';
+                  avisosDemissao.forEach(aviso => {
+                    const tipoLabel = aviso.tipo === 'pedido_demissao_lancado' ? 'PEDIDO DE DEMISSÃO' : 'DEMISSÃO';
                     adminsERH
                       .filter((a: any) => a.id !== userRole.id)
                       .forEach((admin: any) => {
@@ -733,7 +733,7 @@ export function CentralAvisosModal() {
                           user_role_id: admin.id,
                           tipo: 'ciencia_retorno',
                           titulo: `✅ CIÊNCIA — ${tipoLabel}`,
-                          mensagem: `O gestor ${userRole.nome} deu CIÊNCIA na notificação:\n\n${aviso.mensagem || tipoLabel}`,
+                          mensagem: `${userRole.nome} visualizou notificação de ${tipoLabel}:\n\n${aviso.mensagem || tipoLabel}`,
                           referencia_id: aviso.referencia_id,
                         });
                       });
@@ -741,7 +741,6 @@ export function CentralAvisosModal() {
 
                   if (notifRetorno.length > 0) {
                     await supabase.from('notificacoes').insert(notifRetorno);
-                    console.log('[CIENTE TODOS] Notificações de retorno enviadas:', notifRetorno.length);
                   }
                 }
               }
