@@ -659,12 +659,12 @@ export function DashboardFaltasDiario({
                         return (
                           <TableRow key={setor}>
                             <TableCell className="text-[11px] font-semibold py-1.5">{setor}</TableCell>
-                            <TableCell className="text-[11px] font-bold text-center py-1.5">{qtdBase}</TableCell>
+                            <TableCell className="text-[11px] font-bold text-center py-1.5">{qtdHoje}</TableCell>
                             <TableCell className={cn(
                               "text-[11px] font-bold text-center py-1.5",
-                              sobra > 0 ? "text-success" : sobra < 0 ? "text-destructive" : "text-muted-foreground"
+                              sobraDinamica > 0 ? "text-success" : sobraDinamica < 0 ? "text-destructive" : "text-muted-foreground"
                             )}>
-                              {sobra > 0 ? `+${sobra}` : sobra}
+                              {sobraDinamica > 0 ? `+${sobraDinamica}` : sobraDinamica}
                             </TableCell>
                             <TableCell className="text-[11px] font-bold text-center py-1.5 text-info">{reserva}</TableCell>
                             <TableCell className={cn(
