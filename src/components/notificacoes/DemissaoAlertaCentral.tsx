@@ -79,6 +79,16 @@ export function DemissaoAlertaCentral() {
           .order('created_at', { ascending: false })
           .limit(1);
         if (eventoMatch?.[0]) {
+          const { data: vistaExistente } = await supabase
+            .from('notificacoes_vistas')
+            .select('id')
+            .eq('evento_id', eventoMatch[0].id)
+            .eq('user_role_id', userRole.id)
+            .limit(1)
+            .maybeSingle();
+
+          jaTinhaCiencia = !!vistaExistente;
+
           await supabase.from('notificacoes_vistas').upsert({
             evento_id: eventoMatch[0].id,
             user_role_id: userRole.id,
