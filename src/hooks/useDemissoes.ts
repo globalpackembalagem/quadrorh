@@ -157,6 +157,20 @@ export function useCreateDemissao() {
         .single();
       
       if (error) throw error;
+
+      // Remover registros de falta após a data da demissão
+      if (demissao.data_prevista) {
+        const { error: deleteError } = await supabase
+          .from('registros_ponto')
+          .delete()
+          .eq('funcionario_id', demissao.funcionario_id)
+          .gt('data', demissao.data_prevista);
+        
+        if (deleteError) {
+          console.error('Erro ao limpar faltas pós-demissão:', deleteError);
+        }
+      }
+
       return data;
     },
     onSuccess: async (data, variables) => {
