@@ -29,7 +29,13 @@ export default function Home() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-lg font-bold text-foreground tracking-wide">QUADRO DE FUNCIONÁRIOS</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-bold text-foreground tracking-wide">QUADRO DE FUNCIONÁRIOS</h1>
+        <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')} className="gap-2">
+          <LayoutDashboard className="h-4 w-4" />
+          Quadro Completo
+        </Button>
+      </div>
 
       {/* SOPRO Cards */}
       <MetricasTurmaCards
