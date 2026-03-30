@@ -55,7 +55,7 @@ export function HomeFaltasMetrics() {
   const { data: periodos = [], isLoading: loadingPeriodos } = usePeriodosFaltas();
   const { data: quadroPlanejadoSopro = [] } = useQuadroPlanejado('SOPRO');
   const { data: quadroDecoracaoData = [] } = useQuadroDecoracao();
-  const { data: funcionariosQuadro = [] } = useFuncionariosNoQuadro();
+  
 
   // Auto-select active period (oldest open)
   const periodoAtivo = useMemo(() => {
