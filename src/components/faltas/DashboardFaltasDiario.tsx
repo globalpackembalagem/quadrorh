@@ -47,6 +47,7 @@ export function DashboardFaltasDiario({
   periodo,
   reservaFaltasPorSetor = {},
   sobraPorSetor = {},
+  necessarioPorSetor = {},
 }: DashboardFaltasDiarioProps) {
   // Blocos de dias
   const blocosDias = useMemo(() => {
