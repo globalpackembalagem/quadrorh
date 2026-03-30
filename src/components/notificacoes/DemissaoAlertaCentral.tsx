@@ -63,14 +63,14 @@ export function DemissaoAlertaCentral() {
           .ilike('nome', 'LUCIANO');
 
         if (adminsERH && adminsERH.length > 0) {
-          const tipoLabel = alerta?.tipo === 'pedido_demissao_lancado' ? 'PED. DEMISSÃO' : 'DEMISSÃO';
+          const tipoLabel = alerta?.tipo === 'pedido_demissao_lancado' ? 'PEDIDO DE DEMISSÃO' : 'DEMISSÃO';
           const notifRetorno = adminsERH
             .filter((a: any) => a.id !== userRole.id)
             .map((admin: any) => ({
               user_role_id: admin.id,
               tipo: 'ciencia_retorno',
               titulo: `✅ CIÊNCIA — ${tipoLabel}`,
-              mensagem: `O gestor ${userRole.nome} deu CIÊNCIA na notificação:\n\n${alerta?.mensagem || tipoLabel}`,
+              mensagem: `${userRole.nome} visualizou notificação de ${tipoLabel}:\n\n${alerta?.mensagem || tipoLabel}`,
               referencia_id: eventoIdFinal,
             }));
 
