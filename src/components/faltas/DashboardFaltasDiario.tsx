@@ -568,11 +568,10 @@ export function DashboardFaltasDiario({
                       const totalAusencias = f + a + da;
                       const isSopro = setor.toUpperCase().includes('SOPRO');
                       const isFimDeSemana = dia.getDay() === 0 || dia.getDay() === 6;
-                      // SALDO dinâmico: usa total do DIA para calcular sobra real daquele dia
+                      // SALDO dinâmico: usa totalQuadro (apenas conta_no_quadro) para calcular sobra real
                       let saldo: number | undefined;
                       if (necessario != null && reserva != null) {
-                        // Sobra dinâmica = headcount do dia - necessário (planejado)
-                        const sobraDia = (d?.total || 0) - necessario;
+                        const sobraDia = (d?.totalQuadro || 0) - necessario;
                         const sobraEfetiva = isSopro && isFimDeSemana ? Math.round(sobraDia / 4) : sobraDia;
                         const reservaEfetiva = isSopro && isFimDeSemana ? Math.round(reserva / 4) : reserva;
                         saldo = totalAusencias > 0 ? sobraEfetiva + reservaEfetiva - totalAusencias : undefined;
