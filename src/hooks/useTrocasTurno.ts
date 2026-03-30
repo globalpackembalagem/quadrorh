@@ -327,7 +327,7 @@ export function useEfetivarTrocaTurno() {
         },
       });
 
-      // 4. Buscar dados completos da troca para notificação
+      // 5. Buscar dados completos da troca para notificação
       const { data: trocaData } = await supabase
         .from('trocas_turno')
         .select('funcionario:funcionarios!funcionario_id(nome_completo), setor_origem_id, setor_destino_id, turma_origem, turma_destino')
@@ -337,7 +337,7 @@ export function useEfetivarTrocaTurno() {
       const funcNome = (trocaData?.funcionario as any)?.nome_completo || 'Funcionário';
       const turmaDestinoStr = params.turma_destino ? ` turma ${params.turma_destino}` : '';
 
-      // 5. Criar evento na Central de Notificações (não enviar direto ao gestor)
+      // 6. Criar evento na Central de Notificações (não enviar direto ao gestor)
       await inserirEventoSemDuplicata({
         tipo: 'transferencia',
         descricao: `TRANSFERÊNCIA REALIZADA — ${funcNome.toUpperCase()}`,
