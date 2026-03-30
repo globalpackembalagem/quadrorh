@@ -649,10 +649,12 @@ export function DashboardFaltasDiario({
                         const sobra = sobraPorSetor[setor] ?? 0;
                         const isSopro = setor.toUpperCase().includes('SOPRO');
                         const setorData = metricasPorSetorDia[setor];
-                        const qtdBase = setorData ? Object.values(setorData)[0]?.total || 0 : 0;
-                        const baseSemana = sobra + reserva;
+                        const qtdHoje = setorData ? (setorData[hojeStr]?.total ?? Object.values(setorData).pop()?.total ?? 0) : 0;
+                        const necessario = necessarioPorSetor[setor] ?? 0;
+                        const sobraDinamica = qtdHoje - necessario;
+                        const baseSemana = sobraDinamica + reserva;
                         const baseFds = isSopro
-                          ? Math.round(sobra / 4) + Math.round(reserva / 4)
+                          ? Math.round(sobraDinamica / 4) + Math.round(reserva / 4)
                           : baseSemana;
                         return (
                           <TableRow key={setor}>
