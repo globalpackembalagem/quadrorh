@@ -1,5 +1,8 @@
 import { Suspense, lazy } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import { Button } from '@/components/ui/button';
+import { LayoutDashboard } from 'lucide-react';
 import { MetricasTurmaCards } from '@/components/dashboard/MetricasTurmaCards';
 import { useAdmissaoRecente, agruparRecentesPorTurma } from '@/hooks/useAdmissaoRecente';
 import { useTreinamentosPrevisao } from '@/hooks/useTreinamentosPrevisao';
@@ -7,6 +10,7 @@ import { useMemo } from 'react';
 import { HomeFaltasMetrics } from '@/components/home/HomeFaltasMetrics';
 
 export default function Home() {
+  const navigate = useNavigate();
   const data = useDashboardData();
   const { data: recentesSopro = [] } = useAdmissaoRecente('SOPRO');
   const { data: recentesDeco = [] } = useAdmissaoRecente('DECORAÇÃO');
@@ -25,7 +29,13 @@ export default function Home() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-lg font-bold text-foreground tracking-wide">QUADRO DE FUNCIONÁRIOS</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-bold text-foreground tracking-wide">QUADRO DE FUNCIONÁRIOS</h1>
+        <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')} className="gap-2">
+          <LayoutDashboard className="h-4 w-4" />
+          Quadro Completo
+        </Button>
+      </div>
 
       {/* SOPRO Cards */}
       <MetricasTurmaCards
