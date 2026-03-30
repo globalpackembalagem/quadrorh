@@ -68,7 +68,12 @@ export function HomeFaltasMetrics() {
   const { data: registros = [] } = useRegistrosFaltas(periodoId);
 
   const funcionariosFiltrados = useMemo(() => {
-    return funcionarios.filter(func => isSetorDoQuadro(func.setor));
+    return funcionarios
+      .filter(func => isSetorDoQuadro(func.setor))
+      .map(func => ({
+        ...func,
+        situacao_conta_no_quadro: func.situacao?.conta_no_quadro ?? true,
+      }));
   }, [funcionarios]);
 
   const funcionariosAgrupados = useMemo(() => {
