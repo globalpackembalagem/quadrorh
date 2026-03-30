@@ -1147,6 +1147,7 @@ export default function ControleFaltas() {
           periodo={periodo}
           reservaFaltasPorSetor={reservaFaltasPorSetor}
           sobraPorSetor={sobraPorSetor}
+          necessarioPorSetor={necessarioPorSetor}
         />
       )}
 
