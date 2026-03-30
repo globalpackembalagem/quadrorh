@@ -91,6 +91,30 @@ const addSeenIds = (ids: string[]) => {
   } catch {}
 };
 
+const extrairResumoDemissao = (mensagem?: string) => {
+  if (!mensagem) return '';
+
+  const linhasLimpas = mensagem
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .filter((l) => !/^o gestor\b/i.test(l))
+    .filter((l) => !/ci[eê]ncia/i.test(l));
+
+  const colaborador = linhasLimpas.find((l) => !l.startsWith('📍') && !l.startsWith('📅'));
+  const setor = linhasLimpas.find((l) => l.startsWith('📍'));
+  const data = linhasLimpas.find((l) => l.startsWith('📅'));
+
+  return [colaborador, setor, data].filter(Boolean).join('\n');
+};
+
+const montarMensagemRetornoCiencia = (nomeGestor: string, tipoLabel: string, mensagemOrigem?: string) => {
+  const resumo = extrairResumoDemissao(mensagemOrigem);
+  return resumo
+    ? `${nomeGestor} deu CIÊNCIA em ${tipoLabel}:\n${resumo}`
+    : `${nomeGestor} deu CIÊNCIA em ${tipoLabel}.`;
+};
+
 export function CentralAvisosModal() {
   const { userRole, isVisualizacao, isAdmin } = useAuth();
   
@@ -248,6 +272,16 @@ export function CentralAvisosModal() {
 
       // 3. Registrar quem viu (CIENTE)
       if (eventoId && userRole?.id && userRole?.nome) {
+        const { data: vistaExistente } = await supabase
+          .from('notificacoes_vistas')
+          .select('id')
+          .eq('evento_id', eventoId)
+          .eq('user_role_id', userRole.id)
+          .limit(1)
+          .maybeSingle();
+
+        const jaTinhaCiencia = !!vistaExistente;
+
         const { error: vistaError } = await supabase.from('notificacoes_vistas').upsert({
           evento_id: eventoId,
           user_role_id: userRole.id,
@@ -260,9 +294,9 @@ export function CentralAvisosModal() {
           console.log('[CIENTE] Vista registrada:', { eventoId, gestor: userRole.nome });
         }
 
-        // 4. Enviar notificação de retorno APENAS para demissão/pedido de demissão
+        // 4. Enviar retorno apenas no PRIMEIRO CIENTE do gestor para o evento
         const tiposDemissao = ['demissao_lancada', 'pedido_demissao_lancado'];
-        if (avisoTipo && tiposDemissao.includes(avisoTipo)) {
+        if (!jaTinhaCiencia && avisoTipo && tiposDemissao.includes(avisoTipo)) {
           try {
             const { data: adminsERH } = await supabase
               .from('user_roles')
@@ -278,7 +312,7 @@ export function CentralAvisosModal() {
                   user_role_id: admin.id,
                   tipo: 'ciencia_retorno',
                   titulo: `✅ CIÊNCIA — ${tipoLabel}`,
-                  mensagem: `${userRole.nome} visualizou notificação de ${tipoLabel}:\n\n${aviso?.mensagem || tipoLabel}`,
+                  mensagem: montarMensagemRetornoCiencia(userRole.nome, tipoLabel, aviso?.mensagem),
                   referencia_id: eventoId,
                 }));
 
@@ -694,7 +728,19 @@ export function CentralAvisosModal() {
             }
           }
 
-          const vistas = avisosComRef.map(a => ({
+          const eventosIds = [...new Set(avisosComRef.map(a => a.referencia_id!).filter(Boolean))];
+          const { data: vistasExistentes } = eventosIds.length > 0
+            ? await supabase
+                .from('notificacoes_vistas')
+                .select('evento_id')
+                .in('evento_id', eventosIds)
+                .eq('user_role_id', userRole.id)
+            : { data: [] as Array<{ evento_id: string }> };
+
+          const eventosJaVistos = new Set((vistasExistentes || []).map(v => v.evento_id));
+          const avisosNovosCiente = avisosComRef.filter(a => !eventosJaVistos.has(a.referencia_id!));
+
+          const vistas = avisosNovosCiente.map(a => ({
             evento_id: a.referencia_id!,
             user_role_id: userRole.id,
             nome_gestor: userRole.nome,
@@ -713,7 +759,7 @@ export function CentralAvisosModal() {
             // Enviar notificação de retorno APENAS para demissão/pedido de demissão
             try {
               const tiposDemissaoRetorno = ['demissao_lancada', 'pedido_demissao_lancado'];
-              const avisosDemissao = podeFechar.filter(a => tiposDemissaoRetorno.includes(a.tipo) && a.referencia_id);
+              const avisosDemissao = avisosNovosCiente.filter(a => tiposDemissaoRetorno.includes(a.tipo) && a.referencia_id);
               
               if (avisosDemissao.length > 0) {
                 const { data: adminsERH } = await supabase
@@ -733,7 +779,7 @@ export function CentralAvisosModal() {
                           user_role_id: admin.id,
                           tipo: 'ciencia_retorno',
                           titulo: `✅ CIÊNCIA — ${tipoLabel}`,
-                          mensagem: `${userRole.nome} visualizou notificação de ${tipoLabel}:\n\n${aviso.mensagem || tipoLabel}`,
+                          mensagem: montarMensagemRetornoCiencia(userRole.nome, tipoLabel, aviso.mensagem),
                           referencia_id: aviso.referencia_id,
                         });
                       });
