@@ -37,6 +37,7 @@ interface DashboardFaltasDiarioProps {
   periodo?: PeriodoBase;
   reservaFaltasPorSetor?: Record<string, number>;
   sobraPorSetor?: Record<string, number>;
+  necessarioPorSetor?: Record<string, number>;
 }
 
 export function DashboardFaltasDiario({
