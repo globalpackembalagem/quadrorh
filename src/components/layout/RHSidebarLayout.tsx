@@ -99,6 +99,7 @@ const allRHNavigation: NavItem[] = [
   { name: 'TROCA DE TURNO', href: '/troca-turno', icon: RefreshCw },
   { name: 'ARMÁRIOS FEMININO', href: '/armarios-femininos', icon: DoorOpen },
   { name: 'PRESTADORES', href: 'https://prestadoresglobal.lovable.app', icon: Building2 },
+  { name: 'RECRUTAMENTO', href: 'https://recrutamentoglobal.lovable.app', icon: UserPlus },
   
 ];
 
@@ -283,6 +284,7 @@ function getNavigationForUser(
   const nomeUpper = userName?.toUpperCase() || '';
   if (isAdmin || ['KARINA', 'ELIANE', 'SONIA'].some(n => nomeUpper.includes(n))) {
     items.push({ name: 'PRESTADORES', href: 'https://prestadoresglobal.lovable.app', icon: Building2 });
+    items.push({ name: 'RECRUTAMENTO', href: 'https://recrutamentoglobal.lovable.app', icon: UserPlus });
   }
 
   return items;
