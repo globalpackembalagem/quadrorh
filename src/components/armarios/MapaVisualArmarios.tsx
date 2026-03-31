@@ -207,7 +207,37 @@ export default function MapaVisualArmarios({ armarios, totalArmarios, onEditar, 
 
       {/* Grid de Blocos */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
-        {blocos.map((bloco) => (
+        {(() => {
+          // Se há busca, reordenar blocos: matching primeiro, ordenados por tipo de busca
+          let blocosOrdenados = blocos;
+          if (matchNumbers && matchNumbers.size > 0) {
+            const isNumericSearch = /^\d+$/.test(busca.trim());
+            if (isNumericSearch) {
+              // Ordenar blocos que têm match primeiro, por número
+              blocosOrdenados = [...blocos].sort((a, b) => {
+                const aHasMatch = a.nums.some(n => matchNumbers!.has(n));
+                const bHasMatch = b.nums.some(n => matchNumbers!.has(n));
+                if (aHasMatch && !bHasMatch) return -1;
+                if (!aHasMatch && bHasMatch) return 1;
+                return a.inicio - b.inicio;
+              });
+            } else {
+              // Busca por nome/setor: blocos com match primeiro, ordenados alfabeticamente pelo primeiro nome encontrado
+              blocosOrdenados = [...blocos].sort((a, b) => {
+                const aHasMatch = a.nums.some(n => matchNumbers!.has(n));
+                const bHasMatch = b.nums.some(n => matchNumbers!.has(n));
+                if (aHasMatch && !bHasMatch) return -1;
+                if (!aHasMatch && bHasMatch) return 1;
+                if (aHasMatch && bHasMatch) {
+                  const aName = a.nums.map(n => armarioMap.get(n)?.nome_completo || '').filter(Boolean).sort()[0] || '';
+                  const bName = b.nums.map(n => armarioMap.get(n)?.nome_completo || '').filter(Boolean).sort()[0] || '';
+                  return aName.localeCompare(bName, 'pt-BR');
+                }
+                return a.inicio - b.inicio;
+              });
+            }
+          }
+          return blocosOrdenados.map((bloco) => (
           <div key={bloco.inicio} className="border rounded-lg p-2 bg-card shadow-sm">
             <div className="text-[10px] text-muted-foreground text-center mb-1.5 font-medium">
               {bloco.inicio} – {bloco.inicio + 3}
@@ -267,7 +297,8 @@ export default function MapaVisualArmarios({ armarios, totalArmarios, onEditar, 
               })}
             </div>
           </div>
-        ))}
+          ));
+        })()}
       </div>
 
       {/* Dialog detalhes */}
