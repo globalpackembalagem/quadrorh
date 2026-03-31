@@ -208,34 +208,30 @@ export default function MapaVisualArmarios({ armarios, totalArmarios, onEditar, 
       {/* Grid de Blocos */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
         {(() => {
-          // Se há busca, reordenar blocos: matching primeiro, ordenados por tipo de busca
+          // Se há busca, reordenar blocos: matching primeiro
           let blocosOrdenados = blocos;
           if (matchNumbers && matchNumbers.size > 0) {
             const isNumericSearch = /^\d+$/.test(busca.trim());
-            if (isNumericSearch) {
-              // Ordenar blocos que têm match primeiro, por número
-              blocosOrdenados = [...blocos].sort((a, b) => {
-                const aHasMatch = a.nums.some(n => matchNumbers!.has(n));
-                const bHasMatch = b.nums.some(n => matchNumbers!.has(n));
-                if (aHasMatch && !bHasMatch) return -1;
-                if (!aHasMatch && bHasMatch) return 1;
-                return a.inicio - b.inicio;
-              });
-            } else {
-              // Busca por nome/setor: blocos com match primeiro, ordenados alfabeticamente pelo primeiro nome encontrado
-              blocosOrdenados = [...blocos].sort((a, b) => {
-                const aHasMatch = a.nums.some(n => matchNumbers!.has(n));
-                const bHasMatch = b.nums.some(n => matchNumbers!.has(n));
-                if (aHasMatch && !bHasMatch) return -1;
-                if (!aHasMatch && bHasMatch) return 1;
-                if (aHasMatch && bHasMatch) {
-                  const aName = a.nums.map(n => armarioMap.get(n)?.nome_completo || '').filter(Boolean).sort()[0] || '';
-                  const bName = b.nums.map(n => armarioMap.get(n)?.nome_completo || '').filter(Boolean).sort()[0] || '';
+            blocosOrdenados = [...blocos].sort((a, b) => {
+              const aMatches = a.nums.filter(n => matchNumbers!.has(n));
+              const bMatches = b.nums.filter(n => matchNumbers!.has(n));
+              const aHas = aMatches.length > 0;
+              const bHas = bMatches.length > 0;
+              if (aHas && !bHas) return -1;
+              if (!aHas && bHas) return 1;
+              if (aHas && bHas) {
+                if (isNumericSearch) {
+                  // Ordenar pelo menor número que deu match dentro do bloco
+                  return Math.min(...aMatches) - Math.min(...bMatches);
+                } else {
+                  // Busca por nome: ordenar alfabeticamente pelo primeiro nome encontrado
+                  const aName = aMatches.map(n => armarioMap.get(n)?.nome_completo || '').filter(Boolean).sort((x, y) => x.localeCompare(y, 'pt-BR'))[0] || '';
+                  const bName = bMatches.map(n => armarioMap.get(n)?.nome_completo || '').filter(Boolean).sort((x, y) => x.localeCompare(y, 'pt-BR'))[0] || '';
                   return aName.localeCompare(bName, 'pt-BR');
                 }
-                return a.inicio - b.inicio;
-              });
-            }
+              }
+              return a.inicio - b.inicio;
+            });
           }
           return blocosOrdenados.map((bloco) => (
           <div key={bloco.inicio} className="border rounded-lg p-2 bg-card shadow-sm">
