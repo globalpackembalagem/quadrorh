@@ -1461,6 +1461,14 @@ export default function ControleFaltas() {
                 </tr>
               </thead>
               <tbody>
+                {funcionariosAgrupados.length === 0 && debouncedFiltroNome.trim() && (
+                  <tr>
+                    <td colSpan={diasVisiveis.length + 1} className="text-center py-8 text-muted-foreground">
+                      <p className="text-sm font-medium">Nenhum funcionário encontrado para "{debouncedFiltroNome}"</p>
+                      <button onClick={() => setFiltroNome('')} className="text-xs text-primary hover:underline mt-1">Limpar busca</button>
+                    </td>
+                  </tr>
+                )}
                 {funcionariosAgrupados.map(({ setor, funcionarios: funcsSetor }) => (
                   <>
                     {/* Cabeçalho do Setor */}
