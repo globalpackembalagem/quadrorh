@@ -16,6 +16,9 @@ interface FuncionarioBase {
   matricula?: string | null;
   data_admissao: string | null;
   data_demissao: string | null;
+  situacao?: {
+    nome?: string | null;
+  } | null;
   situacao_conta_no_quadro?: boolean;
 }
 
@@ -154,7 +157,9 @@ export function DashboardFaltasDiario({
 
   const funcionarioAtivoNaData = (func: FuncionarioBase, data: Date): boolean => {
     if (func.data_admissao && isAfter(parseISO(func.data_admissao), data)) return false;
-    if (func.data_demissao && isBefore(parseISO(func.data_demissao), data)) return false;
+    const situacaoNome = (func.situacao?.nome || '').toUpperCase();
+    const isDesligado = situacaoNome.includes('DEMISSÃO') || situacaoNome.includes('DEMISS') || situacaoNome.includes('PED. DEMISSÃO');
+    if (isDesligado && func.data_demissao && isBefore(parseISO(func.data_demissao), data)) return false;
     return true;
   };
 

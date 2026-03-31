@@ -667,9 +667,12 @@ export default function ControleFaltas() {
       if (isAfter(admissao, data)) return false;
     }
     
-    // Se tem data de demissão, bloqueia a partir da data de demissão (inclusive)
-    if (func.data_demissao) {
-      const demissao = parseISO(func.data_demissao);
+    // Só considera data de demissão para situações de desligamento
+    const situacaoNome = (func.situacao?.nome || '').toUpperCase();
+    const isDesligado = situacaoNome.includes('DEMISSÃO') || situacaoNome.includes('DEMISS') || situacaoNome.includes('PED. DEMISSÃO');
+    const dataDemissaoEfetiva = isDesligado ? (func.data_demissao || format(new Date(), 'yyyy-MM-dd')) : null;
+    if (dataDemissaoEfetiva) {
+      const demissao = parseISO(dataDemissaoEfetiva);
       if (isBefore(demissao, data) || format(demissao, 'yyyy-MM-dd') === format(data, 'yyyy-MM-dd')) return false;
     }
     
@@ -711,10 +714,9 @@ export default function ControleFaltas() {
     return situacaoNome.includes('DEMISSÃO') || situacaoNome.includes('DEMISS') || situacaoNome.includes('PED. DEMISSÃO');
   };
 
-  // Helper: retorna data efetiva de demissão (usa data atual se não tem data_demissao)
-  const getDataDemissaoEfetiva = (func: Funcionario): string | null => {
+  const getDataDemissaoParaBloqueio = (func: Funcionario): string | null => {
+    if (!isFuncionarioDesligado(func)) return null;
     if (func.data_demissao) return func.data_demissao;
-    if (isFuncionarioDesligado(func)) return format(new Date(), 'yyyy-MM-dd');
     return null;
   };
 
@@ -724,7 +726,7 @@ export default function ControleFaltas() {
     const dataStr = format(data, 'yyyy-MM-dd');
     
     // Bloquear lançamento a partir da data de demissão (inclusive)
-    const dataDemissao = getDataDemissaoEfetiva(func);
+    const dataDemissao = getDataDemissaoParaBloqueio(func);
     if (dataDemissao && dataStr >= dataDemissao) {
       toast.error('Funcionário desligado. Não é possível lançar faltas a partir da data de demissão.');
       return;
