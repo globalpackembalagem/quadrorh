@@ -68,13 +68,34 @@ export function HomeFaltasMetrics() {
   const { data: registros = [] } = useRegistrosFaltas(periodoId);
 
   const funcionariosFiltrados = useMemo(() => {
+    const periodoInicio = periodoAtivo ? parseISO(periodoAtivo.data_inicio) : null;
+    const periodoFim = periodoAtivo ? parseISO(periodoAtivo.data_fim) : null;
+
     return funcionarios
       .filter(func => isSetorDoQuadro(func.setor))
-      .map(func => ({
-        ...func,
-        situacao_conta_no_quadro: func.situacao?.conta_no_quadro ?? true,
-      }));
-  }, [funcionarios]);
+      .map(func => {
+        const situacaoNome = (func.situacao?.nome || '').toUpperCase();
+        const isDesligado = situacaoNome.includes('DEMISSÃO') || situacaoNome.includes('DEMISS') || 
+                            situacaoNome.includes('PED. DEMISSÃO') || situacaoNome.includes('TÉRMINO') || 
+                            situacaoNome.includes('TERMINO');
+        
+        // CORREÇÃO: Demitidos dentro do período devem contar no quadro (conta_no_quadro = true)
+        // porque a regra diz que eles permanecem até o fim do período
+        let contaNoQuadro = func.situacao?.conta_no_quadro ?? true;
+        if (isDesligado && func.data_demissao && periodoInicio && periodoFim) {
+          const demissao = parseISO(func.data_demissao);
+          // Se demissão é dentro do período, forçar conta_no_quadro = true
+          if (demissao >= periodoInicio && demissao <= periodoFim) {
+            contaNoQuadro = true;
+          }
+        }
+
+        return {
+          ...func,
+          situacao_conta_no_quadro: contaNoQuadro,
+        };
+      });
+  }, [funcionarios, periodoAtivo]);
 
   const funcionariosAgrupados = useMemo(() => {
     const grupos: Record<string, typeof funcionariosFiltrados> = {};

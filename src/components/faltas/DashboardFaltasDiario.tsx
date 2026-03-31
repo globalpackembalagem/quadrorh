@@ -156,15 +156,31 @@ export function DashboardFaltasDiario({
   }, [blocosDias, blocosVisiveis, diasPeriodo]);
 
   const funcionarioAtivoNaData = (func: FuncionarioBase, data: Date): boolean => {
+    // Regra 2: Admissão — só entra se admitido até o dia
     if (func.data_admissao && isAfter(parseISO(func.data_admissao), data)) return false;
-    const situacaoNome = (func.situacao?.nome || '').toUpperCase();
-    const isDesligado = situacaoNome.includes('DEMISSÃO') || situacaoNome.includes('DEMISS') || situacaoNome.includes('PED. DEMISSÃO');
-    const dataDemissaoEfetiva = isDesligado ? (func.data_demissao || format(new Date(), 'yyyy-MM-dd')) : null;
 
-    if (dataDemissaoEfetiva) {
-      const demissao = parseISO(dataDemissaoEfetiva);
-      const mesmaDataDemissao = format(demissao, 'yyyy-MM-dd') === format(data, 'yyyy-MM-dd');
-      if (isBefore(demissao, data) || mesmaDataDemissao) return false;
+    // Regra 3: Demissão dentro do período → conta para TODO o período
+    // Só exclui se demissão foi ANTES do início do período
+    if (func.data_demissao && periodo) {
+      const demissao = parseISO(func.data_demissao);
+      const periodoInicio = parseISO(periodo.data_inicio);
+      
+      // Se demissão é antes do período, não conta em nenhum dia
+      if (isBefore(demissao, periodoInicio)) return false;
+      
+      // Se demissão é dentro ou depois do período, conta para TODOS os dias do período
+      // (será removido apenas no próximo período)
+      return true;
+    }
+
+    // Fallback para situação DEMISSÃO sem data_demissao
+    const situacaoNome = (func.situacao?.nome || '').toUpperCase();
+    const isDesligado = situacaoNome.includes('DEMISSÃO') || situacaoNome.includes('DEMISS') || 
+                        situacaoNome.includes('PED. DEMISSÃO') || situacaoNome.includes('TÉRMINO') || 
+                        situacaoNome.includes('TERMINO');
+    if (isDesligado && !func.data_demissao) {
+      // Sem data de demissão mas com status de demissão: manter no período atual
+      return true;
     }
 
     return true;
