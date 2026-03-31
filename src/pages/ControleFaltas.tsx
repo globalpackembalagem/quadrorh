@@ -1411,12 +1411,6 @@ export default function ControleFaltas() {
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-      ) : funcionariosFiltrados.length === 0 && !debouncedFiltroNome.trim() ? (
-        <div className="rounded-lg border bg-card p-12 text-center text-muted-foreground">
-          <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p className="text-lg font-medium">NENHUM FUNCIONÁRIO</p>
-          <p>Não há funcionários ativos ou de férias neste período{!isAdmin && ' para os setores que você tem acesso'}</p>
-        </div>
       ) : (
         <div className="rounded-lg border bg-card overflow-hidden">
           <div className="overflow-auto max-h-[65vh]">
