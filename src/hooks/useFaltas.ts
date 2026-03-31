@@ -260,7 +260,7 @@ export function useFuncionariosFaltas(periodoId?: string, periodo?: PeriodoPonto
       
       if (sumidoError) throw sumidoError;
       
-      // Combinar os IDs de situações
+      // Combinar os IDs de situações ativas (ATIVO, FÉRIAS, SUMIDO, etc.)
       const situacaoIds = [
         ...(situacoesNoPonto?.map(s => s.id) || []),
         ...(situacaoSumido?.map(s => s.id) || [])
@@ -268,7 +268,7 @@ export function useFuncionariosFaltas(periodoId?: string, periodo?: PeriodoPonto
       
       if (situacaoIds.length === 0) return [];
 
-      // Buscar funcionários em lotes para superar limite de 1000
+      // Buscar funcionários ativos em lotes
       const pageSize = 1000;
       let allData: any[] = [];
       let page = 0;
@@ -296,30 +296,75 @@ export function useFuncionariosFaltas(periodoId?: string, periodo?: PeriodoPonto
         }
       }
 
-      // Filtrar: só mostrar funcionários que foram admitidos antes do fim do período
-      // e que não foram demitidos antes do início do período
-      // Se não tem data_demissao mas está desligado, usa data atual
+      // CORREÇÃO: Também buscar funcionários DEMITIDOS cuja demissão ocorre DENTRO do período
+      // Regra: demissão dentro do período → conta até o fim do período
+      if (periodo) {
+        const { data: situacoesDemissao } = await supabase
+          .from('situacoes')
+          .select('id, nome')
+          .or('nome.ilike.%DEMISSÃO%,nome.ilike.%DEMISS%,nome.ilike.%PED. DEMISSÃO%,nome.ilike.%TÉRMINO%,nome.ilike.%TERMINO%')
+          .eq('ativa', true);
+
+        if (situacoesDemissao && situacoesDemissao.length > 0) {
+          const demissaoIds = situacoesDemissao.map(s => s.id);
+          // Buscar demitidos cuja data_demissao >= inicio do período
+          let demitidosPage = 0;
+          let demitidosHasMore = true;
+          const idsJaBuscados = new Set(allData.map((f: any) => f.id));
+
+          while (demitidosHasMore) {
+            const from = demitidosPage * pageSize;
+            const to = from + pageSize - 1;
+
+            const { data: demitidos, error: demError } = await supabase
+              .from('funcionarios')
+              .select('*, setor:setores!setor_id(*), situacao:situacoes(*)')
+              .in('situacao_id', demissaoIds)
+              .gte('data_demissao', periodo.data_inicio)
+              .order('nome_completo')
+              .range(from, to);
+
+            if (demError) throw demError;
+
+            if (demitidos && demitidos.length > 0) {
+              // Evitar duplicatas
+              demitidos.forEach(d => {
+                if (!idsJaBuscados.has(d.id)) {
+                  allData.push(d);
+                  idsJaBuscados.add(d.id);
+                }
+              });
+              demitidosHasMore = demitidos.length === pageSize;
+              demitidosPage++;
+            } else {
+              demitidosHasMore = false;
+            }
+          }
+        }
+      }
+
+      // Filtrar por datas de admissão e demissão
       if (periodo) {
         const periodoInicio = parseISO(periodo.data_inicio);
         const periodoFim = parseISO(periodo.data_fim);
-        const hoje = format(new Date(), 'yyyy-MM-dd');
 
         return allData.filter(func => {
+          // Admissão: só entra se admitido antes ou durante o período
           if (func.data_admissao) {
             const admissao = parseISO(func.data_admissao);
             if (admissao > periodoFim) return false;
           }
           
-          // Para data de demissão, considerar SOMENTE quando o funcionário está desligado
-          // (evita excluir ativos com data_demissao antiga preenchida por histórico)
           const situacaoNome = (func.situacao?.nome || '').toUpperCase();
-          const isDesligado = situacaoNome.includes('DEMISSÃO') || situacaoNome.includes('DEMISS') || situacaoNome.includes('PED. DEMISSÃO');
-          const dataDemissaoEfetiva = isDesligado ? (func.data_demissao || hoje) : null;
+          const isDesligado = situacaoNome.includes('DEMISSÃO') || situacaoNome.includes('DEMISS') || 
+                              situacaoNome.includes('PED. DEMISSÃO') || situacaoNome.includes('TÉRMINO') || 
+                              situacaoNome.includes('TERMINO');
           
-          if (dataDemissaoEfetiva) {
-            const demissao = parseISO(dataDemissaoEfetiva);
-            // Exclui se demissão foi antes do início do período
+          if (isDesligado && func.data_demissao) {
+            const demissao = parseISO(func.data_demissao);
+            // Exclui APENAS se demissão foi ANTES do início do período
             if (demissao < periodoInicio) return false;
+            // Se demissão é dentro do período ou depois, MANTÉM (conta até fim do período)
           }
           
           return true;
