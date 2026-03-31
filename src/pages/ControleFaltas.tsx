@@ -1411,7 +1411,7 @@ export default function ControleFaltas() {
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-      ) : funcionariosFiltrados.length === 0 ? (
+      ) : funcionariosFiltrados.length === 0 && !debouncedFiltroNome.trim() ? (
         <div className="rounded-lg border bg-card p-12 text-center text-muted-foreground">
           <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p className="text-lg font-medium">NENHUM FUNCIONÁRIO</p>
@@ -1461,6 +1461,14 @@ export default function ControleFaltas() {
                 </tr>
               </thead>
               <tbody>
+                {funcionariosAgrupados.length === 0 && debouncedFiltroNome.trim() && (
+                  <tr>
+                    <td colSpan={diasVisiveis.length + 1} className="text-center py-8 text-muted-foreground">
+                      <p className="text-sm font-medium">Nenhum funcionário encontrado para "{debouncedFiltroNome}"</p>
+                      <button onClick={() => setFiltroNome('')} className="text-xs text-primary hover:underline mt-1">Limpar busca</button>
+                    </td>
+                  </tr>
+                )}
                 {funcionariosAgrupados.map(({ setor, funcionarios: funcsSetor }) => (
                   <>
                     {/* Cabeçalho do Setor */}
