@@ -159,7 +159,14 @@ export function DashboardFaltasDiario({
     if (func.data_admissao && isAfter(parseISO(func.data_admissao), data)) return false;
     const situacaoNome = (func.situacao?.nome || '').toUpperCase();
     const isDesligado = situacaoNome.includes('DEMISSÃO') || situacaoNome.includes('DEMISS') || situacaoNome.includes('PED. DEMISSÃO');
-    if (isDesligado && func.data_demissao && isBefore(parseISO(func.data_demissao), data)) return false;
+    const dataDemissaoEfetiva = isDesligado ? (func.data_demissao || format(new Date(), 'yyyy-MM-dd')) : null;
+
+    if (dataDemissaoEfetiva) {
+      const demissao = parseISO(dataDemissaoEfetiva);
+      const mesmaDataDemissao = format(demissao, 'yyyy-MM-dd') === format(data, 'yyyy-MM-dd');
+      if (isBefore(demissao, data) || mesmaDataDemissao) return false;
+    }
+
     return true;
   };
 
