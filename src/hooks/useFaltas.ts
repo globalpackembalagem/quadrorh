@@ -310,10 +310,11 @@ export function useFuncionariosFaltas(periodoId?: string, periodo?: PeriodoPonto
             if (admissao > periodoFim) return false;
           }
           
-          // Para data de demissão, usar data atual se não tem data_demissao mas está desligado
+          // Para data de demissão, considerar SOMENTE quando o funcionário está desligado
+          // (evita excluir ativos com data_demissao antiga preenchida por histórico)
           const situacaoNome = (func.situacao?.nome || '').toUpperCase();
           const isDesligado = situacaoNome.includes('DEMISSÃO') || situacaoNome.includes('DEMISS') || situacaoNome.includes('PED. DEMISSÃO');
-          const dataDemissaoEfetiva = func.data_demissao || (isDesligado ? hoje : null);
+          const dataDemissaoEfetiva = isDesligado ? (func.data_demissao || hoje) : null;
           
           if (dataDemissaoEfetiva) {
             const demissao = parseISO(dataDemissaoEfetiva);
