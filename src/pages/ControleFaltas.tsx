@@ -714,24 +714,6 @@ export default function ControleFaltas() {
     return situacaoNome.includes('DEMISSÃO') || situacaoNome.includes('DEMISS') || situacaoNome.includes('PED. DEMISSÃO');
   };
 
-  // Helper: retorna data efetiva de demissão (usa data atual se não tem data_demissao)
-  const getDataDemissaoEfetiva = (func: Funcionario): string | null => {
-    if (!isFuncionarioDesligado(func)) return null;
-    if (func.data_demissao) return func.data_demissao;
-    return format(new Date(), 'yyyy-MM-dd');
-  };
-
-  const getDataDemissaoSomenteDesligado = (func: Funcionario): string | null => {
-    if (!isFuncionarioDesligado(func)) return null;
-    return func.data_demissao;
-  };
-
-  const deveBloquearPorDataDemissao = (func: Funcionario, dataStr: string): boolean => {
-    const dataDemissao = getDataDemissaoSomenteDesligado(func);
-    if (!dataDemissao) return false;
-    return dataStr >= dataDemissao;
-  };
-
   const getDataDemissaoParaBloqueio = (func: Funcionario): string | null => {
     if (!isFuncionarioDesligado(func)) return null;
     if (func.data_demissao) return func.data_demissao;
