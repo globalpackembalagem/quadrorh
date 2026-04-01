@@ -39,9 +39,13 @@ export function useCreateSituacao() {
   
   return useMutation({
     mutationFn: async (situacao: Omit<Situacao, 'id' | 'created_at' | 'updated_at'>) => {
+      const nomeNormalizado = situacao.nome
+        .toUpperCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
       const { data, error } = await supabase
         .from('situacoes')
-        .insert(situacao)
+        .insert({ ...situacao, nome: nomeNormalizado })
         .select()
         .single();
       
@@ -63,9 +67,12 @@ export function useUpdateSituacao() {
   
   return useMutation({
     mutationFn: async ({ id, ...situacao }: Partial<Situacao> & { id: string }) => {
+      const updateData = situacao.nome 
+        ? { ...situacao, nome: situacao.nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') }
+        : situacao;
       const { data, error } = await supabase
         .from('situacoes')
-        .update(situacao)
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();

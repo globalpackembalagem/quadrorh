@@ -408,16 +408,19 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
     const registrosComAvisos = paraImportar.filter(d => d.avisos.length > 0);
     
     try {
+      const normUpper = (v: string | null | undefined) => 
+        v ? v.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') : null;
+      
       const registros = paraImportar.map(d => ({
-        nome_completo: d.nome_completo,
+        nome_completo: normUpper(d.nome_completo) || d.nome_completo,
         sexo: d.sexo,
         setor_id: d.setor_id,
         situacao_id: d.situacao_id,
         empresa: d.empresa || 'GLOBALPACK',
         matricula: d.matricula || null,
         data_admissao: d.data_admissao || null,
-        cargo: d.cargo || null,
-        turma: d.turma || null,
+        cargo: normUpper(d.cargo),
+        turma: d.turma?.toUpperCase() || null,
         data_demissao: d.data_demissao || null,
         observacoes: d.observacoes || null,
       }));

@@ -70,8 +70,20 @@ export default function Situacoes() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    const nomeNorm = nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    
+    // Verificar duplicatas
+    const duplicata = situacoes.find(s => 
+      s.nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') === nomeNorm 
+      && s.id !== editingSituacao?.id
+    );
+    if (duplicata) {
+      toast.error(`Já existe uma situação "${duplicata.nome}"`);
+      return;
+    }
+    
     const data = {
-      nome,
+      nome: nomeNorm,
       ativa,
       conta_no_quadro: contaNoQuadro,
       entra_no_ponto: entraNoPonto,
