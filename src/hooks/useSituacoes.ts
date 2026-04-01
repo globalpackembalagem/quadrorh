@@ -67,9 +67,12 @@ export function useUpdateSituacao() {
   
   return useMutation({
     mutationFn: async ({ id, ...situacao }: Partial<Situacao> & { id: string }) => {
+      const updateData = situacao.nome 
+        ? { ...situacao, nome: situacao.nome.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') }
+        : situacao;
       const { data, error } = await supabase
         .from('situacoes')
-        .update(situacao)
+        .update(updateData)
         .eq('id', id)
         .select()
         .single();
