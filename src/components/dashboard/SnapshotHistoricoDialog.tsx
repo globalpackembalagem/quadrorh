@@ -93,7 +93,8 @@ function SnapshotCard({ snapshot, expanded, onToggle }: {
             <Calendar className="h-5 w-5 text-primary" />
           </div>
           <div className="text-left">
-            <div className="font-bold text-sm">
+            <div className="font-bold text-sm flex items-center gap-2">
+              <Badge variant="outline" className="text-[10px]">{snapshot.grupo}</Badge>
               {format(parseISO(snapshot.data_referencia), "dd/MM/yyyy", { locale: ptBR })}
             </div>
             <div className="text-xs text-muted-foreground flex items-center gap-1">
