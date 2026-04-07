@@ -42,7 +42,7 @@ import { ImportarPrevisoes } from '@/components/previsao/ImportarPrevisoes';
 import { NovaPrevisaoDialog } from '@/components/previsao/NovaPrevisaoDialog';
 import { DocumentoStatusDialog } from '@/components/previsao/DocumentoStatusDialog';
 import { toast } from 'sonner';
-import { registrarMovimentacaoQuadro, resolverGrupoMovimentacao } from '@/lib/historicoMovimentacao';
+
 
 // Verificar se é o usuário REAL PARCERIA
 function isRealParceria(nome: string) {
