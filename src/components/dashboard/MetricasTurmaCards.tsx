@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { Users, TrendingUp, TrendingDown, Minus, UserPlus, UserX, Umbrella, GraduationCap, UserRound, UserRoundCheck, AlertTriangle, Lock } from 'lucide-react';
-import { format } from 'date-fns';
 
 import { TreinamentosSetorDialog } from '@/components/dashboard/TreinamentosSetorDialog';
 import { HistoricoMovimentacaoDialog } from '@/components/dashboard/HistoricoMovimentacaoDialog';
@@ -206,7 +205,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
       {turmas.map(turma => {
         const metricas = metricasPorTurma[turma];
         const grupoLabel = grupo === 'SOPRO' ? `SOPRO ${turma}` : turma;
-        const ultimaMovimentacao = movimentacoesAll.find((mov) => mov.grupo === grupoLabel);
+        
         const sumidosQtd = (mostrarSumidos && sumidosPorTurma[turma]) ? sumidosPorTurma[turma].total : 0;
         const cobFeriasQtd = (mostrarSumidos && cobFeriasPorTurma[turma]) ? cobFeriasPorTurma[turma].total : 0;
         const treinamentoQtd = (mostrarSumidos && treinamentoPorTurma[turma]) ? treinamentoPorTurma[turma].total : 0;
