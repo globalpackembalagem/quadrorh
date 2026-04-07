@@ -48,6 +48,20 @@ export function useRegistrarMovimentacao() {
 
   return useMutation({
     mutationFn: async (registro: Omit<HistoricoMovimentacao, 'id' | 'created_at'>) => {
+      // Verificar duplicidade: mesmo grupo, tipo, nome e data
+      const { data: existente } = await supabase
+        .from('historico_movimentacao')
+        .select('id')
+        .eq('grupo', registro.grupo)
+        .eq('tipo_movimentacao', registro.tipo_movimentacao)
+        .eq('funcionario_nome', registro.funcionario_nome.trim().toUpperCase())
+        .eq('data', registro.data)
+        .limit(1);
+
+      if (existente && existente.length > 0) {
+        throw new Error('Movimentação já registrada para este funcionário nesta data');
+      }
+
       const { data, error } = await supabase
         .from('historico_movimentacao')
         .insert(registro)
@@ -56,6 +70,24 @@ export function useRegistrarMovimentacao() {
 
       if (error) throw error;
       return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['historico_movimentacao'] });
+    },
+  });
+}
+
+export function useDeletarMovimentacao() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('historico_movimentacao')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['historico_movimentacao'] });

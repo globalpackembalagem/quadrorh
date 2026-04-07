@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { History, Plus, UserMinus, UserPlus, ArrowRightLeft, TrendingUp, TrendingDown, Minus, Filter } from 'lucide-react';
+import { History, Plus, UserMinus, UserPlus, ArrowRightLeft, TrendingUp, TrendingDown, Minus, Filter, Trash2 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useHistoricoMovimentacao, useRegistrarMovimentacao } from '@/hooks/useHistoricoMovimentacao';
+import { useHistoricoMovimentacao, useRegistrarMovimentacao, useDeletarMovimentacao } from '@/hooks/useHistoricoMovimentacao';
 import { useUsuario } from '@/contexts/UserContext';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -26,10 +26,10 @@ const GRUPOS_FILTRO = [
   { value: 'SOPRO A', label: 'Sopro A' },
   { value: 'SOPRO B', label: 'Sopro B' },
   { value: 'SOPRO C', label: 'Sopro C' },
-  { value: 'DIA T1', label: 'Deco DIA T1' },
-  { value: 'DIA T2', label: 'Deco DIA T2' },
-  { value: 'NOITE T1', label: 'Deco NOITE T1' },
-  { value: 'NOITE T2', label: 'Deco NOITE T2' },
+  { value: 'DIA-T1', label: 'Decoração DIA T1' },
+  { value: 'DIA-T2', label: 'Decoração DIA T2' },
+  { value: 'NOITE-T1', label: 'Decoração NOITE T1' },
+  { value: 'NOITE-T2', label: 'Decoração NOITE T2' },
 ];
 
 // ── Single card button (opens filtered by one grupo) ──
@@ -257,6 +257,16 @@ function MovimentacaoForm({ tipo, setTipo, nome, setNome, data, setData, obs, se
 }
 
 function HistoricoList({ historico, isLoading, showGrupo = false }: { historico: any[]; isLoading: boolean; showGrupo?: boolean }) {
+  const deletar = useDeletarMovimentacao();
+
+  const handleDelete = (id: string, nome: string) => {
+    if (!confirm(`Excluir movimentação de ${nome}?`)) return;
+    deletar.mutate(id, {
+      onSuccess: () => toast.success('Movimentação excluída'),
+      onError: (err: any) => toast.error('Erro: ' + (err?.message || 'desconhecido')),
+    });
+  };
+
   return (
     <div className="space-y-2 mt-2">
       {isLoading && <div className="text-sm text-muted-foreground text-center py-4">Carregando...</div>}
@@ -270,7 +280,7 @@ function HistoricoList({ historico, isLoading, showGrupo = false }: { historico:
         const diff = item.quadro_novo - item.necessario;
 
         return (
-          <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors">
+          <div key={item.id} className="flex items-start gap-3 p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors group">
             <div className={cn("mt-0.5 shrink-0", colorClass)}>
               <Icon className="h-4 w-4" />
             </div>
@@ -311,6 +321,14 @@ function HistoricoList({ historico, isLoading, showGrupo = false }: { historico:
                 <div className="text-xs text-muted-foreground mt-1 italic">{item.observacoes}</div>
               )}
             </div>
+            <button
+              onClick={() => handleDelete(item.id, item.funcionario_nome)}
+              disabled={deletar.isPending}
+              className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+              title="Excluir movimentação"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
           </div>
         );
       })}
