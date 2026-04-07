@@ -313,12 +313,6 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                   <Lock className="h-4 w-4" />
                 </button>
 
-                {/* Histórico de Movimentação */}
-                <HistoricoMovimentacaoDialog
-                  grupo={grupo === 'SOPRO' ? `SOPRO ${turma}` : turma}
-                  quadroAtual={totalAjustado}
-                  necessario={metricas.quadroNecessario}
-                />
 
                 {/* Badge de admissão recente */}
                 {recentesPorTurma[turma] && recentesPorTurma[turma].count > 0 && (
