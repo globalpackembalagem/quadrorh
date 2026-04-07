@@ -42,6 +42,7 @@ import { ImportarPrevisoes } from '@/components/previsao/ImportarPrevisoes';
 import { NovaPrevisaoDialog } from '@/components/previsao/NovaPrevisaoDialog';
 import { DocumentoStatusDialog } from '@/components/previsao/DocumentoStatusDialog';
 import { toast } from 'sonner';
+import { registrarMovimentacaoQuadro, resolverGrupoMovimentacao } from '@/lib/historicoMovimentacao';
 
 // Verificar se é o usuário REAL PARCERIA
 function isRealParceria(nome: string) {
@@ -208,6 +209,21 @@ export default function PrevisaoAdmissao() {
       if (func) {
         const setor = setores.find(s => s.id === func.setor_id);
         const setorNome = setor?.nome || '';
+        const grupoMovimentacao = resolverGrupoMovimentacao({
+          setorNome,
+          setorGrupo: setor?.grupo || null,
+          turma: func.turma,
+        });
+
+        if (grupoMovimentacao) {
+          await registrarMovimentacaoQuadro({
+            grupo: grupoMovimentacao,
+            tipoMovimentacao: 'ADMISSÃO',
+            funcionarioNome: func.nome_completo,
+            data: format(new Date(), 'yyyy-MM-dd'),
+            criadoPor: userRole.nome,
+          });
+        }
 
         // Criar registro de treinamento/onboarding ao ativar funcionário
         try {
