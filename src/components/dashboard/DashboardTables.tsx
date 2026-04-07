@@ -60,7 +60,7 @@ export function DashboardTables({
         />
         <HistoricoQuadroTable grupo="SOPRO" />
         <div className="flex justify-end">
-          <SnapshotHistoricoDialog grupo="SOPRO" />
+          <SnapshotHistoricoDialog grupo="SOPRO" grupos={['SOPRO A', 'SOPRO B', 'SOPRO C']} />
         </div>
       </div>
     );
@@ -82,7 +82,7 @@ export function DashboardTables({
       />
       <HistoricoQuadroTable grupo="DECORAÇÃO" />
         <div className="flex justify-end">
-          <SnapshotHistoricoDialog grupo="DECORACAO" />
+          <SnapshotHistoricoDialog grupo="DECORACAO" grupos={['DIA-T1', 'DIA-T2', 'NOITE-T1', 'NOITE-T2']} />
         </div>
     </div>
   );
