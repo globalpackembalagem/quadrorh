@@ -3,17 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Demissao, PeriodoDemissao } from '@/types/demissao';
 import { toast } from 'sonner';
 import { criarEventoENotificar } from '@/hooks/useEventosSistema';
-import { buscarContextoFuncionario, registrarMovimentacaoQuadro, resolverGrupoMovimentacao } from '@/lib/historicoMovimentacao';
+
 
 // Eventos são registrados automaticamente na central de notificações
 
-function mapTipoDesligamentoParaMovimentacao(tipo?: string | null) {
-  const tipoNormalizado = (tipo || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
-
-  if (tipoNormalizado.includes('PEDIDO')) return 'PEDIDO DE DEMISSÃO';
-  if (tipoNormalizado.includes('TERMINO') || tipoNormalizado.includes('ANT')) return 'TÉRMINO CONTRATO';
-  return 'DISPENSA';
-}
 
 export function useDemissoes() {
   return useQuery({
@@ -137,9 +130,6 @@ export function useCreateDemissao() {
     mutationFn: async (input: CreateDemissaoInput & { situacaoPedidoDemissaoId?: string; situacaoDemissaoId?: string }) => {
       // Separar campos extras do resto dos dados
       const { situacaoPedidoDemissaoId, situacaoDemissaoId, setor_nome, criado_por_nome, funcionario_nome, setor_id, turma, skipSituacaoUpdate, ...demissao } = input;
-      const contextoFuncionario = !skipSituacaoUpdate
-        ? await buscarContextoFuncionario(demissao.funcionario_id)
-        : null;
       
       const isPedido = demissao.tipo_desligamento === 'Pedido de Demissão';
       const situacaoAlvo = isPedido ? situacaoPedidoDemissaoId : situacaoDemissaoId;
@@ -183,24 +173,6 @@ export function useCreateDemissao() {
         }
       }
 
-      const grupoMovimentacao = contextoFuncionario
-        ? resolverGrupoMovimentacao({
-            setorNome: contextoFuncionario.setor?.nome,
-            setorGrupo: contextoFuncionario.setor?.grupo,
-            turma: contextoFuncionario.turma,
-          })
-        : null;
-
-      if (grupoMovimentacao && contextoFuncionario) {
-        await registrarMovimentacaoQuadro({
-          grupo: grupoMovimentacao,
-          tipoMovimentacao: mapTipoDesligamentoParaMovimentacao(demissao.tipo_desligamento),
-          funcionarioNome: contextoFuncionario.nome_completo,
-          data: demissao.data_prevista,
-          criadoPor: criado_por_nome || null,
-          observacoes: demissao.observacoes || null,
-        });
-      }
 
       return data;
     },
@@ -307,9 +279,6 @@ export function useRealizarDemissao() {
         .eq('id', demissaoId)
         .single();
 
-      const contextoFuncionario = !skipSituacaoUpdate
-        ? await buscarContextoFuncionario(funcionarioId)
-        : null;
 
       // 2. Marcar demissão como realizada
       const { error: demissaoError } = await supabase
@@ -345,24 +314,6 @@ export function useRealizarDemissao() {
         }
       }
 
-      const grupoMovimentacao = contextoFuncionario
-        ? resolverGrupoMovimentacao({
-            setorNome: contextoFuncionario.setor?.nome,
-            setorGrupo: contextoFuncionario.setor?.grupo,
-            turma: contextoFuncionario.turma,
-          })
-        : null;
-
-      if (grupoMovimentacao && contextoFuncionario) {
-        await registrarMovimentacaoQuadro({
-          grupo: grupoMovimentacao,
-          tipoMovimentacao: mapTipoDesligamentoParaMovimentacao(demissaoData?.tipo_desligamento),
-          funcionarioNome: contextoFuncionario.nome_completo,
-          data: demissaoData?.data_prevista,
-          criadoPor: criadoPorNome || null,
-          observacoes: demissaoData?.observacoes || null,
-        });
-      }
     },
     onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['demissoes'] });

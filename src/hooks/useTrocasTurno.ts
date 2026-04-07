@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { criarEventoENotificar, inserirEventoSemDuplicata } from '@/hooks/useEventosSistema';
-import { registrarTransferenciaHistorico, resolverGrupoMovimentacao } from '@/lib/historicoMovimentacao';
+
 
 export interface TrocaTurno {
   id: string;
@@ -309,14 +309,6 @@ export function useEfetivarTrocaTurno() {
       // 4. Registrar no histórico com dados detalhados
       const setorOrigemNome = (funcAtual?.setor as any)?.nome || 'Desconhecido';
       const setorDestinoNome = setorDestino?.nome || 'Desconhecido';
-      const grupoOrigem = resolverGrupoMovimentacao({
-        setorNome: setorOrigemNome,
-        turma: funcAtual?.turma || null,
-      });
-      const grupoDestino = resolverGrupoMovimentacao({
-        setorNome: setorDestinoNome,
-        turma: params.turma_destino || funcAtual?.turma || null,
-      });
 
       await supabase.from('historico_auditoria').insert({
         tabela: 'funcionarios',
@@ -335,22 +327,6 @@ export function useEfetivarTrocaTurno() {
           data_efetivada: new Date().toISOString().split('T')[0],
         },
       });
-
-      if (grupoOrigem && grupoDestino) {
-        const { data: funcNomeData } = await supabase
-          .from('funcionarios')
-          .select('nome_completo')
-          .eq('id', params.funcionario_id)
-          .single();
-
-        await registrarTransferenciaHistorico({
-          funcionarioNome: funcNomeData?.nome_completo || 'Funcionário',
-          grupoOrigem,
-          grupoDestino,
-          data: new Date().toISOString().split('T')[0],
-          criadoPor: params.usuario_nome || 'SISTEMA',
-        });
-      }
 
       // 5. Buscar dados completos da troca para notificação
       const { data: trocaData } = await supabase
