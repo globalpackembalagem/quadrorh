@@ -241,13 +241,31 @@ export async function registrarMovimentacaoQuadro({
     quadroAnterior ??
     (isSaida(tipoMovimentacao) ? quadroNovoFinal + 1 : Math.max(quadroNovoFinal - 1, 0));
 
+  const dataFinal = data || new Date().toISOString().split('T')[0];
+  const nomeFinal = funcionarioNome.trim().toUpperCase();
+
+  // Verificar duplicidade
+  const { data: existente } = await supabase
+    .from('historico_movimentacao')
+    .select('id')
+    .eq('grupo', grupo)
+    .eq('tipo_movimentacao', tipoMovimentacao)
+    .eq('funcionario_nome', nomeFinal)
+    .eq('data', dataFinal)
+    .limit(1);
+
+  if (existente && existente.length > 0) {
+    console.log(`Movimentação duplicada ignorada: ${tipoMovimentacao} - ${nomeFinal} em ${grupo}`);
+    return;
+  }
+
   const { error } = await supabase
     .from('historico_movimentacao')
     .insert({
       grupo,
       tipo_movimentacao: tipoMovimentacao,
-      funcionario_nome: funcionarioNome.trim().toUpperCase(),
-      data: data || new Date().toISOString().split('T')[0],
+      funcionario_nome: nomeFinal,
+      data: dataFinal,
       quadro_anterior: quadroAnteriorFinal,
       quadro_novo: quadroNovoFinal,
       necessario: necessarioFinal,
