@@ -359,15 +359,6 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
               </div>
             </div>
 
-            {ultimaMovimentacao && (
-              <div className="mt-1 mb-3 rounded-md border border-border/60 bg-muted/30 px-2.5 py-2 text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">
-                  {formatDate(parseISO(ultimaMovimentacao.data), 'dd/MM/yyyy')}
-                </span>
-                <span>{' — '}{ultimaMovimentacao.tipo_movimentacao}: {ultimaMovimentacao.quadro_anterior} → {ultimaMovimentacao.quadro_novo}</span>
-                <span className="font-medium text-foreground">{' • '}{ultimaMovimentacao.funcionario_nome}</span>
-              </div>
-            )}
             
             {/* Indicador de Sobra/Desfalque */}
             <div className={cn(
