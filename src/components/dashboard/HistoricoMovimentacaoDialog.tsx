@@ -32,6 +32,13 @@ const GRUPOS_FILTRO = [
   { value: 'NOITE-T2', label: 'DECORAÇÃO NOITE - T2' },
 ];
 
+const GRUPO_DISPLAY: Record<string, string> = {
+  'DIA-T1': 'DECORAÇÃO DIA - T1',
+  'DIA-T2': 'DECORAÇÃO DIA - T2',
+  'NOITE-T1': 'DECORAÇÃO NOITE - T1',
+  'NOITE-T2': 'DECORAÇÃO NOITE - T2',
+};
+
 // ── Single card button (opens filtered by one grupo) ──
 interface CardProps {
   grupo: string;
@@ -94,7 +101,7 @@ export function HistoricoMovimentacaoDialog({ grupo, quadroAtual, necessario }: 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <History className="h-5 w-5" />
-            Histórico - {grupo}
+            Histórico - {GRUPO_DISPLAY[grupo] || grupo}
           </DialogTitle>
         </DialogHeader>
 
