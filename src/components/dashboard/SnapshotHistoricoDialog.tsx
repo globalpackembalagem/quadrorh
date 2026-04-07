@@ -11,12 +11,19 @@ import { cn } from '@/lib/utils';
 
 interface SnapshotHistoricoDialogProps {
   grupo: string;
+  /** If provided, queries all these groups instead of just `grupo` */
+  grupos?: string[];
 }
 
-export function SnapshotHistoricoDialog({ grupo }: SnapshotHistoricoDialogProps) {
+export function SnapshotHistoricoDialog({ grupo, grupos }: SnapshotHistoricoDialogProps) {
   const [open, setOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const { data: snapshots = [], isLoading } = useSnapshotsQuadro(grupo);
+  // If grupos array provided, fetch all (no single filter)
+  const { data: allSnapshots = [], isLoading } = useSnapshotsQuadro();
+  
+  const snapshots = grupos
+    ? allSnapshots.filter(s => grupos.includes(s.grupo))
+    : allSnapshots.filter(s => s.grupo === grupo);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
