@@ -228,8 +228,29 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                     const grupoLabel = grupo === 'SOPRO' ? `SOPRO ${turma}` : turma;
                     const hoje = format(new Date(), 'yyyy-MM-dd');
                     
-                    // Buscar movimentações filtradas para esta turma
-                    const movsFiltered = movimentacoesAll.filter(m => m.grupo === grupoLabel);
+                    // Capturar lista completa de funcionarios desta turma
+                    let funcsDaTurma: typeof funcionarios = [];
+                    if (grupo === 'SOPRO') {
+                      const grupoEsperado = `SOPRO ${turma}`;
+                      funcsDaTurma = funcionarios.filter(f => {
+                        const grupoSetor = f.setor?.grupo?.toUpperCase() || '';
+                        return grupoSetor === grupoEsperado;
+                      });
+                    } else {
+                      funcsDaTurma = funcionarios.filter(f => {
+                        const turmaFunc = f.turma?.toUpperCase();
+                        const setorNome = f.setor?.nome?.toUpperCase() || '';
+                        const isDia = setorNome.includes('DIA');
+                        const isNoite = setorNome.includes('NOITE');
+                        if (turmaFunc === 'T1' || turmaFunc === '1') {
+                          return (isDia && turma === 'DIA-T1') || (isNoite && turma === 'NOITE-T1');
+                        }
+                        if (turmaFunc === 'T2' || turmaFunc === '2') {
+                          return (isDia && turma === 'DIA-T2') || (isNoite && turma === 'NOITE-T2');
+                        }
+                        return false;
+                      });
+                    }
                     
                     // Montar detalhes breakdown
                     const detalhes: Record<string, unknown> = {
@@ -243,25 +264,39 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                     if (cobFeriasPorTurma[turma]) detalhes.cob_ferias = cobFeriasPorTurma[turma].total;
                     if (treinamentoPorTurma[turma]) detalhes.treinamento = treinamentoPorTurma[turma].total;
                     
+                    // Montar lista de funcionarios congelada
+                    const listaFuncionarios = funcsDaTurma.map(f => ({
+                      nome: f.nome_completo,
+                      matricula: f.matricula || '',
+                      situacao: f.situacao?.nome || '',
+                      cargo: f.cargo || '',
+                      empresa: f.empresa || '',
+                      setor: f.setor?.nome || '',
+                    }));
+                    
+                    // Buscar movimentações recentes (últimos 30 dias) para esta turma
+                    const movsFiltered = movimentacoesAll.filter(m => m.grupo === grupoLabel);
+                    
                     salvarSnapshot.mutate({
                       grupo: grupoLabel,
                       data_referencia: hoje,
                       quadro_real: totalAjustado,
                       quadro_necessario: metricas.quadroNecessario,
                       diferenca,
-                      detalhes,
+                      detalhes: { ...detalhes, funcionarios: listaFuncionarios },
                       movimentacoes: movsFiltered.map(m => ({
                         tipo_movimentacao: m.tipo_movimentacao,
                         funcionario_nome: m.funcionario_nome,
                         data: m.data,
                         quadro_anterior: m.quadro_anterior,
                         quadro_novo: m.quadro_novo,
+                        observacoes: m.observacoes || '',
                       })),
                       travado_por: usuarioAtual?.nome || 'SISTEMA',
                     }, {
                       onSuccess: () => {
                         toast.success(`SNAPSHOT TRAVADO - ${grupoLabel} (${format(new Date(), 'dd/MM/yyyy')})`, {
-                          description: `Real: ${totalAjustado} / Necessario: ${metricas.quadroNecessario} / Diferenca: ${diferenca > 0 ? '+' : ''}${diferenca}`,
+                          description: `Real: ${totalAjustado} / Necessario: ${metricas.quadroNecessario} | ${listaFuncionarios.length} funcionarios salvos`,
                           duration: 5000,
                         });
                       },
