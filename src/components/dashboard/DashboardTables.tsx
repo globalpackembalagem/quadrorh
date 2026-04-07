@@ -4,6 +4,7 @@ import { QuadroRealSoproTable } from '@/components/dashboard/QuadroRealSoproTabl
 import { QuadroRealDecoracaoTable } from '@/components/dashboard/QuadroRealDecoracaoTable';
 import { SubstituicaoReposicaoTable } from '@/components/dashboard/SubstituicaoReposicaoTable';
 import { HistoricoQuadroTable } from '@/components/dashboard/HistoricoQuadroTable';
+import { SnapshotHistoricoDialog } from '@/components/dashboard/SnapshotHistoricoDialog';
 import type { GrupoType } from '@/hooks/useDashboardData';
 import type { Funcionario, QuadroPlanejado, QuadroDecoracao } from '@/types/database';
 import type { Demissao, PeriodoDemissao } from '@/types/demissao';
@@ -58,6 +59,9 @@ export function DashboardTables({
           desfalquePorTurma={desfalqueSopro}
         />
         <HistoricoQuadroTable grupo="SOPRO" />
+        <div className="flex justify-end">
+          <SnapshotHistoricoDialog grupo="SOPRO" grupos={['SOPRO A', 'SOPRO B', 'SOPRO C']} />
+        </div>
       </div>
     );
   }
@@ -77,6 +81,9 @@ export function DashboardTables({
         desfalquePorTurma={desfalqueDecoracao}
       />
       <HistoricoQuadroTable grupo="DECORAÇÃO" />
+        <div className="flex justify-end">
+          <SnapshotHistoricoDialog grupo="DECORACAO" grupos={['DIA-T1', 'DIA-T2', 'NOITE-T1', 'NOITE-T2']} />
+        </div>
     </div>
   );
 }

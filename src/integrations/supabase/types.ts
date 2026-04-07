@@ -1898,6 +1898,45 @@ export type Database = {
         }
         Relationships: []
       }
+      snapshots_quadro: {
+        Row: {
+          created_at: string
+          data_referencia: string
+          detalhes: Json
+          diferenca: number
+          grupo: string
+          id: string
+          movimentacoes: Json
+          quadro_necessario: number
+          quadro_real: number
+          travado_por: string
+        }
+        Insert: {
+          created_at?: string
+          data_referencia: string
+          detalhes?: Json
+          diferenca?: number
+          grupo: string
+          id?: string
+          movimentacoes?: Json
+          quadro_necessario?: number
+          quadro_real?: number
+          travado_por: string
+        }
+        Update: {
+          created_at?: string
+          data_referencia?: string
+          detalhes?: Json
+          diferenca?: number
+          grupo?: string
+          id?: string
+          movimentacoes?: Json
+          quadro_necessario?: number
+          quadro_real?: number
+          travado_por?: string
+        }
+        Relationships: []
+      }
       tipos_desligamento: {
         Row: {
           ativo: boolean
