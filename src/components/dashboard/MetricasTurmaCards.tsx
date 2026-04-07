@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Users, TrendingUp, TrendingDown, Minus, UserPlus, UserX, Umbrella, GraduationCap, UserRound, UserRoundCheck, AlertTriangle, Lock } from 'lucide-react';
+import { format as formatDate, parseISO } from 'date-fns';
 
 import { TreinamentosSetorDialog } from '@/components/dashboard/TreinamentosSetorDialog';
 import { HistoricoMovimentacaoDialog } from '@/components/dashboard/HistoricoMovimentacaoDialog';
@@ -204,6 +205,8 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
     <div className={`grid gap-4 ${grupo === 'SOPRO' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 lg:grid-cols-4'}`}>
       {turmas.map(turma => {
         const metricas = metricasPorTurma[turma];
+        const grupoLabel = grupo === 'SOPRO' ? `SOPRO ${turma}` : turma;
+        const ultimaMovimentacao = movimentacoesAll.find((mov) => mov.grupo === grupoLabel);
         const sumidosQtd = (mostrarSumidos && sumidosPorTurma[turma]) ? sumidosPorTurma[turma].total : 0;
         const cobFeriasQtd = (mostrarSumidos && cobFeriasPorTurma[turma]) ? cobFeriasPorTurma[turma].total : 0;
         const treinamentoQtd = (mostrarSumidos && treinamentoPorTurma[turma]) ? treinamentoPorTurma[turma].total : 0;
@@ -225,7 +228,6 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                 {/* Botão TRAVAR SNAPSHOT */}
                 <button
                   onClick={() => {
-                    const grupoLabel = grupo === 'SOPRO' ? `SOPRO ${turma}` : turma;
                     const hoje = format(new Date(), 'yyyy-MM-dd');
                     
                     // Capturar lista completa de funcionarios desta turma
@@ -356,6 +358,16 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                 / {metricas.quadroNecessario}
               </div>
             </div>
+
+            {ultimaMovimentacao && (
+              <div className="mt-1 mb-3 rounded-md border border-border/60 bg-muted/30 px-2.5 py-2 text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">
+                  {formatDate(parseISO(ultimaMovimentacao.data), 'dd/MM/yyyy')}
+                </span>
+                <span>{' — '}{ultimaMovimentacao.tipo_movimentacao}: {ultimaMovimentacao.quadro_anterior} → {ultimaMovimentacao.quadro_novo}</span>
+                <span className="font-medium text-foreground">{' • '}{ultimaMovimentacao.funcionario_nome}</span>
+              </div>
+            )}
             
             {/* Indicador de Sobra/Desfalque */}
             <div className={cn(
