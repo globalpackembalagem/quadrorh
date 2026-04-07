@@ -75,7 +75,6 @@ interface NavItem {
 // Navegação base - será filtrada por permissões
 const allRHNavigation: NavItem[] = [
   { name: 'QUADRO DE FUNCIONÁRIOS', href: '/', icon: LayoutDashboard },
-  { name: 'HISTÓRICO MOVIMENTAÇÃO', href: '/historico-movimentacao', icon: History },
   
   { name: 'FUNCIONÁRIOS', href: '/funcionarios', icon: Users },
   { name: 'PREVISÃO ADMISSÃO', href: '/previsao-admissao', icon: UserPlus },
@@ -179,7 +178,7 @@ function getNavigationForUser(
   if (canEditFaltas) {
     const gestorItems: NavItem[] = [
       { name: 'QUADRO DE FUNCIONÁRIOS', href: '/', icon: LayoutDashboard },
-      { name: 'HISTÓRICO MOVIMENTAÇÃO', href: '/historico-movimentacao', icon: History },
+      
     ];
 
     if (!perms || perms.pode_visualizar_funcionarios) {
