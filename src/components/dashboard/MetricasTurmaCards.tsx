@@ -86,6 +86,12 @@ function calcularTotalPlanejadoDecoracao(dados: QuadroDecoracao): number {
 
 export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro = [], quadroPlanejadoDecoracao = [], funcionariosPrevisao = [], sumidosPorTurma = {}, cobFeriasPorTurma = {}, treinamentoPorTurma = {}, mostrarSumidos = false, recentesPorTurma = {}, treinamentosPrevisao = [] }: MetricasTurmaCardsProps) {
   const turmas = grupo === 'SOPRO' ? TURMAS_SOPRO : TURMAS_DECORACAO;
+  const salvarSnapshot = useSalvarSnapshot();
+  const { usuarioAtual } = useUsuario();
+
+  // Buscar movimentações para incluir no snapshot
+  const gruposMovimentacao = turmas.map(t => grupo === 'SOPRO' ? `SOPRO ${t}` : t);
+  const { data: movimentacoesAll = [] } = useHistoricoMovimentacao(gruposMovimentacao);
 
   // Calcular métricas por turma usando a mesma lógica do Quadro Real
   const metricasPorTurma = useMemo(() => {
