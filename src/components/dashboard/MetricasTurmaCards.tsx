@@ -272,6 +272,13 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                       setor: f.setor?.nome || '',
                     }));
                     
+                    salvarSnapshot.mutate({
+                      grupo: grupoLabel,
+                      data_referencia: hoje,
+                      quadro_real: totalAjustado,
+                      quadro_necessario: metricas.quadroNecessario,
+                      diferenca,
+                      detalhes: { ...detalhes, funcionarios: listaFuncionarios },
                       movimentacoes: [],
                       travado_por: usuarioAtual?.nome || 'SISTEMA',
                     }, {

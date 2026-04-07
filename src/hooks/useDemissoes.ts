@@ -8,11 +8,6 @@ import { criarEventoENotificar } from '@/hooks/useEventosSistema';
 // Eventos são registrados automaticamente na central de notificações
 
 
-  if (tipoNormalizado.includes('PEDIDO')) return 'PEDIDO DE DEMISSÃO';
-  if (tipoNormalizado.includes('TERMINO') || tipoNormalizado.includes('ANT')) return 'TÉRMINO CONTRATO';
-  return 'DISPENSA';
-}
-
 export function useDemissoes() {
   return useQuery({
     queryKey: ['demissoes'],
