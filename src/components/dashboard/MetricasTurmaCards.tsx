@@ -6,7 +6,7 @@ import { TreinamentosSetorDialog } from '@/components/dashboard/TreinamentosSeto
 import { Funcionario, QuadroPlanejado, QuadroDecoracao } from '@/types/database';
 import { TreinamentoPrevisao, filterByGrupo } from '@/hooks/useTreinamentosPrevisao';
 import { useSalvarSnapshot } from '@/hooks/useSnapshotsQuadro';
-import { useHistoricoMovimentacao } from '@/hooks/useHistoricoMovimentacao';
+
 import { useUsuario } from '@/contexts/UserContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -89,9 +89,6 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
   const salvarSnapshot = useSalvarSnapshot();
   const { usuarioAtual } = useUsuario();
 
-  // Buscar movimentações para incluir no snapshot
-  const gruposMovimentacao = turmas.map(t => grupo === 'SOPRO' ? `SOPRO ${t}` : t);
-  const { data: movimentacoesAll = [] } = useHistoricoMovimentacao(gruposMovimentacao);
 
   // Calcular métricas por turma usando a mesma lógica do Quadro Real
   const metricasPorTurma = useMemo(() => {
@@ -275,24 +272,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                       setor: f.setor?.nome || '',
                     }));
                     
-                    // Buscar movimentações recentes (últimos 30 dias) para esta turma
-                    const movsFiltered = movimentacoesAll.filter(m => m.grupo === grupoLabel);
-                    
-                    salvarSnapshot.mutate({
-                      grupo: grupoLabel,
-                      data_referencia: hoje,
-                      quadro_real: totalAjustado,
-                      quadro_necessario: metricas.quadroNecessario,
-                      diferenca,
-                      detalhes: { ...detalhes, funcionarios: listaFuncionarios },
-                      movimentacoes: movsFiltered.map(m => ({
-                        tipo_movimentacao: m.tipo_movimentacao,
-                        funcionario_nome: m.funcionario_nome,
-                        data: m.data,
-                        quadro_anterior: m.quadro_anterior,
-                        quadro_novo: m.quadro_novo,
-                        observacoes: m.observacoes || '',
-                      })),
+                      movimentacoes: [],
                       travado_por: usuarioAtual?.nome || 'SISTEMA',
                     }, {
                       onSuccess: () => {

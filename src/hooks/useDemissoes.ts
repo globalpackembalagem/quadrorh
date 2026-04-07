@@ -3,12 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Demissao, PeriodoDemissao } from '@/types/demissao';
 import { toast } from 'sonner';
 import { criarEventoENotificar } from '@/hooks/useEventosSistema';
-import { buscarContextoFuncionario, registrarMovimentacaoQuadro, resolverGrupoMovimentacao } from '@/lib/historicoMovimentacao';
+
 
 // Eventos são registrados automaticamente na central de notificações
 
-function mapTipoDesligamentoParaMovimentacao(tipo?: string | null) {
-  const tipoNormalizado = (tipo || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
 
   if (tipoNormalizado.includes('PEDIDO')) return 'PEDIDO DE DEMISSÃO';
   if (tipoNormalizado.includes('TERMINO') || tipoNormalizado.includes('ANT')) return 'TÉRMINO CONTRATO';

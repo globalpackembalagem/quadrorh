@@ -84,7 +84,7 @@ const MockupGate = lazyRetry(() => import("./pages/MockupGate"));
 const ArmariosFemininos = lazyRetry(() => import("./pages/ArmariosFemininos"));
 const ManualArmarios = lazyRetry(() => import("./pages/ManualArmarios"));
 
-const HistoricoMovimentacaoPage = lazyRetry(() => import("./pages/HistoricoMovimentacao"));
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -200,7 +200,7 @@ function LayoutRouter() {
             <Route path="/armarios-femininos/manual" element={<RotaProtegida requireArmarios><ManualArmarios /></RotaProtegida>} />
             
             
-            <Route path="/historico-movimentacao" element={<HistoricoMovimentacaoPage />} />
+            
             <Route path="/manual" element={<ManualGestor />} />
             <Route path="/mockup" element={<MockupGate />} />
             
