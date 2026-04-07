@@ -26,11 +26,18 @@ const GRUPOS_FILTRO = [
   { value: 'SOPRO A', label: 'Sopro A' },
   { value: 'SOPRO B', label: 'Sopro B' },
   { value: 'SOPRO C', label: 'Sopro C' },
-  { value: 'DIA-T1', label: 'Decoração DIA T1' },
-  { value: 'DIA-T2', label: 'Decoração DIA T2' },
-  { value: 'NOITE-T1', label: 'Decoração NOITE T1' },
-  { value: 'NOITE-T2', label: 'Decoração NOITE T2' },
+  { value: 'DIA-T1', label: 'DECORAÇÃO DIA - T1' },
+  { value: 'DIA-T2', label: 'DECORAÇÃO DIA - T2' },
+  { value: 'NOITE-T1', label: 'DECORAÇÃO NOITE - T1' },
+  { value: 'NOITE-T2', label: 'DECORAÇÃO NOITE - T2' },
 ];
+
+const GRUPO_DISPLAY: Record<string, string> = {
+  'DIA-T1': 'DECORAÇÃO DIA - T1',
+  'DIA-T2': 'DECORAÇÃO DIA - T2',
+  'NOITE-T1': 'DECORAÇÃO NOITE - T1',
+  'NOITE-T2': 'DECORAÇÃO NOITE - T2',
+};
 
 // ── Single card button (opens filtered by one grupo) ──
 interface CardProps {
@@ -94,7 +101,7 @@ export function HistoricoMovimentacaoDialog({ grupo, quadroAtual, necessario }: 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <History className="h-5 w-5" />
-            Histórico - {grupo}
+            Histórico - {GRUPO_DISPLAY[grupo] || grupo}
           </DialogTitle>
         </DialogHeader>
 

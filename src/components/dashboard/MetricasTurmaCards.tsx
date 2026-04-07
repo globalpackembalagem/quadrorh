@@ -43,10 +43,10 @@ const TURMAS_LABELS: Record<string, string> = {
   'A': 'SOPRO A',
   'B': 'SOPRO B',
   'C': 'SOPRO C',
-  'DIA-T1': 'DECORAÇÃO DIA T1',
-  'DIA-T2': 'DECORAÇÃO DIA T2',
-  'NOITE-T1': 'DECORAÇÃO NOITE T1',
-  'NOITE-T2': 'DECORAÇÃO NOITE T2',
+  'DIA-T1': 'DECORAÇÃO DIA - T1',
+  'DIA-T2': 'DECORAÇÃO DIA - T2',
+  'NOITE-T1': 'DECORAÇÃO NOITE - T1',
+  'NOITE-T2': 'DECORAÇÃO NOITE - T2',
 };
 
 // Calcular total planejado para SOPRO
