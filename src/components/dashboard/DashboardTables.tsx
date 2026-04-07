@@ -81,6 +81,9 @@ export function DashboardTables({
         desfalquePorTurma={desfalqueDecoracao}
       />
       <HistoricoQuadroTable grupo="DECORAÇÃO" />
+        <div className="flex justify-end">
+          <SnapshotHistoricoDialog grupo="DECORACAO" />
+        </div>
     </div>
   );
 }
