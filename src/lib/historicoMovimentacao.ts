@@ -27,6 +27,9 @@ interface RegistrarMovimentacaoParams {
   data?: string | null;
   criadoPor?: string | null;
   observacoes?: string | null;
+  quadroAnterior?: number;
+  quadroNovo?: number;
+  necessario?: number;
 }
 
 interface RegistrarTransferenciaParams {
@@ -193,7 +196,7 @@ async function calcularQuadroNecessario(grupo: string) {
   return data ? calcularTotalPlanejadoDecoracao(data) : 0;
 }
 
-async function calcularEstadoAtualGrupo(grupo: string) {
+export async function calcularEstadoAtualGrupo(grupo: string) {
   const [funcionariosNoQuadro, necessario] = await Promise.all([
     carregarFuncionariosNoQuadro(),
     calcularQuadroNecessario(grupo),
@@ -222,9 +225,20 @@ export async function registrarMovimentacaoQuadro({
   data,
   criadoPor,
   observacoes,
+  quadroAnterior,
+  quadroNovo,
+  necessario,
 }: RegistrarMovimentacaoParams) {
-  const { quadroNovo, necessario } = await calcularEstadoAtualGrupo(grupo);
-  const quadroAnterior = isSaida(tipoMovimentacao) ? quadroNovo + 1 : Math.max(quadroNovo - 1, 0);
+  const estadoAtual =
+    quadroNovo === undefined || necessario === undefined
+      ? await calcularEstadoAtualGrupo(grupo)
+      : null;
+
+  const quadroNovoFinal = quadroNovo ?? estadoAtual?.quadroNovo ?? 0;
+  const necessarioFinal = necessario ?? estadoAtual?.necessario ?? 0;
+  const quadroAnteriorFinal =
+    quadroAnterior ??
+    (isSaida(tipoMovimentacao) ? quadroNovoFinal + 1 : Math.max(quadroNovoFinal - 1, 0));
 
   const { error } = await supabase
     .from('historico_movimentacao')
@@ -233,9 +247,9 @@ export async function registrarMovimentacaoQuadro({
       tipo_movimentacao: tipoMovimentacao,
       funcionario_nome: funcionarioNome.trim().toUpperCase(),
       data: data || new Date().toISOString().split('T')[0],
-      quadro_anterior: quadroAnterior,
-      quadro_novo: quadroNovo,
-      necessario,
+      quadro_anterior: quadroAnteriorFinal,
+      quadro_novo: quadroNovoFinal,
+      necessario: necessarioFinal,
       observacoes: observacoes || null,
       criado_por: criadoPor || null,
     });
