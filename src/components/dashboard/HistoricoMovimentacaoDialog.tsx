@@ -26,10 +26,10 @@ const GRUPOS_FILTRO = [
   { value: 'SOPRO A', label: 'Sopro A' },
   { value: 'SOPRO B', label: 'Sopro B' },
   { value: 'SOPRO C', label: 'Sopro C' },
-  { value: 'DIA-T1', label: 'Decoração DIA T1' },
-  { value: 'DIA-T2', label: 'Decoração DIA T2' },
-  { value: 'NOITE-T1', label: 'Decoração NOITE T1' },
-  { value: 'NOITE-T2', label: 'Decoração NOITE T2' },
+  { value: 'DIA-T1', label: 'DECORAÇÃO DIA - T1' },
+  { value: 'DIA-T2', label: 'DECORAÇÃO DIA - T2' },
+  { value: 'NOITE-T1', label: 'DECORAÇÃO NOITE - T1' },
+  { value: 'NOITE-T2', label: 'DECORAÇÃO NOITE - T2' },
 ];
 
 // ── Single card button (opens filtered by one grupo) ──
