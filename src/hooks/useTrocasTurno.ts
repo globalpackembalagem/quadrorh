@@ -310,6 +310,24 @@ export function useEfetivarTrocaTurno() {
       const setorOrigemNome = (funcAtual?.setor as any)?.nome || 'Desconhecido';
       const setorDestinoNome = setorDestino?.nome || 'Desconhecido';
 
+      await supabase.from('historico_auditoria').insert({
+        tabela: 'funcionarios',
+        operacao: 'MOVIMENTACAO_EFETIVADA',
+        registro_id: params.funcionario_id,
+        usuario_nome: params.usuario_nome || 'Sistema',
+        dados_anteriores: {
+          setor: setorOrigemNome,
+          setor_id: funcAtual?.setor_id || null,
+          turma: funcAtual?.turma || null,
+        },
+        dados_novos: {
+          setor: setorDestinoNome,
+          setor_id: params.setor_destino_id,
+          turma: params.turma_destino || funcAtual?.turma || null,
+          data_efetivada: new Date().toISOString().split('T')[0],
+        },
+      });
+
       // 5. Buscar dados completos da troca para notificação
       const { data: trocaData } = await supabase
         .from('trocas_turno')
