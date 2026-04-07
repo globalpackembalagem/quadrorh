@@ -179,7 +179,7 @@ function getNavigationForUser(
   if (canEditFaltas) {
     const gestorItems: NavItem[] = [
       { name: 'QUADRO DE FUNCIONÁRIOS', href: '/', icon: LayoutDashboard },
-      
+      { name: 'HISTÓRICO MOVIMENTAÇÃO', href: '/historico-movimentacao', icon: History },
     ];
 
     if (!perms || perms.pode_visualizar_funcionarios) {
