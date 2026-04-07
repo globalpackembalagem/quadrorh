@@ -222,6 +222,68 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                 {TURMAS_LABELS[turma]}
               </div>
               <div className="flex items-center gap-2">
+                {/* Botão TRAVAR SNAPSHOT */}
+                <button
+                  onClick={() => {
+                    const grupoLabel = grupo === 'SOPRO' ? `SOPRO ${turma}` : turma;
+                    const hoje = format(new Date(), 'yyyy-MM-dd');
+                    
+                    // Buscar movimentações filtradas para esta turma
+                    const movsFiltered = movimentacoesAll.filter(m => m.grupo === grupoLabel);
+                    
+                    // Montar detalhes breakdown
+                    const detalhes: Record<string, unknown> = {
+                      quadro_real: totalAjustado,
+                      quadro_necessario: metricas.quadroNecessario,
+                      homens: metricas.homens,
+                      mulheres: metricas.mulheres,
+                      previsoes: metricas.previsoes,
+                    };
+                    if (sumidosPorTurma[turma]) detalhes.sumidos = sumidosPorTurma[turma].total;
+                    if (cobFeriasPorTurma[turma]) detalhes.cob_ferias = cobFeriasPorTurma[turma].total;
+                    if (treinamentoPorTurma[turma]) detalhes.treinamento = treinamentoPorTurma[turma].total;
+                    
+                    salvarSnapshot.mutate({
+                      grupo: grupoLabel,
+                      data_referencia: hoje,
+                      quadro_real: totalAjustado,
+                      quadro_necessario: metricas.quadroNecessario,
+                      diferenca,
+                      detalhes,
+                      movimentacoes: movsFiltered.map(m => ({
+                        tipo_movimentacao: m.tipo_movimentacao,
+                        funcionario_nome: m.funcionario_nome,
+                        data: m.data,
+                        quadro_anterior: m.quadro_anterior,
+                        quadro_novo: m.quadro_novo,
+                      })),
+                      travado_por: usuarioAtual?.nome || 'SISTEMA',
+                    }, {
+                      onSuccess: () => {
+                        toast.success(`SNAPSHOT TRAVADO - ${grupoLabel} (${format(new Date(), 'dd/MM/yyyy')})`, {
+                          description: `Real: ${totalAjustado} / Necessario: ${metricas.quadroNecessario} / Diferenca: ${diferenca > 0 ? '+' : ''}${diferenca}`,
+                          duration: 5000,
+                        });
+                      },
+                      onError: (err: any) => {
+                        toast.error('Erro ao travar snapshot: ' + (err?.message || 'desconhecido'));
+                      },
+                    });
+                  }}
+                  disabled={salvarSnapshot.isPending}
+                  className="flex items-center justify-center h-7 w-7 rounded-full bg-muted hover:bg-primary/20 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                  title={`Travar snapshot de ${TURMAS_LABELS[turma]} para hoje`}
+                >
+                  <Lock className="h-4 w-4" />
+                </button>
+
+                {/* Histórico de Movimentação */}
+                <HistoricoMovimentacaoDialog
+                  grupo={grupo === 'SOPRO' ? `SOPRO ${turma}` : turma}
+                  quadroAtual={totalAjustado}
+                  necessario={metricas.quadroNecessario}
+                />
+
                 {/* Badge de admissão recente */}
                 {recentesPorTurma[turma] && recentesPorTurma[turma].count > 0 && (
                   <button
