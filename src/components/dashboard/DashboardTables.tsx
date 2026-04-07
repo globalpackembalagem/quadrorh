@@ -59,6 +59,9 @@ export function DashboardTables({
           desfalquePorTurma={desfalqueSopro}
         />
         <HistoricoQuadroTable grupo="SOPRO" />
+        <div className="flex justify-end">
+          <SnapshotHistoricoDialog grupo="SOPRO" />
+        </div>
       </div>
     );
   }
