@@ -1,3 +1,4 @@
+import { queryClient } from '@/App';
 import { supabase } from '@/integrations/supabase/client';
 
 type SetorMovimentacao = {
@@ -255,6 +256,8 @@ export async function registrarMovimentacaoQuadro({
     });
 
   if (error) throw error;
+
+  await queryClient.invalidateQueries({ queryKey: ['historico_movimentacao'] });
 }
 
 export async function registrarTransferenciaHistorico({

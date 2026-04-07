@@ -85,7 +85,7 @@ const ArmariosFemininos = lazyRetry(() => import("./pages/ArmariosFemininos"));
 const ManualArmarios = lazyRetry(() => import("./pages/ManualArmarios"));
 
 const HistoricoMovimentacaoPage = lazyRetry(() => import("./pages/HistoricoMovimentacao"));
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 60 * 1000,       // 60s - realtime cuida das atualizações
