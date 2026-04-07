@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Users, TrendingUp, TrendingDown, Minus, UserPlus, UserX, Umbrella, GraduationCap, UserRound, UserRoundCheck, AlertTriangle, Lock } from 'lucide-react';
 
 import { TreinamentosSetorDialog } from '@/components/dashboard/TreinamentosSetorDialog';
-import { HistoricoMovimentacaoDialog } from '@/components/dashboard/HistoricoMovimentacaoDialog';
+
 import { Funcionario, QuadroPlanejado, QuadroDecoracao } from '@/types/database';
 import { TreinamentoPrevisao, filterByGrupo } from '@/hooks/useTreinamentosPrevisao';
 import { useSalvarSnapshot } from '@/hooks/useSnapshotsQuadro';
@@ -313,12 +313,6 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                   <Lock className="h-4 w-4" />
                 </button>
 
-                {/* Histórico de Movimentação */}
-                <HistoricoMovimentacaoDialog
-                  grupo={grupo === 'SOPRO' ? `SOPRO ${turma}` : turma}
-                  quadroAtual={totalAjustado}
-                  necessario={metricas.quadroNecessario}
-                />
 
                 {/* Badge de admissão recente */}
                 {recentesPorTurma[turma] && recentesPorTurma[turma].count > 0 && (
