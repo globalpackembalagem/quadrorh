@@ -1,7 +1,8 @@
 // Local wrapper for xlsx-js-style
-// Uses locally installed package instead of CDN to avoid network/firewall blocks
+// Uses locally installed package bundle directly to avoid CDN/network issues
 
-import XLSX from 'xlsx-js-style/dist/xlsx.bundle.js';
+// @ts-ignore - importing the raw bundle file directly
+import XLSX from '../../node_modules/xlsx-js-style/dist/xlsx.bundle.js';
 
 export default XLSX;
 export const read = XLSX.read;
