@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     exclude: ["xlsx-js-style"],
+    include: [],
   },
   build: {
     commonjsOptions: {

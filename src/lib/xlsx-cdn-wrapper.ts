@@ -1,10 +1,8 @@
-// CDN wrapper for xlsx-js-style
-// Loads from CDN to avoid "Cannot access 'G' before initialization" errors
+// Local wrapper for xlsx-js-style
+// Uses locally installed package bundle directly to avoid CDN/network issues
 
-const CDN_URL = "https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/+esm";
-
-const mod = await import(/* @vite-ignore */ CDN_URL);
-const XLSX = mod.default || mod;
+// @ts-ignore - importing the raw bundle file directly
+import XLSX from '../../node_modules/xlsx-js-style/dist/xlsx.bundle.js';
 
 export default XLSX;
 export const read = XLSX.read;
