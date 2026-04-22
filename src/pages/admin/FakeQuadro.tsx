@@ -6,8 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Search, UserCog, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Search, AlertCircle, ShieldCheck } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+interface FakeConfig {
+  sopro?: Record<string, number>;
+  deco?: Record<string, number>;
+}
 
 export default function FakeQuadro() {
   const queryClient = useQueryClient();
@@ -26,10 +32,10 @@ export default function FakeQuadro() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ativo, config }: { id: string, ativo: boolean, config: any }) => {
+    mutationFn: async ({ id, ativo, config }: { id: string, ativo: boolean, config: FakeConfig }) => {
       const { error } = await supabase
         .from('user_roles')
-        .update({ fake_quadro_ativo: ativo, fake_quadro_config: config })
+        .update({ fake_quadro_ativo: ativo, fake_quadro_config: config as any })
         .eq('id', id);
       if (error) throw error;
     },
@@ -46,13 +52,20 @@ export default function FakeQuadro() {
     updateMutation.mutate({
       id: user.id,
       ativo: !user.fake_quadro_ativo,
-      config: user.fake_quadro_config || {}
+      config: (user.fake_quadro_config as FakeConfig) || {}
     });
   };
 
-  const handleConfigChange = (user: any, key: string, value: string) => {
+  const handleConfigChange = (user: any, type: 'sopro' | 'deco', turma: string, value: string) => {
     const numValue = parseInt(value) || 0;
-    const newConfig = { ...(user.fake_quadro_config || {}), [key]: numValue };
+    const currentConfig = (user.fake_quadro_config as FakeConfig) || {};
+    const newConfig = {
+      ...currentConfig,
+      [type]: {
+        ...(currentConfig[type] || {}),
+        [turma]: numValue
+      }
+    };
     updateMutation.mutate({
       id: user.id,
       ativo: user.fake_quadro_ativo,
@@ -79,7 +92,8 @@ export default function FakeQuadro() {
         <AlertCircle className="h-5 w-5 shrink-0" />
         <p>
           Esta tela permite configurar dados falsos (negativos/desfalque) para usuários específicos. 
-          Quando ativo, o dashboard do usuário selecionado exibirá os valores subtraídos conforme configurado aqui.
+          Quando ativo, o dashboard do usuário selecionado exibirá os valores configurados aqui somados ao desfalque real.
+          Use valores positivos para <strong>aumentar</strong> o desfalque (piorar o quadro).
         </p>
       </div>
 
@@ -93,50 +107,79 @@ export default function FakeQuadro() {
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredUsers.map(user => (
-          <Card key={user.id} className={user.fake_quadro_ativo ? 'border-primary shadow-md' : ''}>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-bold uppercase">{user.nome}</CardTitle>
-                <Switch
-                  checked={user.fake_quadro_ativo}
-                  onCheckedChange={() => handleToggle(user)}
-                />
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-xs">Desfalque Sopro</Label>
-                  <Input
-                    type="number"
-                    className="h-8"
-                    value={user.fake_quadro_config?.desfalque_sopro || 0}
-                    onChange={(e) => handleConfigChange(user, 'desfalque_sopro', e.target.value)}
-                    disabled={!user.fake_quadro_ativo}
-                  />
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
+        {filteredUsers.map(user => {
+          const config = (user.fake_quadro_config as FakeConfig) || {};
+          return (
+            <Card key={user.id} className={user.fake_quadro_ativo ? 'border-primary shadow-md' : ''}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="text-base font-bold uppercase">{user.nome}</CardTitle>
+                    <p className="text-xs text-muted-foreground">ID: {user.id.substring(0, 8)}...</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium">{user.fake_quadro_ativo ? 'ATIVO' : 'INATIVO'}</span>
+                    <Switch
+                      checked={user.fake_quadro_ativo}
+                      onCheckedChange={() => handleToggle(user)}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs">Desfalque Decoração</Label>
-                  <Input
-                    type="number"
-                    className="h-8"
-                    value={user.fake_quadro_config?.desfalque_decoracao || 0}
-                    onChange={(e) => handleConfigChange(user, 'desfalque_decoracao', e.target.value)}
-                    disabled={!user.fake_quadro_ativo}
-                  />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Tabs defaultValue="sopro">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="sopro">SOPRO</TabsTrigger>
+                    <TabsTrigger value="deco">DECORAÇÃO</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="sopro" className="space-y-3 mt-4">
+                    <div className="grid grid-cols-3 gap-3">
+                      {['A', 'B', 'C'].map(turma => (
+                        <div key={turma} className="space-y-1.5">
+                          <Label className="text-[10px] uppercase font-bold">Turma {turma}</Label>
+                          <Input
+                            type="number"
+                            className="h-8 text-center"
+                            value={config.sopro?.[turma] || 0}
+                            onChange={(e) => handleConfigChange(user, 'sopro', turma, e.target.value)}
+                            disabled={!user.fake_quadro_ativo}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="deco" className="space-y-3 mt-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      {['DIA-T1', 'DIA-T2', 'NOITE-T1', 'NOITE-T2'].map(turma => (
+                        <div key={turma} className="space-y-1.5">
+                          <Label className="text-[10px] uppercase font-bold">{turma}</Label>
+                          <Input
+                            type="number"
+                            className="h-8 text-center"
+                            value={config.deco?.[turma] || 0}
+                            onChange={(e) => handleConfigChange(user, 'deco', turma, e.target.value)}
+                            disabled={!user.fake_quadro_ativo}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+                
+                <Separator />
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground italic">
+                  <span>{user.fake_quadro_ativo ? "Dados alterados para este usuário" : "Usuário visualiza dados reais"}</span>
+                  {user.fake_quadro_ativo && (
+                    <span className="text-amber-500 font-bold">● MODO FAKE ATIVO</span>
+                  )}
                 </div>
-              </div>
-              <Separator />
-              <p className="text-[10px] text-muted-foreground italic">
-                {user.fake_quadro_ativo 
-                  ? "Este usuário está visualizando dados alterados."
-                  : "Este usuário visualiza os dados reais do sistema."}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
