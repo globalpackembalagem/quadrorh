@@ -56,11 +56,11 @@ export default function GateAcesso() {
               alt="Globalpack"
               className="h-14 mx-auto mb-4 object-contain"
             />
-            <h1 className="text-xl font-bold text-foreground">
-              Quadro de Pessoal
+            <h1 className="text-xl font-bold text-foreground uppercase tracking-widest">
+              HELLO WORLD
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Identifique-se para continuar
+              Welcome to your new app
             </p>
           </div>
 
@@ -112,7 +112,7 @@ export default function GateAcesso() {
               ) : (
                 <>
                   <Lock className="h-4 w-4" />
-                  Entrar
+                  Click me
                 </>
               )}
             </Button>
