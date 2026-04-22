@@ -26,6 +26,7 @@ export default defineConfig(({ mode }) => ({
     include: [],
   },
   build: {
+    chunkSizeWarningLimit: 2000,
     commonjsOptions: {
       ignoreDynamicRequires: true,
       transformMixedEsModules: true,
