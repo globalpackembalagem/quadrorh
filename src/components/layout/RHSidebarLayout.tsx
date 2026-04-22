@@ -457,12 +457,6 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
           <span className="font-extrabold text-sidebar-foreground text-xs uppercase tracking-widest opacity-80">SISTEMA RH</span>
         </div>
         <div className="flex items-center gap-2">
-          {/* FAKES QUADRO shortcut for admin */}
-          {isAdmin && (
-            <Link to="/admin/fake-quadro" className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors" title="FAKES QUADRO">
-              <ShieldCheck className="h-5 w-5" />
-            </Link>
-          )}
           {/* Botão Fixar/Soltar - só no desktop */}
           {!isMobile && (
             <button
@@ -547,7 +541,15 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="mt-2 space-y-1 ml-4 border-l border-sidebar-border/50 pl-2">
-                  {adminNavigation.map((item) => (
+                  {adminNavigation
+                    .filter((item) => {
+                      if (item.name === 'FAKES QUADRO') {
+                        const nome = userRole?.nome?.toUpperCase() || '';
+                        return nome === 'LUCIANO' || nome === 'MAURICIO';
+                      }
+                      return true;
+                    })
+                    .map((item) => (
                     <Link
                       key={item.name}
                       to={item.href}

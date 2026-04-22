@@ -175,7 +175,7 @@ export function TopNavLayout({ children }: TopNavLayoutProps) {
             </Link>
           )}
 
-          {isLoggedIn && isAdmin && (
+          {isLoggedIn && ['LUCIANO', 'MAURICIO'].includes(usuarioAtual.nome?.toUpperCase() || '') && (
             <Link
               to="/admin/fake-quadro"
               className={cn(
