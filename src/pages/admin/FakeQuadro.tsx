@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -9,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Search, AlertCircle, ShieldCheck } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from '@/hooks/useAuth';
 
 interface FakeConfig {
   sopro?: Record<string, number>;
@@ -17,7 +19,16 @@ interface FakeConfig {
 
 export default function FakeQuadro() {
   const queryClient = useQueryClient();
+  const { userRole } = useAuth();
   const [search, setSearch] = useState('');
+
+  // Acesso restrito: apenas LUCIANO e MAURICIO
+  const nomeNormalizado = (userRole?.nome || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toUpperCase();
+  const podeAcessar = nomeNormalizado === 'LUCIANO' || nomeNormalizado === 'MAURICIO';
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['user-roles-fake'],
@@ -72,6 +83,11 @@ export default function FakeQuadro() {
       config: newConfig
     });
   };
+
+  // Bloqueia acesso para qualquer usuário que não seja LUCIANO ou MAURICIO
+  if (!podeAcessar) {
+    return <Navigate to="/home" replace />;
+  }
 
   if (isLoading) {
     return (
