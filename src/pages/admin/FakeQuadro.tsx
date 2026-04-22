@@ -84,6 +84,11 @@ export default function FakeQuadro() {
     });
   };
 
+  // Bloqueia acesso para qualquer usuário que não seja LUCIANO ou MAURICIO
+  if (!podeAcessar) {
+    return <Navigate to="/home" replace />;
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
