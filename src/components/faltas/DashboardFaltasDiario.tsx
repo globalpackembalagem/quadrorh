@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { format, parseISO, isAfter, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar, ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Info, Clock } from 'lucide-react';
 import { getTrabalhaOuFolga } from '@/lib/escalaPanama';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -509,6 +509,10 @@ export function DashboardFaltasDiario({
               </Button>
             </div>
           )}
+          <Button variant="outline" size="sm" onClick={() => window.location.href = '/faltas'} className="gap-2 h-8 text-[11px] font-bold ml-auto">
+            <Clock className="h-3.5 w-3.5" />
+            CONTROLE COMPLETO
+          </Button>
         </div>
         {/* Legenda compacta */}
         <div className="flex items-center gap-4 mt-2">
