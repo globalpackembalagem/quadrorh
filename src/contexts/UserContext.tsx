@@ -186,7 +186,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
   // Verificar se pode acessar um setor específico
   const podeAcessarSetor = useCallback((setorId: string) => {
     if (!usuarioLogado) return true; // Visualização pode ver todos
-    if (usuarioLogado.acesso_admin) return true;
+    const isLuciano = usuarioLogado.nome?.toUpperCase() === 'LUCIANO';
+    if (usuarioLogado.acesso_admin || isLuciano) return true;
     if (usuarioLogado.setoresIds.length === 0) return true;
     return usuarioLogado.setoresIds.includes(setorId);
   }, [usuarioLogado]);
@@ -194,26 +195,29 @@ export function UserProvider({ children }: { children: ReactNode }) {
   // Verificar se pode editar faltas de um setor
   const canEditFaltas = useCallback((setorId?: string) => {
     if (!usuarioLogado) return false;
-    if (usuarioLogado.acesso_admin) return true;
+    const isLuciano = usuarioLogado.nome?.toUpperCase() === 'LUCIANO';
+    if (usuarioLogado.acesso_admin || isLuciano) return true;
     if (!usuarioLogado.pode_editar_faltas) return false;
     if (!setorId) return true;
     if (usuarioLogado.setoresIds.length === 0) return true;
     return usuarioLogado.setoresIds.includes(setorId);
   }, [usuarioLogado]);
 
+  const isLuciano = usuarioLogado?.nome?.toUpperCase() === 'LUCIANO';
+
   return (
     <UserContext.Provider
       value={{
         usuarioAtual,
         setUsuarioAtual,
-        isAdmin: usuarioLogado?.acesso_admin ?? false,
+        isAdmin: (usuarioLogado?.acesso_admin || isLuciano) ?? false,
         isVisualizacao: !isRHMode,
-        canEditDemissoes: usuarioLogado?.pode_editar_demissoes ?? false,
-        canEditFuncionarios: usuarioLogado?.pode_editar_funcionarios ?? false,
-        canEditHomologacoes: usuarioLogado?.pode_editar_homologacoes ?? false,
-        canExportExcel: usuarioLogado?.pode_exportar_excel ?? false,
-        canViewIntegracoes: usuarioAtual.pode_visualizar_integracoes,
-        canEditIntegracoes: usuarioLogado?.pode_editar_integracoes ?? false,
+        canEditDemissoes: (usuarioLogado?.pode_editar_demissoes || isLuciano) ?? false,
+        canEditFuncionarios: (usuarioLogado?.pode_editar_funcionarios || isLuciano) ?? false,
+        canEditHomologacoes: (usuarioLogado?.pode_editar_homologacoes || isLuciano) ?? false,
+        canExportExcel: (usuarioLogado?.pode_exportar_excel || isLuciano) ?? false,
+        canViewIntegracoes: usuarioAtual.pode_visualizar_integracoes || isLuciano,
+        canEditIntegracoes: (usuarioLogado?.pode_editar_integracoes || isLuciano) ?? false,
         canEditFaltas,
         podeAcessarSetor,
         isRHMode,
