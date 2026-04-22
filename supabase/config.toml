@@ -1,5 +1,8 @@
 project_id = "iffakffvaqharvhjeeuk"
 
+[functions.auth-handler]
+verify_jwt = false
+
 [functions.processar-trocas-turno]
 verify_jwt = false
 
