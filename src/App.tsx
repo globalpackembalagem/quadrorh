@@ -85,6 +85,7 @@ const FakeQuadro = lazyRetry(() => import("./pages/admin/FakeQuadro"));
 const ArmariosFemininos = lazyRetry(() => import("./pages/ArmariosFemininos"));
 const ManualArmarios = lazyRetry(() => import("./pages/ManualArmarios"));
 const Integracoes = lazyRetry(() => import("./pages/Integracoes"));
+const Agencia = lazyRetry(() => import("./pages/Agencia"));
 
 
 export const queryClient = new QueryClient({
@@ -202,6 +203,7 @@ function LayoutRouter() {
             <Route path="/armarios-femininos" element={<RotaProtegida requireArmarios><ArmariosFemininos /></RotaProtegida>} />
             <Route path="/armarios-femininos/manual" element={<RotaProtegida requireArmarios><ManualArmarios /></RotaProtegida>} />
             <Route path="/integracoes" element={<Integracoes />} />
+            <Route path="/agencia" element={<Agencia />} />
             
             
             
