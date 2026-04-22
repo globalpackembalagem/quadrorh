@@ -19,7 +19,16 @@ interface FakeConfig {
 
 export default function FakeQuadro() {
   const queryClient = useQueryClient();
+  const { userRole } = useAuth();
   const [search, setSearch] = useState('');
+
+  // Acesso restrito: apenas LUCIANO e MAURICIO
+  const nomeNormalizado = (userRole?.nome || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toUpperCase();
+  const podeAcessar = nomeNormalizado === 'LUCIANO' || nomeNormalizado === 'MAURICIO';
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['user-roles-fake'],
