@@ -121,7 +121,7 @@ const adminNavigation = [
   { name: 'TIPOS DESLIGAMENTO', href: '/admin/tipos-desligamento', icon: UserMinus },
   { name: 'PERÍODOS', href: '/admin/periodos', icon: Clock },
   { name: 'USUÁRIOS', href: '/admin/usuarios', icon: UserCog },
-  { name: 'FAKES QUADRO', href: '/admin/fake-quadro', icon: ShieldCheck, restricted: true },
+  { name: 'FAKES QUADRO', href: '/admin/fake-quadro', icon: ShieldCheck },
   { name: 'BACKUP', href: '/admin/backup', icon: Database },
   { name: 'REFERÊNCIA', href: '/admin/referencia', icon: Lightbulb },
 ];
@@ -541,7 +541,7 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="mt-2 space-y-1 ml-4 border-l border-sidebar-border/50 pl-2">
-                  {adminNavigation.filter(item => !item.restricted || (usuarioAtual?.nome?.toUpperCase() === 'LUCIANO' || usuarioAtual?.nome?.toUpperCase() === 'MAURICIO')).map((item) => (
+                  {adminNavigation.map((item) => (
                     <Link
                       key={item.name}
                       to={item.href}

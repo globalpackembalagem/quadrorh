@@ -73,7 +73,7 @@ const adminNavigation = [
   { name: 'SITUAÇÕES', href: '/admin/situacoes', icon: FileText },
   { name: 'PERÍODOS', href: '/admin/periodos', icon: Clock },
   { name: 'USUÁRIOS', href: '/admin/usuarios', icon: UserCog },
-  { name: 'FAKES QUADRO', href: '/admin/fake-quadro', icon: ShieldCheck, restricted: true },
+  { name: 'FAKES QUADRO', href: '/admin/fake-quadro', icon: ShieldCheck },
   { name: 'BACKUP', href: '/admin/backup', icon: Database },
   { name: 'HISTÓRICO DE ACESSO', href: '/admin/historico-acesso', icon: Eye },
 ];
@@ -238,7 +238,7 @@ export function TopNavLayout({ children }: TopNavLayoutProps) {
                         ADMINISTRAÇÃO
                         <ChevronDown className={cn("h-3 w-3 ml-auto transition-transform", adminExpanded && "rotate-180")} />
                       </DropdownMenuItem>
-                      {adminExpanded && adminNavigation.filter(item => !item.restricted || (usuarioAtual?.nome?.toUpperCase() === 'LUCIANO' || usuarioAtual?.nome?.toUpperCase() === 'MAURICIO')).map((item) => (
+                      {adminExpanded && adminNavigation.map((item) => (
                         <DropdownMenuItem key={item.name} asChild>
                           <Link
                             to={item.href}
@@ -384,7 +384,7 @@ export function TopNavLayout({ children }: TopNavLayoutProps) {
                   <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Administração
                   </p>
-                  {adminNavigation.filter(item => !item.restricted || (usuarioAtual?.nome?.toUpperCase() === 'LUCIANO' || usuarioAtual?.nome?.toUpperCase() === 'MAURICIO')).map((item) => (
+                  {adminNavigation.map((item) => (
                      <Link
                       key={item.name}
                       to={item.href}
