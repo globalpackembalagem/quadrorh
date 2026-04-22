@@ -320,7 +320,7 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
     .replace(/[\u0300-\u036f]/g, '')
     .trim()
     .toUpperCase();
-  const canAccessFakeQuadro = isAdmin && (nomeUsuarioNormalizado === 'LUCIANO' || nomeUsuarioNormalizado === 'MAURICIO');
+  const canAccessFakeQuadro = isRHMode && (nomeUsuarioNormalizado === 'LUCIANO' || nomeUsuarioNormalizado === 'MAURICIO');
 
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';
