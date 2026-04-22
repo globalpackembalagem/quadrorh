@@ -61,8 +61,8 @@ function clearAttempts(key: string): void {
 
 // ====== HASHING SEGURO COM BCRYPT ======
 async function hashPasswordBcrypt(password: string): Promise<string> {
-  const salt = await bcrypt.genSalt(10);
-  return await bcrypt.hash(password, salt);
+  const salt = bcrypt.genSaltSync(10);
+  return bcrypt.hashSync(password, salt);
 }
 
 // Legacy SHA-256 (só para verificação de hashes antigos)
