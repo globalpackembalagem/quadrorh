@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Users, TrendingUp, TrendingDown, Minus, UserPlus, UserX, Umbrella, GraduationCap, UserRound, UserRoundCheck, AlertTriangle, Lock } from 'lucide-react';
+import { Users, TrendingUp, TrendingDown, Minus, UserPlus, UserX, Umbrella, GraduationCap, UserRound, UserRoundCheck, AlertTriangle } from 'lucide-react';
 
 import { TreinamentosSetorDialog } from '@/components/dashboard/TreinamentosSetorDialog';
 
@@ -86,7 +86,6 @@ function calcularTotalPlanejadoDecoracao(dados: QuadroDecoracao): number {
 
 export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro = [], quadroPlanejadoDecoracao = [], funcionariosPrevisao = [], sumidosPorTurma = {}, cobFeriasPorTurma = {}, treinamentoPorTurma = {}, mostrarSumidos = false, recentesPorTurma = {}, treinamentosPrevisao = [] }: MetricasTurmaCardsProps) {
   const turmas = grupo === 'SOPRO' ? TURMAS_SOPRO : TURMAS_DECORACAO;
-  const salvarSnapshot = useSalvarSnapshot();
   const { usuarioAtual } = useUsuario();
 
 
@@ -225,31 +224,6 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
               </div>
               <div className="flex items-center gap-2">
                 {/* Badge de admissão recente */}
-                {recentesPorTurma[turma] && recentesPorTurma[turma].count > 0 && (
-                  <button
-                    onClick={() => {
-                      const info = recentesPorTurma[turma];
-                      const plural = info.count > 1 ? 'pessoas' : 'pessoa';
-                      toast.info(
-                        `🆕 ${info.count} ${plural} em ${info.situacao} dos ${totalAjustado}`,
-                        {
-                          description: info.nomes.join(', '),
-                          duration: 8000,
-                        }
-                      );
-                    }}
-                    className="flex items-center justify-center h-7 w-7 rounded-full bg-warning/20 text-warning hover:bg-warning/40 transition-colors cursor-pointer"
-                    title={`${recentesPorTurma[turma].count} admissão(ões) recente(s) — clique para ver`}
-                  >
-                    <AlertTriangle className="h-4 w-4" />
-                  </button>
-                )}
-                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
-                  <Users className="h-5 w-5 text-primary" />
-                </div>
-                
-                <TreinamentosSetorDialog grupoLabel={TURMAS_LABELS[turma]} treinamentos={filterByGrupo(treinamentosPrevisao, TURMAS_LABELS[turma])} />
-              </div>
                 {recentesPorTurma[turma] && recentesPorTurma[turma].count > 0 && (
                   <button
                     onClick={() => {
