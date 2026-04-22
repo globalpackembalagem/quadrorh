@@ -316,6 +316,12 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
 
   // Navegação filtrada por perfil
   const rhNavigation = getNavigationForUser(isAdmin, isRHMode, isVisualizacao, canEditFaltas(), userRole?.nome, isRHMode ? usuarioAtual : undefined);
+  const nomeUsuarioNormalizado = (userRole?.nome || usuarioAtual.nome || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toUpperCase();
+  const canAccessFakeQuadro = isAdmin && ['LUCIANO', 'MAURICIO'].includes(nomeUsuarioNormalizado);
 
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';
@@ -544,8 +550,7 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
                   {adminNavigation
                     .filter((item) => {
                       if (item.name === 'FAKES QUADRO') {
-                        const nome = userRole?.nome?.toUpperCase() || '';
-                        return nome === 'LUCIANO' || nome === 'MAURICIO';
+                        return canAccessFakeQuadro;
                       }
                       return true;
                     })
@@ -708,6 +713,21 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          {canAccessFakeQuadro && (
+            <Link
+              to="/admin/fake-quadro"
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold transition-colors',
+                location.pathname === '/admin/fake-quadro'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-sidebar-accent text-sidebar-foreground hover:bg-primary/20'
+              )}
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              {!isMobile && 'FAKES QUADRO'}
+            </Link>
+          )}
+
           <ThemeSelectorButton />
 
           {/* Atalhos rápidos REAL PARCERIA */}
