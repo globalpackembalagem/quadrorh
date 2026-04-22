@@ -115,7 +115,8 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
           return grupoSetor === grupoEsperado;
         });
         
-        result[turma].total = funcTurma.length;
+        const fakeValue = usuarioAtual?.fake_quadro_ativo ? (usuarioAtual?.fake_quadro_config?.sopro?.[turma] || 0) : 0;
+        result[turma].total = funcTurma.length - fakeValue;
         result[turma].homens = funcTurma.filter(f => f.sexo === 'masculino').length;
         result[turma].mulheres = funcTurma.filter(f => f.sexo === 'feminino').length;
         
@@ -158,6 +159,8 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
         if (planejado) {
           result[turma].quadroNecessario = calcularTotalPlanejadoDecoracao(planejado);
         }
+        const fakeValue = usuarioAtual?.fake_quadro_ativo ? (usuarioAtual?.fake_quadro_config?.deco?.[turma] || 0) : 0;
+        result[turma].total = result[turma].total - fakeValue;
         result[turma].diferenca = result[turma].total - result[turma].quadroNecessario;
       });
     }
@@ -195,7 +198,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
     }
     
     return result;
-  }, [funcionarios, turmas, grupo, quadroPlanejadoSopro, quadroPlanejadoDecoracao, funcionariosPrevisao]);
+  }, [funcionarios, turmas, grupo, quadroPlanejadoSopro, quadroPlanejadoDecoracao, funcionariosPrevisao, usuarioAtual]);
 
   return (
     <div className={`grid gap-4 ${grupo === 'SOPRO' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 lg:grid-cols-4'}`}>
