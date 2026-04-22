@@ -3,10 +3,7 @@ import { Users, TrendingUp, TrendingDown, Minus, UserPlus, UserX, Umbrella, Grad
 
 import { TreinamentosSetorDialog } from '@/components/dashboard/TreinamentosSetorDialog';
 
-import { Funcionario, QuadroPlanejado, QuadroDecoracao } from '@/types/database';
 import { TreinamentoPrevisao, filterByGrupo } from '@/hooks/useTreinamentosPrevisao';
-import { useSalvarSnapshot } from '@/hooks/useSnapshotsQuadro';
-
 import { useUsuario } from '@/contexts/UserContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
