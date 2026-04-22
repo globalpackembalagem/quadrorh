@@ -509,6 +509,10 @@ export function DashboardFaltasDiario({
               </Button>
             </div>
           )}
+          <Button variant="outline" size="sm" onClick={() => window.location.href = '/faltas'} className="gap-2 h-8 text-[11px] font-bold ml-auto">
+            <Clock className="h-3.5 w-3.5" />
+            CONTROLE COMPLETO
+          </Button>
         </div>
         {/* Legenda compacta */}
         <div className="flex items-center gap-4 mt-2">
