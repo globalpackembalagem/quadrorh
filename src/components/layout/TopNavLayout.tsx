@@ -26,6 +26,7 @@ import {
   Key,
   LayoutList,
   BookOpen,
+  ShieldCheck,
   Sun,
   Moon,
 } from 'lucide-react';
@@ -237,7 +238,7 @@ export function TopNavLayout({ children }: TopNavLayoutProps) {
                         ADMINISTRAÇÃO
                         <ChevronDown className={cn("h-3 w-3 ml-auto transition-transform", adminExpanded && "rotate-180")} />
                       </DropdownMenuItem>
-                      {adminExpanded && adminNavigation.map((item) => (
+                      {adminExpanded && adminNavigation.filter(item => !item.restricted || (usuarioAtual?.nome?.toUpperCase() === 'LUCIANO' || usuarioAtual?.nome?.toUpperCase() === 'MAURICIO')).map((item) => (
                         <DropdownMenuItem key={item.name} asChild>
                           <Link
                             to={item.href}
@@ -383,7 +384,7 @@ export function TopNavLayout({ children }: TopNavLayoutProps) {
                   <p className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     Administração
                   </p>
-                  {adminNavigation.map((item) => (
+                  {adminNavigation.filter(item => !item.restricted || (usuarioAtual?.nome?.toUpperCase() === 'LUCIANO' || usuarioAtual?.nome?.toUpperCase() === 'MAURICIO')).map((item) => (
                      <Link
                       key={item.name}
                       to={item.href}
