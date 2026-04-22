@@ -316,6 +316,12 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
 
   // Navegação filtrada por perfil
   const rhNavigation = getNavigationForUser(isAdmin, isRHMode, isVisualizacao, canEditFaltas(), userRole?.nome, isRHMode ? usuarioAtual : undefined);
+  const nomeUsuarioNormalizado = (userRole?.nome || usuarioAtual.nome || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toUpperCase();
+  const canAccessFakeQuadro = isAdmin && ['LUCIANO', 'MAURICIO'].includes(nomeUsuarioNormalizado);
 
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';
