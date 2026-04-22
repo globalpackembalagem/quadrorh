@@ -57,10 +57,10 @@ export default function GateAcesso() {
               className="h-14 mx-auto mb-4 object-contain"
             />
             <h1 className="text-xl font-bold text-foreground uppercase tracking-widest">
-              HELLO WORLD
+              QUADRO DE PESSOAL
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Welcome to your new app
+              Identifique-se para continuar
             </p>
           </div>
 
@@ -112,7 +112,7 @@ export default function GateAcesso() {
               ) : (
                 <>
                   <Lock className="h-4 w-4" />
-                  Click me
+                  Entrar
                 </>
               )}
             </Button>
