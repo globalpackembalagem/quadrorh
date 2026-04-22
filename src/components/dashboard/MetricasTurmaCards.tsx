@@ -224,88 +224,32 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                 {TURMAS_LABELS[turma]}
               </div>
               <div className="flex items-center gap-2">
-                {/* Botão TRAVAR SNAPSHOT */}
-                <button
-                  onClick={() => {
-                    const hoje = format(new Date(), 'yyyy-MM-dd');
-                    
-                    // Capturar lista completa de funcionarios desta turma
-                    let funcsDaTurma: typeof funcionarios = [];
-                    if (grupo === 'SOPRO') {
-                      const grupoEsperado = `SOPRO ${turma}`;
-                      funcsDaTurma = funcionarios.filter(f => {
-                        const grupoSetor = f.setor?.grupo?.toUpperCase() || '';
-                        return grupoSetor === grupoEsperado;
-                      });
-                    } else {
-                      funcsDaTurma = funcionarios.filter(f => {
-                        const turmaFunc = f.turma?.toUpperCase();
-                        const setorNome = f.setor?.nome?.toUpperCase() || '';
-                        const isDia = setorNome.includes('DIA');
-                        const isNoite = setorNome.includes('NOITE');
-                        if (turmaFunc === 'T1' || turmaFunc === '1') {
-                          return (isDia && turma === 'DIA-T1') || (isNoite && turma === 'NOITE-T1');
-                        }
-                        if (turmaFunc === 'T2' || turmaFunc === '2') {
-                          return (isDia && turma === 'DIA-T2') || (isNoite && turma === 'NOITE-T2');
-                        }
-                        return false;
-                      });
-                    }
-                    
-                    // Montar detalhes breakdown
-                    const detalhes: Record<string, unknown> = {
-                      quadro_real: totalAjustado,
-                      quadro_necessario: metricas.quadroNecessario,
-                      homens: metricas.homens,
-                      mulheres: metricas.mulheres,
-                      previsoes: metricas.previsoes,
-                    };
-                    if (sumidosPorTurma[turma]) detalhes.sumidos = sumidosPorTurma[turma].total;
-                    if (cobFeriasPorTurma[turma]) detalhes.cob_ferias = cobFeriasPorTurma[turma].total;
-                    if (treinamentoPorTurma[turma]) detalhes.treinamento = treinamentoPorTurma[turma].total;
-                    
-                    // Montar lista de funcionarios congelada
-                    const listaFuncionarios = funcsDaTurma.map(f => ({
-                      nome: f.nome_completo,
-                      matricula: f.matricula || '',
-                      situacao: f.situacao?.nome || '',
-                      cargo: f.cargo || '',
-                      empresa: f.empresa || '',
-                      setor: f.setor?.nome || '',
-                    }));
-                    
-                    salvarSnapshot.mutate({
-                      grupo: grupoLabel,
-                      data_referencia: hoje,
-                      quadro_real: totalAjustado,
-                      quadro_necessario: metricas.quadroNecessario,
-                      diferenca,
-                      detalhes: { ...detalhes, funcionarios: listaFuncionarios },
-                      movimentacoes: [],
-                      travado_por: usuarioAtual?.nome || 'SISTEMA',
-                    }, {
-                      onSuccess: () => {
-                        toast.success(`SNAPSHOT TRAVADO - ${grupoLabel} (${format(new Date(), 'dd/MM/yyyy')})`, {
-                          description: `Real: ${totalAjustado} / Necessario: ${metricas.quadroNecessario} | ${listaFuncionarios.length} funcionarios salvos`,
-                          duration: 5000,
-                        });
-                      },
-                      onError: (err: any) => {
-                        toast.error('Erro ao travar snapshot: ' + (err?.message || 'desconhecido'));
-                      },
-                    });
-                  }}
-                  disabled={salvarSnapshot.isPending}
-                  className="flex items-center gap-1.5 px-2 py-1 h-7 rounded-md bg-muted hover:bg-primary/20 text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                  title={`Travar snapshot de ${TURMAS_LABELS[turma]} para hoje`}
-                >
-                  <Lock className="h-3.5 w-3.5" />
-                  TRAVAR QUADRO
-                </button>
-
-
                 {/* Badge de admissão recente */}
+                {recentesPorTurma[turma] && recentesPorTurma[turma].count > 0 && (
+                  <button
+                    onClick={() => {
+                      const info = recentesPorTurma[turma];
+                      const plural = info.count > 1 ? 'pessoas' : 'pessoa';
+                      toast.info(
+                        `🆕 ${info.count} ${plural} em ${info.situacao} dos ${totalAjustado}`,
+                        {
+                          description: info.nomes.join(', '),
+                          duration: 8000,
+                        }
+                      );
+                    }}
+                    className="flex items-center justify-center h-7 w-7 rounded-full bg-warning/20 text-warning hover:bg-warning/40 transition-colors cursor-pointer"
+                    title={`${recentesPorTurma[turma].count} admissão(ões) recente(s) — clique para ver`}
+                  >
+                    <AlertTriangle className="h-4 w-4" />
+                  </button>
+                )}
+                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                
+                <TreinamentosSetorDialog grupoLabel={TURMAS_LABELS[turma]} treinamentos={filterByGrupo(treinamentosPrevisao, TURMAS_LABELS[turma])} />
+              </div>
                 {recentesPorTurma[turma] && recentesPorTurma[turma].count > 0 && (
                   <button
                     onClick={() => {

@@ -175,6 +175,21 @@ export function TopNavLayout({ children }: TopNavLayoutProps) {
             </Link>
           )}
 
+          {isLoggedIn && isAdmin && (
+            <Link
+              to="/admin/fake-quadro"
+              className={cn(
+                'mr-8 inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-bold transition-colors',
+                location.pathname === '/admin/fake-quadro'
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+              )}
+            >
+              <ShieldCheck className="h-4 w-4" />
+              <span className="hidden sm:inline-block">FAKES QUADRO</span>
+            </Link>
+          )}
+
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1 flex-1">
             {/* RH Dropdown - apenas para logados */}
