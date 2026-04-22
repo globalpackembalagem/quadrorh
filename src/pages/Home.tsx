@@ -2,7 +2,7 @@ import { Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard } from 'lucide-react';
+import { LayoutDashboard, Clock } from 'lucide-react';
 import { MetricasTurmaCards } from '@/components/dashboard/MetricasTurmaCards';
 import { useAdmissaoRecente, agruparRecentesPorTurma } from '@/hooks/useAdmissaoRecente';
 import { useTreinamentosPrevisao } from '@/hooks/useTreinamentosPrevisao';
@@ -31,10 +31,16 @@ export default function Home() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold text-foreground tracking-wide">QUADRO DE FUNCIONÁRIOS</h1>
-        <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')} className="gap-2">
-          <LayoutDashboard className="h-4 w-4" />
-          Quadro Completo
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate('/faltas')} className="gap-2">
+            <Clock className="h-4 w-4" />
+            Faltas
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')} className="gap-2">
+            <LayoutDashboard className="h-4 w-4" />
+            Quadro Completo
+          </Button>
+        </div>
       </div>
 
       {/* SOPRO Cards */}
