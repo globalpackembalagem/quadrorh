@@ -576,68 +576,6 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
           </div>
         )}
 
-        {/* LOVABLE Section - apenas LUCIANO */}
-        {userRole?.nome?.toUpperCase() === 'LUCIANO' && (
-          <div className="mt-4 px-3">
-            <Collapsible>
-              <CollapsibleTrigger asChild>
-                <button className="flex items-center gap-3 w-full px-4 py-3 text-[11px] font-bold text-sidebar-foreground/50 uppercase tracking-[0.15em] hover:text-sidebar-foreground transition-all duration-200 group">
-                  <Heart className="h-4 w-4 text-red-400 group-hover:scale-110 transition-transform duration-300" />
-                  LOVABLE
-                  <ChevronRight className="h-3.5 w-3.5 ml-auto transition-transform [[data-state=open]>&]:rotate-90 opacity-40" />
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="mt-2 space-y-1 ml-4 border-l border-sidebar-border/50 pl-2">
-                  <a
-                    href="https://prestadoresglobal.lovable.app/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={closeFn}
-                    className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-[12px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
-                  >
-                    <Building2 className="h-4 w-4 shrink-0 text-sidebar-foreground/40" />
-                    <span className="truncate">PRESTADORES</span>
-                    <ExternalLink className="h-3 w-3 ml-auto opacity-40" />
-                  </a>
-                  <a
-                    href="https://lovable.dev/projects/6a965d88-1eb0-4198-a1b6-5a23615884f3"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={closeFn}
-                    className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-[12px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
-                  >
-                    <MessageCircle className="h-4 w-4 shrink-0 text-sidebar-foreground/40" />
-                    <span className="truncate">LOVABLE ZAP</span>
-                    <ExternalLink className="h-3 w-3 ml-auto opacity-40" />
-                  </a>
-                  <a
-                    href="https://atendimentorh.lovable.app"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={closeFn}
-                    className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-[12px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
-                  >
-                    <MessageCircle className="h-4 w-4 shrink-0 text-sidebar-foreground/40" />
-                    <span className="truncate">ATENDIMENTO RH</span>
-                    <ExternalLink className="h-3 w-3 ml-auto opacity-40" />
-                  </a>
-                  <a
-                    href="https://lovable.dev/projects/62851bc7-4673-432d-9ca0-95b38206eb9a/security"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={closeFn}
-                    className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-[12px] font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all duration-200"
-                  >
-                    <Shield className="h-4 w-4 shrink-0 text-sidebar-foreground/40" />
-                    <span className="truncate">CHECAR SEGURANCA</span>
-                    <ExternalLink className="h-3 w-3 ml-auto opacity-40" />
-                  </a>
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
-          </div>
-        )}
 
         {/* Alterar Senha + Acesso RH */}
         <div className="mt-auto px-4 pb-6 space-y-2.5">
