@@ -197,7 +197,7 @@ function LayoutRouter() {
             <Route path="/admin/auditoria" element={<RotaProtegida requireAdmin><Auditoria /></RotaProtegida>} />
             <Route path="/admin/historico-acesso" element={<RotaProtegida requireAdmin><HistoricoAcesso /></RotaProtegida>} />
             <Route path="/admin/referencia" element={<RotaProtegida requireAdmin><ReferenciaComponentes /></RotaProtegida>} />
-            <Route path="/admin/fake-quadro" element={<RotaProtegida requireAdmin><FakeQuadro /></RotaProtegida>} />
+            <Route path="/admin/fake-quadro" element={<RotaProtegida allowVisualizacao><FakeQuadro /></RotaProtegida>} />
             <Route path="/armarios-femininos" element={<RotaProtegida requireArmarios><ArmariosFemininos /></RotaProtegida>} />
             <Route path="/armarios-femininos/manual" element={<RotaProtegida requireArmarios><ManualArmarios /></RotaProtegida>} />
             
