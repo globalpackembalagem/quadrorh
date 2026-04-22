@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { format, parseISO, isAfter, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar, ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Info, Clock } from 'lucide-react';
 import { getTrabalhaOuFolga } from '@/lib/escalaPanama';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
