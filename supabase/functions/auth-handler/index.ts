@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import bcrypt from "https://esm.sh/bcryptjs@2.4.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -61,8 +61,8 @@ function clearAttempts(key: string): void {
 
 // ====== HASHING SEGURO COM BCRYPT ======
 async function hashPasswordBcrypt(password: string): Promise<string> {
-  const salt = await bcrypt.genSalt(10);
-  return await bcrypt.hash(password, salt);
+  const salt = bcrypt.genSaltSync(10);
+  return bcrypt.hashSync(password, salt);
 }
 
 // Legacy SHA-256 (só para verificação de hashes antigos)
@@ -78,7 +78,7 @@ async function verifyPassword(password: string, hash: string): Promise<{ valid: 
   // Bcrypt hash
   if (hash.startsWith("$2")) {
     try {
-      const valid = await bcrypt.compare(password, hash);
+      const valid = bcrypt.compareSync(password, hash);
       return { valid, needsMigration: false };
     } catch (e) {
       console.error("Bcrypt compare error:", e);
