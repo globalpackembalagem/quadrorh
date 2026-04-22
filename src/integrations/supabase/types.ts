@@ -1168,6 +1168,42 @@ export type Database = {
           },
         ]
       }
+      integracoes_lista: {
+        Row: {
+          created_at: string | null
+          data_integracao: string
+          id: string
+          marcado_em: string | null
+          marcado_por_id: string | null
+          marcado_por_nome: string | null
+          nome_completo: string
+          presente: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_integracao: string
+          id?: string
+          marcado_em?: string | null
+          marcado_por_id?: string | null
+          marcado_por_nome?: string | null
+          nome_completo: string
+          presente?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_integracao?: string
+          id?: string
+          marcado_em?: string | null
+          marcado_por_id?: string | null
+          marcado_por_nome?: string | null
+          nome_completo?: string
+          presente?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       liberacoes_faltas: {
         Row: {
           created_at: string
