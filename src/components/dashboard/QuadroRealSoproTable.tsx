@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Funcionario, QuadroPlanejado } from '@/types/database';
 import { cn } from '@/lib/utils';
+import { useUsuario } from '@/contexts/UserContext';
 
 interface QuadroRealSoproTableProps {
   funcionarios: Funcionario[];
@@ -30,6 +31,7 @@ function calcularTotalPlanejado(dados: QuadroPlanejado): number {
 }
 
 export function QuadroRealSoproTable({ funcionarios, quadroPlanejado, turmas }: QuadroRealSoproTableProps) {
+  const { usuarioAtual } = useUsuario();
   const planejadoPorTurma = useMemo(() => {
     const mapa: Record<string, QuadroPlanejado> = {};
     quadroPlanejado.forEach(q => {
@@ -78,7 +80,8 @@ export function QuadroRealSoproTable({ funcionarios, quadroPlanejado, turmas }: 
         f.matricula && f.matricula.toUpperCase().startsWith('TEMP')
       ).length;
       
-      const quadroReal = gp + globalpack + temporarios;
+      const fakeValue = usuarioAtual?.fake_quadro_ativo ? (usuarioAtual?.fake_quadro_config?.sopro?.[turma] || 0) : 0;
+      const quadroReal = (gp + globalpack + temporarios) - fakeValue;
       
       // Pegar total necessário do planejado
       const planejado = planejadoPorTurma[turma];
@@ -97,7 +100,7 @@ export function QuadroRealSoproTable({ funcionarios, quadroPlanejado, turmas }: 
     });
 
     return result;
-  }, [funcionarios, turmas, planejadoPorTurma]);
+  }, [funcionarios, turmas, planejadoPorTurma, usuarioAtual]);
 
   return (
     <div className="rounded-lg border bg-card shadow-sm overflow-hidden">

@@ -196,10 +196,13 @@ export function useDashboardData() {
       }).length;
       const temporarios = funcTurma.filter(f => !!(f.matricula && f.matricula.toUpperCase().startsWith('TEMP'))).length;
       const quadroReal = gp + globalpack + temporarios;
-      result[q.turma] = totalNecessario - quadroReal;
+      
+      // Aplicar desfalque fake se ativo para o usuário logado
+      const fakeValue = usuarioAtual?.fake_quadro_ativo ? (usuarioAtual?.fake_quadro_config?.sopro?.[q.turma] || 0) : 0;
+      result[q.turma] = (totalNecessario - quadroReal) + fakeValue;
     });
     return result;
-  }, [quadroPlanejado, funcionariosSopro]);
+  }, [quadroPlanejado, funcionariosSopro, usuarioAtual]);
 
   // Desfalque decoração
   const desfalqueDecoracao = useMemo(() => {
@@ -223,10 +226,13 @@ export function useDashboardData() {
         return false;
       });
       const quadroReal = funcTurma.length;
-      result[q.turma] = totalNecessario - quadroReal;
+      
+      // Aplicar desfalque fake se ativo para o usuário logado
+      const fakeValue = usuarioAtual?.fake_quadro_ativo ? (usuarioAtual?.fake_quadro_config?.deco?.[q.turma] || 0) : 0;
+      result[q.turma] = (totalNecessario - quadroReal) + fakeValue;
     });
     return result;
-  }, [quadroDecoracao, funcionariosDecoracao]);
+  }, [quadroDecoracao, funcionariosDecoracao, usuarioAtual]);
 
   return {
     grupoSelecionado,

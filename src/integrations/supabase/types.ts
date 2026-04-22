@@ -2150,6 +2150,8 @@ export type Database = {
           ativo: boolean
           created_at: string
           email: string | null
+          fake_quadro_ativo: boolean | null
+          fake_quadro_config: Json | null
           id: string
           integracao_perfil: string | null
           nome: string
@@ -2187,6 +2189,8 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           email?: string | null
+          fake_quadro_ativo?: boolean | null
+          fake_quadro_config?: Json | null
           id?: string
           integracao_perfil?: string | null
           nome: string
@@ -2224,6 +2228,8 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           email?: string | null
+          fake_quadro_ativo?: boolean | null
+          fake_quadro_config?: Json | null
           id?: string
           integracao_perfil?: string | null
           nome?: string
@@ -2386,6 +2392,8 @@ export type Database = {
           ativo: boolean | null
           created_at: string | null
           email: string | null
+          fake_quadro_ativo: boolean | null
+          fake_quadro_config: Json | null
           id: string | null
           nome: string | null
           pode_criar_divergencias: boolean | null
@@ -2417,6 +2425,8 @@ export type Database = {
           ativo?: boolean | null
           created_at?: string | null
           email?: string | null
+          fake_quadro_ativo?: boolean | null
+          fake_quadro_config?: Json | null
           id?: string | null
           nome?: string | null
           pode_criar_divergencias?: boolean | null
@@ -2448,6 +2458,8 @@ export type Database = {
           ativo?: boolean | null
           created_at?: string | null
           email?: string | null
+          fake_quadro_ativo?: boolean | null
+          fake_quadro_config?: Json | null
           id?: string | null
           nome?: string | null
           pode_criar_divergencias?: boolean | null

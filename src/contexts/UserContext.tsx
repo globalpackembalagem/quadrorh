@@ -28,6 +28,8 @@ export interface UsuarioLocal {
   pode_editar_integracoes: boolean;
   recebe_notificacoes: boolean;
   tempo_inatividade: number;
+  fake_quadro_ativo?: boolean;
+  fake_quadro_config?: any;
 }
 
 interface UserContextType {

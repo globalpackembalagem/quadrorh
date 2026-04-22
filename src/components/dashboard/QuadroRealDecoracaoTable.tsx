@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Funcionario, QuadroDecoracao } from '@/types/database';
 import { cn } from '@/lib/utils';
+import { useUsuario } from '@/contexts/UserContext';
 
 interface QuadroRealDecoracaoTableProps {
   funcionarios: Funcionario[];
@@ -57,6 +58,7 @@ function calcularTotalPlanejado(dados: QuadroDecoracao): number {
 }
 
 export function QuadroRealDecoracaoTable({ funcionarios, quadroPlanejado }: QuadroRealDecoracaoTableProps) {
+  const { usuarioAtual } = useUsuario();
   const planejadoPorTurma = useMemo(() => {
     const mapa: Record<string, QuadroDecoracao> = {};
     quadroPlanejado.forEach(q => {
@@ -92,7 +94,8 @@ export function QuadroRealDecoracaoTable({ funcionarios, quadroPlanejado }: Quad
         f.matricula && f.matricula.toUpperCase().startsWith('TEMP')
       ).length;
       
-      const quadroReal = efetivos + temporarios;
+      const fakeValue = usuarioAtual?.fake_quadro_ativo ? (usuarioAtual?.fake_quadro_config?.deco?.[turma] || 0) : 0;
+      const quadroReal = (efetivos + temporarios) - fakeValue;
       
       // Pegar total necessário do planejado
       const planejado = planejadoPorTurma[turma];
@@ -110,7 +113,7 @@ export function QuadroRealDecoracaoTable({ funcionarios, quadroPlanejado }: Quad
     });
 
     return result;
-  }, [funcionarios, planejadoPorTurma]);
+  }, [funcionarios, planejadoPorTurma, usuarioAtual]);
 
   return (
     <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
