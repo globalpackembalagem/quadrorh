@@ -112,7 +112,7 @@ export default function GateAcesso() {
               ) : (
                 <>
                   <Lock className="h-4 w-4" />
-                  Entrar
+                  Click me
                 </>
               )}
             </Button>
