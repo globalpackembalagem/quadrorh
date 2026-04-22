@@ -101,8 +101,6 @@ const allRHNavigation: NavItem[] = [
   { name: 'HOMOLOGAÇÕES', href: '/homologacoes', icon: CalendarCheck },
   { name: 'DIVERGÊNCIAS', href: '/divergencias', icon: AlertTriangle },
   { name: 'TROCA DE TURNO', href: '/troca-turno', icon: RefreshCw },
-  { name: 'INTEGRAÇÕES', href: '/integracoes', icon: UserPlus },
-  { name: 'AGÊNCIA', href: '/agencia', icon: Building2 },
   { name: 'ARMÁRIOS FEMININO', href: '/armarios-femininos', icon: DoorOpen },
   { name: 'PRESTADORES', href: 'https://prestadoresglobal.lovable.app', icon: Building2 },
   { name: 'RECRUTAMENTO', href: 'https://recrutamentoglobal.lovable.app', icon: UserPlus },
@@ -285,11 +283,6 @@ function getNavigationForUser(
   if (!perms || perms.pode_visualizar_armarios || perms.pode_editar_armarios) {
     items.push({ name: 'ARMÁRIOS FEMININO', href: '/armarios-femininos', icon: DoorOpen, viewOnly: perms && !perms.pode_editar_armarios });
   }
-
-  // Integrações
-  items.push({ name: 'INTEGRAÇÕES', href: '/integracoes', icon: UserPlus });
-  items.push({ name: 'AGÊNCIA', href: '/agencia', icon: Building2 });
-
 
   // Prestadores - apenas para administradores e usuários autorizados
   const nomeUpper = userName?.toUpperCase() || '';
