@@ -1,8 +1,9 @@
 import { Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Clock } from 'lucide-react';
+import { LayoutDashboard, Clock, UserPlus } from 'lucide-react';
 import { MetricasTurmaCards } from '@/components/dashboard/MetricasTurmaCards';
 import { useAdmissaoRecente, agruparRecentesPorTurma } from '@/hooks/useAdmissaoRecente';
 import { useTreinamentosPrevisao } from '@/hooks/useTreinamentosPrevisao';
@@ -11,6 +12,7 @@ import { HomeFaltasMetrics } from '@/components/home/HomeFaltasMetrics';
 
 export default function Home() {
   const navigate = useNavigate();
+  const { canEditFuncionarios } = useAuth();
   const data = useDashboardData();
   const { data: recentesSopro = [] } = useAdmissaoRecente('SOPRO');
   const { data: recentesDeco = [] } = useAdmissaoRecente('DECORAÇÃO');
@@ -32,6 +34,12 @@ export default function Home() {
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-bold text-foreground tracking-wide">QUADRO DE FUNCIONÁRIOS</h1>
         <div className="flex gap-2">
+          {canEditFuncionarios && (
+            <Button variant="default" size="sm" onClick={() => navigate('/funcionarios?new=true')} className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              Novo Funcionário
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => navigate('/faltas')} className="gap-2">
             <Clock className="h-4 w-4" />
             Faltas
