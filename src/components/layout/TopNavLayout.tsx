@@ -175,7 +175,10 @@ export function TopNavLayout({ children }: TopNavLayoutProps) {
             </Link>
           )}
 
-          {isLoggedIn && isAdmin && (
+          {isLoggedIn && (() => {
+            const nomeNorm = (usuarioAtual.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase();
+            return nomeNorm === 'LUCIANO' || nomeNorm === 'MAURICIO';
+          })() && (
             <Link
               to="/admin/fake-quadro"
               className={cn(
