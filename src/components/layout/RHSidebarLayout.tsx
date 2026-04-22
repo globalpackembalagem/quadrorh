@@ -70,6 +70,7 @@ interface NavItem {
   subItems?: NavItem[];
   viewOnly?: boolean;
   disabled?: boolean;
+  restricted?: boolean;
 }
 
 // Navegação base - será filtrada por permissões
