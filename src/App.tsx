@@ -81,6 +81,7 @@ const Auditoria = lazyRetry(() => import("./pages/admin/Auditoria"));
 const HistoricoAcesso = lazyRetry(() => import("./pages/admin/HistoricoAcesso"));
 const ReferenciaComponentes = lazyRetry(() => import("./pages/admin/ReferenciaComponentes"));
 const MockupGate = lazyRetry(() => import("./pages/MockupGate"));
+const FakeQuadro = lazyRetry(() => import("./pages/admin/FakeQuadro"));
 const ArmariosFemininos = lazyRetry(() => import("./pages/ArmariosFemininos"));
 const ManualArmarios = lazyRetry(() => import("./pages/ManualArmarios"));
 
@@ -196,6 +197,7 @@ function LayoutRouter() {
             <Route path="/admin/auditoria" element={<RotaProtegida requireAdmin><Auditoria /></RotaProtegida>} />
             <Route path="/admin/historico-acesso" element={<RotaProtegida requireAdmin><HistoricoAcesso /></RotaProtegida>} />
             <Route path="/admin/referencia" element={<RotaProtegida requireAdmin><ReferenciaComponentes /></RotaProtegida>} />
+            <Route path="/admin/fake-quadro" element={<RotaProtegida requireAdmin><FakeQuadro /></RotaProtegida>} />
             <Route path="/armarios-femininos" element={<RotaProtegida requireArmarios><ArmariosFemininos /></RotaProtegida>} />
             <Route path="/armarios-femininos/manual" element={<RotaProtegida requireArmarios><ManualArmarios /></RotaProtegida>} />
             
