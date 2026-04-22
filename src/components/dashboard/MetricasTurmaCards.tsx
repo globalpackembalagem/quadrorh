@@ -297,10 +297,11 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                     });
                   }}
                   disabled={salvarSnapshot.isPending}
-                  className="flex items-center justify-center h-7 w-7 rounded-full bg-muted hover:bg-primary/20 text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-2 py-1 h-7 rounded-md bg-muted hover:bg-primary/20 text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors cursor-pointer"
                   title={`Travar snapshot de ${TURMAS_LABELS[turma]} para hoje`}
                 >
-                  <Lock className="h-4 w-4" />
+                  <Lock className="h-3.5 w-3.5" />
+                  TRAVAR QUADRO
                 </button>
 
 
