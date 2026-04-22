@@ -78,7 +78,7 @@ async function verifyPassword(password: string, hash: string): Promise<{ valid: 
   // Bcrypt hash
   if (hash.startsWith("$2")) {
     try {
-      const valid = await bcrypt.compare(password, hash);
+      const valid = bcrypt.compareSync(password, hash);
       return { valid, needsMigration: false };
     } catch (e) {
       console.error("Bcrypt compare error:", e);
