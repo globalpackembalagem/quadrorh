@@ -31,5 +31,15 @@ export default defineConfig(({ mode }) => ({
       transformMixedEsModules: true,
     },
     target: "esnext",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom", "react-router-dom"],
+          ui: ["@radix-ui/react-accordion", "@radix-ui/react-alert-dialog", "@radix-ui/react-dialog", "@radix-ui/react-dropdown-menu", "@radix-ui/react-popover", "@radix-ui/react-select", "@radix-ui/react-tabs", "lucide-react"],
+          charts: ["recharts"],
+          utils: ["date-fns", "xlsx-js-style", "zod"],
+        },
+      },
+    },
   },
 }));
