@@ -4,7 +4,6 @@ import { QuadroRealSoproTable } from '@/components/dashboard/QuadroRealSoproTabl
 import { QuadroRealDecoracaoTable } from '@/components/dashboard/QuadroRealDecoracaoTable';
 import { SubstituicaoReposicaoTable } from '@/components/dashboard/SubstituicaoReposicaoTable';
 import { HistoricoQuadroTable } from '@/components/dashboard/HistoricoQuadroTable';
-import { SnapshotHistoricoDialog } from '@/components/dashboard/SnapshotHistoricoDialog';
 import type { GrupoType } from '@/hooks/useDashboardData';
 import type { Funcionario, QuadroPlanejado, QuadroDecoracao } from '@/types/database';
 import type { Demissao, PeriodoDemissao } from '@/types/demissao';
