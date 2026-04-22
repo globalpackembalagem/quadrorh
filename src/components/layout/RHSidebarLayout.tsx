@@ -120,6 +120,7 @@ const adminNavigation = [
   { name: 'TIPOS DESLIGAMENTO', href: '/admin/tipos-desligamento', icon: UserMinus },
   { name: 'PERÍODOS', href: '/admin/periodos', icon: Clock },
   { name: 'USUÁRIOS', href: '/admin/usuarios', icon: UserCog },
+  { name: 'FAKES QUADRO', href: '/admin/fake-quadro', icon: ShieldCheck, restricted: true },
   { name: 'BACKUP', href: '/admin/backup', icon: Database },
   { name: 'REFERÊNCIA', href: '/admin/referencia', icon: Lightbulb },
 ];
