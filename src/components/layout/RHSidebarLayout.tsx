@@ -547,7 +547,15 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="mt-2 space-y-1 ml-4 border-l border-sidebar-border/50 pl-2">
-                  {adminNavigation.map((item) => (
+                  {adminNavigation
+                    .filter((item) => {
+                      if (item.name === 'FAKES QUADRO') {
+                        const nome = userRole?.nome?.toUpperCase() || '';
+                        return nome === 'LUCIANO' || nome === 'MAURICIO';
+                      }
+                      return true;
+                    })
+                    .map((item) => (
                     <Link
                       key={item.name}
                       to={item.href}
