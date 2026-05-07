@@ -125,8 +125,33 @@ const PERM_ICONS: { key: keyof UserRole; label: string; icon: React.ReactNode }[
 
 export default function Usuarios() {
   const queryClient = useQueryClient();
-  const { isAdmin, usuarioAtual } = useUsuario();
+  const { isAdmin, usuarioAtual, setUsuarioAtual } = useUsuario();
   const { data: setores = [] } = useSetoresAtivos();
+  const navigate = useNavigate();
+  const isMaster = usuarioAtual.nome.toUpperCase() === 'LUCIANO';
+
+  const acessarComoUsuario = async (userId: string, userNome: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('*, user_roles_setores(setor_id)')
+        .eq('id', userId)
+        .single();
+      if (error) throw error;
+      setUsuarioAtual(montarUsuarioLocal(data));
+      await supabase.from('historico_acesso').insert({
+        user_role_id: userId,
+        nome_usuario: `${userNome} (IMPERSONADO POR LUCIANO)`,
+        navegador: navigator.userAgent.substring(0, 200),
+        dispositivo: /Mobi|Android/i.test(navigator.userAgent) ? 'MOBILE' : 'DESKTOP',
+      });
+      toast.success(`Acessando como ${userNome.toUpperCase()}`);
+      navigate('/home');
+    } catch (e) {
+      toast.error('Erro ao acessar como usuário');
+      console.error(e);
+    }
+  };
 
   const [activeTab, setActiveTab] = useState('usuarios');
   const [dialogOpen, setDialogOpen] = useState(false);
