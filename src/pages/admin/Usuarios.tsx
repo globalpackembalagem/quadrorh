@@ -29,9 +29,11 @@ import {
   Plus, Pencil, Trash2, Eye, EyeOff,
   ShieldCheck, Users, UserCog, UserCheck, Building2,
   FileText, ClipboardList, CalendarCheck, Timer, Star,
-  History, Monitor, Smartphone, Shield,
+  History, Monitor, Smartphone, Shield, LogIn,
 } from 'lucide-react';
 import { useUsuario } from '@/contexts/UserContext';
+import { montarUsuarioLocal } from '@/lib/montarUsuarioLocal';
+import { useNavigate } from 'react-router-dom';
 import { PermissoesCheckboxes, Permissoes } from '@/components/usuarios/PermissoesCheckboxes';
 import {
   AlertDialog,
