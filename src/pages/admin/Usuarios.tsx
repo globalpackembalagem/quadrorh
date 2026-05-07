@@ -29,9 +29,11 @@ import {
   Plus, Pencil, Trash2, Eye, EyeOff,
   ShieldCheck, Users, UserCog, UserCheck, Building2,
   FileText, ClipboardList, CalendarCheck, Timer, Star,
-  History, Monitor, Smartphone, Shield,
+  History, Monitor, Smartphone, Shield, LogIn,
 } from 'lucide-react';
 import { useUsuario } from '@/contexts/UserContext';
+import { montarUsuarioLocal } from '@/lib/montarUsuarioLocal';
+import { useNavigate } from 'react-router-dom';
 import { PermissoesCheckboxes, Permissoes } from '@/components/usuarios/PermissoesCheckboxes';
 import {
   AlertDialog,
@@ -123,8 +125,33 @@ const PERM_ICONS: { key: keyof UserRole; label: string; icon: React.ReactNode }[
 
 export default function Usuarios() {
   const queryClient = useQueryClient();
-  const { isAdmin, usuarioAtual } = useUsuario();
+  const { isAdmin, usuarioAtual, setUsuarioAtual } = useUsuario();
   const { data: setores = [] } = useSetoresAtivos();
+  const navigate = useNavigate();
+  const isMaster = usuarioAtual.nome.toUpperCase() === 'LUCIANO';
+
+  const acessarComoUsuario = async (userId: string, userNome: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('*, user_roles_setores(setor_id)')
+        .eq('id', userId)
+        .single();
+      if (error) throw error;
+      setUsuarioAtual(montarUsuarioLocal(data));
+      await supabase.from('historico_acesso').insert({
+        user_role_id: userId,
+        nome_usuario: `${userNome} (IMPERSONADO POR LUCIANO)`,
+        navegador: navigator.userAgent.substring(0, 200),
+        dispositivo: /Mobi|Android/i.test(navigator.userAgent) ? 'MOBILE' : 'DESKTOP',
+      });
+      toast.success(`Acessando como ${userNome.toUpperCase()}`);
+      navigate('/home');
+    } catch (e) {
+      toast.error('Erro ao acessar como usuário');
+      console.error(e);
+    }
+  };
 
   const [activeTab, setActiveTab] = useState('usuarios');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -507,6 +534,23 @@ export default function Usuarios() {
 
               {/* Ações */}
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {isMaster && !isLuciano && user.ativo && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-primary hover:text-primary"
+                          onClick={() => acessarComoUsuario(user.id, user.nome)}
+                        >
+                          <LogIn className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent><p className="text-xs">Acessar como {user.nome.toUpperCase()}</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(user)}>
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
