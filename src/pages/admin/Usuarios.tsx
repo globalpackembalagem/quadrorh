@@ -534,6 +534,23 @@ export default function Usuarios() {
 
               {/* Ações */}
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                {isMaster && !isLuciano && user.ativo && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-primary hover:text-primary"
+                          onClick={() => acessarComoUsuario(user.id, user.nome)}
+                        >
+                          <LogIn className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent><p className="text-xs">Acessar como {user.nome.toUpperCase()}</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
                 <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(user)}>
                   <Pencil className="h-3.5 w-3.5" />
                 </Button>
