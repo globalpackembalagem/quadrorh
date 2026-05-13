@@ -526,10 +526,10 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
           <div className="mt-6 px-3">
             <Collapsible>
               <CollapsibleTrigger asChild>
-                <button className="flex items-center gap-3 w-full px-4 py-3 text-[11px] font-bold text-sidebar-foreground/50 uppercase tracking-[0.15em] hover:text-sidebar-foreground transition-all duration-200 group">
-                  <Settings className="h-4 w-4 group-hover:rotate-45 transition-transform duration-300" />
-                  CONFIGURAÇÃO
-                  <ChevronRight className="h-3.5 w-3.5 ml-auto transition-transform [[data-state=open]>&]:rotate-90 opacity-40" />
+                <button className="flex items-center gap-3 w-full px-4 py-3 text-[11px] font-bold text-yellow-500 uppercase tracking-[0.15em] hover:text-yellow-400 transition-all duration-200 group">
+                  <Settings className="h-4 w-4 group-hover:rotate-45 transition-transform duration-300 text-yellow-500" />
+                  <span className="text-yellow-500">CONFIGURAÇÃO</span>
+                  <ChevronRight className="h-3.5 w-3.5 ml-auto transition-transform [[data-state=open]>&]:rotate-90 opacity-40 text-yellow-500" />
                 </button>
               </CollapsibleTrigger>
               <CollapsibleContent>
