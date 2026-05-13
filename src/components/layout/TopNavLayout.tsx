@@ -250,11 +250,11 @@ export function TopNavLayout({ children }: TopNavLayoutProps) {
                           e.preventDefault();
                           setAdminExpanded(prev => !prev);
                         }}
-                        className="text-xs text-muted-foreground cursor-pointer"
+                        className="text-xs text-yellow-500 cursor-pointer"
                       >
-                        <Settings className="h-3 w-3 mr-2" />
-                        ADMINISTRAÇÃO
-                        <ChevronDown className={cn("h-3 w-3 ml-auto transition-transform", adminExpanded && "rotate-180")} />
+                        <Settings className="h-3 w-3 mr-2 text-yellow-500" />
+                        <span className="text-yellow-500 font-semibold">ADMINISTRAÇÃO</span>
+                        <ChevronDown className={cn("h-3 w-3 ml-auto transition-transform text-yellow-500", adminExpanded && "rotate-180")} />
                       </DropdownMenuItem>
                       {adminExpanded && adminNavigation.map((item) => (
                         <DropdownMenuItem key={item.name} asChild>
