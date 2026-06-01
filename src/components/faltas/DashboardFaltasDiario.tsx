@@ -611,7 +611,6 @@ export function DashboardFaltasDiario({
             <TableHeader>
               <TableRow className="bg-card border-b-2 border-border">
                 <TableHead className="text-sm font-extrabold text-foreground sticky left-0 bg-card z-10 w-[190px] min-w-[190px] max-w-[190px] py-2.5 px-3 border-r border-border/50">SETOR</TableHead>
-                <TableHead className="text-sm font-extrabold text-foreground text-center w-[60px] min-w-[60px] py-2.5">QTD</TableHead>
                 {diasVisiveis.map((dia, colIndex) => {
                   const dataStr = format(dia, 'yyyy-MM-dd');
                   const isHoje = dataStr === hojeStr;
@@ -643,8 +642,6 @@ export function DashboardFaltasDiario({
                 if (!setorData) return null;
                 const totalFaltas = Object.values(setorData).reduce((s, d) => s + d.faltas, 0);
                 const totalAtestados = Object.values(setorData).reduce((s, d) => s + d.atestados, 0);
-                // QTD: mostrar total de HOJE (ou último dia disponível)
-                const qtdHoje = setorData[hojeStr]?.totalQuadro ?? Object.values(setorData).pop()?.totalQuadro ?? 0;
                 const setorNomes = nomesPorSetorDia[setor] || {};
                 const isEven = idx % 2 === 0;
                 const reserva = reservaFaltasPorSetor[setor];
@@ -654,7 +651,6 @@ export function DashboardFaltasDiario({
                 return (
                   <TableRow key={setor} className={cn("hover:bg-accent/30 transition-colors", isEven ? "bg-card/50" : "bg-card")}>
                     <TableCell className={cn("text-sm font-semibold py-2.5 px-3 sticky left-0 z-10 whitespace-nowrap border-r border-border/50 w-[190px] min-w-[190px] max-w-[190px]", isEven ? "bg-card" : "bg-card")}>{setor}</TableCell>
-                    <TableCell className="text-sm font-bold text-center py-2.5 text-muted-foreground w-[60px] min-w-[60px]">{qtdHoje}</TableCell>
                     {diasVisiveis.map((dia, colIndex) => {
                       const dataStr = format(dia, 'yyyy-MM-dd');
                       const d = setorData[dataStr];
@@ -691,16 +687,6 @@ export function DashboardFaltasDiario({
               {/* Linha TOTAL */}
               <TableRow className="border-t-2 border-border bg-card">
                 <TableCell className="text-sm font-extrabold py-2.5 px-3 sticky left-0 bg-card z-10 border-r border-border/50 w-[190px] min-w-[190px] max-w-[190px]">TOTAL</TableCell>
-                <TableCell className="text-sm font-extrabold text-center py-2.5 w-[60px] min-w-[60px]">
-                  {(() => {
-                    let sum = 0;
-                    funcionariosAgrupsFiltrados.forEach(({ setor }) => {
-                      const sd = metricasPorSetorDia[setor];
-                      if (sd) { const d = sd[hojeStr]; sum += d ? d.totalQuadro : (Object.values(sd).pop()?.totalQuadro ?? 0); }
-                    });
-                    return sum;
-                  })()}
-                </TableCell>
                 {diasVisiveis.map((dia, colIndex) => {
                   const dataStr = format(dia, 'yyyy-MM-dd');
                   const d = totaisPorDia[dataStr];

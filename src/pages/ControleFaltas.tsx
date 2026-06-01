@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, parseISO, eachDayOfInterval, isWeekend, isBefore, isAfter, differenceInDays, startOfDay } from 'date-fns';
 import { useFuncionariosNoQuadro } from '@/hooks/useFuncionarios';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Lock, Unlock, Calendar, AlertTriangle, Filter, BarChart3, Users, Wind, Palette, Layers, Search, Info, Eye, KeyRound } from 'lucide-react';
+import { Plus, Lock, Unlock, Calendar, AlertTriangle, Filter, BarChart3, Users, Wind, Palette, Layers, Search, Info, Eye, KeyRound, Bell, CheckCircle } from 'lucide-react';
 import { useLiberacoesFaltas } from '@/hooks/useLiberacoesFaltas';
 import { LiberarDatasDialog } from '@/components/faltas/LiberarDatasDialog';
 import {
@@ -96,6 +96,8 @@ export default function ControleFaltas() {
   const isRealParceria = isRHMode && userRole?.nome?.toUpperCase() === 'REAL PARCERIA';
   const { data: liberacoes = [] } = useLiberacoesFaltas();
   const [liberarDatasOpen, setLiberarDatasOpen] = useState(false);
+  const [alertasTempOpen, setAlertasTempOpen] = useState(false);
+  const [confirmandoTempId, setConfirmandoTempId] = useState<string | null>(null);
   
   // Quadro planejado/decoração para cálculo de saldo
   const { data: quadroPlanejadoSopro = [] } = useQuadroPlanejado('SOPRO');
@@ -1057,6 +1059,91 @@ export default function ControleFaltas() {
     });
   }, [funcionariosAgrupados, registros]);
 
+  const podeVerAlertasTemp = useMemo(() => {
+    const nome = (userRole?.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase();
+    return isAdmin || ['LEILA', 'AMILTON', 'ALEX', 'SILVA'].includes(nome);
+  }, [isAdmin, userRole?.nome]);
+
+  const alertasTemp = useMemo(() => {
+    const funcionariosTemp = new Map(
+      funcionarios
+        .filter(f => (f.matricula || '').toUpperCase().startsWith('TEMP'))
+        .map(f => [f.id, f])
+    );
+
+    const faltasPorFuncionario = new Map<string, { funcionario: Funcionario; dias: string[] }>();
+    registros.forEach(r => {
+      if (r.tipo !== 'F' && r.tipo !== 'SS') return;
+      const funcionario = funcionariosTemp.get(r.funcionario_id);
+      if (!funcionario) return;
+
+      const atual = faltasPorFuncionario.get(funcionario.id) || { funcionario, dias: [] };
+      if (!atual.dias.includes(r.data)) atual.dias.push(r.data);
+      faltasPorFuncionario.set(funcionario.id, atual);
+    });
+
+    return Array.from(faltasPorFuncionario.values())
+      .filter(item => item.dias.length >= 3)
+      .map(item => ({
+        funcionario: item.funcionario,
+        dias: item.dias.sort(),
+        total: item.dias.length,
+      }))
+      .sort((a, b) => b.total - a.total || a.funcionario.nome_completo.localeCompare(b.funcionario.nome_completo));
+  }, [funcionarios, registros]);
+
+  const confirmarSumidoTemp = async (alerta: typeof alertasTemp[number]) => {
+    setConfirmandoTempId(alerta.funcionario.id);
+    try {
+      const hojeInicio = startOfDay(new Date()).toISOString();
+      const referenciaId = `temp-sumido-${alerta.funcionario.id}-${periodoEfetivo}`;
+
+      const { data: lucianos, error: userError } = await supabase
+        .from('user_roles')
+        .select('id, nome')
+        .eq('ativo', true)
+        .ilike('nome', 'LUCIANO');
+
+      if (userError) throw userError;
+      if (!lucianos || lucianos.length === 0) {
+        toast.error('Usuário LUCIANO não encontrado para receber notificação.');
+        return;
+      }
+
+      const { data: existente } = await supabase
+        .from('notificacoes')
+        .select('id')
+        .eq('tipo', 'alerta_temp_sumido')
+        .eq('referencia_id', referenciaId)
+        .gte('created_at', hojeInicio)
+        .limit(1);
+
+      if (existente && existente.length > 0) {
+        toast.info('Este alerta já foi confirmado hoje.');
+        return;
+      }
+
+      const diasFormatados = alerta.dias.map(d => format(parseISO(d), 'dd/MM', { locale: ptBR })).join(', ');
+      const funcionario = alerta.funcionario;
+      const setor = funcionario.setor?.nome || funcionario.setor?.grupo || 'Sem setor';
+      const confirmadoPor = userRole?.nome || usuarioAtual?.nome || 'Sistema';
+
+      await supabase.from('notificacoes').insert(lucianos.map(luciano => ({
+        user_role_id: luciano.id,
+        tipo: 'alerta_temp_sumido',
+        titulo: 'TEMP com 3+ faltas confirmado',
+        mensagem: `${confirmadoPor} confirmou possível sumido:\n\n${funcionario.matricula || 'TEMP'} - ${funcionario.nome_completo}\nSetor: ${setor}${funcionario.turma ? `\nTurma: ${funcionario.turma}` : ''}\nFaltas (${alerta.total}): ${diasFormatados}\n\nEntrar em contato.`,
+        referencia_id: referenciaId,
+      })));
+
+      toast.success('Alerta enviado para LUCIANO.');
+    } catch (error) {
+      toast.error('Erro ao confirmar alerta TEMP.');
+    } finally {
+      setConfirmandoTempId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="page-header flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -1109,6 +1196,20 @@ export default function ControleFaltas() {
 
       {/* Ações de período (admin) */}
       <div className="flex flex-wrap items-center gap-3">
+          {podeVerAlertasTemp && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAlertasTempOpen(true)}
+              className="gap-2"
+            >
+              <Bell className="h-3.5 w-3.5" />
+              ALERTAS TEMP
+              {alertasTemp.length > 0 && (
+                <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">{alertasTemp.length}</Badge>
+              )}
+            </Button>
+          )}
           {periodo && isAdmin && (
             <>
               <Button
@@ -1141,6 +1242,65 @@ export default function ControleFaltas() {
           )}
       </div>
       {/* Métricas resumo */}
+      <Dialog open={alertasTempOpen} onOpenChange={setAlertasTempOpen}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-warning" />
+              Alertas TEMP com 3+ faltas
+            </DialogTitle>
+            <DialogDescription>
+              Funcionários TEMP com 3 ou mais faltas no período selecionado. Confirme para enviar notificação ao LUCIANO.
+            </DialogDescription>
+          </DialogHeader>
+
+          {alertasTemp.length === 0 ? (
+            <div className="rounded-lg border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+              Nenhum TEMP com 3 ou mais faltas neste período.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {alertasTemp.map(alerta => {
+                const funcionario = alerta.funcionario;
+                const setor = funcionario.setor?.nome || funcionario.setor?.grupo || 'Sem setor';
+                return (
+                  <div key={funcionario.id} className="rounded-lg border bg-card p-4 space-y-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-bold text-sm">{funcionario.nome_completo}</p>
+                          <Badge variant="secondary">{funcionario.matricula || 'TEMP'}</Badge>
+                          <Badge variant="destructive">{alerta.total} faltas</Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {setor}{funcionario.turma ? ` • Turma ${funcionario.turma}` : ''}
+                        </p>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => confirmarSumidoTemp(alerta)}
+                        disabled={confirmandoTempId === funcionario.id}
+                        className="gap-1.5"
+                      >
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        Confirmar sumido
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {alerta.dias.map(dia => (
+                        <Badge key={dia} variant="outline" className="text-[11px]">
+                          {format(parseISO(dia), 'dd/MM (EEE)', { locale: ptBR })}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {periodo && funcionariosAgrupadosFiltrados.length > 0 && (
         <DashboardFaltasDiario
           funcionariosAgrupados={funcionariosAgrupadosFiltrados}
