@@ -248,33 +248,60 @@ export function CentralAvisosModal() {
     return () => { document.body.style.overflow = ''; };
   }, [visible]);
 
+  const registrarCienciaNotificacoes = useCallback(async (avisosParaMarcar: AvisoNotificacao[]) => {
+    if (!userRole?.id || avisosParaMarcar.length === 0) return false;
+
+    const ids = avisosParaMarcar.map(a => a.id);
+    const { error: erroMarcarLidas } = await supabase
+      .from('notificacoes')
+      .update({ lida: true })
+      .in('id', ids)
+      .eq('user_role_id', userRole.id);
+
+    if (erroMarcarLidas) {
+      console.error('[CIENTE] Erro ao marcar notificacoes como lidas:', erroMarcarLidas);
+      return false;
+    }
+
+    if (!userRole.nome) return true;
+
+    const avisosComRef = avisosParaMarcar.filter(a => a.referencia_id);
+    if (avisosComRef.length > 0) {
+      const { error: vistaError } = await supabase
+        .from('notificacoes_vistas')
+        .upsert(
+          avisosComRef.map(a => ({
+            evento_id: a.referencia_id!,
+            user_role_id: userRole.id,
+            nome_gestor: userRole.nome,
+          })),
+          { onConflict: 'evento_id,user_role_id' }
+        );
+
+      if (vistaError) {
+        console.warn('[CIENTE] Nao foi possivel registrar historico de ciencia:', vistaError);
+      }
+    }
+
+    return true;
+  }, [userRole?.id, userRole?.nome]);
+
   const marcarCiente = useCallback(async (id: string) => {
     const aviso = avisos.find(a => a.id === id);
     if (!aviso) return;
 
     setCienteIds(prev => new Set([...prev, id]));
+    addSeenIds([id]);
+    removerAvisoDaTela(id);
 
     try {
       const salvou = await registrarCienciaNotificacoes([aviso]);
       if (!salvou) {
-        toast.error('Nao foi possivel salvar o CIENTE no servidor.');
-        setCienteIds(prev => {
-          const next = new Set(prev);
-          next.delete(id);
-          return next;
-        });
-        return;
+        toast.warning('CIENTE removido da tela. Se voltar ao entrar novamente, avise o RH.');
       }
-
-      removerAvisoDaTela(id);
     } catch (err) {
       console.error('[CIENTE] Erro geral ao marcar ciente:', err);
-      toast.error('Falha ao processar CIENTE.');
-      setCienteIds(prev => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
+      toast.warning('CIENTE removido da tela. Houve falha ao salvar no servidor.');
     }
   }, [avisos, registrarCienciaNotificacoes, removerAvisoDaTela]);
   // Handler para confirmação de previsão (SIM/NÃO)
@@ -632,27 +659,16 @@ export function CentralAvisosModal() {
     if (podeFechar.length > 0) {
       const ids = podeFechar.map(a => a.id);
       setCienteIds(prev => new Set([...prev, ...ids]));
+      addSeenIds(ids);
 
       try {
         const salvou = await registrarCienciaNotificacoes(podeFechar);
         if (!salvou) {
-          toast.error('Nao foi possivel concluir CIENTE DE TODOS.');
-          setCienteIds(prev => {
-            const next = new Set(prev);
-            ids.forEach(id => next.delete(id));
-            return next;
-          });
-          return;
+          toast.warning('CIENTE DE TODOS removido da tela. Se voltar ao entrar novamente, avise o RH.');
         }
       } catch (err) {
         console.error('[CIENTE TODOS] Erro geral:', err);
-        toast.error('Nao foi possivel concluir CIENTE DE TODOS.');
-        setCienteIds(prev => {
-          const next = new Set(prev);
-          ids.forEach(id => next.delete(id));
-          return next;
-        });
-        return;
+        toast.warning('CIENTE DE TODOS removido da tela. Houve falha ao salvar no servidor.');
       }
     }
 
