@@ -15,7 +15,7 @@ import { SimulacaoNotificacaoModal } from '@/components/notificacoes/SimulacaoNo
 import { GaleriaModelosModal } from '@/components/notificacoes/GaleriaModelosModal';
 import { HorariosNotificacaoConfig } from '@/components/previsao/HorariosNotificacaoConfig';
 import { useAuth } from '@/hooks/useAuth';
-import { format } from 'date-fns';
+import { addDays, differenceInCalendarDays, format, parseISO, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -50,6 +50,20 @@ const TIPO_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
   experiencia_consulta: ClipboardList,
   cobertura_treinamento: Users,
   turma_pendente: AlertTriangle,
+};
+
+const podeCobrarTurmaNaSegundaSeguinte = (dataAdmissao?: string | null) => {
+  if (!dataAdmissao) return false;
+
+  const hoje = startOfDay(new Date());
+  const admissao = startOfDay(parseISO(dataAdmissao));
+  if (Number.isNaN(admissao.getTime())) return false;
+
+  const diaSemana = admissao.getDay();
+  const diasAteProximaSegunda = diaSemana === 1 ? 7 : (8 - diaSemana) % 7 || 7;
+  const segundaSeguinte = addDays(admissao, diasAteProximaSegunda);
+
+  return differenceInCalendarDays(hoje, segundaSeguinte) >= 0;
 };
 
 const TIPO_LABELS: Record<string, string> = {
@@ -310,22 +324,23 @@ export default function Notificacoes() {
       // Buscar funcionários sem turma nesses setores
       const { data: funcs } = await supabase
         .from('funcionarios')
-        .select('id, nome_completo, turma, setor_id, setor:setores!setor_id(nome, grupo)')
+        .select('id, nome_completo, turma, setor_id, data_admissao, setor:setores!setor_id(nome, grupo)')
         .in('setor_id', setoresIds)
         .in('situacao_id', situacoesAtivoFerias)
         .is('turma', null);
 
       const { data: funcsVazio } = await supabase
         .from('funcionarios')
-        .select('id, nome_completo, turma, setor_id, setor:setores!setor_id(nome, grupo)')
+        .select('id, nome_completo, turma, setor_id, data_admissao, setor:setores!setor_id(nome, grupo)')
         .in('setor_id', setoresIds)
         .in('situacao_id', situacoesAtivoFerias)
         .eq('turma', '');
 
-      const todos = [...(funcs || []), ...(funcsVazio || [])];
+      const todos = [...(funcs || []), ...(funcsVazio || [])]
+        .filter((func: any) => podeCobrarTurmaNaSegundaSeguinte(func.data_admissao));
 
       if (todos.length === 0) {
-        toast.info('Nenhum funcionário sem turma nos setores SOPRO/DECORAÇÃO.');
+        toast.info('Nenhum funcionário sem turma para cobrar nesta semana.');
         return;
       }
 

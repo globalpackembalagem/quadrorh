@@ -188,13 +188,8 @@ export function CentralAvisosModal() {
       .limit(20);
 
     if (data && data.length > 0) {
-      const seenIds = getSeenIds();
-      const novas = (data as AvisoNotificacao[]).filter(a => !seenIds.has(a.id));
-      if (novas.length > 0) {
-        addSeenIds(data.map((a: any) => a.id));
-        setAvisos(novas);
-        setVisible(true);
-      }
+      setAvisos(data as AvisoNotificacao[]);
+      setVisible(true);
     }
   }, [isVisualizacao, userRole?.id]);
 
@@ -218,7 +213,6 @@ export function CentralAvisosModal() {
               if (prev.some(a => a.id === notif.id)) return prev;
               return [notif as AvisoNotificacao, ...prev];
             });
-            addSeenIds([notif.id]);
             setVisible(true);
           }
         }
@@ -673,7 +667,6 @@ export function CentralAvisosModal() {
     }
 
     if (naoPodemFechar.length > 0) {
-      addSeenIds(naoPodemFechar.map(a => a.id));
       toast.info(`${naoPodemFechar.length} notificacao(oes) pendente(s) de resposta. Responda para dar baixa.`);
     }
 
