@@ -249,114 +249,34 @@ export function CentralAvisosModal() {
   }, [visible]);
 
   const marcarCiente = useCallback(async (id: string) => {
-    // Capturar o aviso ANTES de qualquer state change para evitar stale closure
     const aviso = avisos.find(a => a.id === id);
-    const referenciaId = aviso?.referencia_id;
-    const avisoTipo = aviso?.tipo;
-    
-    setCienteIds(prev => new Set([...prev, id]));
-    removerAvisoDaTela(id);
-    
-    // Registrar CIENTE imediatamente (sem setTimeout) para garantir gravação
-    try {
-      // 1. Marcar notificação como lida
-      const { error: erroMarcarLida } = await supabase
-        .from('notificacoes')
-        .update({ lida: true })
-        .eq('id', id);
+    if (!aviso) return;
 
-      if (erroMarcarLida) {
-        console.error('[CIENTE] Erro ao marcar notificação como lida:', erroMarcarLida);
-        toast.error('Não foi possível salvar o CIENTE no servidor (pode reaparecer).');
+    setCienteIds(prev => new Set([...prev, id]));
+
+    try {
+      const salvou = await registrarCienciaNotificacoes([aviso]);
+      if (!salvou) {
+        toast.error('Nao foi possivel salvar o CIENTE no servidor.');
+        setCienteIds(prev => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
         return;
       }
-      
-      // 2. Resolver evento_id
-      let eventoId = referenciaId;
 
-      // Se referencia_id está null, tentar encontrar o evento correspondente
-      if (!eventoId && avisoTipo && userRole?.id) {
-        try {
-          const tipoBase = avisoTipo.replace('_lancada', '').replace('_lancado', '').replace('_pendente', '').replace('_confirmacao', '').replace('_consulta', '');
-          const { data: eventoMatch } = await supabase
-            .from('eventos_sistema')
-            .select('id')
-            .eq('tipo', tipoBase)
-            .order('created_at', { ascending: false })
-            .limit(1);
-          if (eventoMatch && eventoMatch.length > 0) {
-            eventoId = eventoMatch[0].id;
-            await supabase.from('notificacoes').update({ referencia_id: eventoId }).eq('id', id);
-          }
-        } catch (err) {
-          console.warn('[CIENTE] Fallback evento não encontrado:', err);
-        }
-      }
-
-      // 3. Registrar quem viu (CIENTE)
-      if (eventoId && userRole?.id && userRole?.nome) {
-        const { data: vistaExistente } = await supabase
-          .from('notificacoes_vistas')
-          .select('id')
-          .eq('evento_id', eventoId)
-          .eq('user_role_id', userRole.id)
-          .limit(1)
-          .maybeSingle();
-
-        const jaTinhaCiencia = !!vistaExistente;
-
-        const { error: vistaError } = await supabase.from('notificacoes_vistas').upsert({
-          evento_id: eventoId,
-          user_role_id: userRole.id,
-          nome_gestor: userRole.nome,
-        }, { onConflict: 'evento_id,user_role_id' });
-        
-        if (vistaError) {
-          console.error('[CIENTE] Erro ao registrar vista:', vistaError);
-        } else {
-          console.log('[CIENTE] Vista registrada:', { eventoId, gestor: userRole.nome });
-        }
-
-        // 4. Enviar retorno apenas no PRIMEIRO CIENTE do gestor para o evento
-        const tiposDemissao = ['demissao_lancada', 'pedido_demissao_lancado'];
-        if (!jaTinhaCiencia && avisoTipo && tiposDemissao.includes(avisoTipo)) {
-          try {
-            const { data: adminsERH } = await supabase
-              .from('user_roles')
-              .select('id')
-              .eq('ativo', true)
-              .ilike('nome', 'LUCIANO');
-
-            if (adminsERH && adminsERH.length > 0) {
-              const tipoLabel = avisoTipo === 'pedido_demissao_lancado' ? 'PEDIDO DE DEMISSÃO' : 'DEMISSÃO';
-              const notifRetorno = adminsERH
-                .filter((a: any) => a.id !== userRole.id)
-                .map((admin: any) => ({
-                  user_role_id: admin.id,
-                  tipo: 'ciencia_retorno',
-                  titulo: `✅ CIÊNCIA — ${tipoLabel}`,
-                  mensagem: montarMensagemRetornoCiencia(userRole.nome, tipoLabel, aviso?.mensagem),
-                  referencia_id: eventoId,
-                }));
-
-              if (notifRetorno.length > 0) {
-                await supabase.from('notificacoes').insert(notifRetorno);
-              }
-            }
-          } catch (err) {
-            console.warn('[CIENTE] Erro ao enviar notificação de retorno:', err);
-          }
-        }
-      } else {
-        console.warn('[CIENTE] Não foi possível registrar vista - dados faltando:', { eventoId, userId: userRole?.id, nome: userRole?.nome });
-      }
+      removerAvisoDaTela(id);
     } catch (err) {
       console.error('[CIENTE] Erro geral ao marcar ciente:', err);
-      toast.error('Falha ao processar CIENTE (pode reaparecer após atualizar).');
+      toast.error('Falha ao processar CIENTE.');
+      setCienteIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
-  }, [avisos, userRole?.id, userRole?.nome, removerAvisoDaTela]);
-
-
+  }, [avisos, registrarCienciaNotificacoes, removerAvisoDaTela]);
   // Handler para confirmação de previsão (SIM/NÃO)
   const handleConfirmacaoPrevisao = useCallback(async (aviso: AvisoNotificacao, iniciou: boolean) => {
     if (!aviso.referencia_id || !userRole?.id) return;
@@ -705,137 +625,45 @@ export function CentralAvisosModal() {
     : ['admissao_confirmacao', 'previsao_confirmacao', 'experiencia_consulta', 'cobertura_treinamento_consulta', 'turma_pendente_consulta'];
 
   const handleFecharTodos = useCallback(async () => {
-    // Capturar avisos ANTES de limpar state
     const avisosSnapshot = [...avisos];
     const podeFechar = avisosSnapshot.filter(a => !TIPOS_EXIGEM_CONFIRMACAO.includes(a.tipo));
     const naoPodemFechar = avisosSnapshot.filter(a => TIPOS_EXIGEM_CONFIRMACAO.includes(a.tipo));
 
     if (podeFechar.length > 0) {
+      const ids = podeFechar.map(a => a.id);
+      setCienteIds(prev => new Set([...prev, ...ids]));
+
       try {
-        const ids = podeFechar.map(a => a.id);
-        const { error: erroMarcarTodasLidas } = await supabase
-          .from('notificacoes')
-          .update({ lida: true })
-          .in('id', ids);
-
-        if (erroMarcarTodasLidas) {
-          console.error('[CIENTE TODOS] Erro ao marcar notificações como lidas:', erroMarcarTodasLidas);
-          toast.error('Não foi possível concluir "CIENTE DE TODOS".');
+        const salvou = await registrarCienciaNotificacoes(podeFechar);
+        if (!salvou) {
+          toast.error('Nao foi possivel concluir CIENTE DE TODOS.');
+          setCienteIds(prev => {
+            const next = new Set(prev);
+            ids.forEach(id => next.delete(id));
+            return next;
+          });
           return;
-        }
-        
-        // Registrar CIENTE para os que podem fechar
-        if (userRole?.id && userRole?.nome) {
-          const avisosComRef = podeFechar.filter(a => a.referencia_id);
-          const avisosSemRef = podeFechar.filter(a => !a.referencia_id);
-
-          // Tentar resolver referencia_id para avisos sem ela
-          for (const aviso of avisosSemRef) {
-            try {
-              const tipoBase = aviso.tipo.replace('_lancada', '').replace('_lancado', '').replace('_pendente', '').replace('_confirmacao', '').replace('_consulta', '');
-              const { data: eventoMatch } = await supabase
-                .from('eventos_sistema')
-                .select('id')
-                .eq('tipo', tipoBase)
-                .order('created_at', { ascending: false })
-                .limit(1);
-              if (eventoMatch && eventoMatch.length > 0) {
-                aviso.referencia_id = eventoMatch[0].id;
-                await supabase.from('notificacoes').update({ referencia_id: eventoMatch[0].id }).eq('id', aviso.id);
-                avisosComRef.push(aviso);
-              }
-            } catch (err) {
-              console.warn('[CIENTE TODOS] Fallback erro:', err);
-            }
-          }
-
-          const eventosIds = [...new Set(avisosComRef.map(a => a.referencia_id!).filter(Boolean))];
-          const { data: vistasExistentes } = eventosIds.length > 0
-            ? await supabase
-                .from('notificacoes_vistas')
-                .select('evento_id')
-                .in('evento_id', eventosIds)
-                .eq('user_role_id', userRole.id)
-            : { data: [] as Array<{ evento_id: string }> };
-
-          const eventosJaVistos = new Set((vistasExistentes || []).map(v => v.evento_id));
-          const avisosNovosCiente = avisosComRef.filter(a => !eventosJaVistos.has(a.referencia_id!));
-
-          const vistas = avisosNovosCiente.map(a => ({
-            evento_id: a.referencia_id!,
-            user_role_id: userRole.id,
-            nome_gestor: userRole.nome,
-          }));
-          if (vistas.length > 0) {
-            const { error: vistaError } = await supabase
-              .from('notificacoes_vistas')
-              .upsert(vistas, { onConflict: 'evento_id,user_role_id' });
-            
-            if (vistaError) {
-              console.error('[CIENTE TODOS] Erro ao registrar vistas:', vistaError);
-            } else {
-              console.log('[CIENTE TODOS] Vistas registradas:', vistas.length, 'para', userRole.nome);
-            }
-
-            // Enviar notificação de retorno APENAS para demissão/pedido de demissão
-            try {
-              const tiposDemissaoRetorno = ['demissao_lancada', 'pedido_demissao_lancado'];
-              const avisosDemissao = avisosNovosCiente.filter(a => tiposDemissaoRetorno.includes(a.tipo) && a.referencia_id);
-              
-              if (avisosDemissao.length > 0) {
-                const { data: adminsERH } = await supabase
-                  .from('user_roles')
-                  .select('id')
-                  .eq('ativo', true)
-                  .ilike('nome', 'LUCIANO');
-
-                if (adminsERH && adminsERH.length > 0) {
-                  const notifRetorno: any[] = [];
-                  avisosDemissao.forEach(aviso => {
-                    const tipoLabel = aviso.tipo === 'pedido_demissao_lancado' ? 'PEDIDO DE DEMISSÃO' : 'DEMISSÃO';
-                    adminsERH
-                      .filter((a: any) => a.id !== userRole.id)
-                      .forEach((admin: any) => {
-                        notifRetorno.push({
-                          user_role_id: admin.id,
-                          tipo: 'ciencia_retorno',
-                          titulo: `✅ CIÊNCIA — ${tipoLabel}`,
-                          mensagem: montarMensagemRetornoCiencia(userRole.nome, tipoLabel, aviso.mensagem),
-                          referencia_id: aviso.referencia_id,
-                        });
-                      });
-                  });
-
-                  if (notifRetorno.length > 0) {
-                    await supabase.from('notificacoes').insert(notifRetorno);
-                  }
-                }
-              }
-            } catch (err) {
-              console.warn('[CIENTE TODOS] Erro ao enviar notificações de retorno:', err);
-            }
-          } else {
-            console.warn('[CIENTE TODOS] Nenhuma vista para registrar - avisosComRef:', avisosComRef.length);
-          }
-        } else {
-          console.warn('[CIENTE TODOS] userRole incompleto:', { id: userRole?.id, nome: userRole?.nome });
         }
       } catch (err) {
         console.error('[CIENTE TODOS] Erro geral:', err);
+        toast.error('Nao foi possivel concluir CIENTE DE TODOS.');
+        setCienteIds(prev => {
+          const next = new Set(prev);
+          ids.forEach(id => next.delete(id));
+          return next;
+        });
+        return;
       }
     }
 
-    // Adicionar os que exigem confirmação ao sessionStorage
     if (naoPodemFechar.length > 0) {
       addSeenIds(naoPodemFechar.map(a => a.id));
-      toast.info(`${naoPodemFechar.length} notificação(ões) pendente(s) de resposta — reaparecerão ao reabrir o sistema.`);
+      toast.info(`${naoPodemFechar.length} notificacao(oes) pendente(s) de resposta. Responda para dar baixa.`);
     }
 
-    // Sempre fecha o modal
-    setAvisos([]);
-    setVisible(false);
-  }, [avisos, userRole?.id, userRole?.nome]);
-
+    setAvisos(naoPodemFechar);
+    setVisible(naoPodemFechar.length > 0);
+  }, [avisos, TIPOS_EXIGEM_CONFIRMACAO, registrarCienciaNotificacoes]);
   if (!visible || avisos.length === 0) return null;
 
   return (
