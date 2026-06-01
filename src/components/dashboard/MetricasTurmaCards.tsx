@@ -9,7 +9,7 @@ import { TreinamentoPrevisao, enrichStatus, filterByGrupo } from '@/hooks/useTre
 import { useUsuario } from '@/contexts/UserContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { addDays, differenceInCalendarDays, format, parseISO, startOfDay } from 'date-fns';
 import {
   Popover,
   PopoverContent,
@@ -45,6 +45,39 @@ const TURMAS_LABELS: Record<string, string> = {
   'DIA-T2': 'DECORAÇÃO DIA - T2',
   'NOITE-T1': 'DECORAÇÃO NOITE - T1',
   'NOITE-T2': 'DECORAÇÃO NOITE - T2',
+};
+
+const normalizarTurma = (turma?: string | null) =>
+  (turma || '').toUpperCase().trim().replace(/^TURMA\s*/, '');
+
+const isAdmissaoEmTreinamento = (f: Funcionario) => {
+  const situacaoNome = f.situacao?.nome?.toUpperCase() || '';
+  const isAtivoOuTreinamento = situacaoNome === 'ATIVO' || situacaoNome.includes('TREINAMENTO');
+  if (!isAtivoOuTreinamento || !f.data_admissao) return false;
+
+  const hoje = startOfDay(new Date());
+  const admissao = startOfDay(parseISO(f.data_admissao));
+  if (Number.isNaN(admissao.getTime())) return false;
+
+  const diasDesdeAdmissao = differenceInCalendarDays(hoje, admissao);
+  return diasDesdeAdmissao >= 0 && diasDesdeAdmissao <= 1;
+};
+
+const getTurmaCardFuncionario = (f: Funcionario, grupo: 'SOPRO' | 'DECORAÃ‡ÃƒO') => {
+  if (grupo === 'SOPRO') {
+    const grupoSetor = f.setor?.grupo?.toUpperCase() || '';
+    const match = grupoSetor.match(/SOPRO\s+([ABC])/);
+    return match?.[1] || null;
+  }
+
+  const turmaFunc = normalizarTurma(f.turma);
+  const setorNome = f.setor?.nome?.toUpperCase() || '';
+  const isDia = setorNome.includes('DIA');
+  const isNoite = setorNome.includes('NOITE');
+
+  if (turmaFunc === 'T1' || turmaFunc === '1') return isDia ? 'DIA-T1' : isNoite ? 'NOITE-T1' : null;
+  if (turmaFunc === 'T2' || turmaFunc === '2') return isDia ? 'DIA-T2' : isNoite ? 'NOITE-T2' : null;
+  return null;
 };
 
 // Calcular total planejado para SOPRO
@@ -207,6 +240,28 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
         const treinamentosAtivos = treinamentosDaTurma
           .map(enrichStatus)
           .filter(t => t.statusReal === 'EM TREINAMENTO');
+        const idsComTreinamento = new Set(treinamentosAtivos.map(t => t.funcionario_id));
+        const admitidosRecentesDaTurma = funcionarios.filter(f =>
+          isAdmissaoEmTreinamento(f) &&
+          getTurmaCardFuncionario(f, grupo) === turma &&
+          !idsComTreinamento.has(f.id)
+        );
+        const treinamentoCardItems = [
+          ...treinamentosAtivos.map(t => ({
+            id: t.funcionario_id,
+            matricula: t.matricula,
+            nome: t.nome_completo,
+            inicio: t.treinamento_inicio,
+            termino: t.treinamento_expiracao,
+          })),
+          ...admitidosRecentesDaTurma.map(f => ({
+            id: f.id,
+            matricula: f.matricula,
+            nome: f.nome_completo,
+            inicio: f.data_admissao || new Date().toISOString(),
+            termino: addDays(parseISO(f.data_admissao || new Date().toISOString()), 1).toISOString(),
+          })),
+        ];
         
         const sumidosQtd = (mostrarSumidos && sumidosPorTurma[turma]) ? sumidosPorTurma[turma].total : 0;
         const cobFeriasQtd = (mostrarSumidos && cobFeriasPorTurma[turma]) ? cobFeriasPorTurma[turma].total : 0;
@@ -291,7 +346,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
             </div>
 
             {/* Previsão de Admissão - sempre visível */}
-            {treinamentosAtivos.length > 0 ? (
+            {treinamentoCardItems.length > 0 ? (
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="flex items-center justify-between gap-1.5 px-3 py-2 mt-2 rounded-lg border border-warning/30 bg-warning/5 text-sm font-semibold text-warning hover:bg-warning/15 transition-colors cursor-pointer w-full">
@@ -299,18 +354,18 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                       <GraduationCap className="h-4 w-4 shrink-0" />
                       <span>EM TREINAMENTO (2 DIAS)</span>
                     </div>
-                    <span className="text-lg font-bold">{treinamentosAtivos.length}</span>
+                    <span className="text-lg font-bold">{treinamentoCardItems.length}</span>
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80 p-3" align="start">
                   <div className="space-y-1">
                     <h4 className="font-semibold text-sm mb-2 text-warning">EM TREINAMENTO - {TURMAS_LABELS[turma]}</h4>
                     <div className="max-h-48 overflow-y-auto space-y-1.5">
-                      {treinamentosAtivos.map(t => (
+                      {treinamentoCardItems.map(t => (
                         <div key={t.id} className="text-xs p-2 rounded-md bg-warning/5 border border-warning/20">
-                          <div className="font-semibold">{t.matricula ? `${t.matricula} - ` : ''}{t.nome_completo}</div>
+                          <div className="font-semibold">{t.matricula ? `${t.matricula} - ` : ''}{t.nome}</div>
                           <div className="text-muted-foreground mt-0.5">
-                            Inicio: {format(new Date(t.treinamento_inicio), 'dd/MM/yyyy')} | Termino: {format(new Date(t.treinamento_expiracao), 'dd/MM/yyyy')}
+                            Inicio: {format(new Date(t.inicio), 'dd/MM/yyyy')} | Termino: {format(new Date(t.termino), 'dd/MM/yyyy')}
                           </div>
                         </div>
                       ))}
