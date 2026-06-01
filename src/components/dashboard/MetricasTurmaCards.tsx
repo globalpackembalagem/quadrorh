@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { Users, TrendingUp, TrendingDown, Minus, UserPlus, UserX, Umbrella, GraduationCap, UserRound, UserRoundCheck, AlertTriangle } from 'lucide-react';
 
-import { TreinamentosSetorDialog } from '@/components/dashboard/TreinamentosSetorDialog';
 
 import { Funcionario, QuadroPlanejado, QuadroDecoracao } from '@/types/database';
 import { TreinamentoPrevisao, enrichStatus, filterByGrupo } from '@/hooks/useTreinamentosPrevisao';
@@ -304,8 +303,6 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                 <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
                   <Users className="h-5 w-5 text-primary" />
                 </div>
-                
-                <TreinamentosSetorDialog grupoLabel={TURMAS_LABELS[turma]} treinamentos={treinamentosDaTurma} />
               </div>
             </div>
             
