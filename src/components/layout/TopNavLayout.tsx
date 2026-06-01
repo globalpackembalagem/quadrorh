@@ -73,7 +73,6 @@ const adminNavigation = [
   { name: 'SITUAÇÕES', href: '/admin/situacoes', icon: FileText },
   { name: 'PERÍODOS', href: '/admin/periodos', icon: Clock },
   { name: 'USUÁRIOS', href: '/admin/usuarios', icon: UserCog },
-  { name: 'FAKES QUADRO', href: '/admin/fake-quadro', icon: ShieldCheck },
   { name: 'BACKUP', href: '/admin/backup', icon: Database },
   { name: 'HISTÓRICO DE ACESSO', href: '/admin/historico-acesso', icon: Eye },
 ];
@@ -172,24 +171,6 @@ export function TopNavLayout({ children }: TopNavLayoutProps) {
             >
               <LayoutDashboard className="h-4 w-4" />
               <span className="hidden sm:inline-block">QUADRO FUNCIONÁRIOS</span>
-            </Link>
-          )}
-
-          {isLoggedIn && (() => {
-            const nomeNorm = (usuarioAtual.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase();
-            return nomeNorm === 'LUCIANO' || nomeNorm === 'MAURICIO';
-          })() && (
-            <Link
-              to="/admin/fake-quadro"
-              className={cn(
-                'mr-8 inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-bold transition-colors',
-                location.pathname === '/admin/fake-quadro'
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-              )}
-            >
-              <ShieldCheck className="h-4 w-4" />
-              <span className="hidden sm:inline-block">FAKES QUADRO</span>
             </Link>
           )}
 

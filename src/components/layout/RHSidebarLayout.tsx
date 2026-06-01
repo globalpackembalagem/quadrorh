@@ -119,7 +119,6 @@ const adminNavigation = [
   { name: 'TIPOS DESLIGAMENTO', href: '/admin/tipos-desligamento', icon: UserMinus },
   { name: 'PERÍODOS', href: '/admin/periodos', icon: Clock },
   { name: 'USUÁRIOS', href: '/admin/usuarios', icon: UserCog },
-  { name: 'FAKES QUADRO', href: '/admin/fake-quadro', icon: ShieldCheck },
   { name: 'BACKUP', href: '/admin/backup', icon: Database },
   { name: 'REFERÊNCIA', href: '/admin/referencia', icon: Lightbulb },
 ];
@@ -534,14 +533,7 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="mt-2 space-y-1 ml-4 border-l border-sidebar-border/50 pl-2">
-                  {adminNavigation
-                    .filter((item) => {
-                      if (item.name === 'FAKES QUADRO') {
-                        return canAccessFakeQuadro;
-                      }
-                      return true;
-                    })
-                    .map((item) => (
+                  {adminNavigation.map((item) => (
                     <Link
                       key={item.name}
                       to={item.href}
@@ -638,21 +630,6 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          {canAccessFakeQuadro && (
-            <Link
-              to="/admin/fake-quadro"
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-bold transition-colors',
-                location.pathname === '/admin/fake-quadro'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-sidebar-accent text-sidebar-foreground hover:bg-primary/20'
-              )}
-            >
-              <ShieldCheck className="h-3.5 w-3.5" />
-              {!isMobile && 'FAKES QUADRO'}
-            </Link>
-          )}
-
           <ThemeSelectorButton />
 
           {/* Atalhos rápidos REAL PARCERIA */}
