@@ -4,6 +4,7 @@ import { usePeriodosFaltas, useRegistrosFaltas, useFuncionariosFaltas } from '@/
 import { useQuadroPlanejado } from '@/hooks/useQuadroPlanejado';
 import { useQuadroDecoracao } from '@/hooks/useQuadroDecoracao';
 import { DashboardFaltasDiario } from '@/components/faltas/DashboardFaltasDiario';
+import { useFuncionariosNoQuadro } from '@/hooks/useFuncionarios';
 
 function isSetorDoQuadro(setor: { nome?: string; conta_no_quadro?: boolean } | null): boolean {
   if (!setor) return false;
@@ -65,6 +66,7 @@ export function HomeFaltasMetrics() {
 
   const periodoId = periodoAtivo?.id || '';
   const { data: funcionarios = [] } = useFuncionariosFaltas(periodoId, periodoAtivo);
+  const { data: funcionariosQuadro = [] } = useFuncionariosNoQuadro();
   const { data: registros = [] } = useRegistrosFaltas(periodoId);
 
   const funcionariosFiltrados = useMemo(() => {
@@ -181,6 +183,42 @@ export function HomeFaltasMetrics() {
     return map;
   }, [quadroPlanejadoSopro, quadroDecoracaoData]);
 
+  const sobraPorSetor = useMemo(() => {
+    const map: Record<string, number> = {};
+
+    ['A', 'B', 'C'].forEach(turma => {
+      const setor = `SOPRO ${turma}`;
+      const total = funcionariosQuadro.filter(f => f.setor?.grupo?.toUpperCase() === setor).length;
+      map[setor] = total - (necessarioPorSetor[setor] ?? 0);
+    });
+
+    const decoLabels: Record<string, string> = {
+      'DIA-T1': 'DECORAÃ‡ÃƒO DIA - T1',
+      'DIA-T2': 'DECORAÃ‡ÃƒO DIA - T2',
+      'NOITE-T1': 'DECORAÃ‡ÃƒO NOITE - T1',
+      'NOITE-T2': 'DECORAÃ‡ÃƒO NOITE - T2',
+    };
+    const funcsDeco = funcionariosQuadro.filter(f => {
+      const n = f.setor?.nome?.toUpperCase() || '';
+      return n.includes('DECORAÃ‡ÃƒO') || n.includes('DECORACAO');
+    });
+
+    Object.entries(decoLabels).forEach(([turmaKey, setor]) => {
+      const total = funcsDeco.filter(f => {
+        const t = f.turma?.toUpperCase();
+        const sn = f.setor?.nome?.toUpperCase() || '';
+        const isDia = sn.includes('DIA');
+        const isNoite = sn.includes('NOITE');
+        if (t === 'T1' || t === '1') return (isDia && turmaKey === 'DIA-T1') || (isNoite && turmaKey === 'NOITE-T1');
+        if (t === 'T2' || t === '2') return (isDia && turmaKey === 'DIA-T2') || (isNoite && turmaKey === 'NOITE-T2');
+        return false;
+      }).length;
+      map[setor] = total - (necessarioPorSetor[setor] ?? 0);
+    });
+
+    return map;
+  }, [funcionariosQuadro, necessarioPorSetor]);
+
   if (loadingPeriodos || !periodoAtivo || funcionariosAgrupados.length === 0) {
     return null;
   }
@@ -192,6 +230,7 @@ export function HomeFaltasMetrics() {
       diasPeriodo={diasPeriodo}
       periodo={periodoAtivo}
       reservaFaltasPorSetor={reservaFaltasPorSetor}
+      sobraPorSetor={sobraPorSetor}
       necessarioPorSetor={necessarioPorSetor}
     />
   );

@@ -602,8 +602,8 @@ export function DashboardFaltasDiario({
                       const isFimDeSemana = dia.getDay() === 0 || dia.getDay() === 6;
                       // SALDO dinâmico: usa totalQuadro (apenas conta_no_quadro) para calcular sobra real
                       let saldo: number | undefined;
-                      if (necessario != null && reserva != null) {
-                        const sobraDia = (d?.totalQuadro || 0) - necessario;
+                      if (reserva != null && sobra != null) {
+                        const sobraDia = sobra;
                         const sobraEfetiva = isSopro && isFimDeSemana ? Math.round(sobraDia / 4) : sobraDia;
                         const reservaEfetiva = isSopro && isFimDeSemana ? Math.round(reserva / 4) : reserva;
                         saldo = totalAusencias > 0 ? sobraEfetiva + reservaEfetiva - totalAusencias : undefined;
@@ -690,11 +690,9 @@ export function DashboardFaltasDiario({
                         const isSopro = setor.toUpperCase().includes('SOPRO');
                         const setorData = metricasPorSetorDia[setor];
                         const qtdHoje = setorData ? (setorData[hojeStr]?.totalQuadro ?? Object.values(setorData).pop()?.totalQuadro ?? 0) : 0;
-                        const necessario = necessarioPorSetor[setor] ?? 0;
-                        const sobraDinamica = qtdHoje - necessario;
-                        const baseSemana = sobraDinamica + reserva;
+                        const baseSemana = sobra + reserva;
                         const baseFds = isSopro
-                          ? Math.round(sobraDinamica / 4) + Math.round(reserva / 4)
+                          ? Math.round(sobra / 4) + Math.round(reserva / 4)
                           : baseSemana;
                         return (
                           <TableRow key={setor}>
@@ -702,9 +700,9 @@ export function DashboardFaltasDiario({
                             <TableCell className="text-[11px] font-bold text-center py-1.5">{qtdHoje}</TableCell>
                             <TableCell className={cn(
                               "text-[11px] font-bold text-center py-1.5",
-                              sobraDinamica > 0 ? "text-success" : sobraDinamica < 0 ? "text-destructive" : "text-muted-foreground"
+                              sobra > 0 ? "text-success" : sobra < 0 ? "text-destructive" : "text-muted-foreground"
                             )}>
-                              {sobraDinamica > 0 ? `+${sobraDinamica}` : sobraDinamica}
+                              {sobra > 0 ? `+${sobra}` : sobra}
                             </TableCell>
                             <TableCell className="text-[11px] font-bold text-center py-1.5 text-info">{reserva}</TableCell>
                             <TableCell className={cn(
