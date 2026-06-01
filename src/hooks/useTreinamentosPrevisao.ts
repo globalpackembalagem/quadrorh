@@ -118,7 +118,7 @@ export function filterByGrupo(treinamentos: TreinamentoPrevisao[], grupoLabel: s
   return treinamentos.filter(t => {
     const sg = (t.setor_grupo || '').toUpperCase();
     const sn = (t.setor_nome || '').toUpperCase();
-    const turma = (t.turma || '').toUpperCase().trim();
+    const turma = (t.turma || '').toUpperCase().trim().replace(/^TURMA\s*/, '');
 
     // SOPRO A/B/C
     if (label === 'SOPRO A') return sg.includes('SOPRO A') || sn.includes('SOPRO') && sn.includes(' A');

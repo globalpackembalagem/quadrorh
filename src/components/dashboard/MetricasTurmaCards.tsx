@@ -4,7 +4,7 @@ import { Users, TrendingUp, TrendingDown, Minus, UserPlus, UserX, Umbrella, Grad
 import { TreinamentosSetorDialog } from '@/components/dashboard/TreinamentosSetorDialog';
 
 import { Funcionario, QuadroPlanejado, QuadroDecoracao } from '@/types/database';
-import { TreinamentoPrevisao, filterByGrupo } from '@/hooks/useTreinamentosPrevisao';
+import { TreinamentoPrevisao, enrichStatus, filterByGrupo } from '@/hooks/useTreinamentosPrevisao';
 
 import { useUsuario } from '@/contexts/UserContext';
 import { cn } from '@/lib/utils';
@@ -203,6 +203,10 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
       {turmas.map(turma => {
         const metricas = metricasPorTurma[turma];
         const grupoLabel = grupo === 'SOPRO' ? `SOPRO ${turma}` : turma;
+        const treinamentosDaTurma = filterByGrupo(treinamentosPrevisao, TURMAS_LABELS[turma]);
+        const treinamentosAtivos = treinamentosDaTurma
+          .map(enrichStatus)
+          .filter(t => t.statusReal === 'EM TREINAMENTO');
         
         const sumidosQtd = (mostrarSumidos && sumidosPorTurma[turma]) ? sumidosPorTurma[turma].total : 0;
         const cobFeriasQtd = (mostrarSumidos && cobFeriasPorTurma[turma]) ? cobFeriasPorTurma[turma].total : 0;
@@ -246,7 +250,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                   <Users className="h-5 w-5 text-primary" />
                 </div>
                 
-                <TreinamentosSetorDialog grupoLabel={TURMAS_LABELS[turma]} treinamentos={filterByGrupo(treinamentosPrevisao, TURMAS_LABELS[turma])} />
+                <TreinamentosSetorDialog grupoLabel={TURMAS_LABELS[turma]} treinamentos={treinamentosDaTurma} />
               </div>
             </div>
             
@@ -287,6 +291,43 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
             </div>
 
             {/* Previsão de Admissão - sempre visível */}
+            {treinamentosAtivos.length > 0 ? (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="flex items-center justify-between gap-1.5 px-3 py-2 mt-2 rounded-lg border border-warning/30 bg-warning/5 text-sm font-semibold text-warning hover:bg-warning/15 transition-colors cursor-pointer w-full">
+                    <div className="flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4 shrink-0" />
+                      <span>EM TREINAMENTO (2 DIAS)</span>
+                    </div>
+                    <span className="text-lg font-bold">{treinamentosAtivos.length}</span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-3" align="start">
+                  <div className="space-y-1">
+                    <h4 className="font-semibold text-sm mb-2 text-warning">EM TREINAMENTO - {TURMAS_LABELS[turma]}</h4>
+                    <div className="max-h-48 overflow-y-auto space-y-1.5">
+                      {treinamentosAtivos.map(t => (
+                        <div key={t.id} className="text-xs p-2 rounded-md bg-warning/5 border border-warning/20">
+                          <div className="font-semibold">{t.matricula ? `${t.matricula} - ` : ''}{t.nome_completo}</div>
+                          <div className="text-muted-foreground mt-0.5">
+                            Inicio: {format(new Date(t.treinamento_inicio), 'dd/MM/yyyy')} | Termino: {format(new Date(t.treinamento_expiracao), 'dd/MM/yyyy')}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <div className="flex items-center justify-between gap-1.5 px-3 py-2 mt-2 rounded-lg border border-warning/30 bg-warning/5 text-sm font-semibold text-warning w-full">
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4 shrink-0" />
+                  <span>EM TREINAMENTO (2 DIAS)</span>
+                </div>
+                <span className="text-lg font-bold">0</span>
+              </div>
+            )}
+
             {metricas.previsoes > 0 ? (
               <Popover>
                 <PopoverTrigger asChild>
