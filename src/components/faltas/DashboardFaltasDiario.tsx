@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { format, parseISO, isAfter, isBefore } from 'date-fns';
+import { differenceInCalendarDays, format, parseISO, startOfDay, isAfter, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar, ChevronDown, ChevronUp, Info, Clock } from 'lucide-react';
 import { getTrabalhaOuFolga } from '@/lib/escalaPanama';
@@ -208,15 +208,29 @@ export function DashboardFaltasDiario({
     return !getTrabalhaOuFolga(data, turma);
   };
 
+  const isTreinamentoNaData = (func: FuncionarioBase, data: Date): boolean => {
+    const situacaoNome = func.situacao?.nome?.toUpperCase() || '';
+    const isAtivoOuTreinamento = situacaoNome === 'ATIVO' || situacaoNome.includes('TREINAMENTO');
+    if (!isAtivoOuTreinamento || !func.data_admissao) return false;
+
+    const admissao = startOfDay(parseISO(func.data_admissao));
+    if (Number.isNaN(admissao.getTime())) return false;
+
+    const diasDesdeAdmissao = differenceInCalendarDays(startOfDay(data), admissao);
+    return diasDesdeAdmissao >= 0 && diasDesdeAdmissao <= 1;
+  };
+
   // Métricas por setor por dia
   const metricasPorSetorDia = useMemo(() => {
-    const result: Record<string, Record<string, { total: number; totalQuadro: number; faltas: number; atestados: number; dayoff: number; folga: boolean }>> = {};
+    const result: Record<string, Record<string, { total: number; totalQuadro: number; treinamento: number; faltas: number; atestados: number; dayoff: number; folga: boolean }>> = {};
     funcionariosAgrupados.forEach(({ setor, funcionarios }) => {
       result[setor] = {};
       diasPeriodo.forEach(dia => {
         const dataStr = format(dia, 'yyyy-MM-dd');
         const ativos = funcionarios.filter(f => funcionarioAtivoNaData(f, dia));
         const ativosQuadro = ativos.filter(f => f.situacao_conta_no_quadro !== false);
+        const treinamento = ativosQuadro.filter(f => isTreinamentoNaData(f, dia)).length;
+        const totalQuadroDisponivel = Math.max(ativosQuadro.length - treinamento, 0);
         const folga = isFolgaSetorDia(setor, dia);
         let faltas = 0, atestados = 0, dayoff = 0;
         ativos.forEach(func => {
@@ -225,7 +239,7 @@ export function DashboardFaltasDiario({
           else if (tipo === 'A' || tipo === 'FE') atestados++;
           else if (tipo === 'DA' || tipo === 'DF') dayoff++;
         });
-        result[setor][dataStr] = { total: ativos.length, totalQuadro: ativosQuadro.length, faltas, atestados, dayoff, folga };
+        result[setor][dataStr] = { total: ativos.length, totalQuadro: totalQuadroDisponivel, treinamento, faltas, atestados, dayoff, folga };
       });
     });
     return result;
@@ -233,7 +247,7 @@ export function DashboardFaltasDiario({
 
   // Nomes dos funcionários com falta/atestado por setor/dia
   const nomesPorSetorDia = useMemo(() => {
-    const result: Record<string, Record<string, { faltas: string[]; suspensao: string[]; atestados: string[]; ferias: string[]; dayoff: string[] }>> = {};
+    const result: Record<string, Record<string, { faltas: string[]; suspensao: string[]; atestados: string[]; ferias: string[]; dayoff: string[]; treinamento: string[] }>> = {};
     funcionariosAgrupados.forEach(({ setor, funcionarios }) => {
       result[setor] = {};
       diasPeriodo.forEach(dia => {
@@ -243,20 +257,22 @@ export function DashboardFaltasDiario({
         const atestados: string[] = [];
         const ferias: string[] = [];
         const dayoff: string[] = [];
+        const treinamento: string[] = [];
         const ativos = funcionarios.filter(f => funcionarioAtivoNaData(f, dia));
         ativos.forEach(func => {
           const tipo = registrosPorFuncData.get(`${func.id}-${dataStr}`);
           const idPrefix = func.matricula ? `(${func.matricula}) ` : '';
           const nome = `${idPrefix}${func.nome_completo || 'Sem nome'}`;
+          if (func.situacao_conta_no_quadro !== false && isTreinamentoNaData(func, dia)) treinamento.push(nome);
           if (tipo === 'F') faltas.push(nome);
           else if (tipo === 'SS') suspensao.push(nome);
           else if (tipo === 'A') atestados.push(nome);
           else if (tipo === 'FE') ferias.push(nome);
           else if (tipo === 'DA' || tipo === 'DF') dayoff.push(nome);
         });
-        const hasAny = faltas.length > 0 || suspensao.length > 0 || atestados.length > 0 || ferias.length > 0 || dayoff.length > 0;
+        const hasAny = faltas.length > 0 || suspensao.length > 0 || atestados.length > 0 || ferias.length > 0 || dayoff.length > 0 || treinamento.length > 0;
         if (hasAny) {
-          result[setor][dataStr] = { faltas: faltas.sort(), suspensao: suspensao.sort(), atestados: atestados.sort(), ferias: ferias.sort(), dayoff: dayoff.sort() };
+          result[setor][dataStr] = { faltas: faltas.sort(), suspensao: suspensao.sort(), atestados: atestados.sort(), ferias: ferias.sort(), dayoff: dayoff.sort(), treinamento: treinamento.sort() };
         }
       });
     });
@@ -280,7 +296,7 @@ export function DashboardFaltasDiario({
 
   // Nomes totais (todos setores) por dia
   const nomesTotaisPorDia = useMemo(() => {
-    const result: Record<string, { faltas: string[]; suspensao: string[]; atestados: string[]; ferias: string[]; dayoff: string[] }> = {};
+    const result: Record<string, { faltas: string[]; suspensao: string[]; atestados: string[]; ferias: string[]; dayoff: string[]; treinamento: string[] }> = {};
     diasPeriodo.forEach(dia => {
       const dataStr = format(dia, 'yyyy-MM-dd');
       const faltas: string[] = [];
@@ -288,6 +304,7 @@ export function DashboardFaltasDiario({
       const atestados: string[] = [];
       const ferias: string[] = [];
       const dayoff: string[] = [];
+      const treinamento: string[] = [];
       Object.entries(nomesPorSetorDia).forEach(([, setorData]) => {
         const d = setorData[dataStr];
         if (d) {
@@ -296,11 +313,12 @@ export function DashboardFaltasDiario({
           atestados.push(...d.atestados);
           ferias.push(...d.ferias);
           dayoff.push(...d.dayoff);
+          treinamento.push(...d.treinamento);
         }
       });
-      const hasAny = faltas.length > 0 || suspensao.length > 0 || atestados.length > 0 || ferias.length > 0 || dayoff.length > 0;
+      const hasAny = faltas.length > 0 || suspensao.length > 0 || atestados.length > 0 || ferias.length > 0 || dayoff.length > 0 || treinamento.length > 0;
       if (hasAny) {
-        result[dataStr] = { faltas: faltas.sort(), suspensao: suspensao.sort(), atestados: atestados.sort(), ferias: ferias.sort(), dayoff: dayoff.sort() };
+        result[dataStr] = { faltas: faltas.sort(), suspensao: suspensao.sort(), atestados: atestados.sort(), ferias: ferias.sort(), dayoff: dayoff.sort(), treinamento: treinamento.sort() };
       }
     });
     return result;
@@ -310,7 +328,12 @@ export function DashboardFaltasDiario({
 
   if (!periodo || funcionariosAgrupados.length === 0) return null;
 
-  const renderPopoverContent = (nomes: { faltas: string[]; suspensao: string[]; atestados: string[]; ferias: string[]; dayoff: string[] } | undefined, setor: string, dataLabel: string) => {
+  const renderPopoverContent = (
+    nomes: { faltas: string[]; suspensao: string[]; atestados: string[]; ferias: string[]; dayoff: string[]; treinamento: string[] } | undefined,
+    setor: string,
+    dataLabel: string,
+    saldoDetalhe?: { sobra: number; reserva: number; treinamento: number; faltas: number; atestados: number; dayoff: number; saldo: number }
+  ) => {
     if (!nomes) return null;
     const sections = [
       { label: 'Faltas', items: nomes.faltas, colorClass: 'text-destructive' },
@@ -318,10 +341,19 @@ export function DashboardFaltasDiario({
       { label: 'Atestados', items: nomes.atestados, colorClass: 'text-warning' },
       { label: '+1 Dia Férias', items: nomes.ferias, colorClass: 'text-primary' },
       { label: 'Day Off', items: nomes.dayoff, colorClass: 'text-info' },
+      { label: 'Em Treinamento', items: nomes.treinamento, colorClass: 'text-primary' },
     ].filter(s => s.items.length > 0);
     return (
       <div className="max-w-[260px]">
         <p className="text-[11px] font-bold text-foreground mb-2 border-b pb-1">{setor} — {dataLabel}</p>
+        {saldoDetalhe && (
+          <div className="mb-2 rounded-md border bg-muted/40 p-2">
+            <p className="text-[10px] font-bold text-foreground">Saldo: {saldoDetalhe.saldo}</p>
+            <p className="text-[10px] text-muted-foreground leading-tight">
+              {saldoDetalhe.sobra} + {saldoDetalhe.reserva} - {saldoDetalhe.treinamento} - {saldoDetalhe.faltas} - {saldoDetalhe.atestados} - {saldoDetalhe.dayoff} = {saldoDetalhe.saldo}
+            </p>
+          </div>
+        )}
         {sections.map((section, idx) => (
           <div key={section.label} className={idx < sections.length - 1 ? 'mb-2' : ''}>
             <p className={`text-[10px] font-bold ${section.colorClass} mb-0.5`}>{section.label} ({section.items.length})</p>
@@ -340,12 +372,13 @@ export function DashboardFaltasDiario({
     isHoje: boolean,
     dataStr: string,
     setor: string,
-    nomes: { faltas: string[]; suspensao: string[]; atestados: string[]; ferias: string[]; dayoff: string[] } | undefined,
+    nomes: { faltas: string[]; suspensao: string[]; atestados: string[]; ferias: string[]; dayoff: string[]; treinamento: string[] } | undefined,
     isTotalRow = false,
     isAlternateCol = false,
     folga = false,
     saldo?: number,
-    dayoff = 0
+    dayoff = 0,
+    saldoDetalhe?: { sobra: number; reserva: number; treinamento: number; faltas: number; atestados: number; dayoff: number; saldo: number }
   ) => {
     // Para os badges, F inclui F+SS e A inclui A+FE+DA (como antes)
     const badgeF = faltas;
@@ -424,7 +457,7 @@ export function DashboardFaltasDiario({
               </button>
             </PopoverTrigger>
             <PopoverContent side="top" className="p-3 w-auto" align="center">
-              {renderPopoverContent(nomes, setor, dataLabel)}
+              {renderPopoverContent(nomes, setor, dataLabel, saldoDetalhe)}
             </PopoverContent>
           </Popover>
         </TableCell>
@@ -534,8 +567,39 @@ export function DashboardFaltasDiario({
           </div>
           <div className="flex items-center gap-1.5">
             <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-success text-success-foreground font-bold text-xs">S</span>
-            <span className="text-xs text-muted-foreground font-medium">SALDO (SOBRA + RSV - AUS)</span>
+            <span className="text-xs text-muted-foreground font-medium">SALDO</span>
           </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="text-xs font-semibold text-primary hover:underline" type="button">
+                Legenda
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="bottom" align="start" className="w-[330px] p-3">
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-foreground">Legenda</p>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                  <span><strong>F</strong> = Falta</span>
+                  <span><strong>A</strong> = Atestado</span>
+                  <span><strong>DA</strong> = Day Off</span>
+                  <span>🛏️ = Folga escala</span>
+                  <span><strong>S</strong> = Saldo</span>
+                </div>
+                <div className="border-t pt-2">
+                  <p className="text-[11px] font-bold text-foreground">Como calcula o saldo</p>
+                  <p className="text-[11px] text-muted-foreground leading-snug">
+                    Saldo = Sobra do quadro + Reserva faltas - Treinamento - Faltas - Atestados - Day Off.
+                  </p>
+                </div>
+                <div className="rounded-md bg-muted/40 p-2">
+                  <p className="text-[11px] font-bold text-foreground">Exemplo</p>
+                  <p className="text-[11px] text-muted-foreground leading-snug">
+                    Sobra 4 + Reserva 13 - Treinamento 1 - Faltas 6 - Atestados 17 - Day Off 0 = <strong>-7 Saldo</strong>
+                  </p>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
           <div className="flex items-center gap-1">
             <span className="text-xs text-muted-foreground/70 italic">Clique na célula para ver nomes</span>
           </div>
@@ -597,23 +661,27 @@ export function DashboardFaltasDiario({
                       const f = d?.faltas || 0;
                       const a = d?.atestados || 0;
                       const da = d?.dayoff || 0;
+                      const treinamento = d?.treinamento || 0;
                       const totalAusencias = f + a + da;
                       const isSopro = setor.toUpperCase().includes('SOPRO');
                       const isFimDeSemana = dia.getDay() === 0 || dia.getDay() === 6;
                       // SALDO dinâmico: usa totalQuadro (apenas conta_no_quadro) para calcular sobra real
                       let saldo: number | undefined;
+                      let saldoDetalhe: { sobra: number; reserva: number; treinamento: number; faltas: number; atestados: number; dayoff: number; saldo: number } | undefined;
                       if (reserva != null && sobra != null) {
                         const sobraDia = sobra;
                         const sobraEfetiva = isSopro && isFimDeSemana ? Math.round(sobraDia / 4) : sobraDia;
                         const reservaEfetiva = isSopro && isFimDeSemana ? Math.round(reserva / 4) : reserva;
-                        saldo = totalAusencias > 0 ? sobraEfetiva + reservaEfetiva - totalAusencias : undefined;
+                        saldo = totalAusencias > 0 ? sobraEfetiva + reservaEfetiva - treinamento - totalAusencias : undefined;
+                        if (saldo != null) saldoDetalhe = { sobra: sobraEfetiva, reserva: reservaEfetiva, treinamento, faltas: f, atestados: a, dayoff: da, saldo };
                       } else if (reserva != null || sobra != null) {
                         // Fallback: usar sobra estática se necessário não estiver disponível
                         const sobraEfetiva = isSopro && isFimDeSemana ? Math.round((sobra || 0) / 4) : (sobra || 0);
                         const reservaEfetiva = isSopro && isFimDeSemana ? Math.round((reserva || 0) / 4) : (reserva || 0);
-                        saldo = totalAusencias > 0 ? sobraEfetiva + reservaEfetiva - totalAusencias : undefined;
+                        saldo = totalAusencias > 0 ? sobraEfetiva + reservaEfetiva - treinamento - totalAusencias : undefined;
+                        if (saldo != null) saldoDetalhe = { sobra: sobraEfetiva, reserva: reservaEfetiva, treinamento, faltas: f, atestados: a, dayoff: da, saldo };
                       }
-                      return renderCelula(f, a, dataStr === hojeStr, dataStr, setor, setorNomes[dataStr], false, colIndex % 2 === 1, d?.folga || false, saldo, da);
+                      return renderCelula(f, a, dataStr === hojeStr, dataStr, setor, setorNomes[dataStr], false, colIndex % 2 === 1, d?.folga || false, saldo, da, saldoDetalhe);
                     })}
                     <TableCell className="text-sm font-bold text-destructive text-center py-2.5">{totalFaltas || '-'}</TableCell>
                     <TableCell className="text-sm font-bold text-warning text-center py-2.5">{totalAtestados || '-'}</TableCell>
