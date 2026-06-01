@@ -128,10 +128,10 @@ export function filterByGrupo(treinamentos: TreinamentoPrevisao[], grupoLabel: s
     // DECORAÇÃO
     const isDia = sg.includes('DIA') || sn.includes('DIA');
     const isNoite = sg.includes('NOITE') || sn.includes('NOITE');
-    if (label === 'DIA - T1' || label === 'DIA T1') return isDia && (turma === 'T1' || turma === '1');
-    if (label === 'DIA - T2' || label === 'DIA T2') return isDia && (turma === 'T2' || turma === '2');
-    if (label === 'NOITE - T1' || label === 'NOITE T1') return isNoite && (turma === 'T1' || turma === '1');
-    if (label === 'NOITE - T2' || label === 'NOITE T2') return isNoite && (turma === 'T2' || turma === '2');
+    if (label.includes('DIA') && label.includes('T1')) return isDia && (turma === 'T1' || turma === '1');
+    if (label.includes('DIA') && label.includes('T2')) return isDia && (turma === 'T2' || turma === '2');
+    if (label.includes('NOITE') && label.includes('T1')) return isNoite && (turma === 'T1' || turma === '1');
+    if (label.includes('NOITE') && label.includes('T2')) return isNoite && (turma === 'T2' || turma === '2');
 
     return false;
   });
