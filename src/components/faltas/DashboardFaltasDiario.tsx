@@ -57,37 +57,16 @@ export function DashboardFaltasDiario({
   const blocosDias = useMemo(() => {
     if (diasPeriodo.length === 0) return [];
     const blocos: { id: number; label: string; dias: Date[] }[] = [];
-    const totalDias = diasPeriodo.length;
 
-    if (totalDias <= 15) {
+    for (let inicio = 0; inicio < diasPeriodo.length; inicio += 15) {
+      const diasBloco = diasPeriodo.slice(inicio, inicio + 15);
       blocos.push({
-        id: 0,
-        label: `${format(diasPeriodo[0], 'dd/MM')} - ${format(diasPeriodo[totalDias - 1], 'dd/MM')}`,
-        dias: diasPeriodo,
+        id: blocos.length,
+        label: `${format(diasBloco[0], 'dd/MM')} - ${format(diasBloco[diasBloco.length - 1], 'dd/MM')}`,
+        dias: diasBloco,
       });
-    } else {
-      const primeiroMes = diasPeriodo[0].getMonth();
-      let pontoCorte = diasPeriodo.findIndex(d => d.getMonth() !== primeiroMes);
-      if (pontoCorte === -1) pontoCorte = Math.ceil(totalDias / 2);
-
-      const diasBloco0 = diasPeriodo.slice(0, pontoCorte);
-      const diasBloco1 = diasPeriodo.slice(pontoCorte);
-
-      if (diasBloco0.length > 0) {
-        blocos.push({
-          id: 0,
-          label: `${format(diasBloco0[0], 'dd/MM')} - ${format(diasBloco0[diasBloco0.length - 1], 'dd/MM')}`,
-          dias: diasBloco0,
-        });
-      }
-      if (diasBloco1.length > 0) {
-        blocos.push({
-          id: 1,
-          label: `${format(diasBloco1[0], 'dd/MM')} - ${format(diasBloco1[diasBloco1.length - 1], 'dd/MM')}`,
-          dias: diasBloco1,
-        });
-      }
     }
+
     return blocos;
   }, [diasPeriodo]);
 
@@ -371,6 +350,7 @@ export function DashboardFaltasDiario({
 
     const detalhadoRows: string[] = [];
     const conferenciaRows: string[] = [];
+    const nomesRows: string[] = [];
 
     funcionariosAgrupsFiltrados.forEach(({ setor }) => {
       const setorData = metricasPorSetorDia[setor];
@@ -413,6 +393,30 @@ export function DashboardFaltasDiario({
           saldo,
           `${sobraEfetiva} + ${reservaEfetiva} - ${treinamento} - ${f} - ${a} - ${da} = ${saldo}`,
         ]));
+
+        const nomes = nomesPorSetorDia[setor]?.[dataStr];
+        if (nomes) {
+          [
+            ['Falta', nomes.faltas],
+            ['Suspensao', nomes.suspensao],
+            ['Atestado', nomes.atestados],
+            ['Ferias', nomes.ferias],
+            ['Day Off', nomes.dayoff],
+            ['Treinamento', nomes.treinamento],
+          ].forEach(([tipo, lista]) => {
+            (lista as string[]).forEach(nome => {
+              const match = nome.match(/^\(([^)]+)\)\s*(.*)$/);
+              nomesRows.push(renderRow([
+                setor,
+                format(dia, 'dd/MM/yyyy'),
+                format(dia, 'EEEE', { locale: ptBR }),
+                tipo as string,
+                match?.[1] || '',
+                match?.[2] || nome,
+              ]));
+            });
+          });
+        }
       });
     });
 
@@ -455,6 +459,11 @@ export function DashboardFaltasDiario({
           <table>
             <tr><th>Setor</th><th>Data</th><th>Sobra</th><th>Reserva Faltas</th><th>Treinamento</th><th>Faltas</th><th>Atestados</th><th>Day Off</th><th>Ausencias Total</th><th>Saldo</th><th>Formula</th></tr>
             ${conferenciaRows.join('')}
+          </table>
+          <h2>Nomes</h2>
+          <table>
+            <tr><th>Setor</th><th>Data</th><th>Dia</th><th>Tipo</th><th>Matricula</th><th>Nome</th></tr>
+            ${nomesRows.join('')}
           </table>
         </body>
       </html>
@@ -561,33 +570,33 @@ export function DashboardFaltasDiario({
     }
 
     const cellContent = (
-      <div className="flex flex-col items-center justify-center gap-0.5">
-        <div className="flex items-center justify-center gap-1">
+      <div className="flex flex-col items-center justify-center gap-0.5 overflow-visible">
+        <div className="flex items-center justify-center gap-px flex-nowrap whitespace-nowrap">
           {folga && (
             <span className="text-[10px] opacity-60" title="Folga">🛏️</span>
           )}
           {badgeF > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-md bg-foreground text-background font-bold text-sm px-2 shadow-sm">
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[16px] rounded bg-foreground text-background font-bold text-[10px] px-[2px] shadow-sm leading-none">
               {badgeF}F
             </span>
           )}
           {badgeA > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-md bg-foreground text-background font-bold text-sm px-2 shadow-sm">
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[16px] rounded bg-foreground text-background font-bold text-[10px] px-[2px] shadow-sm leading-none">
               {badgeA}A
             </span>
           )}
           {badgeT > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-md bg-primary text-primary-foreground font-bold text-sm px-2 shadow-sm">
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[16px] rounded bg-primary text-primary-foreground font-bold text-[10px] px-[2px] shadow-sm leading-none">
               {badgeT}T
             </span>
           )}
         </div>
         {saldo != null && (
           <span className={cn(
-           "inline-flex items-center justify-center h-[18px] rounded font-bold text-xs px-1.5 shadow-sm whitespace-nowrap",
+           "inline-flex items-center justify-center h-[16px] rounded font-bold text-[10px] px-1.5 shadow-sm whitespace-nowrap",
             saldo > 0 ? "bg-success text-success-foreground" : saldo < 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"
           )}>
-            {saldo > 0 ? `+${saldo}` : saldo} SALDO
+            {saldo > 0 ? `+${saldo}` : saldo} S
           </span>
         )}
       </div>
@@ -610,7 +619,7 @@ export function DashboardFaltasDiario({
             <PopoverTrigger asChild>
               <button
                 className={cn(
-                  "w-full h-full cursor-pointer hover:bg-accent/50 rounded transition-colors py-1.5 px-1",
+                  "w-full h-full cursor-pointer hover:bg-accent/50 rounded transition-colors py-1 px-0.5",
                   isHoje && "bg-green-100 dark:bg-green-900/30"
                 )}
                 type="button"
@@ -646,8 +655,8 @@ export function DashboardFaltasDiario({
   return (
     <Card className="shadow-sm border-border/60">
       <CardHeader className="pb-3 pt-5 px-5">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 flex-wrap min-w-0">
             <CardTitle className="text-base font-extrabold tracking-wide text-foreground">MÉTRICAS POR SETOR / DIA</CardTitle>
             {gruposDisponiveis.length > 1 && (
               <div className="flex items-center gap-1.5">
@@ -669,7 +678,7 @@ export function DashboardFaltasDiario({
             )}
           </div>
           {blocosDias.length > 1 && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap justify-center">
               {blocosDias.map(bloco => (
                 <Button
                   key={bloco.id}
@@ -677,7 +686,7 @@ export function DashboardFaltasDiario({
                   size="sm"
                   onClick={() => toggleBloco(bloco.id)}
                   className={cn(
-                    "h-8 px-4 text-[11px] font-bold gap-1.5 rounded-md transition-all",
+                    "h-8 px-3 text-[11px] font-bold gap-1.5 rounded-md transition-all",
                     blocosVisiveis.has(bloco.id) && "bg-primary text-primary-foreground shadow-sm"
                   )}
                 >
@@ -696,7 +705,7 @@ export function DashboardFaltasDiario({
                   }
                 }}
                 className={cn(
-                  "h-8 px-4 text-[11px] font-bold rounded-md",
+                  "h-8 px-3 text-[11px] font-bold rounded-md",
                   blocosVisiveis.size === blocosDias.length && "bg-primary/15 text-primary border border-primary/30"
                 )}
               >
@@ -704,17 +713,19 @@ export function DashboardFaltasDiario({
               </Button>
             </div>
           )}
-          <Button variant="outline" size="sm" onClick={() => window.location.href = '/faltas'} className="gap-2 h-8 text-[11px] font-bold ml-auto">
-            <Clock className="h-3.5 w-3.5" />
-            CONTROLE COMPLETO
-          </Button>
-          <Button variant="outline" size="sm" onClick={exportarMetricasExcel} className="gap-2 h-8 text-[11px] font-bold">
-            <Download className="h-3.5 w-3.5" />
-            EXPORTAR EXCEL
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button variant="outline" size="sm" onClick={() => window.location.href = '/faltas'} className="gap-2 h-8 text-[11px] font-bold">
+              <Clock className="h-3.5 w-3.5" />
+              CONTROLE COMPLETO
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportarMetricasExcel} className="gap-2 h-8 text-[11px] font-bold">
+              <Download className="h-3.5 w-3.5" />
+              EXPORTAR EXCEL
+            </Button>
+          </div>
         </div>
         {/* Legenda compacta */}
-        <div className="flex items-center gap-4 mt-2">
+        <div className="flex items-center gap-3 mt-2 flex-wrap">
           <div className="flex items-center gap-1.5">
             <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-foreground text-background font-bold text-xs">F</span>
             <span className="text-xs text-muted-foreground font-medium">FALTA</span>
@@ -773,10 +784,10 @@ export function DashboardFaltasDiario({
       </CardHeader>
       <CardContent className="px-0 pb-3">
         <div className="overflow-x-auto">
-          <Table>
+          <Table className="w-max min-w-full table-fixed">
             <TableHeader>
               <TableRow className="bg-card border-b-2 border-border">
-                <TableHead className="text-sm font-extrabold text-foreground sticky left-0 bg-card z-10 w-[190px] min-w-[190px] max-w-[190px] py-2.5 px-3 border-r border-border/50">SETOR</TableHead>
+                <TableHead className="text-[13px] font-extrabold text-foreground sticky left-0 bg-card z-10 w-[140px] min-w-[140px] max-w-[140px] py-1.5 px-2 border-r border-border/50">SETOR</TableHead>
                 {diasVisiveis.map((dia, colIndex) => {
                   const dataStr = format(dia, 'yyyy-MM-dd');
                   const isHoje = dataStr === hojeStr;
@@ -787,26 +798,23 @@ export function DashboardFaltasDiario({
                     <TableHead
                       key={dataStr}
                       className={cn(
-                        "text-center min-w-[78px] px-1.5 py-2.5",
+                        "text-center w-[52px] min-w-[52px] max-w-[52px] px-0.5 py-1.5",
                         isHoje && "bg-green-100 dark:bg-green-900/30",
                         !isHoje && isAlternate && "bg-muted/90",
                         isDomingo && "text-destructive"
                       )}
                     >
-                      <div className="text-sm font-extrabold">{format(dia, 'dd')}</div>
-                      <div className="text-xs font-semibold uppercase tracking-wide">{diaSemana}</div>
+                      <div className="text-[12px] font-extrabold leading-tight">{format(dia, 'dd')}</div>
+                      <div className="text-[10px] font-semibold uppercase leading-tight">{diaSemana}</div>
                     </TableHead>
                   );
                 })}
-                <TableHead className="text-sm font-extrabold text-destructive text-center min-w-[44px] py-2.5">∑F</TableHead>
-                <TableHead className="text-sm font-extrabold text-warning text-center min-w-[44px] py-2.5">∑A</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {funcionariosAgrupsFiltrados.map(({ setor }, idx) => {
                 const setorData = metricasPorSetorDia[setor];
                 if (!setorData) return null;
-                const totaisVisiveis = getTotalVisivelSetor(setorData);
                 const setorNomes = nomesPorSetorDia[setor] || {};
                 const isEven = idx % 2 === 0;
                 const reserva = reservaFaltasPorSetor[setor];
@@ -815,7 +823,7 @@ export function DashboardFaltasDiario({
 
                 return (
                   <TableRow key={setor} className={cn("hover:bg-accent/30 transition-colors", isEven ? "bg-card/50" : "bg-card")}>
-                    <TableCell className={cn("text-sm font-semibold py-2.5 px-3 sticky left-0 z-10 whitespace-nowrap border-r border-border/50 w-[190px] min-w-[190px] max-w-[190px]", isEven ? "bg-card" : "bg-card")}>{setor}</TableCell>
+                    <TableCell className={cn("text-[12px] font-semibold py-2 px-2 sticky left-0 z-10 whitespace-normal leading-tight border-r border-border/50 w-[140px] min-w-[140px] max-w-[140px]", isEven ? "bg-card" : "bg-card")}>{setor}</TableCell>
                     {diasVisiveis.map((dia, colIndex) => {
                       const dataStr = format(dia, 'yyyy-MM-dd');
                       const d = setorData[dataStr];
@@ -844,14 +852,12 @@ export function DashboardFaltasDiario({
                       }
                       return renderCelula(f, a, dataStr === hojeStr, dataStr, setor, setorNomes[dataStr], false, colIndex % 2 === 1, d?.folga || false, saldo, da, saldoDetalhe, treinamento);
                     })}
-                    <TableCell className="text-sm font-bold text-destructive text-center py-2.5">{totaisVisiveis.faltas || '-'}</TableCell>
-                    <TableCell className="text-sm font-bold text-warning text-center py-2.5">{totaisVisiveis.atestados || '-'}</TableCell>
                   </TableRow>
                 );
               })}
               {/* Linha TOTAL */}
               <TableRow className="border-t-2 border-border bg-card">
-                <TableCell className="text-sm font-extrabold py-2.5 px-3 sticky left-0 bg-card z-10 border-r border-border/50 w-[190px] min-w-[190px] max-w-[190px]">TOTAL</TableCell>
+                <TableCell className="text-[12px] font-extrabold py-2 px-2 sticky left-0 bg-card z-10 border-r border-border/50 w-[140px] min-w-[140px] max-w-[140px]">TOTAL</TableCell>
                 {diasVisiveis.map((dia, colIndex) => {
                   const dataStr = format(dia, 'yyyy-MM-dd');
                   const d = totaisPorDia[dataStr];
@@ -861,12 +867,6 @@ export function DashboardFaltasDiario({
                   const treinamento = nomesTotaisPorDia[dataStr]?.treinamento.length || 0;
                   return renderCelula(f, a, dataStr === hojeStr, dataStr, 'TOTAL', nomesTotaisPorDia[dataStr], true, colIndex % 2 === 1, false, undefined, da, undefined, treinamento);
                 })}
-                <TableCell className="text-sm font-extrabold text-destructive text-center py-2.5">
-                  {getTotalVisivelSetor(totaisPorDia).faltas || '-'}
-                </TableCell>
-                <TableCell className="text-sm font-extrabold text-warning text-center py-2.5">
-                  {getTotalVisivelSetor(totaisPorDia).atestados || '-'}
-                </TableCell>
               </TableRow>
             </TableBody>
           </Table>
