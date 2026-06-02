@@ -362,7 +362,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                         <div key={t.id} className="text-xs p-2 rounded-md bg-warning/5 border border-warning/20">
                           <div className="font-semibold">{t.matricula ? `${t.matricula} - ` : ''}{t.nome}</div>
                           <div className="text-muted-foreground mt-0.5">
-                            Inicio: {format(new Date(t.inicio), 'dd/MM/yyyy')} | Termino: {format(new Date(t.termino), 'dd/MM/yyyy')}
+                            Estará em treinamento: {format(new Date(t.inicio), 'dd/MM/yyyy')} e {format(addDays(new Date(t.inicio), 1), 'dd/MM/yyyy')}
                           </div>
                         </div>
                       ))}

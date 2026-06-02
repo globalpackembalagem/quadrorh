@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { differenceInCalendarDays, format, parseISO, startOfDay, isAfter, isBefore } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar, ChevronDown, ChevronUp, Info, Clock } from 'lucide-react';
+import { Calendar, ChevronDown, ChevronUp, Info, Clock, Download } from 'lucide-react';
 import { getTrabalhaOuFolga } from '@/lib/escalaPanama';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -326,6 +326,151 @@ export function DashboardFaltasDiario({
 
   const hojeStr = format(new Date(), 'yyyy-MM-dd');
 
+  const diasVisiveisKeys = useMemo(() => diasVisiveis.map(dia => format(dia, 'yyyy-MM-dd')), [diasVisiveis]);
+
+  const getTotalVisivelSetor = (
+    setorData: Record<string, { faltas: number; atestados: number; dayoff: number; treinamento: number }> | undefined
+  ) => {
+    return diasVisiveisKeys.reduce((acc, dataStr) => {
+      const d = setorData?.[dataStr];
+      acc.faltas += d?.faltas || 0;
+      acc.atestados += d?.atestados || 0;
+      acc.dayoff += d?.dayoff || 0;
+      acc.treinamento += d?.treinamento || 0;
+      return acc;
+    }, { faltas: 0, atestados: 0, dayoff: 0, treinamento: 0 });
+  };
+
+  const exportarMetricasExcel = () => {
+    const periodoLabel = diasVisiveis.length > 0
+      ? `${format(diasVisiveis[0], 'dd-MM-yyyy')}_a_${format(diasVisiveis[diasVisiveis.length - 1], 'dd-MM-yyyy')}`
+      : format(new Date(), 'dd-MM-yyyy');
+    const escapeHtml = (value: string | number) => String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+    const renderRow = (values: Array<string | number>) =>
+      `<tr>${values.map(value => `<td>${escapeHtml(value)}</td>`).join('')}</tr>`;
+
+    const resumoRows = funcionariosAgrupsFiltrados.map(({ setor }) => {
+      const setorData = metricasPorSetorDia[setor];
+      const totais = getTotalVisivelSetor(setorData);
+      return renderRow([
+        setor,
+        periodoLabel.replace(/_/g, ' '),
+        totais.faltas,
+        totais.atestados,
+        totais.dayoff,
+        totais.treinamento,
+        totais.faltas + totais.atestados + totais.dayoff,
+        sobraPorSetor[setor] ?? 0,
+        reservaFaltasPorSetor[setor] ?? 0,
+      ]);
+    });
+
+    const detalhadoRows: string[] = [];
+    const conferenciaRows: string[] = [];
+
+    funcionariosAgrupsFiltrados.forEach(({ setor }) => {
+      const setorData = metricasPorSetorDia[setor];
+      diasVisiveis.forEach(dia => {
+        const dataStr = format(dia, 'yyyy-MM-dd');
+        const d = setorData?.[dataStr];
+        const f = d?.faltas || 0;
+        const a = d?.atestados || 0;
+        const da = d?.dayoff || 0;
+        const treinamento = d?.treinamento || 0;
+        const isSopro = setor.toUpperCase().includes('SOPRO');
+        const isFimDeSemana = dia.getDay() === 0 || dia.getDay() === 6;
+        const sobraBase = sobraPorSetor[setor] ?? 0;
+        const reservaBase = reservaFaltasPorSetor[setor] ?? 0;
+        const sobraEfetiva = isSopro && isFimDeSemana ? Math.round(sobraBase / 4) : sobraBase;
+        const reservaEfetiva = isSopro && isFimDeSemana ? Math.round(reservaBase / 4) : reservaBase;
+        const saldo = sobraEfetiva + reservaEfetiva - treinamento - f - a - da;
+
+        detalhadoRows.push(renderRow([
+          setor,
+          format(dia, 'dd/MM/yyyy'),
+          format(dia, 'EEEE', { locale: ptBR }),
+          f,
+          a,
+          da,
+          treinamento,
+          f + a + da,
+        ]));
+
+        conferenciaRows.push(renderRow([
+          setor,
+          format(dia, 'dd/MM/yyyy'),
+          sobraEfetiva,
+          reservaEfetiva,
+          treinamento,
+          f,
+          a,
+          da,
+          f + a + da,
+          saldo,
+          `${sobraEfetiva} + ${reservaEfetiva} - ${treinamento} - ${f} - ${a} - ${da} = ${saldo}`,
+        ]));
+      });
+    });
+
+    const totalResumo = getTotalVisivelSetor(totaisPorDia);
+    resumoRows.push(renderRow([
+      'TOTAL',
+      periodoLabel.replace(/_/g, ' '),
+      totalResumo.faltas,
+      totalResumo.atestados,
+      totalResumo.dayoff,
+      totalResumo.treinamento,
+      totalResumo.faltas + totalResumo.atestados + totalResumo.dayoff,
+      '',
+      '',
+    ]));
+
+    const html = `
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            table { border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px; margin-bottom: 24px; }
+            th, td { border: 1px solid #999; padding: 5px 8px; }
+            th { background: #d9e8ff; font-weight: bold; }
+            h2 { font-family: Arial, sans-serif; font-size: 16px; margin: 16px 0 8px; }
+          </style>
+        </head>
+        <body>
+          <h2>Resumo por setor</h2>
+          <table>
+            <tr><th>Setor</th><th>Periodo</th><th>Faltas</th><th>Atestados</th><th>Day Off</th><th>Treinamento</th><th>Ausencias Total</th><th>Sobra</th><th>Reserva Faltas</th></tr>
+            ${resumoRows.join('')}
+          </table>
+          <h2>Detalhado por dia</h2>
+          <table>
+            <tr><th>Setor</th><th>Data</th><th>Dia</th><th>Faltas</th><th>Atestados</th><th>Day Off</th><th>Treinamento</th><th>Ausencias Total</th></tr>
+            ${detalhadoRows.join('')}
+          </table>
+          <h2>Conferencia saldo</h2>
+          <table>
+            <tr><th>Setor</th><th>Data</th><th>Sobra</th><th>Reserva Faltas</th><th>Treinamento</th><th>Faltas</th><th>Atestados</th><th>Day Off</th><th>Ausencias Total</th><th>Saldo</th><th>Formula</th></tr>
+            ${conferenciaRows.join('')}
+          </table>
+        </body>
+      </html>
+    `;
+
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `metricas_faltas_${periodoLabel}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   if (!periodo || funcionariosAgrupados.length === 0) return null;
 
   const renderPopoverContent = (
@@ -546,6 +691,10 @@ export function DashboardFaltasDiario({
             <Clock className="h-3.5 w-3.5" />
             CONTROLE COMPLETO
           </Button>
+          <Button variant="outline" size="sm" onClick={exportarMetricasExcel} className="gap-2 h-8 text-[11px] font-bold">
+            <Download className="h-3.5 w-3.5" />
+            EXPORTAR EXCEL
+          </Button>
         </div>
         {/* Legenda compacta */}
         <div className="flex items-center gap-4 mt-2">
@@ -640,8 +789,7 @@ export function DashboardFaltasDiario({
               {funcionariosAgrupsFiltrados.map(({ setor }, idx) => {
                 const setorData = metricasPorSetorDia[setor];
                 if (!setorData) return null;
-                const totalFaltas = Object.values(setorData).reduce((s, d) => s + d.faltas, 0);
-                const totalAtestados = Object.values(setorData).reduce((s, d) => s + d.atestados, 0);
+                const totaisVisiveis = getTotalVisivelSetor(setorData);
                 const setorNomes = nomesPorSetorDia[setor] || {};
                 const isEven = idx % 2 === 0;
                 const reserva = reservaFaltasPorSetor[setor];
@@ -679,8 +827,8 @@ export function DashboardFaltasDiario({
                       }
                       return renderCelula(f, a, dataStr === hojeStr, dataStr, setor, setorNomes[dataStr], false, colIndex % 2 === 1, d?.folga || false, saldo, da, saldoDetalhe);
                     })}
-                    <TableCell className="text-sm font-bold text-destructive text-center py-2.5">{totalFaltas || '-'}</TableCell>
-                    <TableCell className="text-sm font-bold text-warning text-center py-2.5">{totalAtestados || '-'}</TableCell>
+                    <TableCell className="text-sm font-bold text-destructive text-center py-2.5">{totaisVisiveis.faltas || '-'}</TableCell>
+                    <TableCell className="text-sm font-bold text-warning text-center py-2.5">{totaisVisiveis.atestados || '-'}</TableCell>
                   </TableRow>
                 );
               })}
@@ -696,10 +844,10 @@ export function DashboardFaltasDiario({
                   return renderCelula(f, a, dataStr === hojeStr, dataStr, 'TOTAL', nomesTotaisPorDia[dataStr], true, colIndex % 2 === 1, false, undefined, da);
                 })}
                 <TableCell className="text-sm font-extrabold text-destructive text-center py-2.5">
-                  {Object.values(totaisPorDia).reduce((s, d) => s + d.faltas, 0) || '-'}
+                  {getTotalVisivelSetor(totaisPorDia).faltas || '-'}
                 </TableCell>
                 <TableCell className="text-sm font-extrabold text-warning text-center py-2.5">
-                  {Object.values(totaisPorDia).reduce((s, d) => s + d.atestados, 0) || '-'}
+                  {getTotalVisivelSetor(totaisPorDia).atestados || '-'}
                 </TableCell>
               </TableRow>
             </TableBody>
