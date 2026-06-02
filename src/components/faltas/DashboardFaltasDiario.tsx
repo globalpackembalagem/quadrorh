@@ -480,6 +480,8 @@ export function DashboardFaltasDiario({
     saldoDetalhe?: { sobra: number; reserva: number; treinamento: number; faltas: number; atestados: number; dayoff: number; saldo: number }
   ) => {
     if (!nomes) return null;
+    const pessoaLabel = (valor: number) => Math.abs(valor) === 1 ? 'pessoa' : 'pessoas';
+    const sinal = (valor: number) => valor > 0 ? `+${valor}` : `${valor}`;
     const sections = [
       { label: 'Faltas', items: nomes.faltas, colorClass: 'text-destructive' },
       { label: 'Suspensão', items: nomes.suspensao, colorClass: 'text-warning' },
@@ -493,10 +495,18 @@ export function DashboardFaltasDiario({
         <p className="text-[11px] font-bold text-foreground mb-2 border-b pb-1">{setor} — {dataLabel}</p>
         {saldoDetalhe && (
           <div className="mb-2 rounded-md border bg-muted/40 p-2">
-            <p className="text-[10px] font-bold text-foreground">Saldo: {saldoDetalhe.saldo}</p>
-            <p className="text-[10px] text-muted-foreground leading-tight">
-              {saldoDetalhe.sobra} + {saldoDetalhe.reserva} - {saldoDetalhe.treinamento} - {saldoDetalhe.faltas} - {saldoDetalhe.atestados} - {saldoDetalhe.dayoff} = {saldoDetalhe.saldo}
-            </p>
+            <p className="text-[10px] font-bold text-foreground mb-1">Saldo: {saldoDetalhe.saldo}</p>
+            <div className="space-y-0.5 text-[10px] text-muted-foreground leading-tight">
+              <p>Sobra do quadro: {sinal(saldoDetalhe.sobra)} {pessoaLabel(saldoDetalhe.sobra)}</p>
+              <p>Reserva faltas: {sinal(saldoDetalhe.reserva)} {pessoaLabel(saldoDetalhe.reserva)}</p>
+              <p>Treinamento: -{saldoDetalhe.treinamento} {pessoaLabel(saldoDetalhe.treinamento)}</p>
+              <p>Faltas: -{saldoDetalhe.faltas} {pessoaLabel(saldoDetalhe.faltas)}</p>
+              <p>Atestados: -{saldoDetalhe.atestados} {pessoaLabel(saldoDetalhe.atestados)}</p>
+              <p>Day Off: -{saldoDetalhe.dayoff} {pessoaLabel(saldoDetalhe.dayoff)}</p>
+              <p className="pt-1 font-semibold text-foreground">
+                Conta: {saldoDetalhe.sobra} + {saldoDetalhe.reserva} - {saldoDetalhe.treinamento} - {saldoDetalhe.faltas} - {saldoDetalhe.atestados} - {saldoDetalhe.dayoff} = {saldoDetalhe.saldo}
+              </p>
+            </div>
           </div>
         )}
         {sections.map((section, idx) => (
@@ -523,12 +533,14 @@ export function DashboardFaltasDiario({
     folga = false,
     saldo?: number,
     dayoff = 0,
-    saldoDetalhe?: { sobra: number; reserva: number; treinamento: number; faltas: number; atestados: number; dayoff: number; saldo: number }
+    saldoDetalhe?: { sobra: number; reserva: number; treinamento: number; faltas: number; atestados: number; dayoff: number; saldo: number },
+    treinamento = 0
   ) => {
     // Para os badges, F inclui F+SS e A inclui A+FE+DA (como antes)
     const badgeF = faltas;
     const badgeA = atestados + dayoff;
-    const hasData = badgeF > 0 || badgeA > 0;
+    const badgeT = treinamento;
+    const hasData = badgeF > 0 || badgeA > 0 || badgeT > 0;
     const dataLabel = format(parseISO(dataStr), 'dd/MM (EEE)', { locale: ptBR });
 
     // Se é folga da Decoração e não tem faltas/atestados, mostrar 🛏️
@@ -562,6 +574,11 @@ export function DashboardFaltasDiario({
           {badgeA > 0 && (
             <span className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-md bg-foreground text-background font-bold text-sm px-2 shadow-sm">
               {badgeA}A
+            </span>
+          )}
+          {badgeT > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[28px] h-[22px] rounded-md bg-primary text-primary-foreground font-bold text-sm px-2 shadow-sm">
+              {badgeT}T
             </span>
           )}
         </div>
@@ -825,7 +842,7 @@ export function DashboardFaltasDiario({
                         saldo = totalAusencias > 0 ? sobraEfetiva + reservaEfetiva - treinamento - totalAusencias : undefined;
                         if (saldo != null) saldoDetalhe = { sobra: sobraEfetiva, reserva: reservaEfetiva, treinamento, faltas: f, atestados: a, dayoff: da, saldo };
                       }
-                      return renderCelula(f, a, dataStr === hojeStr, dataStr, setor, setorNomes[dataStr], false, colIndex % 2 === 1, d?.folga || false, saldo, da, saldoDetalhe);
+                      return renderCelula(f, a, dataStr === hojeStr, dataStr, setor, setorNomes[dataStr], false, colIndex % 2 === 1, d?.folga || false, saldo, da, saldoDetalhe, treinamento);
                     })}
                     <TableCell className="text-sm font-bold text-destructive text-center py-2.5">{totaisVisiveis.faltas || '-'}</TableCell>
                     <TableCell className="text-sm font-bold text-warning text-center py-2.5">{totaisVisiveis.atestados || '-'}</TableCell>
@@ -841,7 +858,8 @@ export function DashboardFaltasDiario({
                   const f = d?.faltas || 0;
                   const a = d?.atestados || 0;
                   const da = d?.dayoff || 0;
-                  return renderCelula(f, a, dataStr === hojeStr, dataStr, 'TOTAL', nomesTotaisPorDia[dataStr], true, colIndex % 2 === 1, false, undefined, da);
+                  const treinamento = nomesTotaisPorDia[dataStr]?.treinamento.length || 0;
+                  return renderCelula(f, a, dataStr === hojeStr, dataStr, 'TOTAL', nomesTotaisPorDia[dataStr], true, colIndex % 2 === 1, false, undefined, da, undefined, treinamento);
                 })}
                 <TableCell className="text-sm font-extrabold text-destructive text-center py-2.5">
                   {getTotalVisivelSetor(totaisPorDia).faltas || '-'}
