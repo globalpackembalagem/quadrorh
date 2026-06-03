@@ -58,6 +58,9 @@ import { useSetoresUsuario } from '@/hooks/useSetoresUsuario';
 import { CentralAvisosModal } from '@/components/notificacoes/CentralAvisosModal';
 import { AlterarMinhaSenhaDialog } from '@/components/auth/AlterarMinhaSenhaDialog';
 import { GuiaInterativoGestor } from '@/components/manual/GuiaInterativoGestor';
+import { ForceUpdateModal } from '@/components/admin/ForceUpdateModal';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface RHSidebarLayoutProps {
   children: ReactNode;
@@ -294,6 +297,7 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [guiaOpen, setGuiaOpen] = useState(false);
   const [alterarSenhaOpen, setAlterarSenhaOpen] = useState(false);
+  const [forcandoAtualizacao, setForcandoAtualizacao] = useState(false);
   const [logoExpanded, setLogoExpanded] = useState(false);
   const [sidebarPinned, setSidebarPinned] = useState(() => {
     try { return localStorage.getItem('sidebar-pinned') === 'true'; } catch { return false; }
@@ -326,6 +330,22 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
     const next = !sidebarPinned;
     setSidebarPinned(next);
     try { localStorage.setItem('sidebar-pinned', String(next)); } catch {}
+  };
+
+  const forcarAtualizacao = async () => {
+    if (!usuarioAtual?.nome) return;
+    setForcandoAtualizacao(true);
+    try {
+      const { error } = await supabase.from('force_update').insert({
+        triggered_by: usuarioAtual.nome,
+      });
+      if (error) throw error;
+      toast.success('Atualizacao obrigatoria enviada para usuarios logados.');
+    } catch (error) {
+      toast.error('Erro ao enviar atualizacao obrigatoria.');
+    } finally {
+      setForcandoAtualizacao(false);
+    }
   };
 
   const renderNavItem = (item: NavItem, closeMobileMenu?: () => void, depth: number = 0): React.ReactNode => {
@@ -500,6 +520,15 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
         {isAdmin && (
           <div className="mt-4 px-3">
             <div className="space-y-1">
+              <button
+                type="button"
+                onClick={forcarAtualizacao}
+                disabled={forcandoAtualizacao}
+                className="flex items-center gap-3.5 rounded-xl px-4 py-3 text-[13px] font-semibold transition-all duration-200 w-full text-left text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground disabled:opacity-60"
+              >
+                <RefreshCw className="h-5 w-5 shrink-0 text-sidebar-primary/70" />
+                <span className="truncate">{forcandoAtualizacao ? 'ENVIANDO...' : 'FORCAR ATUALIZACAO'}</span>
+              </button>
               {adminMainItems.map((item) => (
                 <Link
                   key={item.name}
@@ -696,6 +725,7 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
       </div>
       {/* Modal unificado de avisos */}
       <CentralAvisosModal />
+      <ForceUpdateModal />
       <AlterarMinhaSenhaDialog open={alterarSenhaOpen} onOpenChange={setAlterarSenhaOpen} />
       <GuiaInterativoGestor open={guiaOpen} onOpenChange={setGuiaOpen} />
     </div>

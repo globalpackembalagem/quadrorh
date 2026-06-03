@@ -580,6 +580,24 @@ export type Database = {
         }
         Relationships: []
       }
+      force_update: {
+        Row: {
+          id: string
+          triggered_at: string
+          triggered_by: string
+        }
+        Insert: {
+          id?: string
+          triggered_at?: string
+          triggered_by: string
+        }
+        Update: {
+          id?: string
+          triggered_at?: string
+          triggered_by?: string
+        }
+        Relationships: []
+      }
       fretado_imports: {
         Row: {
           created_at: string
