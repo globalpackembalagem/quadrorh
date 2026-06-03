@@ -138,6 +138,12 @@ function getNavigationForUser(
   userName?: string,
   perms?: UsuarioLocal
 ): NavItem[] {
+  const userNameNormalizado = userName
+    ?.normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase();
+  const podeVerHistoricoQuadro = userNameNormalizado === 'LUCIANO' || userNameNormalizado === 'MAURICIO';
+
   // REAL PARCERIA: acesso restrito a Previsão de Admissão + Faltas (somente visualização, apenas TEMP)
   if (userName?.toUpperCase() === 'REAL PARCERIA') {
     return [
@@ -183,6 +189,10 @@ function getNavigationForUser(
       
     ];
 
+    if (podeVerHistoricoQuadro) {
+      gestorItems.push({ name: 'HISTÓRICO DO QUADRO', href: '/historico-quadro', icon: History });
+    }
+
     if (!perms || perms.pode_visualizar_funcionarios) {
       gestorItems.push({ name: 'FUNCIONÁRIOS', href: '/funcionarios', icon: Users, viewOnly: !perms?.pode_editar_funcionarios });
     }
@@ -218,6 +228,7 @@ function getNavigationForUser(
   // RH padrão: filtrar por permissões granulares
   const items: NavItem[] = [
     { name: 'QUADRO DE FUNCIONÁRIOS', href: '/', icon: LayoutDashboard },
+    ...(podeVerHistoricoQuadro ? [{ name: 'HISTÓRICO DO QUADRO', href: '/historico-quadro', icon: History }] : []),
   ];
 
 
