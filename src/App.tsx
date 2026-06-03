@@ -50,6 +50,7 @@ function lazyRetry(factory: () => Promise<{ default: ComponentType<any> }>) {
 const GateAcesso = lazyRetry(() => import("./pages/GateAcesso"));
 const Home = lazyRetry(() => import("./pages/Home"));
 const Dashboard = lazyRetry(() => import("./pages/Dashboard"));
+const HistoricoQuadro = lazyRetry(() => import("./pages/HistoricoQuadro"));
 const Funcionarios = lazyRetry(() => import("./pages/Funcionarios"));
 const PrevisaoAdmissao = lazyRetry(() => import("./pages/PrevisaoAdmissao"));
 const CoberturasTreinamentos = lazyRetry(() => import("./pages/CoberturasTreinamentos"));
@@ -160,6 +161,7 @@ function LayoutRouter() {
             <Route path="/home" element={<Home />} />
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/historico-quadro" element={<HistoricoQuadro />} />
             <Route path="/experiencia-geral" element={<RotaProtegida requireFaltas><ExperienciaGeral /></RotaProtegida>} />
             
             <Route path="/funcionarios" element={<RotaProtegida requireFuncionarios><Funcionarios /></RotaProtegida>} />
