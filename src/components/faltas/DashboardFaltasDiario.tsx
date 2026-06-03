@@ -576,24 +576,24 @@ export function DashboardFaltasDiario({
             <span className="text-[10px] opacity-60" title="Folga">🛏️</span>
           )}
           {badgeF > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[18px] h-[16px] rounded bg-foreground text-background font-bold text-[10px] px-[2px] shadow-sm leading-none">
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[16px] rounded bg-foreground text-background text-[10px] px-[2px] shadow-sm leading-none">
               {badgeF}F
             </span>
           )}
           {badgeA > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[18px] h-[16px] rounded bg-foreground text-background font-bold text-[10px] px-[2px] shadow-sm leading-none">
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[16px] rounded bg-foreground text-background text-[10px] px-[2px] shadow-sm leading-none">
               {badgeA}A
             </span>
           )}
           {badgeT > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[18px] h-[16px] rounded bg-primary text-primary-foreground font-bold text-[10px] px-[2px] shadow-sm leading-none">
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[16px] rounded bg-primary text-primary-foreground text-[10px] px-[2px] shadow-sm leading-none">
               {badgeT}T
             </span>
           )}
         </div>
         {saldo != null && (
                     <span className={cn(
-                     "inline-flex items-center justify-center h-[16px] rounded font-bold px-1.5 shadow-sm whitespace-nowrap leading-none gap-[2px]",
+                     "inline-flex items-center justify-center h-[16px] rounded px-1.5 shadow-sm whitespace-nowrap leading-none gap-[2px]",
                       saldo > 0 ? "bg-success text-success-foreground" : saldo < 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"
                     )}>
                       <span className="text-[10px]">{saldo > 0 ? `+${saldo}` : saldo}</span>
