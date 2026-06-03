@@ -592,12 +592,13 @@ export function DashboardFaltasDiario({
           )}
         </div>
         {saldo != null && (
-          <span className={cn(
-           "inline-flex items-center justify-center h-[16px] rounded font-bold text-[10px] px-1.5 shadow-sm whitespace-nowrap",
-            saldo > 0 ? "bg-success text-success-foreground" : saldo < 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"
-          )}>
-            {saldo > 0 ? `+${saldo}` : saldo} S
-          </span>
+                    <span className={cn(
+                     "inline-flex items-center justify-center h-[16px] rounded font-bold px-1.5 shadow-sm whitespace-nowrap leading-none gap-[2px]",
+                      saldo > 0 ? "bg-success text-success-foreground" : saldo < 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"
+                    )}>
+                      <span className="text-[10px]">{saldo > 0 ? `+${saldo}` : saldo}</span>
+                      <span className="text-[7px]">SALDO</span>
+                    </span>
         )}
       </div>
     );
@@ -760,7 +761,7 @@ export function DashboardFaltasDiario({
                   <span><strong>A</strong> = Atestado</span>
                   <span><strong>DA</strong> = Day Off</span>
                   <span>🛏️ = Folga escala</span>
-                  <span><strong>S</strong> = Saldo</span>
+          <span><strong>SALDO</strong> = Saldo</span>
                 </div>
                 <div className="border-t pt-2">
                   <p className="text-[11px] font-bold text-foreground">Como calcula o saldo</p>
