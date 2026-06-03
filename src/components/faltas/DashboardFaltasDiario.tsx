@@ -593,11 +593,10 @@ export function DashboardFaltasDiario({
         </div>
         {saldo != null && (
                     <span className={cn(
-                     "inline-flex items-center justify-center h-[16px] rounded px-1.5 shadow-sm whitespace-nowrap leading-none gap-[2px]",
+                     "inline-flex items-center justify-center h-[16px] rounded px-[2px] shadow-sm whitespace-nowrap leading-none text-[10px]",
                       saldo > 0 ? "bg-success text-success-foreground" : saldo < 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"
                     )}>
-                      <span className="text-[10px]">{saldo > 0 ? `+${saldo}` : saldo}</span>
-                      <span className="text-[7px]">SALDO</span>
+                      {saldo > 0 ? `+${saldo}` : saldo} SALDO
                     </span>
         )}
       </div>
