@@ -273,10 +273,10 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
         return (
           <div 
             key={turma} 
-            className="rounded-xl border-2 border-border/50 bg-gradient-to-br from-card to-muted/20 p-5 shadow-md hover:shadow-lg transition-all duration-200"
+            className="rounded-xl border-2 border-border/50 bg-gradient-to-br from-card to-muted/20 p-4 sm:p-5 shadow-md hover:shadow-lg transition-all duration-200"
           >
-             <div className="flex items-center justify-between mb-3">
-              <div className="text-base font-bold text-foreground">
+             <div className="flex items-center justify-between gap-3 mb-3">
+              <div className="min-w-0 truncate text-sm sm:text-base font-bold text-foreground">
                 {TURMAS_LABELS[turma]}
               </div>
               <div className="flex items-center gap-2">
@@ -319,7 +319,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
             
             {/* Indicador de Sobra/Desfalque */}
             <div className={cn(
-              "flex items-center gap-1.5 px-2 py-1 rounded-md text-sm font-semibold",
+              "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs sm:text-sm font-semibold",
               diferenca > 0 && "bg-success/10 text-success",
               diferenca < 0 && "bg-destructive/10 text-destructive",
               diferenca === 0 && "bg-muted text-muted-foreground"
@@ -346,12 +346,12 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
             {treinamentoCardItems.length > 0 ? (
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="flex items-center justify-between gap-1.5 px-3 py-2 mt-2 rounded-lg border border-warning/30 bg-warning/5 text-sm font-semibold text-warning hover:bg-warning/15 transition-colors cursor-pointer w-full">
-                    <div className="flex items-center gap-2">
+                  <button className="flex items-center justify-between gap-1.5 px-2 sm:px-3 py-2 mt-2 rounded-lg border border-warning/30 bg-warning/5 text-[11px] sm:text-sm font-semibold text-warning hover:bg-warning/15 transition-colors cursor-pointer w-full">
+                    <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                       <GraduationCap className="h-4 w-4 shrink-0" />
-                      <span>EM TREINAMENTO (2 DIAS)</span>
+                      <span className="truncate whitespace-nowrap">EM TREINAMENTO (2 DIAS)</span>
                     </div>
-                    <span className="text-lg font-bold">{treinamentoCardItems.length}</span>
+                    <span className="shrink-0 text-base sm:text-lg font-bold">{treinamentoCardItems.length}</span>
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80 p-3" align="start">
@@ -371,24 +371,24 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                 </PopoverContent>
               </Popover>
             ) : (
-              <div className="flex items-center justify-between gap-1.5 px-3 py-2 mt-2 rounded-lg border border-warning/30 bg-warning/5 text-sm font-semibold text-warning w-full">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between gap-1.5 px-2 sm:px-3 py-2 mt-2 rounded-lg border border-warning/30 bg-warning/5 text-[11px] sm:text-sm font-semibold text-warning w-full">
+                <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                   <GraduationCap className="h-4 w-4 shrink-0" />
-                  <span>EM TREINAMENTO (2 DIAS)</span>
+                  <span className="truncate whitespace-nowrap">EM TREINAMENTO (2 DIAS)</span>
                 </div>
-                <span className="text-lg font-bold">0</span>
+                <span className="shrink-0 text-base sm:text-lg font-bold">0</span>
               </div>
             )}
 
             {metricas.previsoes > 0 ? (
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="flex items-center justify-between gap-1.5 px-3 py-2 mt-2 mb-3 rounded-lg border border-primary/30 bg-primary/5 text-sm font-semibold text-primary hover:bg-primary/15 transition-colors cursor-pointer w-full">
+                  <button className="flex items-center justify-between gap-1.5 px-2 sm:px-3 py-2 mt-2 mb-3 rounded-lg border border-primary/30 bg-primary/5 text-[11px] sm:text-sm font-semibold text-primary hover:bg-primary/15 transition-colors cursor-pointer w-full">
                     <div className="flex items-center gap-2">
                       <UserPlus className="h-4 w-4 shrink-0" />
                       <span>PREVISÃO</span>
                     </div>
-                    <span className="text-lg font-bold">+{metricas.previsoes}</span>
+                    <span className="text-base sm:text-lg font-bold">+{metricas.previsoes}</span>
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80 p-3" align="start">
@@ -408,12 +408,12 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                 </PopoverContent>
               </Popover>
             ) : (
-              <div className="flex items-center justify-between gap-1.5 px-3 py-2 mt-2 mb-3 rounded-lg border border-muted bg-muted/30 text-sm font-semibold text-muted-foreground w-full">
+              <div className="flex items-center justify-between gap-1.5 px-2 sm:px-3 py-2 mt-2 mb-3 rounded-lg border border-muted bg-muted/30 text-[11px] sm:text-sm font-semibold text-muted-foreground w-full">
                 <div className="flex items-center gap-2">
                   <UserPlus className="h-4 w-4 shrink-0" />
                   <span>PREVISÃO</span>
                 </div>
-                <span className="text-lg font-bold">0</span>
+                <span className="text-base sm:text-lg font-bold">0</span>
               </div>
             )}
 
