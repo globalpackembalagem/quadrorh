@@ -23,12 +23,18 @@ interface ExportarFuncionariosDialogProps {
   situacoes: Situacao[];
 }
 
-function formatIsoDateBR(isoDate?: string | null) {
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const EXCEL_EPOCH_UTC = Date.UTC(1899, 11, 30);
+
+function isoDateToExcelSerial(isoDate?: string | null) {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate || '');
   if (!match) return '';
 
   const [, year, month, day] = match;
-  return `${day}/${month}/${year}`;
+  const utcDate = Date.UTC(Number(year), Number(month) - 1, Number(day));
+  if (Number.isNaN(utcDate)) return '';
+
+  return Math.floor((utcDate - EXCEL_EPOCH_UTC) / MS_PER_DAY);
 }
 
 export function ExportarFuncionariosDialog({ 
@@ -187,12 +193,12 @@ export function ExportarFuncionariosDialog({
         'Setor': f.setor?.nome || '',
         'Situação': f.situacao?.nome || '',
         'Empresa': f.empresa || '',
-        'Data Admissão': formatIsoDateBR(f.data_admissao),
+        'Data Admissão': isoDateToExcelSerial(f.data_admissao),
         'Cargo': f.cargo || '',
         'Turma': f.turma || '',
         'Conta no Quadro': contaNoQuadro ? 'SIM' : 'NÃO',
         'Turma Quadro': turmaQuadro,
-        'Data Demissão': formatIsoDateBR(f.data_demissao),
+        'Data Demissão': isoDateToExcelSerial(f.data_demissao),
         'Tamanho Uniforme': f.tamanho_uniforme || '',
         'Tamanho Calça': f.tamanho_calca || '',
         'Tamanho Camiseta': f.tamanho_camiseta || '',
@@ -209,9 +215,9 @@ export function ExportarFuncionariosDialog({
     for (let row = 2; row <= dados.length + 1; row++) {
       [colDataAdmissao, colDataDemissao].forEach((col) => {
         const cell = ws[`${col}${row}`];
-        if (cell) {
-          cell.t = 's';
-          cell.z = '@';
+        if (cell && typeof cell.v === 'number') {
+          cell.t = 'n';
+          cell.z = 'dd/mm/yyyy';
         }
       });
     }

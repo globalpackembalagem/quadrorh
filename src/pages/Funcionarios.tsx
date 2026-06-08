@@ -55,12 +55,18 @@ import { loadXLSX } from '@/lib/xlsx';
 // xlsx-js-style loaded dynamically
 import { toast } from 'sonner';
 
-function formatIsoDateBR(isoDate?: string | null) {
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const EXCEL_EPOCH_UTC = Date.UTC(1899, 11, 30);
+
+function isoDateToExcelSerial(isoDate?: string | null) {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate || '');
   if (!match) return '';
 
   const [, year, month, day] = match;
-  return `${day}/${month}/${year}`;
+  const utcDate = Date.UTC(Number(year), Number(month) - 1, Number(day));
+  if (Number.isNaN(utcDate)) return '';
+
+  return Math.floor((utcDate - EXCEL_EPOCH_UTC) / MS_PER_DAY);
 }
 
 // ─── Componente de Temporários ──────────────────────────────────────────────────
@@ -512,10 +518,10 @@ export default function Funcionarios() {
       'Setor': f.setor?.nome || '',
       'Situação': f.situacao?.nome || '',
       'Empresa': f.empresa || '',
-      'Data Admissão': formatIsoDateBR(f.data_admissao),
+      'Data Admissão': isoDateToExcelSerial(f.data_admissao),
       'Cargo': f.cargo || '',
       'Turma': f.turma || '',
-      'Data Demissão': formatIsoDateBR(f.data_demissao),
+      'Data Demissão': isoDateToExcelSerial(f.data_demissao),
       'Observações': f.observacoes || '',
     }));
     const ws = XLSX.utils.json_to_sheet(dados);
@@ -525,9 +531,9 @@ export default function Funcionarios() {
     for (let row = 2; row <= dados.length + 1; row++) {
       [colDataAdmissao, colDataDemissao].forEach((col) => {
         const cell = ws[`${col}${row}`];
-        if (cell) {
-          cell.t = 's';
-          cell.z = '@';
+        if (cell && typeof cell.v === 'number') {
+          cell.t = 'n';
+          cell.z = 'dd/mm/yyyy';
         }
       });
     }
