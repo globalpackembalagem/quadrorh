@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import { useUsuario } from '@/contexts/UserContext';
 import { useNavigate } from 'react-router-dom';
+import { loadXLSX } from '@/lib/xlsx';
 
 interface IntegracaoAgencia {
   id: string;
@@ -257,7 +258,7 @@ export default function Agencia() {
   };
 
   const baixarModelo = async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const modelo = [
       {
         'NOME COMPLETO': '',
@@ -290,7 +291,7 @@ export default function Agencia() {
   };
 
   const exportarExcel = async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const dados = filtrados.map(r => ({
       'NOME COMPLETO': r.nome_completo || '',
       'SETOR': r.setor || '',
@@ -543,3 +544,4 @@ export default function Agencia() {
     </div>
   );
 }
+

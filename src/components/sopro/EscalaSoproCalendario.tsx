@@ -6,6 +6,7 @@ import { Share2, ChevronLeft, ChevronRight, Calendar, Download, Printer } from '
 import { cn } from '@/lib/utils';
 // xlsx-js-style loaded dynamically
 import { getTurmaSoproFimDeSemana, TURMAS_ESCALA_SOPRO } from '@/lib/escalaSopro';
+import { loadXLSX } from '@/lib/xlsx';
 
 const DIAS_SEMANA = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 const MESES = [
@@ -138,7 +139,7 @@ export function EscalaSoproCalendario() {
   }, [ano, turmaFiltro]);
 
   const exportarExcel = useCallback(async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const wb = XLSX.utils.book_new();
 
     for (let m = 0; m < 12; m++) {
@@ -326,3 +327,4 @@ export function EscalaSoproCalendario() {
     </Card>
   );
 }
+

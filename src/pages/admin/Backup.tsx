@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 // xlsx-js-style loaded dynamically
 import { useUsuario } from '@/contexts/UserContext';
+import { loadXLSX } from '@/lib/xlsx';
 
 interface TabelaUso {
   nome: string;
@@ -120,7 +121,7 @@ export default function Backup() {
         })
       );
 
-      const XLSX = await import('xlsx-js-style');
+      const XLSX = await loadXLSX();
       const wb = XLSX.utils.book_new();
 
       const resumo = resultados.map((r) => ({
@@ -333,3 +334,4 @@ export default function Backup() {
     </div>
   );
 }
+

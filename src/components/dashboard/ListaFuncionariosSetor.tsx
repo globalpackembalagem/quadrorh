@@ -19,6 +19,7 @@ import { format, parseISO, differenceInDays, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 // xlsx-js-style loaded dynamically
 import { toast } from 'sonner';
+import { loadXLSX } from '@/lib/xlsx';
 
 interface ListaFuncionariosSetorProps {
   grupo: 'SOPRO' | 'DECORAÇÃO';
@@ -169,7 +170,7 @@ export function ListaFuncionariosSetor({ grupo, funcionarios, disabled = false }
 
   // Exportar para Excel
   const exportarExcel = async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const situacoesExcluidas = ['DEMISSÃO', 'DEMISSAO', 'PED. DEMISSÃO', 'PED. DEMISSAO'];
     const dadosExport = funcionariosFiltrados.filter(f => !situacoesExcluidas.includes((f.situacao?.nome || '').toUpperCase()));
     const dados = dadosExport.map(f => ({
@@ -368,3 +369,4 @@ export function ListaFuncionariosSetor({ grupo, funcionarios, disabled = false }
     </>
   );
 }
+

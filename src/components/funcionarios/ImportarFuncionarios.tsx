@@ -17,6 +17,7 @@ import { Setor, Situacao, SexoTipo, EmpresaTipo } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { loadXLSX } from '@/lib/xlsx';
 
 interface ImportarFuncionariosProps {
   setores: Setor[];
@@ -300,7 +301,7 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
-        const XLSX = await import('xlsx-js-style');
+        const XLSX = await loadXLSX();
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -358,7 +359,7 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
   }, [setores, situacoes]);
 
   const downloadModelo = async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const ws = XLSX.utils.aoa_to_sheet([
       ['João Silva', 'M', 'SOPRO', 'Ativo', 'GLOBALPACK', '12345', '01/01/2024', 'Auxiliar', 'T1', '', ''],
       ['Maria Santos', 'F', 'DECORAÇÃO', 'Ativo', 'G+P', 'TEMP', '15/03/2024', 'Operador', 'T2', '', 'Exemplo'],
@@ -370,7 +371,7 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
   };
 
   const exportarConfirmacao = async (registros: FuncionarioImport[]) => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const dadosExport = registros.map(item => ({
       'Matrícula': item.matricula || '',
       'Nome': item.nome_completo,
@@ -476,7 +477,7 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
       return;
     }
 
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const dadosExport = dadosComErroCritico.map(item => ({
       'Linha': item.linha,
       'Nome': item.nome_completo || '(vazio)',
@@ -697,3 +698,4 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
     </Dialog>
   );
 }
+

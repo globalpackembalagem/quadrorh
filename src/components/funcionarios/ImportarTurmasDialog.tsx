@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { useUsuario } from '@/contexts/UserContext';
+import { loadXLSX } from '@/lib/xlsx';
 
 interface ImportarTurmasDialogProps {
   open: boolean;
@@ -58,7 +59,7 @@ export function ImportarTurmasDialog({ open, onOpenChange, onSuccess }: Importar
   // Exportar lista atual para preencher turmas
   const exportarParaPreencher = async () => {
     try {
-      const XLSX = await import('xlsx-js-style');
+      const XLSX = await loadXLSX();
       let allFuncionarios: any[] = [];
       let page = 0;
       const pageSize = 1000;
@@ -185,7 +186,7 @@ export function ImportarTurmasDialog({ open, onOpenChange, onSuccess }: Importar
     const reader = new FileReader();
     reader.onload = async (evt) => {
       try {
-        const XLSX = await import('xlsx-js-style');
+        const XLSX = await loadXLSX();
         const data = new Uint8Array(evt.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -402,3 +403,4 @@ export function ImportarTurmasDialog({ open, onOpenChange, onSuccess }: Importar
     </Dialog>
   );
 }
+

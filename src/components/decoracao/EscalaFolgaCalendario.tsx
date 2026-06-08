@@ -6,6 +6,7 @@ import { Share2, ChevronLeft, ChevronRight, Calendar, Download, Printer } from '
 import { cn } from '@/lib/utils';
 // xlsx-js-style loaded dynamically
 import { getTrabalhaOuFolga } from '@/lib/escalaPanama';
+import { loadXLSX } from '@/lib/xlsx';
 
 const DIAS_SEMANA = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 const MESES = [
@@ -132,7 +133,7 @@ export function EscalaFolgaCalendario() {
   };
 
   const exportarExcel = async (ano: number, turma: 'T1' | 'T2') => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const wb = XLSX.utils.book_new();
     const diasAbrev = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
@@ -344,3 +345,4 @@ export function EscalaFolgaCalendario() {
     </Card>
   );
 }
+

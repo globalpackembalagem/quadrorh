@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Situacao } from '@/types/database';
+import { loadXLSX } from '@/lib/xlsx';
 
 export default function Situacoes() {
   const { data: situacoes = [], isLoading } = useSituacoes();
@@ -40,7 +41,7 @@ export default function Situacoes() {
   };
 
   const exportarRelatorio = async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     if (situacoes.length === 0) {
       toast.error('Nenhuma situação para exportar');
       return;
@@ -263,3 +264,4 @@ export default function Situacoes() {
     </div>
   );
 }
+

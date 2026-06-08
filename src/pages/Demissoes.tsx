@@ -55,6 +55,7 @@ import { criarEventoSistema } from '@/hooks/useEventosSistema';
 import { Demissao } from '@/types/demissao';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { loadXLSX } from '@/lib/xlsx';
 // xlsx-js-style loaded dynamically
 
 // Gera opções de período para os últimos/próximos meses
@@ -324,7 +325,7 @@ export default function Demissoes() {
 
   // Exportar para Excel
   const handleExportarExcel = async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const todasDemissoes = [
       ...demissoesPendentes.map(d => ({
         Matrícula: d.funcionario?.matricula || '',
@@ -895,3 +896,4 @@ export default function Demissoes() {
     </div>
   );
 }
+

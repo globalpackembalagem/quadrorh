@@ -38,6 +38,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { Funcionario } from '@/types/database';
+import { loadXLSX } from '@/lib/xlsx';
 // xlsx-js-style loaded dynamically
 
 const FILTROS_SETOR = [
@@ -281,7 +282,7 @@ export default function CoberturasTreinamentos() {
   };
 
   const exportarExcel = async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     if (funcionariosFiltrados.length === 0) {
       toast.info('Nenhum funcionário para exportar.');
       return;
@@ -724,3 +725,4 @@ export default function CoberturasTreinamentos() {
     </div>
   );
 }
+

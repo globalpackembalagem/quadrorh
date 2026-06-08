@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { loadXLSX } from '@/lib/xlsx';
 
 export default function HistoricoQuadro() {
   const { usuarioAtual, isAdmin } = useUsuario();
@@ -69,7 +70,7 @@ export default function HistoricoQuadro() {
       return;
     }
 
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const dados = registrosVisiveis.map((item) => ({
       Data: format(parseISO(item.data_movimentacao), 'dd/MM/yyyy'),
       Funcionario: item.funcionario_nome,
@@ -237,3 +238,4 @@ export default function HistoricoQuadro() {
     </div>
   );
 }
+

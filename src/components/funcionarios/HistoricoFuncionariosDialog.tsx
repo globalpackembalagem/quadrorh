@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { loadXLSX } from '@/lib/xlsx';
 // xlsx-js-style loaded dynamically
 
 interface DetalhesExpandidos {
@@ -55,7 +56,7 @@ export function HistoricoFuncionariosDialog() {
 
   const exportarHistoricoExcel = async () => {
     if (filteredHistorico.length === 0) return;
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const dados = filteredHistorico.map(h => {
       const dadosNovos = h.dados_novos as Record<string, unknown> | null;
       const dadosAnteriores = h.dados_anteriores as Record<string, unknown> | null;
@@ -283,3 +284,4 @@ export function HistoricoFuncionariosDialog() {
     </Dialog>
   );
 }
+

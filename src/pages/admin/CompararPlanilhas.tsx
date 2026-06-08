@@ -12,6 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { loadXLSX } from '@/lib/xlsx';
 
 interface RegistroPlanilha {
   linha: number;
@@ -136,7 +137,7 @@ export default function CompararPlanilhas() {
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
-        const XLSX = await import('xlsx-js-style');
+        const XLSX = await loadXLSX();
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -394,7 +395,7 @@ export default function CompararPlanilhas() {
 
   const exportarDiferencas = async () => {
     if (!resultado) return;
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const wb = XLSX.utils.book_new();
 
     const resumoData: any[] = [];
@@ -449,7 +450,7 @@ export default function CompararPlanilhas() {
   };
 
   const baixarModelo = async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const wb = XLSX.utils.book_new();
     const headers = [['Nome', 'Sexo', 'Setor', 'Situação', 'Empresa', 'Matrícula', 'Data Admissão', 'Cargo', 'Turma']];
     const ws = XLSX.utils.aoa_to_sheet(headers);
@@ -1044,3 +1045,4 @@ export default function CompararPlanilhas() {
     </div>
   );
 }
+

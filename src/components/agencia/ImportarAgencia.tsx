@@ -21,6 +21,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import { loadXLSX } from '@/lib/xlsx';
 
 interface RegistroImport {
   linha: number;
@@ -109,7 +110,7 @@ export function ImportarAgencia({ criado_por }: ImportarAgenciaProps) {
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
-        const XLSX = await import('xlsx-js-style');
+        const XLSX = await loadXLSX();
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -303,3 +304,4 @@ export function ImportarAgencia({ criado_por }: ImportarAgenciaProps) {
     </Dialog>
   );
 }
+

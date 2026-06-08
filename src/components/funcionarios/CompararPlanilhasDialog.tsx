@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { loadXLSX } from '@/lib/xlsx';
 
 interface RegistroPlanilha {
   linha: number;
@@ -128,7 +129,7 @@ export function CompararPlanilhasDialog() {
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
-        const XLSX = await import('xlsx-js-style');
+        const XLSX = await loadXLSX();
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -385,7 +386,7 @@ export function CompararPlanilhasDialog() {
 
   const exportarDiferencas = async () => {
     if (!resultado) return;
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const wb = XLSX.utils.book_new();
 
     const resumoData: any[] = [];
@@ -440,7 +441,7 @@ export function CompararPlanilhasDialog() {
   };
 
   const baixarModelo = async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const wb = XLSX.utils.book_new();
     const headers = [['Nome', 'Sexo', 'Setor', 'Situação', 'Empresa', 'Matrícula', 'Data Admissão', 'Cargo', 'Turma']];
     const ws = XLSX.utils.aoa_to_sheet(headers);
@@ -843,3 +844,4 @@ export function CompararPlanilhasDialog() {
     </Dialog>
   );
 }
+

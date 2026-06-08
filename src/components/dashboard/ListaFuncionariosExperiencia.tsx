@@ -11,6 +11,7 @@ import { ptBR } from 'date-fns/locale';
 // xlsx-js-style loaded dynamically
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { loadXLSX } from '@/lib/xlsx';
 
 interface ListaFuncionariosExperienciaProps {
   funcionarios: Funcionario[];
@@ -168,7 +169,7 @@ export function ListaFuncionariosExperiencia({ funcionarios, grupo, disabled = f
 
   // Exportar para Excel
   const exportarExcel = async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const dados = funcionariosFiltrados.map(f => ({
       'Tipo': f.isTemporario ? 'Temporário' : 'Efetivo',
       'Setor': f.setor?.nome || '',
@@ -340,3 +341,4 @@ export function ListaFuncionariosExperiencia({ funcionarios, grupo, disabled = f
     </>
   );
 }
+

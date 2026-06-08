@@ -18,6 +18,7 @@ import {
 import { cn } from '@/lib/utils';
 // xlsx-js-style loaded dynamically
 import { toast } from 'sonner';
+import { loadXLSX } from '@/lib/xlsx';
 
 interface HistoricoItem {
   id: string;
@@ -170,7 +171,7 @@ export default function Auditoria() {
 
   const exportarExcel = async () => {
     if (!filtrado.length) return;
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const dados = filtrado.map(h => ({
       'Data/Hora': format(parseISO(h.created_at), 'dd/MM/yyyy HH:mm:ss'),
       'Usuário': h.usuario_nome || '',
@@ -402,3 +403,4 @@ export default function Auditoria() {
     </div>
   );
 }
+

@@ -237,7 +237,7 @@ export function PrevisaoAdmissaoSection({
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
-        const XLSX = await import('xlsx-js-style');
+        const XLSX = await loadXLSX();
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         
@@ -590,3 +590,4 @@ export function PrevisaoAdmissaoSection({
     </div>
   );
 }
+

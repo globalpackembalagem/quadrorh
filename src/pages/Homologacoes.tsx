@@ -41,6 +41,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 // xlsx-js-style loaded dynamically
 import { useAuth } from '@/hooks/useAuth';
+import { loadXLSX } from '@/lib/xlsx';
 
 // Data mínima para exibir (a partir de fevereiro/2026)
 const DATA_MINIMA = '2026-02-01';
@@ -202,7 +203,7 @@ export default function Homologacoes() {
 
   // Exportar para Excel
   const handleExportarExcel = async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const dados = agendaHomologacoes.map(d => ({
       Matrícula: d.funcionario?.matricula || '',
       Nome: d.funcionario?.nome_completo || '',

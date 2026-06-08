@@ -19,6 +19,7 @@ import { useFuncionariosNoQuadro } from '@/hooks/useFuncionarios';
 import { useQuadroPlanejado } from '@/hooks/useQuadroPlanejado';
 import { useQuadroDecoracao } from '@/hooks/useQuadroDecoracao';
 import { useFuncionariosPrevisao } from '@/hooks/usePrevisoes';
+import { loadXLSX } from '@/lib/xlsx';
 
 function calcularTotalPlanejadoSopro(dados: any): number {
   const reservaRefeicaoIndustria = Math.round(dados.aux_maquina_industria / 6);
@@ -494,7 +495,7 @@ export function ListaFuncionariosExperienciaGeral({ funcionarios, disabled = fal
   }, [funcionariosExperiencia, busca, filtrosTipo, filtrosSetor, filtrosResponsavel, filtrosMes, ordenacao, decisoes, responsaveis, cientes]);
 
   const exportarExcel = async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const dados = funcionariosFiltrados.map(f => ({
       'Tipo': f.isTemporario ? 'Temporário' : 'Efetivo',
       'Setor': f.setor?.nome || '',
@@ -1526,3 +1527,4 @@ export function ListaFuncionariosExperienciaGeral({ funcionarios, disabled = fal
     </>
   );
 }
+

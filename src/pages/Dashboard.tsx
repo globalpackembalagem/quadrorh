@@ -9,6 +9,7 @@ import { useTreinamentosPrevisao } from '@/hooks/useTreinamentosPrevisao';
 import { toast } from 'sonner';
 // xlsx-js-style loaded dynamically
 import { format } from 'date-fns';
+import { loadXLSX } from '@/lib/xlsx';
 
 export default function Dashboard() {
   const data = useDashboardData();
@@ -36,7 +37,7 @@ export default function Dashboard() {
   };
 
   const exportarExcelPorTurma = async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const grupo = data.grupoSelecionado;
     const situacoesExcluidas = ['DEMISSÃO', 'DEMISSAO', 'PED. DEMISSÃO', 'PED. DEMISSAO'];
     const funcionarios = (grupo === 'SOPRO' ? data.funcionariosSopro : data.funcionariosDecoracao)
@@ -96,7 +97,7 @@ export default function Dashboard() {
   };
 
   const exportarExcel = async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const wb = XLSX.utils.book_new();
 
     const resumoSoproData = data.quadroPlanejado.map(q => {
@@ -236,3 +237,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

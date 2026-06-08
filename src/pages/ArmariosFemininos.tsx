@@ -16,6 +16,7 @@ import MapaVisualArmarios from '@/components/armarios/MapaVisualArmarios';
 // xlsx-js-style loaded dynamically
 import { useAuth } from '@/hooks/useAuth';
 import { useUsuario } from '@/contexts/UserContext';
+import { loadXLSX } from '@/lib/xlsx';
 
 const LOCAIS = [
   { value: 'SOPRO', label: 'Sopro' },
@@ -820,7 +821,7 @@ export default function ArmariosFemininos() {
 
   // Exportar lista COMPLETA de armários (todos os locais, vazios inclusos)
   const handleExport = useCallback(async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
 
     // Montar mapa de todos os armários ocupados/bloqueados/quebrados
     const armarioMap = new Map<string, { nome: string; matricula: string; setor: string; tipo: string; status: string }>();
@@ -900,7 +901,7 @@ export default function ArmariosFemininos() {
   }, [funcionariasAtivas, prestadoresComArmario, armariosParaMapa, configLocais, filtroLocal]);
 
   const handleExportSemArmario = useCallback(async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     if (funcionariasSemArmarioLista.length === 0) {
       toast.error('Nenhuma funcionária sem armário para exportar');
       return;
@@ -2209,3 +2210,4 @@ export default function ArmariosFemininos() {
     </div>
   );
 }
+
