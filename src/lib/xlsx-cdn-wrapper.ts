@@ -2,7 +2,9 @@
 // Uses locally installed package bundle directly to avoid CDN/network issues
 
 // @ts-ignore - importing the raw bundle file directly
-import XLSX from '../../node_modules/xlsx-js-style/dist/xlsx.bundle.js';
+import '../../node_modules/xlsx-js-style/dist/xlsx.bundle.js';
+
+const XLSX = (globalThis as any).XLSX;
 
 export default XLSX;
 export const read = XLSX.read;

@@ -51,8 +51,17 @@ import { useCriarDivergenciaAuto, devecriarDivergencia } from '@/hooks/useDiverg
 import { Funcionario, SexoTipo, EmpresaTipo } from '@/types/database';
 import { format, parseISO, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { loadXLSX } from '@/lib/xlsx';
 // xlsx-js-style loaded dynamically
 import { toast } from 'sonner';
+
+function formatIsoDateBR(isoDate?: string | null) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate || '');
+  if (!match) return '';
+
+  const [, year, month, day] = match;
+  return `${day}/${month}/${year}`;
+}
 
 // ─── Componente de Temporários ──────────────────────────────────────────────────
 function TemporariosTab({ funcionarios }: { funcionarios: Funcionario[] }) {
@@ -495,7 +504,7 @@ export default function Funcionarios() {
 
   const exportarTudo = async () => {
     if (!funcionarios.length) { toast.error('Nenhum funcionário para exportar'); return; }
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     const dados = funcionarios.map(f => ({
       'Matrícula': f.matricula || '',
       'Nome': f.nome_completo,
@@ -503,13 +512,25 @@ export default function Funcionarios() {
       'Setor': f.setor?.nome || '',
       'Situação': f.situacao?.nome || '',
       'Empresa': f.empresa || '',
-      'Data Admissão': f.data_admissao ? format(parseISO(f.data_admissao), 'dd/MM/yyyy') : '',
+      'Data Admissão': formatIsoDateBR(f.data_admissao),
       'Cargo': f.cargo || '',
       'Turma': f.turma || '',
-      'Data Demissão': f.data_demissao ? format(parseISO(f.data_demissao), 'dd/MM/yyyy') : '',
+      'Data Demissão': formatIsoDateBR(f.data_demissao),
       'Observações': f.observacoes || '',
     }));
     const ws = XLSX.utils.json_to_sheet(dados);
+    const headers = Object.keys(dados[0]);
+    const colDataAdmissao = XLSX.utils.encode_col(headers.indexOf('Data Admissão'));
+    const colDataDemissao = XLSX.utils.encode_col(headers.indexOf('Data Demissão'));
+    for (let row = 2; row <= dados.length + 1; row++) {
+      [colDataAdmissao, colDataDemissao].forEach((col) => {
+        const cell = ws[`${col}${row}`];
+        if (cell) {
+          cell.t = 's';
+          cell.z = '@';
+        }
+      });
+    }
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Funcionários');
     XLSX.writeFile(wb, `Funcionarios_Todos_${format(new Date(), 'dd-MM-yyyy')}.xlsx`);

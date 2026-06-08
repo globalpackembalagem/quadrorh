@@ -54,6 +54,28 @@ function canSeeDocStatus(nome: string, isAdmin: boolean) {
   return isAdmin || nome.toUpperCase() === 'SONIA' || isRealParceria(nome);
 }
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const EXCEL_EPOCH_UTC = Date.UTC(1899, 11, 30);
+
+function isoDateToExcelSerial(isoDate?: string | null) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate || '');
+  if (!match) return null;
+
+  const [, year, month, day] = match;
+  const utcDate = Date.UTC(Number(year), Number(month) - 1, Number(day));
+  if (Number.isNaN(utcDate)) return null;
+
+  return Math.floor((utcDate - EXCEL_EPOCH_UTC) / MS_PER_DAY);
+}
+
+function formatIsoDateBR(isoDate?: string | null) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate || '');
+  if (!match) return '-';
+
+  const [, year, month, day] = match;
+  return `${day}/${month}/${year}`;
+}
+
 export default function PrevisaoAdmissao() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroSetores, setFiltroSetores] = useState<string[]>([]);
@@ -271,13 +293,17 @@ export default function PrevisaoAdmissao() {
       'Setor': f.setor?.nome || '-',
       'Turma': f.turma || '-',
       'Cargo': f.cargo || '-',
-      'Data Prevista': f.data_admissao 
-        ? format(parseISO(f.data_admissao), 'dd/MM/yyyy', { locale: ptBR })
-        : '-',
+      'Data Prevista': f.data_admissao ? formatIsoDateBR(f.data_admissao) : '',
     }));
     const ws = XLSX.utils.json_to_sheet(dados);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Previsão Admissão');
+    for (let row = 2; row <= dados.length + 1; row++) {
+      const cell = ws[`G${row}`];
+      if (cell) {
+        cell.t = 's';
+      }
+    }
     ws['!cols'] = [
       { wch: 12 }, { wch: 10 }, { wch: 35 }, { wch: 20 }, { wch: 8 }, { wch: 25 }, { wch: 12 },
     ];
@@ -693,7 +719,7 @@ export default function PrevisaoAdmissao() {
                         <TableCell>{func.cargo || '-'}</TableCell>
                         <TableCell>
                           {func.data_admissao
-                            ? format(parseISO(func.data_admissao), 'dd/MM/yyyy', { locale: ptBR })
+                            ? formatIsoDateBR(func.data_admissao)
                             : '-'}
                         </TableCell>
                         {showDocStatus && (
@@ -882,7 +908,7 @@ export default function PrevisaoAdmissao() {
                       <TableCell>{func.cargo || '-'}</TableCell>
                       <TableCell>
                         {func.data_admissao
-                          ? format(parseISO(func.data_admissao), 'dd/MM/yyyy', { locale: ptBR })
+                          ? formatIsoDateBR(func.data_admissao)
                           : '-'}
                       </TableCell>
                       {showDocStatus && (
