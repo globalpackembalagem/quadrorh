@@ -2,7 +2,7 @@
 
 export async function loadXLSX(): Promise<any> {
   const mod = await import('@/lib/xlsx-cdn-wrapper');
-  return mod.default || mod;
+  return mod.getXLSX ? mod.getXLSX() : mod.default();
 }
 
 // Helper to convert Excel serial number to date object

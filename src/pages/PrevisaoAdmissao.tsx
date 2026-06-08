@@ -13,6 +13,7 @@ import { useSetoresAtivos } from '@/hooks/useSetores';
 import { usePrevisaoDocumentos, usePrevisaoDocumentosHistorico, useUpdateDocumentoStatus } from '@/hooks/usePrevisaoDocumentos';
 import { useAuth } from '@/hooks/useAuth';
 import { Funcionario } from '@/types/database';
+import { loadXLSX } from '@/lib/xlsx';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -281,7 +282,7 @@ export default function PrevisaoAdmissao() {
   };
 
   const handleExportar = async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     if (funcionariosFiltrados.length === 0) {
       toast.error('Nenhum registro para exportar');
       return;
@@ -342,7 +343,7 @@ export default function PrevisaoAdmissao() {
   }, [funcionariosFiltrados, docMap]);
 
   const handleExportarParceria = async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     if (funcionariosFiltrados.length === 0) {
       toast.error('Nenhum registro para exportar');
       return;

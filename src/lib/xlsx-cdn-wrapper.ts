@@ -1,16 +1,41 @@
-// Local wrapper for xlsx-js-style
-// Uses locally installed package bundle directly to avoid CDN/network issues
+// Local wrapper for xlsx-js-style.
+// The package bundle is UMD, so production builds must load it as a script.
 
-// @ts-ignore - importing the raw bundle file directly
-import '../../node_modules/xlsx-js-style/dist/xlsx.bundle.js';
+import xlsxBundleUrl from '../../node_modules/xlsx-js-style/dist/xlsx.bundle.js?url';
 
-const XLSX = (globalThis as any).XLSX;
+let loadPromise: Promise<any> | null = null;
 
-export default XLSX;
-export const read = XLSX.read;
-export const write = XLSX.write;
-export const writeFile = XLSX.writeFile;
-export const writeFileXLSX = XLSX.writeFileXLSX;
-export const utils = XLSX.utils;
-export const SSF = XLSX.SSF;
-export const version = XLSX.version;
+function getGlobalXLSX() {
+  return (globalThis as any).XLSX;
+}
+
+export async function getXLSX(): Promise<any> {
+  const current = getGlobalXLSX();
+  if (current?.utils) return current;
+
+  if (!loadPromise) {
+    loadPromise = new Promise((resolve, reject) => {
+      const existing = document.querySelector<HTMLScriptElement>('script[data-xlsx-js-style="true"]');
+      if (existing) {
+        existing.addEventListener('load', () => resolve(getGlobalXLSX()));
+        existing.addEventListener('error', reject);
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = xlsxBundleUrl;
+      script.async = true;
+      script.dataset.xlsxJsStyle = 'true';
+      script.onload = () => resolve(getGlobalXLSX());
+      script.onerror = () => reject(new Error('Falha ao carregar biblioteca Excel'));
+      document.head.appendChild(script);
+    }).then((xlsx) => {
+      if (!xlsx?.utils) throw new Error('Biblioteca Excel carregada sem utilitarios');
+      return xlsx;
+    });
+  }
+
+  return loadPromise;
+}
+
+export default getXLSX;
