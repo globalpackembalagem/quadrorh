@@ -17,6 +17,7 @@ import { Setor, Situacao, SexoTipo, EmpresaTipo } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { loadXLSX } from '@/lib/xlsx';
 
 interface ImportarPrevisoesProps {
   setores: Setor[];
@@ -105,16 +106,34 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
     return 'GLOBALPACK';
   };
 
-  const parseData = (valor: string): string | undefined => {
+  const parseData = (valor: unknown): string | undefined => {
     if (!valor) return undefined;
+
+    if (valor instanceof Date && !Number.isNaN(valor.getTime())) {
+      const ano = valor.getFullYear();
+      const mes = String(valor.getMonth() + 1).padStart(2, '0');
+      const dia = String(valor.getDate()).padStart(2, '0');
+      return `${ano}-${mes}-${dia}`;
+    }
+
+    if (typeof valor === 'number' && valor > 40000 && valor < 60000) {
+      const excelEpoch = Date.UTC(1899, 11, 30);
+      const date = new Date(excelEpoch + valor * 24 * 60 * 60 * 1000);
+      return date.toISOString().split('T')[0];
+    }
     
     const str = valor.toString().trim();
     
-    // Formato DD/MM/YYYY ou DD-MM-YYYY
-    const match = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    // Formato DD/MM/YYYY, DD/MM/YY ou DD/MM/206 (corrige para 2026)
+    const match = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
     if (match) {
       const [, dia, mes, ano] = match;
-      return `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+      const anoNormalizado = ano.length === 2
+        ? `20${ano}`
+        : ano.length === 3 && ano.startsWith('2')
+          ? `20${ano.slice(1)}`
+          : ano;
+      return `${anoNormalizado}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
     }
     
     // Formato YYYY-MM-DD
@@ -246,9 +265,9 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
-        const XLSX = await import('xlsx-js-style');
+        const XLSX = await loadXLSX();
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
+        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as string[][];
         
@@ -264,7 +283,7 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
   }, [processarDados]);
 
   const downloadModelo = async () => {
-    const XLSX = await import('xlsx-js-style');
+    const XLSX = await loadXLSX();
     // Aba principal com exemplo preenchido
     const wsModelo = XLSX.utils.aoa_to_sheet([
       COLUNAS_PREVISAO,
