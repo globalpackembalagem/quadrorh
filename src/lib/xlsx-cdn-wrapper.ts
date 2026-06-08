@@ -9,9 +9,13 @@ function getGlobalXLSX() {
   return (globalThis as any).XLSX;
 }
 
+function isValidXLSX(xlsx: any) {
+  return !!xlsx?.utils && typeof xlsx.read === 'function' && typeof xlsx.writeFile === 'function';
+}
+
 export async function getXLSX(): Promise<any> {
   const current = getGlobalXLSX();
-  if (current?.utils) return current;
+  if (isValidXLSX(current)) return current;
 
   if (!loadPromise) {
     loadPromise = new Promise((resolve, reject) => {
@@ -29,8 +33,9 @@ export async function getXLSX(): Promise<any> {
       script.onload = () => resolve(getGlobalXLSX());
       script.onerror = () => reject(new Error('Falha ao carregar biblioteca Excel'));
       document.head.appendChild(script);
-    }).then((xlsx) => {
-      if (!xlsx?.utils) throw new Error('Biblioteca Excel carregada sem utilitarios');
+    }).then(() => {
+      const xlsx = getGlobalXLSX();
+      if (!isValidXLSX(xlsx)) throw new Error('Biblioteca Excel carregada sem leitor valido');
       return xlsx;
     });
   }
