@@ -722,7 +722,7 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
 
       {/* Logo Blu Tech - canto inferior direito, clicável para ampliar */}
       <div 
-        className="fixed bottom-3 right-3 z-40 opacity-70 hover:opacity-100 transition-all cursor-pointer"
+        className="hidden"
         onClick={() => setLogoExpanded(!logoExpanded)}
         title="Clique para ampliar"
       >
