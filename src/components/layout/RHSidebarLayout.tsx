@@ -47,7 +47,6 @@ import { BotaoAcessoRH } from '@/components/auth/BotaoAcessoRH';
 import { useAuth } from '@/hooks/useAuth';
 import { UsuarioLocal, useUsuario } from '@/contexts/UserContext';
 import logoGlobalpack from '@/assets/logo-globalpack-new.png';
-import logoBluTech from '@/assets/blu-tech-logo.png';
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -310,7 +309,6 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
   const [guiaOpen, setGuiaOpen] = useState(false);
   const [alterarSenhaOpen, setAlterarSenhaOpen] = useState(false);
   const [forcandoAtualizacao, setForcandoAtualizacao] = useState(false);
-  const [logoExpanded, setLogoExpanded] = useState(false);
   const [sidebarPinned, setSidebarPinned] = useState(() => {
     try { return localStorage.getItem('sidebar-pinned') === 'true'; } catch { return false; }
   });
@@ -720,21 +718,6 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
         </main>
       </div>
 
-      {/* Logo Blu Tech - canto inferior direito, clicável para ampliar */}
-      <div 
-        className="hidden"
-        onClick={() => setLogoExpanded(!logoExpanded)}
-        title="Clique para ampliar"
-      >
-        <img 
-          src={logoBluTech} 
-          alt="Blu Tech Soluções" 
-          className={cn(
-            "rounded-full shadow-lg transition-all duration-300",
-            logoExpanded ? "h-28 w-28" : "h-14 w-14"
-          )} 
-        />
-      </div>
       {/* Modal unificado de avisos */}
       <CentralAvisosModal />
       <ForceUpdateModal />
