@@ -214,10 +214,24 @@ export function useEnviarNotificacaoEventos() {
       const grupos = new Map<string, {
         tipo: string; setor_nome: string; turma: string | null; setor_id: string | null;
         quantidade: number; funcionarios: string[]; evento_id: string;
+        funcionario_id?: string | null; funcionario_sexo?: string | null;
         setor_origem_id?: string | null; setor_destino_id?: string | null;
         mensagem_personalizada?: string | null;
         destinatarios?: string[] | null;
       }>();
+
+      const funcionarioIds = eventos
+        .map(ev => ev.funcionario_id)
+        .filter((id): id is string => Boolean(id));
+      const { data: funcionariosEventos } = funcionarioIds.length > 0
+        ? await supabase
+            .from('funcionarios')
+            .select('id, sexo')
+            .in('id', funcionarioIds)
+        : { data: [] as { id: string; sexo: string | null }[] };
+      const sexoPorFuncionario = new Map(
+        (funcionariosEventos || []).map(func => [func.id, func.sexo])
+      );
       
       eventos.forEach(ev => {
         const key = `${ev.tipo}|${ev.setor_nome || 'SEM SETOR'}|${ev.turma || ''}|${ev.id}`;
@@ -230,6 +244,8 @@ export function useEnviarNotificacaoEventos() {
           quantidade: ev.quantidade || 1,
           funcionarios: ev.funcionario_nome ? [ev.funcionario_nome] : [],
           evento_id: ev.id,
+          funcionario_id: ev.funcionario_id,
+          funcionario_sexo: ev.funcionario_id ? sexoPorFuncionario.get(ev.funcionario_id) || null : null,
           setor_origem_id: dadosExtra.setor_origem_id || null,
           setor_destino_id: dadosExtra.setor_destino_id || null,
           mensagem_personalizada: dadosExtra.mensagem_personalizada || null,
@@ -240,7 +256,7 @@ export function useEnviarNotificacaoEventos() {
       // Buscar todos os usuários ativos
       const { data: userRoles } = await supabase
         .from('user_roles')
-        .select('id, perfil, setor_id, acesso_admin, recebe_notificacoes')
+        .select('id, nome, email, perfil, setor_id, acesso_admin, recebe_notificacoes')
         .eq('ativo', true);
 
       if (!userRoles) throw new Error('Sem usuários');
@@ -314,11 +330,25 @@ export function useEnviarNotificacaoEventos() {
           
           // Admin não recebe notificação — é quem envia
           if (isAdmin) return;
-          
+          const isSegurancaTrabalho = normalizarTexto(`${ur.nome || ''} ${ur.email || ''}`).includes('SEGURANCA');
+          const isEventoDesligamento = grupo.tipo === 'demissao' || grupo.tipo === 'pedido_demissao';
+          const isFuncionarioMasculino = (grupo.funcionario_sexo || '').toLowerCase() === 'masculino';
           const isRH = ur.perfil === 'rh_completo' || ur.perfil === 'rh_demissoes';
           
-          // RH não recebe notificações
-          if (isRH) return;
+          // RH nao recebe notificacoes, exceto a regra especifica de Seguranca do Trabalho
+          if (isRH && !isSegurancaTrabalho) return;
+          if (isSegurancaTrabalho) {
+            if (!isEventoDesligamento || !isFuncionarioMasculino) return;
+
+            notificacoes.push({
+              user_role_id: ur.id,
+              tipo: grupo.tipo === 'pedido_demissao' ? 'pedido_demissao_lancado' : 'demissao_lancada',
+              titulo: tipoLabel,
+              mensagem: `${mensagemBase}${nomesStr}${msgPersonalizada}`,
+              referencia_id: grupo.evento_id,
+            });
+            return;
+          }
           // Setor do gestor (principal + adicionais)
           const setoresDoUsuario = new Set<string>();
           if (ur.setor_id) setoresDoUsuario.add(ur.setor_id);
@@ -493,4 +523,12 @@ function getTipoLabel(tipo: string): string {
     turma_pendente: 'TURMA PENDENTE',
   };
   return labels[tipo] || tipo.toUpperCase();
+}
+
+
+function normalizarTexto(valor: string): string {
+  return valor
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase();
 }
