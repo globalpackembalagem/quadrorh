@@ -227,7 +227,7 @@ export default function Demissoes() {
       console.error('Erro ao notificar gestor:', e);
     }
     
-    toast.success('Enviado para a central e notificado todo o RH!');
+    toast.success('Enviado para a central e gestores do setor.');
   };
 
   // Filtro por período selecionado
