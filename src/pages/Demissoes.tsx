@@ -59,6 +59,15 @@ import { loadXLSX } from '@/lib/xlsx';
 // xlsx-js-style loaded dynamically
 
 // Gera opções de período para os últimos/próximos meses
+const isPedidoDemissao = (tipo?: string | null) => tipo === 'Pedido de Demissão';
+
+const getTipoEventoSaida = (tipo?: string | null) => isPedidoDemissao(tipo) ? 'pedido_demissao' : 'demissao';
+
+const getTipoLabelSaida = (tipo?: string | null) => (tipo || 'Demissão').toUpperCase();
+
+const normalizarTexto = (valor: string) =>
+  valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+
 function gerarOpcoesPeriodo() {
   const base = new Date(2026, 1, 1); // Fev 2026
   const options: { value: string; label: string }[] = [
@@ -144,8 +153,8 @@ export default function Demissoes() {
     });
 
     const nomeFunc = demissao.funcionario?.nome_completo || 'Colaborador';
-    const tipoEvento = demissao.tipo_desligamento === 'Pedido de Demissão' ? 'pedido_demissao' : 'demissao';
-    const tipoLabel = demissao.tipo_desligamento === 'Pedido de Demissão' ? 'Pedido de Demissão' : 'Demissão';
+    const tipoEvento = getTipoEventoSaida(demissao.tipo_desligamento);
+    const tipoLabel = getTipoLabelSaida(demissao.tipo_desligamento);
     
     await criarEventoSistema({
       tipo: tipoEvento,
@@ -156,6 +165,7 @@ export default function Demissoes() {
       setor_nome: demissao.funcionario?.setor?.nome || null,
       turma: demissao.funcionario?.turma || null,
       criado_por: userRole?.nome || 'Sistema',
+      dados_extra: { tipo_desligamento: demissao.tipo_desligamento || 'Demissão' },
     });
   };
 
@@ -168,8 +178,8 @@ export default function Demissoes() {
 
   const handleNotificar = async (demissao: Demissao) => {
     const nomeFunc = demissao.funcionario?.nome_completo || 'Colaborador';
-    const tipoEvento = demissao.tipo_desligamento === 'Pedido de Demissão' ? 'pedido_demissao' : 'demissao';
-    const tipoLabel = demissao.tipo_desligamento === 'Pedido de Demissão' ? 'Pedido de Demissão' : 'Demissão';
+    const tipoEvento = getTipoEventoSaida(demissao.tipo_desligamento);
+    const tipoLabel = getTipoLabelSaida(demissao.tipo_desligamento);
     const isTemp = demissao.funcionario?.matricula?.toUpperCase().startsWith('TEMP');
     const dataDemissao = format(parseISO(demissao.data_prevista), 'dd/MM/yyyy');
     
@@ -182,6 +192,7 @@ export default function Demissoes() {
       setor_nome: demissao.funcionario?.setor?.nome || null,
       turma: demissao.funcionario?.turma || null,
       criado_por: userRole?.nome || 'Sistema',
+      dados_extra: { tipo_desligamento: demissao.tipo_desligamento || 'Demissão' },
     });
 
     try {
@@ -207,13 +218,32 @@ export default function Demissoes() {
           if (extras.some(s => s.setor_id === setorId)) gestoresIds.add(g.id);
         });
 
+        const { data: funcionarioSexo } = await supabase
+          .from('funcionarios')
+          .select('sexo')
+          .eq('id', demissao.funcionario_id)
+          .maybeSingle();
+
+        if ((funcionarioSexo?.sexo || '').toLowerCase() === 'masculino') {
+          const { data: segurancaTrabalho } = await supabase
+            .from('user_roles')
+            .select('id, nome, email')
+            .eq('ativo', true)
+            .eq('recebe_notificacoes', true);
+
+          segurancaTrabalho?.forEach(user => {
+            const identificador = normalizarTexto(`${user.nome || ''} ${user.email || ''}`);
+            if (identificador.includes('SEGURANCA')) gestoresIds.add(user.id);
+          });
+        }
+
         if (gestoresIds.size > 0) {
           const notificacoes = [...gestoresIds]
             .filter(id => id !== userRole?.id)
             .map(gestorId => ({
               user_role_id: gestorId,
               tipo: tipoEvento === 'pedido_demissao' ? 'pedido_demissao_lancado' : 'demissao_lancada' as string,
-              titulo: `${isTemp ? '🏭 TEMPORÁRIO' : '📋 DEMISSÃO'} — ${tipoLabel.toUpperCase()}`,
+              titulo: `${isTemp ? '🏭 TEMPORÁRIO' : '📋 SAÍDA DO QUADRO'} — ${tipoLabel}`,
               mensagem: `${nomeFunc.toUpperCase()}\n📍 ${demissao.funcionario?.setor?.nome?.toUpperCase() || 'SEM SETOR'}${demissao.funcionario?.turma ? ` — ${demissao.funcionario.turma}` : ''}\n📅 Data: ${dataDemissao}`,
               referencia_id: demissao.id,
             }));

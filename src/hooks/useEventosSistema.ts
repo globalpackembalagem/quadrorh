@@ -216,6 +216,7 @@ export function useEnviarNotificacaoEventos() {
         quantidade: number; funcionarios: string[]; evento_id: string;
         funcionario_id?: string | null; funcionario_sexo?: string | null;
         setor_origem_id?: string | null; setor_destino_id?: string | null;
+        tipo_desligamento?: string | null;
         mensagem_personalizada?: string | null;
         destinatarios?: string[] | null;
       }>();
@@ -248,6 +249,7 @@ export function useEnviarNotificacaoEventos() {
           funcionario_sexo: ev.funcionario_id ? sexoPorFuncionario.get(ev.funcionario_id) || null : null,
           setor_origem_id: dadosExtra.setor_origem_id || null,
           setor_destino_id: dadosExtra.setor_destino_id || null,
+          tipo_desligamento: dadosExtra.tipo_desligamento || null,
           mensagem_personalizada: dadosExtra.mensagem_personalizada || null,
           destinatarios: dadosExtra.destinatarios || null,
         });
@@ -281,7 +283,7 @@ export function useEnviarNotificacaoEventos() {
       const notificacoes: any[] = [];
 
       grupos.forEach((grupo) => {
-        const tipoLabel = getTipoLabel(grupo.tipo);
+        const tipoLabel = getTipoLabel(grupo.tipo, grupo.tipo_desligamento);
         const turmaStr = grupo.turma ? ` - ${grupo.turma}` : '';
         
         // Mensagem base
@@ -507,7 +509,11 @@ export async function criarEventoSistema(params: {
   return criarEventoENotificar(params);
 }
 
-function getTipoLabel(tipo: string): string {
+function getTipoLabel(tipo: string, tipoDesligamento?: string | null): string {
+  if ((tipo === 'demissao' || tipo === 'pedido_demissao') && tipoDesligamento) {
+    return tipoDesligamento.toUpperCase();
+  }
+
   const labels: Record<string, string> = {
     admissao: 'ADMISSÃO',
     ativacao: 'ADMISSÃO',

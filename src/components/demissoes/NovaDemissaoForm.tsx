@@ -65,6 +65,12 @@ interface NovaDemissaoFormProps {
   onSuccess: () => void;
 }
 
+const isPedidoDemissao = (tipo?: string | null) => tipo === 'Pedido de Demissão';
+
+const getTipoEventoSaida = (tipo?: string | null) => isPedidoDemissao(tipo) ? 'pedido_demissao' : 'demissao';
+
+const getTipoLabelSaida = (tipo?: string | null) => (tipo || 'Demissão').toUpperCase();
+
 export function NovaDemissaoForm({ onSuccess }: NovaDemissaoFormProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showSearchHint, setShowSearchHint] = useState(false);
@@ -163,8 +169,8 @@ export function NovaDemissaoForm({ onSuccess }: NovaDemissaoFormProps) {
 
       // Enviar para notificações se marcado
       if (enviarNotificacao && funcionarioSelecionado) {
-        const tipoEvento = data.tipo_desligamento === 'Pedido de Demissão' ? 'pedido_demissao' : 'demissao';
-        const tipoLabel = data.tipo_desligamento === 'Pedido de Demissão' ? 'Pedido de Demissão' : 'Demissão';
+        const tipoEvento = getTipoEventoSaida(data.tipo_desligamento);
+        const tipoLabel = getTipoLabelSaida(data.tipo_desligamento);
         await criarEventoSistema({
           tipo: tipoEvento,
           descricao: `${tipoLabel} — ${funcionarioSelecionado.nome_completo}`,
@@ -174,6 +180,7 @@ export function NovaDemissaoForm({ onSuccess }: NovaDemissaoFormProps) {
           setor_nome: funcionarioSelecionado.setor?.nome || null,
           turma: funcionarioSelecionado.turma || null,
           criado_por: userRole?.nome || 'Sistema',
+          dados_extra: { tipo_desligamento: data.tipo_desligamento || 'Demiss�o' },
         });
       }
 
