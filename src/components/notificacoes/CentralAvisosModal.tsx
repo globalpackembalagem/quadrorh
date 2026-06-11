@@ -260,7 +260,19 @@ export function CentralAvisosModal() {
     if (!userRole.nome) return true;
 
     const avisosComRef = avisosParaMarcar.filter(a => a.referencia_id);
+    let avisosComCienciaNova = avisosComRef;
+
     if (avisosComRef.length > 0) {
+      const referencias = avisosComRef.map(a => a.referencia_id!);
+      const { data: vistasExistentes } = await supabase
+        .from('notificacoes_vistas')
+        .select('evento_id')
+        .eq('user_role_id', userRole.id)
+        .in('evento_id', referencias);
+
+      const eventosJaVistos = new Set((vistasExistentes || []).map(v => v.evento_id));
+      avisosComCienciaNova = avisosComRef.filter(a => !eventosJaVistos.has(a.referencia_id!));
+
       const { error: vistaError } = await supabase
         .from('notificacoes_vistas')
         .upsert(
@@ -274,6 +286,42 @@ export function CentralAvisosModal() {
 
       if (vistaError) {
         console.warn('[CIENTE] Nao foi possivel registrar historico de ciencia:', vistaError);
+      }
+    }
+
+    const avisosDemissao = avisosComCienciaNova.filter(a =>
+      a.referencia_id &&
+      (a.tipo === 'demissao_lancada' || a.tipo === 'pedido_demissao_lancado')
+    );
+
+    if (avisosDemissao.length > 0) {
+      try {
+        const { data: adminsLuciano } = await supabase
+          .from('user_roles')
+          .select('id')
+          .eq('ativo', true)
+          .ilike('nome', 'LUCIANO');
+
+        const notificacoesRetorno = (adminsLuciano || [])
+          .filter((admin: any) => admin.id !== userRole.id)
+          .flatMap((admin: any) =>
+            avisosDemissao.map(aviso => {
+              const tipoLabel = aviso.tipo === 'pedido_demissao_lancado' ? 'PEDIDO DE DEMISSAO' : 'DEMISSAO';
+              return {
+                user_role_id: admin.id,
+                tipo: 'ciencia_retorno',
+                titulo: `CIENCIA - ${tipoLabel}`,
+                mensagem: montarMensagemRetornoCiencia(userRole.nome, tipoLabel, aviso.mensagem),
+                referencia_id: aviso.referencia_id,
+              };
+            })
+          );
+
+        if (notificacoesRetorno.length > 0) {
+          await supabase.from('notificacoes').insert(notificacoesRetorno);
+        }
+      } catch (err) {
+        console.warn('[CIENTE] Nao foi possivel enviar retorno de ciencia:', err);
       }
     }
 
