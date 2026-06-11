@@ -150,7 +150,7 @@ export function TurmaPendenteActions({ aviso, isCiente, userRoleName, onDone }: 
         disabled={!turma || salvando || isCiente}
       >
         <CheckCircle2 className="h-3.5 w-3.5" />
-        {salvando ? 'SALVANDO...' : 'DEFINIR TURMA'}
+        {salvando ? 'SALVANDO...' : 'INCLUIR TURMA'}
       </Button>
     </div>
   );

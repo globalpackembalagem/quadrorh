@@ -56,14 +56,16 @@ const podeCobrarTurmaNaSegundaSeguinte = (dataAdmissao?: string | null) => {
   if (!dataAdmissao) return false;
 
   const hoje = startOfDay(new Date());
+  if (hoje.getDay() !== 1) return false;
+
   const admissao = startOfDay(parseISO(dataAdmissao));
   if (Number.isNaN(admissao.getTime())) return false;
 
-  const diaSemana = admissao.getDay();
-  const diasAteProximaSegunda = diaSemana === 1 ? 7 : (8 - diaSemana) % 7 || 7;
-  const segundaSeguinte = addDays(admissao, diasAteProximaSegunda);
+  const prazo = admissao.getDay() === 1
+    ? addDays(admissao, 7)
+    : addDays(admissao, 2);
 
-  return differenceInCalendarDays(hoje, segundaSeguinte) >= 0;
+  return differenceInCalendarDays(hoje, prazo) >= 0;
 };
 
 const TIPO_LABELS: Record<string, string> = {
@@ -346,7 +348,7 @@ export default function Notificacoes() {
 
       const eventosParaInserir = todos.map((func: any) => ({
         tipo: 'turma_pendente',
-        descricao: `TURMA PENDENTE — ${func.nome_completo}`,
+        descricao: `LEMBRETE TURMA PENDENTE — ${func.nome_completo}`,
         funcionario_id: func.id,
         funcionario_nome: func.nome_completo,
         setor_id: func.setor_id,
@@ -355,6 +357,8 @@ export default function Notificacoes() {
         criado_por: userRole?.nome || 'ADMIN',
         dados_extra: {
           setor_grupo: ((func.setor as any)?.grupo || '').toUpperCase(),
+          mensagem_personalizada: `Funcionário sem turma. Você já tem a turma deste funcionário? Prazo para incluir a turma: hoje.`,
+          prazo_turma: 'hoje',
         },
         notificado: false,
       }));
