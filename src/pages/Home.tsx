@@ -9,6 +9,7 @@ import { useAdmissaoRecente, agruparRecentesPorTurma } from '@/hooks/useAdmissao
 import { useTreinamentosPrevisao } from '@/hooks/useTreinamentosPrevisao';
 import { useMemo } from 'react';
 import { HomeFaltasMetrics } from '@/components/home/HomeFaltasMetrics';
+import { HomeFaltasAlertButton } from '@/components/home/HomeFaltasAlertButton';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -44,6 +45,7 @@ export default function Home() {
             <Clock className="h-4 w-4" />
             Faltas
           </Button>
+          <HomeFaltasAlertButton />
           <Button variant="outline" size="sm" onClick={() => navigate('/dashboard')} className="gap-2">
             <LayoutDashboard className="h-4 w-4" />
             Quadro Completo
