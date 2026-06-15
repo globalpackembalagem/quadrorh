@@ -570,10 +570,25 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
                   <ChevronRight className="h-3.5 w-3.5 ml-auto transition-transform [[data-state=open]>&]:rotate-90 opacity-40 text-yellow-500" />
                 </button>
               </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="mt-2 space-y-1 ml-4 border-l border-sidebar-border/50 pl-2">
-                  {adminNavigation.map((item) => (
-                    <Link
+	              <CollapsibleContent>
+	                <div className="mt-2 space-y-1 ml-4 border-l border-sidebar-border/50 pl-2">
+	                  {canAccessFakeQuadro && (
+	                    <Link
+	                      to="/admin/fake-quadro"
+	                      onClick={closeFn}
+	                      className={cn(
+	                        'flex items-center gap-3 rounded-xl px-4 py-2.5 text-[12px] font-medium transition-all duration-200',
+	                        isActive('/admin/fake-quadro')
+	                          ? 'bg-sidebar-primary/10 text-sidebar-primary font-bold border border-sidebar-primary/20'
+	                          : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
+	                      )}
+	                    >
+	                      <ShieldCheck className={cn("h-4 w-4 shrink-0", isActive('/admin/fake-quadro') ? "text-sidebar-primary" : "text-sidebar-foreground/40")} />
+	                      <span className="truncate">QUADRO FAKE</span>
+	                    </Link>
+	                  )}
+	                  {adminNavigation.map((item) => (
+	                    <Link
                       key={item.name}
                       to={item.href}
                       
