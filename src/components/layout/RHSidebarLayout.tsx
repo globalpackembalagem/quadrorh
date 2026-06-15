@@ -89,6 +89,7 @@ const allRHNavigation: NavItem[] = [
     icon: Clock,
     subItems: [
       { name: 'POR FUNCIONÁRIOS', href: '/faltas', icon: ClipboardList },
+      { name: 'ALERTAS 3+', href: '/faltas/alertas', icon: AlertTriangle },
       { name: 'INTEGRAÇÃO', href: '/faltas/integracao', icon: ListChecks },
     ]
   },
@@ -256,6 +257,7 @@ function getNavigationForUser(
       viewOnly: !perms.pode_editar_faltas,
       subItems: [
         { name: 'POR FUNCIONÁRIOS', href: '/faltas', icon: ClipboardList },
+        { name: 'ALERTAS 3+', href: '/faltas/alertas', icon: AlertTriangle },
         ...(perms.pode_editar_faltas ? [{ name: 'INTEGRAÇÃO', href: '/faltas/integracao', icon: ListChecks }] : []),
       ]
     });

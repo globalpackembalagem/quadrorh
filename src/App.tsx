@@ -55,6 +55,7 @@ const Funcionarios = lazyRetry(() => import("./pages/Funcionarios"));
 const PrevisaoAdmissao = lazyRetry(() => import("./pages/PrevisaoAdmissao"));
 const CoberturasTreinamentos = lazyRetry(() => import("./pages/CoberturasTreinamentos"));
 const ControleFaltas = lazyRetry(() => import("./pages/ControleFaltas"));
+const FaltasAlertas = lazyRetry(() => import("./pages/FaltasAlertas"));
 const IntegracaoFaltas = lazyRetry(() => import("./pages/IntegracaoFaltas"));
 const Demissoes = lazyRetry(() => import("./pages/Demissoes"));
 const CartaDesligamento = lazyRetry(() => import("./pages/CartaDesligamento"));
@@ -176,8 +177,9 @@ function LayoutRouter() {
             
             <Route path="/coberturas-treinamentos" element={<RotaProtegida requireCoberturas><CoberturasTreinamentos /></RotaProtegida>} />
             
-            <Route path="/faltas" element={<RotaProtegida allowVisualizacao><ControleFaltas /></RotaProtegida>} />
-            <Route path="/faltas/integracao" element={<RotaProtegida requireFaltas><IntegracaoFaltas /></RotaProtegida>} />
+	            <Route path="/faltas" element={<RotaProtegida allowVisualizacao><ControleFaltas /></RotaProtegida>} />
+	            <Route path="/faltas/alertas" element={<RotaProtegida allowVisualizacao><FaltasAlertas /></RotaProtegida>} />
+	            <Route path="/faltas/integracao" element={<RotaProtegida requireFaltas><IntegracaoFaltas /></RotaProtegida>} />
             <Route path="/controle-faltas" element={<Navigate to="/faltas" replace />} />
             
             
