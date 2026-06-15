@@ -275,7 +275,7 @@ export function useEfetivarTrocaTurno() {
       // 2. Remover registros de falta após a data programada da transferência
       const { data: trocaInfo } = await supabase
         .from('trocas_turno')
-        .select('data_programada')
+        .select('data_programada, tipo')
         .eq('id', params.id)
         .single();
 
@@ -297,6 +297,8 @@ export function useEfetivarTrocaTurno() {
       };
       if (params.turma_destino) {
         updateFunc.turma = params.turma_destino;
+      } else if (trocaInfo?.tipo === 'transferencia') {
+        updateFunc.turma = null;
       }
 
       const { error: fErr } = await supabase

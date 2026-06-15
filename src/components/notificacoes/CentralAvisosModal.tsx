@@ -108,11 +108,13 @@ const extrairResumoDemissao = (mensagem?: string) => {
   return [colaborador, setor, data].filter(Boolean).join('\n');
 };
 
-const montarMensagemRetornoCiencia = (nomeGestor: string, tipoLabel: string, mensagemOrigem?: string) => {
+const montarMensagemRetornoCiencia = (nomeGestor: string, tipoLabel: string, mensagemOrigem?: string, funcionarioNome?: string | null) => {
   const resumo = extrairResumoDemissao(mensagemOrigem);
-  return resumo
-    ? `${nomeGestor} deu CIÊNCIA em ${tipoLabel}:\n${resumo}`
-    : `${nomeGestor} deu CIÊNCIA em ${tipoLabel}.`;
+  const nomeLinha = funcionarioNome ? `FUNCIONARIO: ${funcionarioNome.toUpperCase()}` : '';
+  const detalhes = [nomeLinha, resumo].filter(Boolean).join('\n');
+  return detalhes
+    ? `${nomeGestor} deu CIENCIA em ${tipoLabel}:\n${detalhes}`
+    : `${nomeGestor} deu CIENCIA em ${tipoLabel}.`;
 };
 
 export function CentralAvisosModal() {
@@ -302,6 +304,13 @@ export function CentralAvisosModal() {
           .eq('ativo', true)
           .ilike('nome', 'LUCIANO');
 
+        const { data: eventosDemissao } = await supabase
+          .from('eventos_sistema')
+          .select('id, funcionario_nome')
+          .in('id', avisosDemissao.map(a => a.referencia_id!));
+
+        const nomesPorEvento = new Map((eventosDemissao || []).map((ev: any) => [ev.id, ev.funcionario_nome as string | null]));
+
         const notificacoesRetorno = (adminsLuciano || [])
           .filter((admin: any) => admin.id !== userRole.id)
           .flatMap((admin: any) =>
@@ -311,7 +320,7 @@ export function CentralAvisosModal() {
                 user_role_id: admin.id,
                 tipo: 'ciencia_retorno',
                 titulo: `CIENCIA - ${tipoLabel}`,
-                mensagem: montarMensagemRetornoCiencia(userRole.nome, tipoLabel, aviso.mensagem),
+                mensagem: montarMensagemRetornoCiencia(userRole.nome, tipoLabel, aviso.mensagem, nomesPorEvento.get(aviso.referencia_id!)),
                 referencia_id: aviso.referencia_id,
               };
             })

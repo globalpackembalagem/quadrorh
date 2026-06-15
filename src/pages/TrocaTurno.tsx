@@ -101,6 +101,7 @@ export default function TrocaTurno() {
   const [filtroGrupo, setFiltroGrupo] = useState<string>('');
   const [filtroTurno, setFiltroTurno] = useState<string>('');
   const [filtroModo, setFiltroModo] = useState<'atual' | 'destino'>('atual');
+  const [idsAutoEfetivados, setIdsAutoEfetivados] = useState<Set<string>>(new Set());
   
 
   const [idsSimulando] = useState<Set<string>>(new Set());
@@ -254,6 +255,29 @@ export default function TrocaTurno() {
       usuario_nome: userRole?.nome || 'RH',
     });
   };
+
+  useEffect(() => {
+    if (efetivarTroca.isPending) return;
+    const hoje = format(new Date(), 'yyyy-MM-dd');
+    const trocaVencida = trocas.find(t =>
+      t.data_programada &&
+      t.data_programada <= hoje &&
+      !t.efetivada &&
+      t.status === 'pendente_rh' &&
+      !idsAutoEfetivados.has(t.id)
+    );
+
+    if (!trocaVencida) return;
+
+    setIdsAutoEfetivados(prev => new Set(prev).add(trocaVencida.id));
+    efetivarTroca.mutate({
+      id: trocaVencida.id,
+      funcionario_id: trocaVencida.funcionario_id,
+      setor_destino_id: trocaVencida.setor_destino_id,
+      turma_destino: trocaVencida.turma_destino,
+      usuario_nome: 'Sistema - data programada',
+    });
+  }, [trocas, efetivarTroca, idsAutoEfetivados]);
 
   const handleAbrirEditar = (t: TrocaTurnoType) => {
     setTrocaEditar(t);

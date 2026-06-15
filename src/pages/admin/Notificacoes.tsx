@@ -338,8 +338,25 @@ export default function Notificacoes() {
         .in('situacao_id', situacoesAtivoFerias)
         .eq('turma', '');
 
+      const idsSemTurma = [...(funcs || []), ...(funcsVazio || [])].map((func: any) => func.id);
+      const { data: transferenciasEfetivadas } = idsSemTurma.length > 0
+        ? await supabase
+          .from('trocas_turno')
+          .select('funcionario_id, data_efetivada, data_programada')
+          .in('funcionario_id', idsSemTurma)
+          .eq('efetivada', true)
+        : { data: [] as any[] };
+
+      const dataTransferenciaPorFuncionario = new Map<string, string>();
+      (transferenciasEfetivadas || []).forEach((troca: any) => {
+        const dataRef = troca.data_efetivada || troca.data_programada;
+        if (!dataRef) return;
+        const atual = dataTransferenciaPorFuncionario.get(troca.funcionario_id);
+        if (!atual || dataRef > atual) dataTransferenciaPorFuncionario.set(troca.funcionario_id, dataRef);
+      });
+
       const todos = [...(funcs || []), ...(funcsVazio || [])]
-        .filter((func: any) => podeCobrarTurmaNaSegundaSeguinte(func.data_admissao));
+        .filter((func: any) => podeCobrarTurmaNaSegundaSeguinte(dataTransferenciaPorFuncionario.get(func.id) || func.data_admissao));
 
       if (todos.length === 0) {
         toast.info('Nenhum funcionário sem turma para cobrar nesta semana.');
