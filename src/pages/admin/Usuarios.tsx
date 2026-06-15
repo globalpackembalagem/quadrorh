@@ -210,6 +210,8 @@ export default function Usuarios() {
           setor_id: setoresIds[0] || null,
           tempo_inatividade: tempoInatividade,
           ...permissoesRestritas,
+          pode_visualizar_integracao: pode_visualizar_integracoes,
+          pode_editar_integracao: pode_editar_integracoes,
         } as any)
         .select()
         .single();
@@ -250,6 +252,8 @@ export default function Usuarios() {
       const updateData: Record<string, unknown> = {
         nome, email: email || null, setor_id: setoresIds[0] || null,
         ativo, tempo_inatividade: tempoInatividade, ...permissoesRestritas,
+        pode_visualizar_integracao: pode_visualizar_integracoes,
+        pode_editar_integracao: pode_editar_integracoes,
       };
       // NÃO salvar senha diretamente no update
 
@@ -389,8 +393,8 @@ export default function Usuarios() {
       pode_editar_troca_turno: (user as any).pode_editar_troca_turno ?? true,
       pode_visualizar_armarios: (user as any).pode_visualizar_armarios ?? false,
       pode_editar_armarios: (user as any).pode_editar_armarios ?? false,
-      pode_visualizar_integracoes: (user as any).pode_visualizar_integracoes ?? true,
-      pode_editar_integracoes: (user as any).pode_editar_integracoes ?? false,
+      pode_visualizar_integracoes: (user as any).pode_visualizar_integracao ?? (user as any).pode_visualizar_integracoes ?? true,
+      pode_editar_integracoes: (user as any).pode_editar_integracao ?? (user as any).pode_editar_integracoes ?? false,
       pode_exportar_excel: user.pode_exportar_excel,
       acesso_admin: user.acesso_admin,
       recebe_notificacoes: user.recebe_notificacoes ?? true,
