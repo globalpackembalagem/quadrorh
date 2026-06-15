@@ -733,12 +733,6 @@ export default function Usuarios() {
             </div>
 
             {/* Email */}
-            <div className="space-y-2">
-              <Label>Email (para notificações)</Label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value.toLowerCase())} placeholder="email@empresa.com" className="!lowercase" />
-              <p className="text-xs text-muted-foreground">Opcional — usado para envio de alertas e relatórios</p>
-            </div>
-
             {/* Senha */}
             <div className="space-y-2">
               <Label>{editingUser ? 'Nova Senha (deixe em branco para manter)' : 'Senha'}</Label>
