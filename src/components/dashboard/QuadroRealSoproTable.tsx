@@ -81,7 +81,8 @@ export function QuadroRealSoproTable({ funcionarios, quadroPlanejado, turmas }: 
       ).length;
       
       const fakeValue = usuarioAtual?.fake_quadro_ativo ? (usuarioAtual?.fake_quadro_config?.sopro?.[turma] || 0) : 0;
-      const quadroReal = (gp + globalpack + temporarios) - fakeValue;
+      const globalpackFake = Math.max(0, globalpack - fakeValue);
+      const quadroReal = gp + globalpackFake + temporarios;
       
       // Pegar total necessário do planejado
       const planejado = planejadoPorTurma[turma];
@@ -91,7 +92,7 @@ export function QuadroRealSoproTable({ funcionarios, quadroPlanejado, turmas }: 
 
       result[turma] = {
         gp,
-        globalpack,
+        globalpack: globalpackFake,
         temporarios,
         quadroReal,
         totalNecessario,
