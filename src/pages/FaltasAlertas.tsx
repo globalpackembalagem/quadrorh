@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 const TIPO_DIVERGENCIA = 'FALTAS_3_MAIS_RH';
-const DATA_INICIO_CONTAGEM = '2026-06-12';
+const DATA_INICIO_CONTAGEM = '2026-06-01';
 
 function normalizar(texto?: string | null) {
   return (texto || '')
@@ -150,7 +150,7 @@ export default function FaltasAlertas() {
           ALERTAS DE FALTAS 3+
         </h1>
         <p className="text-sm text-muted-foreground">
-          Conta faltas a partir de 12/06/2026. Quando um alerta e resolvido, a contagem zera e so volta com 3 novas faltas.
+          Conta faltas a partir de 01/06/2026. Quando um alerta e resolvido, a contagem zera e so volta com 3 novas faltas.
         </p>
       </div>
 
