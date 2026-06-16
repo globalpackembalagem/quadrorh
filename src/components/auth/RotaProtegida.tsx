@@ -45,12 +45,17 @@ export function RotaProtegida({
     return <Navigate to="/" replace />;
   }
 
-  // REAL PARCERIA: pode acessar /previsao-admissao e /faltas (somente visualização)
+  // REAL PARCERIA: acesso pontual, sempre em modo visualização
   if (userRole?.nome?.toUpperCase() === 'REAL PARCERIA') {
-    if (location.pathname === '/previsao-admissao' || location.pathname.startsWith('/faltas')) {
+    const rotasPermitidas = [
+      '/home',
+      '/previsao-admissao',
+      '/funcionarios',
+    ];
+    if (rotasPermitidas.includes(location.pathname) || location.pathname.startsWith('/faltas')) {
       return <>{children}</>;
     }
-    return <Navigate to="/previsao-admissao" replace />;
+    return <Navigate to="/home" replace />;
   }
 
   // Se permite visualização, deixa passar

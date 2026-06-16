@@ -145,17 +145,19 @@ function getNavigationForUser(
     .toUpperCase();
   const podeVerHistoricoQuadro = userNameNormalizado === 'LUCIANO' || userNameNormalizado === 'MAURICIO';
 
-  // REAL PARCERIA: acesso restrito a Previsão de Admissão + Faltas (somente visualização, apenas TEMP)
+  // REAL PARCERIA: acesso pontual, sempre em modo visualização
   if (userName?.toUpperCase() === 'REAL PARCERIA') {
     return [
-      { name: 'PREVISÃO ADMISSÃO', href: '/previsao-admissao', icon: UserPlus },
+      { name: 'QUADRO DE FUNCIONÁRIOS', href: '/home', icon: LayoutDashboard },
+      { name: 'FUNCIONÁRIOS', href: '/funcionarios', icon: Users, viewOnly: true },
+      { name: 'PREVISÃO ADMISSÃO', href: '/previsao-admissao', icon: UserPlus, viewOnly: true },
       { 
         name: 'CONTROLE DE FALTAS', 
         href: '/faltas', 
         icon: Clock,
         viewOnly: true,
         subItems: [
-          { name: 'POR FUNCIONÁRIOS (TEMP)', href: '/faltas', icon: ClipboardList },
+          { name: 'MÉTRICAS SETOR/DIA', href: '/faltas', icon: ClipboardList },
         ]
       },
     ];

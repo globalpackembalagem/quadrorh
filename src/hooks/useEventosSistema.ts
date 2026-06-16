@@ -214,7 +214,7 @@ export function useEnviarNotificacaoEventos() {
       const grupos = new Map<string, {
         tipo: string; setor_nome: string; turma: string | null; setor_id: string | null;
         quantidade: number; funcionarios: string[]; evento_id: string;
-        funcionario_id?: string | null; funcionario_sexo?: string | null;
+        funcionario_id?: string | null; funcionario_sexo?: string | null; funcionario_matricula?: string | null;
         setor_origem_id?: string | null; setor_destino_id?: string | null;
         tipo_desligamento?: string | null;
         mensagem_personalizada?: string | null;
@@ -227,11 +227,14 @@ export function useEnviarNotificacaoEventos() {
       const { data: funcionariosEventos } = funcionarioIds.length > 0
         ? await supabase
             .from('funcionarios')
-            .select('id, sexo')
+            .select('id, sexo, matricula')
             .in('id', funcionarioIds)
-        : { data: [] as { id: string; sexo: string | null }[] };
+        : { data: [] as { id: string; sexo: string | null; matricula: string | null }[] };
       const sexoPorFuncionario = new Map(
         (funcionariosEventos || []).map(func => [func.id, func.sexo])
+      );
+      const matriculaPorFuncionario = new Map(
+        (funcionariosEventos || []).map(func => [func.id, func.matricula])
       );
       
       eventos.forEach(ev => {
@@ -247,6 +250,7 @@ export function useEnviarNotificacaoEventos() {
           evento_id: ev.id,
           funcionario_id: ev.funcionario_id,
           funcionario_sexo: ev.funcionario_id ? sexoPorFuncionario.get(ev.funcionario_id) || null : null,
+          funcionario_matricula: ev.funcionario_id ? matriculaPorFuncionario.get(ev.funcionario_id) || null : null,
           setor_origem_id: dadosExtra.setor_origem_id || null,
           setor_destino_id: dadosExtra.setor_destino_id || null,
           tipo_desligamento: dadosExtra.tipo_desligamento || null,
@@ -333,9 +337,27 @@ export function useEnviarNotificacaoEventos() {
           // Admin não recebe notificação — é quem envia
           if (isAdmin) return;
           const isSegurancaTrabalho = normalizarTexto(`${ur.nome || ''} ${ur.email || ''}`).includes('SEGURANCA');
+          const isRealParceria = normalizarTexto(ur.nome || '') === 'REAL PARCERIA';
           const isEventoDesligamento = grupo.tipo === 'demissao' || grupo.tipo === 'pedido_demissao';
+          const isEventoAdmissao = grupo.tipo === 'admissao' || grupo.tipo === 'ativacao';
           const isFuncionarioMasculino = (grupo.funcionario_sexo || '').toLowerCase() === 'masculino';
+          const isFuncionarioTemp = (grupo.funcionario_matricula || '').toUpperCase().startsWith('TEMP');
           const isRH = ur.perfil === 'rh_completo' || ur.perfil === 'rh_demissoes';
+
+          if (isRealParceria) {
+            if (!isFuncionarioTemp || (!isEventoDesligamento && !isEventoAdmissao)) return;
+
+            notificacoes.push({
+              user_role_id: ur.id,
+              tipo: isEventoDesligamento
+                ? (grupo.tipo === 'pedido_demissao' ? 'pedido_demissao_lancado' : 'demissao_lancada')
+                : 'evento_sistema_modal',
+              titulo: tipoLabel,
+              mensagem: `${mensagemBase}${nomesStr}${msgPersonalizada}`,
+              referencia_id: grupo.evento_id,
+            });
+            return;
+          }
           
           // RH nao recebe notificacoes, exceto a regra especifica de Seguranca do Trabalho
           if (isRH && !isSegurancaTrabalho) return;

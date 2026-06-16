@@ -145,12 +145,6 @@ function LayoutRouter() {
     return <Navigate to="/" replace />;
   }
 
-  // REAL PARCERIA: redirecionar para previsão se tentar acessar home
-  const isRealParceria = isRHMode && userRole?.nome?.toUpperCase() === 'REAL PARCERIA';
-  if (isRealParceria && location.pathname === '/home') {
-    return <Navigate to="/previsao-admissao" replace />;
-  }
-
   // Gestores agora também veem /home como todos os outros usuários
 
   // TODAS as rotas autenticadas usam o mesmo layout com sidebar

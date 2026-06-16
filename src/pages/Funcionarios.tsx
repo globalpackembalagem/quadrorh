@@ -171,7 +171,9 @@ export default function Funcionarios() {
   const { data: setoresAtivos = [] } = useSetoresAtivos();
   const { data: todasSituacoes = [] } = useSituacoes();
   const { data: situacoesAtivas = [] } = useSituacoesAtivas();
-  const { canEditFuncionarios, isVisualizacao, isAdmin, isRHMode } = useAuth();
+  const { canEditFuncionarios, isVisualizacao, isAdmin, isRHMode, userRole } = useAuth();
+  const isRealParceria = userRole?.nome?.toUpperCase() === 'REAL PARCERIA';
+  const podeEditarFuncionarios = canEditFuncionarios && !isVisualizacao && !isRealParceria;
   const updateFuncionario = useUpdateFuncionario();
   const deleteFuncionario = useDeleteFuncionario();
   const createFuncionario = useCreateFuncionario();
@@ -835,23 +837,25 @@ export default function Funcionarios() {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h1 className="page-title">FUNCIONÁRIOS</h1>
-            <p className="page-description">CLIQUE EM UM FUNCIONÁRIO PARA EDITAR</p>
+            <p className="page-description">
+              {podeEditarFuncionarios ? 'CLIQUE EM UM FUNCIONÁRIO PARA EDITAR' : 'VISUALIZE E PESQUISE OS FUNCIONÁRIOS'}
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm" onClick={openNew} className="gap-2" disabled={!canEditFuncionarios || isVisualizacao}>
+            <Button size="sm" onClick={openNew} className="gap-2" disabled={!podeEditarFuncionarios}>
               <Plus className="h-4 w-4" />
               NOVO FUNCIONÁRIO
             </Button>
-            {canEditFuncionarios && !isVisualizacao && <TrocaUnificadaDialog funcionarios={funcionarios} />}
+            {podeEditarFuncionarios && <TrocaUnificadaDialog funcionarios={funcionarios} />}
             {isAdmin && (
               <Button size="sm" variant="outline" onClick={() => setImportarTurmasOpen(true)}>
                 <Upload className="h-4 w-4 mr-1" />
                 TURMAS
               </Button>
             )}
-            {canEditFuncionarios && !isVisualizacao && <ZerarBaseDialog />}
+            {podeEditarFuncionarios && <ZerarBaseDialog />}
             <ExportarFuncionariosDialog funcionarios={funcionarios} setores={setores} situacoes={todasSituacoes} />
-            {canEditFuncionarios && !isVisualizacao && <ImportarFuncionarios setores={setores} situacoes={todasSituacoes} />}
+            {podeEditarFuncionarios && <ImportarFuncionarios setores={setores} situacoes={todasSituacoes} />}
             {isAdmin && (
               <>
                 <Button size="sm" variant="outline" onClick={handleRemoverAcentos} className="gap-1">
@@ -1021,8 +1025,8 @@ export default function Funcionarios() {
                       return (
                         <tr
                           key={func.id}
-                          className={canEditFuncionarios ? 'cursor-pointer hover:bg-muted/50' : 'hover:bg-muted/50'}
-                          onClick={() => canEditFuncionarios && openEdit(func)}
+                          className={podeEditarFuncionarios ? 'cursor-pointer hover:bg-muted/50' : 'hover:bg-muted/50'}
+                          onClick={() => podeEditarFuncionarios && openEdit(func)}
                         >
                           <td>{func.empresa}</td>
                           <td>{func.matricula || '-'}</td>
