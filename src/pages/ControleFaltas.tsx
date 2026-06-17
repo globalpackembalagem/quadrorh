@@ -1098,15 +1098,26 @@ export default function ControleFaltas() {
       const hojeInicio = startOfDay(new Date()).toISOString();
       const referenciaId = `temp-sumido-${alerta.funcionario.id}-${periodoEfetivo}`;
 
-      const { data: lucianos, error: userError } = await supabase
+      const { data: destinatarios, error: userError } = await supabase
         .from('user_roles')
-        .select('id, nome')
+        .select('id, nome, perfil, recebe_notificacoes')
         .eq('ativo', true)
-        .ilike('nome', 'LUCIANO');
+        .or('nome.ilike.LUCIANO,perfil.eq.rh_completo,perfil.eq.rh_demissoes');
 
       if (userError) throw userError;
-      if (!lucianos || lucianos.length === 0) {
+      const lucianos = (destinatarios || []).filter(user => user.nome?.toUpperCase() === 'LUCIANO');
+      const destinatariosNotificacao = (destinatarios || []).filter(user => {
+        const isLuciano = user.nome?.toUpperCase() === 'LUCIANO';
+        const isRH = user.perfil === 'rh_completo' || user.perfil === 'rh_demissoes';
+        return isLuciano || (isRH && user.recebe_notificacoes !== false);
+      });
+
+      if (lucianos.length === 0) {
         toast.error('Usuário LUCIANO não encontrado para receber notificação.');
+        return;
+      }
+      if (destinatariosNotificacao.length === 0) {
+        toast.error('Nenhum destinatário encontrado para receber notificação.');
         return;
       }
 
@@ -1128,15 +1139,15 @@ export default function ControleFaltas() {
       const setor = funcionario.setor?.nome || funcionario.setor?.grupo || 'Sem setor';
       const confirmadoPor = userRole?.nome || usuarioAtual?.nome || 'Sistema';
 
-      await supabase.from('notificacoes').insert(lucianos.map(luciano => ({
-        user_role_id: luciano.id,
+      await supabase.from('notificacoes').insert(destinatariosNotificacao.map(destinatario => ({
+        user_role_id: destinatario.id,
         tipo: 'alerta_temp_sumido',
         titulo: 'TEMP com 3+ faltas confirmado',
         mensagem: `${confirmadoPor} confirmou possível sumido:\n\n${funcionario.matricula || 'TEMP'} - ${funcionario.nome_completo}\nSetor: ${setor}${funcionario.turma ? `\nTurma: ${funcionario.turma}` : ''}\nFaltas (${alerta.total}): ${diasFormatados}\n\nEntrar em contato.`,
         referencia_id: referenciaId,
       })));
 
-      toast.success('Alerta enviado para LUCIANO.');
+      toast.success('Alerta enviado para RH e LUCIANO.');
     } catch (error) {
       toast.error('Erro ao confirmar alerta TEMP.');
     } finally {
@@ -1250,7 +1261,7 @@ export default function ControleFaltas() {
               Alertas TEMP com 3+ faltas
             </DialogTitle>
             <DialogDescription>
-              Funcionários TEMP com 3 ou mais faltas no período selecionado. Confirme para enviar notificação ao LUCIANO.
+              Funcionários TEMP com 3 ou mais faltas no período selecionado. Confirme para enviar notificação ao RH e ao LUCIANO.
             </DialogDescription>
           </DialogHeader>
 
