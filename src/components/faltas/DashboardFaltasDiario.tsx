@@ -58,8 +58,8 @@ export function DashboardFaltasDiario({
     if (diasPeriodo.length === 0) return [];
     const blocos: { id: number; label: string; dias: Date[] }[] = [];
 
-    for (let inicio = 0; inicio < diasPeriodo.length; inicio += 15) {
-      const diasBloco = diasPeriodo.slice(inicio, inicio + 15);
+    for (let inicio = 0; inicio < diasPeriodo.length; inicio += 10) {
+      const diasBloco = diasPeriodo.slice(inicio, inicio + 10);
       blocos.push({
         id: blocos.length,
         label: `${format(diasBloco[0], 'dd/MM')} - ${format(diasBloco[diasBloco.length - 1], 'dd/MM')}`,
@@ -133,6 +133,12 @@ export function DashboardFaltasDiario({
     if (blocosDias.length === 0) return diasPeriodo;
     return blocosDias.filter(b => blocosVisiveis.has(b.id)).flatMap(b => b.dias);
   }, [blocosDias, blocosVisiveis, diasPeriodo]);
+
+  const colunaDiaClass = diasVisiveis.length <= 10
+    ? "w-[84px] min-w-[84px] max-w-[84px]"
+    : diasVisiveis.length <= 15
+      ? "w-[64px] min-w-[64px] max-w-[64px]"
+      : "w-[52px] min-w-[52px] max-w-[52px]";
 
   const funcionarioAtivoNaData = (func: FuncionarioBase, data: Date): boolean => {
     // Regra 2: Admissão — só entra se admitido até o dia
@@ -565,6 +571,7 @@ export function DashboardFaltasDiario({
           key={`${setor}-${dataStr}`}
           className={cn(
             "text-center py-1.5 px-1",
+            colunaDiaClass,
             isHoje && "!bg-green-100 dark:!bg-green-900/30",
             !isHoje && isAlternateCol && "bg-muted/90",
             !isHoje && !isAlternateCol && "bg-violet-50/50 dark:bg-violet-950/20",
@@ -614,6 +621,7 @@ export function DashboardFaltasDiario({
           key={`${setor}-${dataStr}`}
           className={cn(
             "text-center py-0 px-0",
+            colunaDiaClass,
             isHoje && "!bg-green-100 dark:!bg-green-900/30",
             !isHoje && isAlternateCol && !isTotalRow && "bg-muted/90",
             isTotalRow && !isHoje && "bg-muted/50",
@@ -646,6 +654,7 @@ export function DashboardFaltasDiario({
         key={`${setor}-${dataStr}`}
         className={cn(
           "text-center py-1.5 px-1",
+          colunaDiaClass,
           isHoje && "!bg-green-100 dark:!bg-green-900/30",
             !isHoje && isAlternateCol && !isTotalRow && "bg-muted/90",
             isTotalRow && !isHoje && "bg-muted/50",
@@ -730,28 +739,7 @@ export function DashboardFaltasDiario({
             </Button>
           </div>
         </div>
-        {/* Legenda compacta */}
         <div className="flex items-center gap-3 mt-2 flex-wrap">
-          <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-foreground text-background font-bold text-xs">F</span>
-            <span className="text-xs text-muted-foreground font-medium">FALTA</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-warning text-warning-foreground font-bold text-xs">A</span>
-            <span className="text-xs text-muted-foreground font-medium">ATESTADO</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-info text-info-foreground font-bold text-xs">DA</span>
-            <span className="text-xs text-muted-foreground font-medium">DAY OFF</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-base">🛏️</span>
-            <span className="text-xs text-muted-foreground font-medium">FOLGA ESCALA</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="inline-flex items-center justify-center w-[22px] h-[18px] rounded-md bg-success text-success-foreground font-bold text-xs">S</span>
-            <span className="text-xs text-muted-foreground font-medium">SALDO</span>
-          </div>
           <Popover>
             <PopoverTrigger asChild>
               <button className="text-xs font-semibold text-primary hover:underline" type="button">
@@ -804,7 +792,8 @@ export function DashboardFaltasDiario({
                     <TableHead
                       key={dataStr}
                       className={cn(
-                        "text-center w-[52px] min-w-[52px] max-w-[52px] px-0.5 py-1.5",
+                        "text-center px-0.5 py-1.5",
+                        colunaDiaClass,
                         isHoje && "bg-green-100 dark:bg-green-900/30",
                         !isHoje && isAlternate && "bg-muted/90",
                         isDomingo && "text-destructive"
