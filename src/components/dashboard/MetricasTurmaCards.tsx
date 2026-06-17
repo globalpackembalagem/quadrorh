@@ -24,6 +24,7 @@ type PrevisaoCardItem = Partial<Funcionario> & {
   nome_completo: string;
   data_programada?: string | null;
   origem?: string | null;
+  isTransferencia?: boolean;
 };
 
 interface MetricasTurmaCardsProps {
@@ -237,6 +238,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
             setor: { nome: t.setor_destino?.nome || 'SETOR DESTINO' },
             data_programada: t.data_programada,
             origem: t.setor_origem?.nome || null,
+            isTransferencia: true,
           } as PrevisaoCardItem));
         result[turma].previsoes = lista.length + trocasDaTurma.length;
         result[turma].previsoesLista = [...lista, ...trocasDaTurma];
@@ -285,6 +287,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
             setor: { nome: t.setor_destino?.nome || 'SETOR DESTINO' },
             data_programada: t.data_programada,
             origem: t.setor_origem?.nome || null,
+            isTransferencia: true,
           } as PrevisaoCardItem);
         }
       });
@@ -491,7 +494,15 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                         <div key={f.id} className="text-xs p-2 rounded-md bg-muted/50 border">
                           <div className="font-semibold">{f.nome_completo}</div>
                           <div className="text-muted-foreground mt-0.5">
-                            {f.setor?.nome}{f.turma ? ` • Turma: ${f.turma}` : ''}{f.empresa ? ` • ${f.empresa}` : ''}{f.data_programada ? ` • Programada: ${format(parseISO(f.data_programada), 'dd/MM/yyyy')}` : ''}{f.origem ? ` • Origem: ${f.origem}` : ''}
+                            {f.isTransferencia ? (
+                              <>
+                                <div>TRANSFERÊNCIA</div>
+                                {f.origem && <div>De: {f.origem}</div>}
+                                {f.data_programada && <div>No dia: {format(parseISO(f.data_programada), 'dd/MM/yyyy')}</div>}
+                              </>
+                            ) : (
+                              <>{f.setor?.nome}{f.turma ? ` • Turma: ${f.turma}` : ''}{f.empresa ? ` • ${f.empresa}` : ''}</>
+                            )}
                           </div>
                         </div>
                       ))}
