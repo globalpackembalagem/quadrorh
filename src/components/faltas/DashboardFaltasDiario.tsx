@@ -187,6 +187,12 @@ export function DashboardFaltasDiario({
     return !getTrabalhaOuFolga(data, turma);
   };
 
+  const getStatusHojeDecoracao = (setorNome: string): boolean | null => {
+    const turma = getTurmaDecoracao(setorNome);
+    if (!turma) return null;
+    return getTrabalhaOuFolga(new Date(), turma);
+  };
+
   const isTreinamentoNaData = (func: FuncionarioBase, data: Date): boolean => {
     const situacaoNome = func.situacao?.nome?.toUpperCase() || '';
     const isAtivoOuTreinamento = situacaoNome === 'ATIVO' || situacaoNome.includes('TREINAMENTO');
@@ -821,9 +827,21 @@ export function DashboardFaltasDiario({
                 const sobra = sobraPorSetor[setor];
                 const necessario = necessarioPorSetor[setor];
 
+                const trabalhaHoje = getStatusHojeDecoracao(setor);
+
                 return (
                   <TableRow key={setor} className={cn("hover:bg-accent/30 transition-colors", isEven ? "bg-card/50" : "bg-card")}>
-                    <TableCell className={cn("text-[12px] font-semibold py-2 px-2 sticky left-0 z-10 whitespace-normal leading-tight border-r border-border/50 w-[140px] min-w-[140px] max-w-[140px]", isEven ? "bg-card" : "bg-card")}>{setor}</TableCell>
+                    <TableCell className={cn("text-[12px] font-semibold py-2 px-2 sticky left-0 z-10 whitespace-normal leading-tight border-r border-border/50 w-[140px] min-w-[140px] max-w-[140px]", isEven ? "bg-card" : "bg-card")}>
+                      <div>{setor}</div>
+                      {trabalhaHoje !== null && (
+                        <div className={cn(
+                          "mt-1 inline-flex rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide",
+                          trabalhaHoje ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+                        )}>
+                          {trabalhaHoje ? 'TRABALHANDO HOJE' : 'FOLGA HOJE'}
+                        </div>
+                      )}
+                    </TableCell>
                     {diasVisiveis.map((dia, colIndex) => {
                       const dataStr = format(dia, 'yyyy-MM-dd');
                       const d = setorData[dataStr];

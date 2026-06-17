@@ -17,6 +17,7 @@ import { useUsuario } from '@/contexts/UserContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { getTrabalhaOuFolga } from '@/lib/escalaPanama';
 
 export default function Decoracao() {
   const navigate = useNavigate();
@@ -114,6 +115,28 @@ export default function Decoracao() {
     return result;
   }, [quadroDecoracao, funcionariosDecoracao]);
 
+  const isLuciano = (usuarioAtual?.nome || '').toUpperCase().trim() === 'LUCIANO';
+
+  const escalaAtualDecoracao = useMemo(() => {
+    const hoje = new Date();
+    const t1Trabalha = getTrabalhaOuFolga(hoje, 'T1');
+    const trabalhando = t1Trabalha ? 'T1' : 'T2';
+    const folga = t1Trabalha ? 'T2' : 'T1';
+
+    const contarPorTurma = (turma: 'T1' | 'T2') =>
+      funcionariosDecoracao.filter(f => {
+        const turmaFunc = (f.turma || '').toUpperCase().trim();
+        return turmaFunc === turma || turmaFunc === turma.replace('T', '');
+      }).length;
+
+    return {
+      trabalhando,
+      folga,
+      trabalhandoTotal: contarPorTurma(trabalhando),
+      folgaTotal: contarPorTurma(folga),
+    };
+  }, [funcionariosDecoracao]);
+
   // Não redirecionar - apenas ocultar conteúdo se sem acesso
   // O redirecionamento causava loop infinito: /quadro-geral → /home → /quadro-geral
 
@@ -163,6 +186,30 @@ export default function Decoracao() {
         <div className="w-px h-6 bg-border shrink-0" />
         <EscalaFolgaDialog />
       </div>
+
+      {isLuciano && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-primary" />
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-primary">Agora na Decoração</p>
+                <p className="text-xs text-muted-foreground">Escala Panamá de hoje</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-sm sm:min-w-80">
+              <div className="rounded-md border border-success/30 bg-success/10 px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase text-success">Trabalhando</p>
+                <p className="font-bold text-foreground">{escalaAtualDecoracao.trabalhando} · {escalaAtualDecoracao.trabalhandoTotal} pessoas</p>
+              </div>
+              <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2">
+                <p className="text-[11px] font-semibold uppercase text-destructive">Folga</p>
+                <p className="font-bold text-foreground">{escalaAtualDecoracao.folga} · {escalaAtualDecoracao.folgaTotal} pessoas</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
 
 

@@ -7,6 +7,7 @@ import { TreinamentoPrevisao, enrichStatus, filterByGrupo } from '@/hooks/useTre
 
 import { useUsuario } from '@/contexts/UserContext';
 import { cn } from '@/lib/utils';
+import { getTrabalhaOuFolga } from '@/lib/escalaPanama';
 import { toast } from 'sonner';
 import { addDays, differenceInCalendarDays, format, parseISO, startOfDay } from 'date-fns';
 import {
@@ -118,6 +119,10 @@ function calcularTotalPlanejadoDecoracao(dados: QuadroDecoracao): number {
 export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro = [], quadroPlanejadoDecoracao = [], funcionariosPrevisao = [], sumidosPorTurma = {}, cobFeriasPorTurma = {}, treinamentoPorTurma = {}, mostrarSumidos = false, recentesPorTurma = {}, treinamentosPrevisao = [] }: MetricasTurmaCardsProps) {
   const turmas = grupo === 'SOPRO' ? TURMAS_SOPRO : TURMAS_DECORACAO;
   const { usuarioAtual } = useUsuario();
+  const escalaHojeDecoracao = useMemo(() => ({
+    T1: getTrabalhaOuFolga(new Date(), 'T1'),
+    T2: getTrabalhaOuFolga(new Date(), 'T2'),
+  }), []);
 
 
   // Calcular métricas por turma usando a mesma lógica do Quadro Real
@@ -235,6 +240,8 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
       {turmas.map(turma => {
         const metricas = metricasPorTurma[turma];
         const grupoLabel = grupo === 'SOPRO' ? `SOPRO ${turma}` : turma;
+        const turmaDecoracao = turma.includes('T1') ? 'T1' : turma.includes('T2') ? 'T2' : null;
+        const trabalhaHoje = grupo !== 'SOPRO' && turmaDecoracao ? escalaHojeDecoracao[turmaDecoracao] : null;
         const treinamentosDaTurma = filterByGrupo(treinamentosPrevisao, TURMAS_LABELS[turma]);
         const treinamentosAtivos = treinamentosDaTurma
           .map(enrichStatus)
@@ -278,6 +285,14 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
              <div className="flex items-center justify-between gap-3 mb-3">
               <div className="min-w-0 truncate text-sm sm:text-base font-bold text-foreground">
                 {TURMAS_LABELS[turma]}
+                {trabalhaHoje !== null && (
+                  <div className={cn(
+                    "mt-1 w-fit rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-wide",
+                    trabalhaHoje ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+                  )}>
+                    {trabalhaHoje ? 'TRABALHANDO HOJE' : 'FOLGA HOJE'}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 {/* Badge de admissão recente */}
