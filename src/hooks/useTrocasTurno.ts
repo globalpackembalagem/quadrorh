@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { criarEventoENotificar, inserirEventoSemDuplicata } from '@/hooks/useEventosSistema';
@@ -46,6 +47,8 @@ const selectQuery = `
   setor_origem:setores!setor_origem_id(nome),
   setor_destino:setores!setor_destino_id(nome)
 `;
+
+const autoEfetivadasNaSessao = new Set<string>();
 
 export function useTrocasTurno() {
   return useQuery({
@@ -341,19 +344,65 @@ export function useEfetivarTrocaTurno() {
       const turmaDestinoStr = params.turma_destino ? ` turma ${params.turma_destino}` : '';
 
       // 6. Criar evento na Central de Notificações (não enviar direto ao gestor)
-      await inserirEventoSemDuplicata({
+      const eventoTransferencia = await inserirEventoSemDuplicata({
         tipo: 'transferencia',
         descricao: `TRANSFERÊNCIA REALIZADA — ${funcNome.toUpperCase()}`,
+        funcionario_id: params.funcionario_id,
         funcionario_nome: funcNome.toUpperCase(),
+        setor_id: trocaData?.setor_origem_id || funcAtual?.setor_id || null,
         setor_nome: setorOrigemNome.toUpperCase(),
         turma: trocaData?.turma_origem || funcAtual?.turma || null,
         criado_por: params.usuario_nome || 'SISTEMA',
         dados_extra: {
           setor_destino: setorDestinoNome.toUpperCase(),
           turma_destino: params.turma_destino || trocaData?.turma_destino || null,
+          setor_origem_id: trocaData?.setor_origem_id || funcAtual?.setor_id || null,
+          setor_destino_id: params.setor_destino_id,
           mensagem_personalizada: `${funcNome.toUpperCase()} | ${setorOrigemNome.toUpperCase()} → ${setorDestinoNome.toUpperCase()}${turmaDestinoStr.toUpperCase()}`,
         },
       });
+
+      const setorIdsEnvolvidos = [
+        trocaData?.setor_origem_id || funcAtual?.setor_id || null,
+        params.setor_destino_id,
+      ].filter(Boolean) as string[];
+
+      if (eventoTransferencia && setorIdsEnvolvidos.length > 0) {
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('id, perfil, setor_id, recebe_notificacoes')
+          .eq('ativo', true)
+          .eq('perfil', 'gestor_setor');
+
+        const { data: rolesSetores } = await supabase
+          .from('user_roles_setores')
+          .select('user_role_id, setor_id')
+          .in('setor_id', setorIdsEnvolvidos);
+
+        const destinatarios = new Set<string>();
+        const rolesHabilitadas = new Set<string>();
+        (roles || []).forEach((role: any) => {
+          if (role.recebe_notificacoes === false) return;
+          rolesHabilitadas.add(role.id);
+          if (role.setor_id && setorIdsEnvolvidos.includes(role.setor_id)) destinatarios.add(role.id);
+        });
+        (rolesSetores || []).forEach((rel: any) => {
+          if (rolesHabilitadas.has(rel.user_role_id)) destinatarios.add(rel.user_role_id);
+        });
+
+        const notificacoes = Array.from(destinatarios).map(userRoleId => ({
+          user_role_id: userRoleId,
+          tipo: 'transferencia_pendente',
+          titulo: 'TRANSFERENCIA REALIZADA',
+          mensagem: `${funcNome.toUpperCase()} | ${setorOrigemNome.toUpperCase()} -> ${setorDestinoNome.toUpperCase()}${turmaDestinoStr.toUpperCase()}`,
+          referencia_id: (eventoTransferencia as any).id,
+        }));
+
+        if (notificacoes.length > 0) {
+          const { error: notifError } = await supabase.from('notificacoes').insert(notificacoes);
+          if (notifError) console.error('Erro ao notificar gestores da transferencia:', notifError);
+        }
+      }
 
       return { success: true };
     },
@@ -366,4 +415,32 @@ export function useEfetivarTrocaTurno() {
       toast.error('Erro ao efetivar movimentação');
     },
   });
+}
+
+export function useAutoEfetivarTrocasProgramadas(trocas: TrocaTurno[]) {
+  const efetivarTroca = useEfetivarTrocaTurno();
+
+  useEffect(() => {
+    if (efetivarTroca.isPending) return;
+
+    const hoje = new Date().toISOString().split('T')[0];
+    const trocaVencida = trocas.find(t =>
+      t.data_programada &&
+      t.data_programada <= hoje &&
+      !t.efetivada &&
+      t.status === 'pendente_rh' &&
+      !autoEfetivadasNaSessao.has(t.id)
+    );
+
+    if (!trocaVencida) return;
+
+    autoEfetivadasNaSessao.add(trocaVencida.id);
+    efetivarTroca.mutate({
+      id: trocaVencida.id,
+      funcionario_id: trocaVencida.funcionario_id,
+      setor_destino_id: trocaVencida.setor_destino_id,
+      turma_destino: trocaVencida.turma_destino,
+      usuario_nome: 'Sistema - data programada',
+    });
+  }, [trocas, efetivarTroca]);
 }

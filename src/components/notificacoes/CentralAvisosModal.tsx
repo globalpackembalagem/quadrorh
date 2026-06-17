@@ -291,31 +291,35 @@ export function CentralAvisosModal() {
       }
     }
 
-    const avisosDemissao = avisosComCienciaNova.filter(a =>
+    const avisosRetornoCiencia = avisosComCienciaNova.filter(a =>
       a.referencia_id &&
-      (a.tipo === 'demissao_lancada' || a.tipo === 'pedido_demissao_lancado')
+      (a.tipo === 'demissao_lancada' || a.tipo === 'pedido_demissao_lancado' || a.tipo === 'transferencia_pendente')
     );
 
-    if (avisosDemissao.length > 0) {
+    if (avisosRetornoCiencia.length > 0) {
       try {
-        const { data: adminsLuciano } = await supabase
+        const { data: adminsRetorno } = await supabase
           .from('user_roles')
           .select('id')
           .eq('ativo', true)
-          .ilike('nome', 'LUCIANO');
+          .or('nome.ilike.LUCIANO,nome.ilike.MAURICIO');
 
-        const { data: eventosDemissao } = await supabase
+        const { data: eventosCiencia } = await supabase
           .from('eventos_sistema')
           .select('id, funcionario_nome')
-          .in('id', avisosDemissao.map(a => a.referencia_id!));
+          .in('id', avisosRetornoCiencia.map(a => a.referencia_id!));
 
-        const nomesPorEvento = new Map((eventosDemissao || []).map((ev: any) => [ev.id, ev.funcionario_nome as string | null]));
+        const nomesPorEvento = new Map((eventosCiencia || []).map((ev: any) => [ev.id, ev.funcionario_nome as string | null]));
 
-        const notificacoesRetorno = (adminsLuciano || [])
+        const notificacoesRetorno = (adminsRetorno || [])
           .filter((admin: any) => admin.id !== userRole.id)
           .flatMap((admin: any) =>
-            avisosDemissao.map(aviso => {
-              const tipoLabel = aviso.tipo === 'pedido_demissao_lancado' ? 'PEDIDO DE DEMISSAO' : 'DEMISSAO';
+            avisosRetornoCiencia.map(aviso => {
+              const tipoLabel = aviso.tipo === 'pedido_demissao_lancado'
+                ? 'PEDIDO DE DEMISSAO'
+                : aviso.tipo === 'transferencia_pendente'
+                  ? 'TRANSFERENCIA'
+                  : 'DEMISSAO';
               return {
                 user_role_id: admin.id,
                 tipo: 'ciencia_retorno',

@@ -8,6 +8,7 @@ import { TreinamentoPrevisao, enrichStatus, filterByGrupo } from '@/hooks/useTre
 import { useUsuario } from '@/contexts/UserContext';
 import { cn } from '@/lib/utils';
 import { getTrabalhaOuFolga } from '@/lib/escalaPanama';
+import { useAutoEfetivarTrocasProgramadas, useTrocasTurno } from '@/hooks/useTrocasTurno';
 import { toast } from 'sonner';
 import { addDays, differenceInCalendarDays, format, parseISO, startOfDay } from 'date-fns';
 import {
@@ -18,6 +19,12 @@ import {
 
 type StatusPorTurma = Record<string, { total: number; nomes: string[] }>;
 type RecentesPorTurma = Record<string, { count: number; nomes: string[]; situacao: string }>;
+type PrevisaoCardItem = Partial<Funcionario> & {
+  id: string;
+  nome_completo: string;
+  data_programada?: string | null;
+  origem?: string | null;
+};
 
 interface MetricasTurmaCardsProps {
   grupo: 'SOPRO' | 'DECORAÇÃO';
@@ -119,6 +126,8 @@ function calcularTotalPlanejadoDecoracao(dados: QuadroDecoracao): number {
 export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro = [], quadroPlanejadoDecoracao = [], funcionariosPrevisao = [], sumidosPorTurma = {}, cobFeriasPorTurma = {}, treinamentoPorTurma = {}, mostrarSumidos = false, recentesPorTurma = {}, treinamentosPrevisao = [] }: MetricasTurmaCardsProps) {
   const turmas = grupo === 'SOPRO' ? TURMAS_SOPRO : TURMAS_DECORACAO;
   const { usuarioAtual } = useUsuario();
+  const { data: trocasTurno = [] } = useTrocasTurno();
+  useAutoEfetivarTrocasProgramadas(trocasTurno);
   const escalaHojeDecoracao = useMemo(() => ({
     T1: getTrabalhaOuFolga(new Date(), 'T1'),
     T2: getTrabalhaOuFolga(new Date(), 'T2'),
@@ -134,13 +143,19 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
       quadroNecessario: number;
       diferenca: number;
       previsoes: number;
-      previsoesLista: Funcionario[];
+      previsoesLista: PrevisaoCardItem[];
     }> = {};
     
     turmas.forEach(turma => {
       result[turma] = { total: 0, homens: 0, mulheres: 0, quadroNecessario: 0, diferenca: 0, previsoes: 0, previsoesLista: [] };
     });
     
+    const trocasProgramadas = trocasTurno.filter(t =>
+      t.data_programada &&
+      !t.efetivada &&
+      t.status === 'pendente_rh'
+    );
+
     if (grupo === 'SOPRO') {
       // SOPRO: usar o grupo do setor para agrupar (SOPRO A, SOPRO B, SOPRO C)
       turmas.forEach(turma => {
@@ -208,8 +223,23 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
           const grupoSetor = f.setor?.grupo?.toUpperCase() || '';
           return grupoSetor === grupoEsperado;
         });
-        result[turma].previsoes = lista.length;
-        result[turma].previsoesLista = lista;
+        const trocasDaTurma = trocasProgramadas
+          .filter(t => {
+            const destino = t.setor_destino?.nome?.toUpperCase() || '';
+            return destino.includes('SOPRO') && destino.includes(` ${turma}`);
+          })
+          .map(t => ({
+            id: `troca-${t.id}`,
+            nome_completo: t.funcionario?.nome_completo || 'TRANSFERENCIA PROGRAMADA',
+            matricula: t.funcionario?.matricula || null,
+            turma: t.turma_destino || t.funcionario?.turma || null,
+            empresa: 'TRANSFERENCIA PROGRAMADA',
+            setor: { nome: t.setor_destino?.nome || 'SETOR DESTINO' },
+            data_programada: t.data_programada,
+            origem: t.setor_origem?.nome || null,
+          } as PrevisaoCardItem));
+        result[turma].previsoes = lista.length + trocasDaTurma.length;
+        result[turma].previsoesLista = [...lista, ...trocasDaTurma];
       });
     } else {
       funcionariosPrevisao.forEach(f => {
@@ -230,10 +260,38 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
           result[turmaKey].previsoesLista.push(f);
         }
       });
+
+      trocasProgramadas.forEach(t => {
+        const turmaFunc = t.turma_destino?.toUpperCase();
+        const setorNome = t.setor_destino?.nome?.toUpperCase() || '';
+        const isDia = setorNome.includes('DIA');
+        const isNoite = setorNome.includes('NOITE');
+
+        let turmaKey: string | null = null;
+        if (turmaFunc === 'T1' || turmaFunc === '1') {
+          turmaKey = isDia ? 'DIA-T1' : isNoite ? 'NOITE-T1' : null;
+        } else if (turmaFunc === 'T2' || turmaFunc === '2') {
+          turmaKey = isDia ? 'DIA-T2' : isNoite ? 'NOITE-T2' : null;
+        }
+
+        if (turmaKey && result[turmaKey]) {
+          result[turmaKey].previsoes++;
+          result[turmaKey].previsoesLista.push({
+            id: `troca-${t.id}`,
+            nome_completo: t.funcionario?.nome_completo || 'TRANSFERENCIA PROGRAMADA',
+            matricula: t.funcionario?.matricula || null,
+            turma: t.turma_destino || t.funcionario?.turma || null,
+            empresa: 'TRANSFERENCIA PROGRAMADA',
+            setor: { nome: t.setor_destino?.nome || 'SETOR DESTINO' },
+            data_programada: t.data_programada,
+            origem: t.setor_origem?.nome || null,
+          } as PrevisaoCardItem);
+        }
+      });
     }
     
     return result;
-  }, [funcionarios, turmas, grupo, quadroPlanejadoSopro, quadroPlanejadoDecoracao, funcionariosPrevisao, usuarioAtual]);
+  }, [funcionarios, turmas, grupo, quadroPlanejadoSopro, quadroPlanejadoDecoracao, funcionariosPrevisao, usuarioAtual, trocasTurno]);
 
   return (
     <div className={`grid gap-4 ${grupo === 'SOPRO' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 lg:grid-cols-4'}`}>
@@ -252,6 +310,18 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
           getTurmaCardFuncionario(f, grupo) === turma &&
           !idsComTreinamento.has(f.id)
         );
+        const transferenciasRecentesDaTurma = trocasTurno.filter(t => {
+          if (!t.efetivada || !t.data_efetivada || idsComTreinamento.has(t.funcionario_id)) return false;
+          const efetivada = startOfDay(parseISO(t.data_efetivada));
+          if (Number.isNaN(efetivada.getTime())) return false;
+          const diasDesdeEfetivacao = differenceInCalendarDays(startOfDay(new Date()), efetivada);
+          if (diasDesdeEfetivacao < 0 || diasDesdeEfetivacao > 1) return false;
+
+          return getTurmaCardFuncionario({
+            turma: t.turma_destino || t.funcionario?.turma || null,
+            setor: { nome: t.setor_destino?.nome || '' },
+          } as Funcionario, grupo) === turma;
+        });
         const treinamentoCardItems = [
           ...treinamentosAtivos.map(t => ({
             id: t.funcionario_id,
@@ -266,6 +336,13 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
             nome: f.nome_completo,
             inicio: f.data_admissao || new Date().toISOString(),
             termino: addDays(parseISO(f.data_admissao || new Date().toISOString()), 1).toISOString(),
+          })),
+          ...transferenciasRecentesDaTurma.map(t => ({
+            id: `troca-${t.id}`,
+            matricula: t.funcionario?.matricula || null,
+            nome: `${t.funcionario?.nome_completo || 'TRANSFERENCIA'} - TRANSFERENCIA`,
+            inicio: t.data_efetivada || new Date().toISOString(),
+            termino: addDays(parseISO(t.data_efetivada || new Date().toISOString()), 1).toISOString(),
           })),
         ];
         
@@ -414,7 +491,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                         <div key={f.id} className="text-xs p-2 rounded-md bg-muted/50 border">
                           <div className="font-semibold">{f.nome_completo}</div>
                           <div className="text-muted-foreground mt-0.5">
-                            {f.setor?.nome}{f.turma ? ` • Turma: ${f.turma}` : ''}{f.empresa ? ` • ${f.empresa}` : ''}
+                            {f.setor?.nome}{f.turma ? ` • Turma: ${f.turma}` : ''}{f.empresa ? ` • ${f.empresa}` : ''}{f.data_programada ? ` • Programada: ${format(parseISO(f.data_programada), 'dd/MM/yyyy')}` : ''}{f.origem ? ` • Origem: ${f.origem}` : ''}
                           </div>
                         </div>
                       ))}
