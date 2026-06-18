@@ -87,25 +87,25 @@ const TIPO_LABELS: Record<string, string> = {
 const REGRAS_NOTIFICACOES = [
   {
     tipo: 'PREVISAO ADMISSAO',
-    recebe: 'Gestor do setor do funcionario',
+    recebe: 'Gestor do setor do funcionario; REAL PARCERIA ve previsoes TEMP',
     acao: 'Responde INICIOU ou NAO INICIOU',
     retorno: 'Admin, RH Completo e RH Demissoes',
   },
   {
     tipo: 'ADMISSAO ATIVADA',
-    recebe: 'Gestor do setor do funcionario',
-    acao: 'Confirma se o funcionario iniciou',
+    recebe: 'Gestor do setor; REAL PARCERIA recebe aviso quando for TEMP',
+    acao: 'Gestor confirma; REAL PARCERIA da CIENTE',
     retorno: 'Admin, RH Completo e RH Demissoes',
   },
   {
     tipo: 'DEMISSAO',
-    recebe: 'Gestor do setor do funcionario',
+    recebe: 'Gestor do setor; REAL PARCERIA recebe quando for TEMP',
     acao: 'Ciente',
     retorno: 'LUCIANO e MAURICIO recebem o ciente',
   },
   {
     tipo: 'PEDIDO DE DEMISSAO',
-    recebe: 'Gestor do setor do funcionario',
+    recebe: 'Gestor do setor; REAL PARCERIA recebe quando for TEMP',
     acao: 'Ciente',
     retorno: 'LUCIANO e MAURICIO recebem o ciente',
   },

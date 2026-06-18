@@ -122,6 +122,7 @@ export function CentralAvisosModal() {
   
   // RH e Admin só visualizam — nunca respondem SIM/NÃO
   const isRHUser = userRole?.perfil === 'rh_completo' || userRole?.perfil === 'rh_demissoes' || userRole?.perfil === 'admin';
+  const isRealParceria = userRole?.nome?.toUpperCase() === 'REAL PARCERIA';
   
   const [avisos, setAvisos] = useState<AvisoNotificacao[]>([]);
   const [visible, setVisible] = useState(false);
@@ -170,7 +171,7 @@ export function CentralAvisosModal() {
   });
 
   const buscarAvisos = useCallback(async () => {
-    if (isVisualizacao || !userRole?.id) return;
+    if ((isVisualizacao && !isRealParceria) || !userRole?.id) return;
 
     // Verificar se este usuário tem permissão para receber notificações
     const { data: roleData } = await supabase
@@ -193,7 +194,7 @@ export function CentralAvisosModal() {
       setAvisos(data as AvisoNotificacao[]);
       setVisible(true);
     }
-  }, [isVisualizacao, userRole?.id]);
+  }, [isVisualizacao, isRealParceria, userRole?.id]);
 
   useEffect(() => {
     buscarAvisos();
@@ -201,7 +202,7 @@ export function CentralAvisosModal() {
 
   // Realtime: escuta novas notificações
   useEffect(() => {
-    if (isVisualizacao || !userRole?.id) return;
+    if ((isVisualizacao && !isRealParceria) || !userRole?.id) return;
 
     const channel = supabase
       .channel('central-avisos-realtime')
@@ -222,7 +223,7 @@ export function CentralAvisosModal() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [isVisualizacao, userRole?.id]);
+  }, [isVisualizacao, isRealParceria, userRole?.id]);
 
   // ESC para fechar
   useEffect(() => {

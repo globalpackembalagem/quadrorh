@@ -224,20 +224,31 @@ export default function Demissoes() {
           .eq('id', demissao.funcionario_id)
           .maybeSingle();
 
-        if ((funcionarioSexo?.sexo || '').toLowerCase() === 'masculino') {
-          const { data: segurancaTrabalho } = await supabase
-            .from('user_roles')
-            .select('id, nome, email')
-            .eq('ativo', true)
-            .eq('recebe_notificacoes', true);
+	        if ((funcionarioSexo?.sexo || '').toLowerCase() === 'masculino') {
+	          const { data: segurancaTrabalho } = await supabase
+	            .from('user_roles')
+	            .select('id, nome, email')
+	            .eq('ativo', true)
+	            .eq('recebe_notificacoes', true);
 
           segurancaTrabalho?.forEach(user => {
             const identificador = normalizarTexto(`${user.nome || ''} ${user.email || ''}`);
-            if (identificador.includes('SEGURANCA')) gestoresIds.add(user.id);
-          });
-        }
+	            if (identificador.includes('SEGURANCA')) gestoresIds.add(user.id);
+	          });
+	        }
 
-        if (gestoresIds.size > 0) {
+	        if (isTemp) {
+	          const { data: realParceria } = await supabase
+	            .from('user_roles')
+	            .select('id')
+	            .eq('ativo', true)
+	            .eq('recebe_notificacoes', true)
+	            .ilike('nome', 'REAL PARCERIA');
+
+	          realParceria?.forEach(user => gestoresIds.add(user.id));
+	        }
+
+	        if (gestoresIds.size > 0) {
           const notificacoes = [...gestoresIds]
             .filter(id => id !== userRole?.id)
             .map(gestorId => ({
