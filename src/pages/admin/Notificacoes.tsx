@@ -84,6 +84,75 @@ const TIPO_LABELS: Record<string, string> = {
   turma_pendente: 'TURMA PENDENTE',
 };
 
+const REGRAS_NOTIFICACOES = [
+  {
+    tipo: 'PREVISAO ADMISSAO',
+    recebe: 'Gestor do setor do funcionario',
+    acao: 'Responde INICIOU ou NAO INICIOU',
+    retorno: 'Admin, RH Completo e RH Demissoes',
+  },
+  {
+    tipo: 'ADMISSAO ATIVADA',
+    recebe: 'Gestor do setor do funcionario',
+    acao: 'Confirma se o funcionario iniciou',
+    retorno: 'Admin, RH Completo e RH Demissoes',
+  },
+  {
+    tipo: 'DEMISSAO',
+    recebe: 'Gestor do setor do funcionario',
+    acao: 'Ciente',
+    retorno: 'LUCIANO e MAURICIO recebem o ciente',
+  },
+  {
+    tipo: 'PEDIDO DE DEMISSAO',
+    recebe: 'Gestor do setor do funcionario',
+    acao: 'Ciente',
+    retorno: 'LUCIANO e MAURICIO recebem o ciente',
+  },
+  {
+    tipo: 'TRANSFERENCIA / TROCA TURNO',
+    recebe: 'Gestores de origem e destino',
+    acao: 'Ciente ou aprovacao conforme o fluxo',
+    retorno: 'LUCIANO e MAURICIO recebem o ciente',
+  },
+  {
+    tipo: 'EXPERIENCIA',
+    recebe: 'Gestor do setor do funcionario',
+    acao: 'Decide EFETIVAR ou DESLIGAR',
+    retorno: 'Admin, RH Completo e RH Demissoes',
+  },
+  {
+    tipo: 'COBERTURA / TREINAMENTO',
+    recebe: 'Gestor do setor do funcionario',
+    acao: 'Confirma se esta na situacao',
+    retorno: 'Admin, RH Completo e RH Demissoes',
+  },
+  {
+    tipo: 'TURMA PENDENTE',
+    recebe: 'Gestor do setor do funcionario',
+    acao: 'Informa a turma correta',
+    retorno: 'Admin e RH Completo',
+  },
+  {
+    tipo: 'DIVERGENCIA',
+    recebe: 'Gestor ou RH/Admin conforme origem da acao',
+    acao: 'Analisa, responde ou acompanha',
+    retorno: 'Usuario envolvido no fluxo',
+  },
+  {
+    tipo: 'ALERTA TEMP SUMIDO',
+    recebe: 'RH e LUCIANO',
+    acao: 'Ciente / acompanhamento',
+    retorno: 'Sem retorno automatico especifico',
+  },
+  {
+    tipo: 'AVISO RH / EVENTO MANUAL',
+    recebe: 'Destinatarios escolhidos na Central',
+    acao: 'Ciente quando enviado como modal',
+    retorno: 'Historico mostra quem viu',
+  },
+];
+
 interface NotificacaoVista {
   id: string;
   evento_id: string;
@@ -646,6 +715,10 @@ export default function Notificacoes() {
             <Clock className="h-3.5 w-3.5" />
             AGENDAMENTOS
           </TabsTrigger>
+          <TabsTrigger value="regras" className="gap-1.5">
+            <Users className="h-3.5 w-3.5" />
+            QUEM RECEBE
+          </TabsTrigger>
         </TabsList>
 
         {/* Aba Eventos */}
@@ -1056,6 +1129,38 @@ export default function Notificacoes() {
         {/* Aba Agendamentos */}
         <TabsContent value="agendamentos" className="space-y-4 mt-4">
           <HorariosNotificacaoConfig />
+        </TabsContent>
+
+        {/* Aba Quem Recebe */}
+        <TabsContent value="regras" className="space-y-4 mt-4">
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[210px]">TIPO</TableHead>
+                    <TableHead>QUEM RECEBE</TableHead>
+                    <TableHead>ACAO NA TELA</TableHead>
+                    <TableHead>RETORNO / QUEM FICA SABENDO</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {REGRAS_NOTIFICACOES.map((regra) => (
+                    <TableRow key={regra.tipo}>
+                      <TableCell>
+                        <Badge variant="outline" className="text-[10px] font-bold">
+                          {regra.tipo}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm font-medium">{regra.recebe}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{regra.acao}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{regra.retorno}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
