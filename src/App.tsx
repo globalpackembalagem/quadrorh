@@ -328,17 +328,11 @@ function ManutencaoRouter() {
 }
 
 function TelaManutencaoPublica() {
-  const [cliquesLogo, setCliquesLogo] = useState(0);
   const [liberado, setLiberado] = useState(() => localStorage.getItem('manutencao_luciano_liberado') === 'SIM');
 
-  const handleLogoClick = () => {
-    const novoTotal = cliquesLogo + 1;
-    setCliquesLogo(novoTotal);
-    if (novoTotal >= 2) {
-      localStorage.setItem('manutencao_luciano_liberado', 'SIM');
-      setLiberado(true);
-    }
-    window.setTimeout(() => setCliquesLogo(0), 900);
+  const liberarAcesso = () => {
+    localStorage.setItem('manutencao_luciano_liberado', 'SIM');
+    setLiberado(true);
   };
 
   if (liberado) {
@@ -348,7 +342,7 @@ function TelaManutencaoPublica() {
   return (
     <div className="min-h-screen bg-[#f4f7fb] flex items-center justify-center p-6">
       <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-        <button type="button" onClick={handleLogoClick} className="mx-auto mb-8 block cursor-default">
+        <button type="button" onDoubleClick={liberarAcesso} className="mx-auto mb-8 block cursor-default select-none">
           <img src={logoGlobalpack} alt="Globalpack" className="h-14 object-contain" />
         </button>
         <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-700">
