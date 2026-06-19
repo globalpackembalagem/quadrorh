@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 // ============================================================
 // 🔧 MODO MANUTENÇÃO - Mude para false quando quiser reativar
-const MODO_MANUTENCAO = import.meta.env.PROD;
+const MODO_MANUTENCAO = false;
 // ============================================================
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { useRealtimeData } from "@/hooks/useRealtimeData";
