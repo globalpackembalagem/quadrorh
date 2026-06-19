@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { lazy, Suspense, ComponentType, useState, useEffect } from "react";
+import { lazy, Suspense, ComponentType, useEffect, useState } from "react";
 import { TopNavLayout } from "@/components/layout/TopNavLayout";
 import { RHSidebarLayout } from "@/components/layout/RHSidebarLayout";
 import { UserProvider, useUsuario } from "@/contexts/UserContext";
@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 // ============================================================
 // 🔧 MODO MANUTENÇÃO - Mude para false quando quiser reativar
-const MODO_MANUTENCAO = false;
+const MODO_MANUTENCAO = import.meta.env.PROD;
 // ============================================================
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { useRealtimeData } from "@/hooks/useRealtimeData";
@@ -323,6 +323,30 @@ function ManutencaoRouter() {
   );
 }
 
+function TelaManutencaoPublica() {
+  return (
+    <div className="min-h-screen bg-[#f4f7fb] flex items-center justify-center p-6">
+      <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+        <img src={logoGlobalpack} alt="Globalpack" className="h-14 mx-auto mb-8 object-contain" />
+        <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+          <Construction className="h-7 w-7" />
+        </div>
+        <h1 className="text-2xl font-bold tracking-tight text-slate-950">
+          DESCULPA PELO TRANSTORNO
+        </h1>
+        <div className="mt-5 space-y-2 text-slate-600">
+          <p className="text-lg font-semibold text-slate-800">ESTAMOS EM MANUTENÇÃO</p>
+          <p>Estamos realizando ajustes no QuadroRH.</p>
+          <p className="font-medium">Logo voltaremos.</p>
+        </div>
+        <div className="mt-8 rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+          Sistema temporariamente indisponível.
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // App principal com providers
 const App = () => {
   // 🔧 MODO MANUTENÇÃO - mostra tela de manutenção apenas para quem NÃO está logado
@@ -336,7 +360,9 @@ const App = () => {
               <Toaster />
               <Sonner />
               <BrowserRouter>
-                <ManutencaoRouter />
+                <Routes>
+                  <Route path="*" element={<TelaManutencaoPublica />} />
+                </Routes>
               </BrowserRouter>
             </TooltipProvider>
           </UserProvider>

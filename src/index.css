@@ -13,26 +13,26 @@
 @layer base {
   /* TEMA 1 — CLARO AZUL CORPORATIVO (PADRÃO) */
   :root {
-    --background: 214 45% 95%;
-    --foreground: 215 30% 15%;
+    --background: 210 20% 96%;
+    --foreground: 215 28% 17%;
 
-    --card: 213 40% 98%;
-    --card-foreground: 215 30% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 28% 17%;
 
-    --popover: 213 40% 98%;
-    --popover-foreground: 215 30% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 28% 17%;
 
-    --primary: 221 84% 48%;
+    --primary: 221 83% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 214 40% 88%;
-    --secondary-foreground: 215 30% 15%;
+    --secondary: 214 28% 91%;
+    --secondary-foreground: 215 28% 17%;
 
-    --muted: 214 35% 90%;
-    --muted-foreground: 215 20% 42%;
+    --muted: 214 24% 92%;
+    --muted-foreground: 215 16% 42%;
 
-    --accent: 214 40% 88%;
-    --accent-foreground: 215 30% 15%;
+    --accent: 214 28% 91%;
+    --accent-foreground: 215 28% 17%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
@@ -46,20 +46,20 @@
     --info: 221 83% 48%;
     --info-foreground: 0 0% 100%;
 
-    --border: 214 30% 84%;
-    --input: 214 30% 84%;
-    --ring: 221 83% 48%;
+    --border: 214 20% 84%;
+    --input: 214 20% 84%;
+    --ring: 221 83% 45%;
 
-    --radius: 0.625rem;
+    --radius: 0.5rem;
 
-    --sidebar-background: 217 45% 15%;
-    --sidebar-foreground: 213 32% 91%;
-    --sidebar-primary: 221 83% 53%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 28% 17%;
+    --sidebar-primary: 221 83% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 18%;
-    --sidebar-accent-foreground: 213 32% 91%;
-    --sidebar-border: 217 33% 25%;
-    --sidebar-ring: 221 83% 53%;
+    --sidebar-accent: 214 28% 94%;
+    --sidebar-accent-foreground: 215 28% 17%;
+    --sidebar-border: 214 20% 86%;
+    --sidebar-ring: 221 83% 45%;
 
     --chart-1: 221 83% 48%;
     --chart-2: 152 55% 33%;
@@ -162,42 +162,42 @@
 
   /* TEMA 4 — GLOBAL BLUE (CLARO ALTERNATIVO — verde) */
   .global-blue {
-    --background: 210 29% 97%;
-    --foreground: 222 47% 11%;
+    --background: 214 45% 95%;
+    --foreground: 215 30% 15%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 213 40% 98%;
+    --card-foreground: 215 30% 15%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 213 40% 98%;
+    --popover-foreground: 215 30% 15%;
 
-    --primary: 142 72% 36%;
+    --primary: 221 84% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 214 32% 91%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 214 40% 88%;
+    --secondary-foreground: 215 30% 15%;
 
-    --muted: 210 29% 93%;
-    --muted-foreground: 215 14% 47%;
+    --muted: 214 35% 90%;
+    --muted-foreground: 215 20% 42%;
 
-    --accent: 214 32% 91%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 214 40% 88%;
+    --accent-foreground: 215 30% 15%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 72% 36%;
+    --success: 152 55% 33%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 85% 48%;
     --warning-foreground: 0 0% 100%;
 
-    --info: 142 72% 36%;
+    --info: 221 83% 48%;
     --info-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 142 72% 36%;
+    --border: 214 30% 84%;
+    --input: 214 30% 84%;
+    --ring: 221 83% 48%;
 
     --sidebar-background: 217 45% 15%;
     --sidebar-foreground: 213 32% 91%;
@@ -208,8 +208,8 @@
     --sidebar-border: 217 33% 25%;
     --sidebar-ring: 221 83% 53%;
 
-    --chart-1: 142 72% 36%;
-    --chart-2: 217 91% 60%;
+    --chart-1: 221 83% 48%;
+    --chart-2: 152 55% 33%;
     --chart-3: 38 85% 48%;
     --chart-4: 0 72% 51%;
     --chart-5: 270 50% 50%;

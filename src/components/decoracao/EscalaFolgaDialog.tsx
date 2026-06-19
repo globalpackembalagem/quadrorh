@@ -21,8 +21,9 @@ export function EscalaFolgaDialog({ disabled }: EscalaFolgaDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
-          size="lg"
-          className="gap-2 font-semibold bg-emerald-600 text-white hover:bg-emerald-700 shadow-md"
+          variant="outline"
+          size="sm"
+          className="gap-2 shrink-0 border-border bg-card font-semibold text-foreground shadow-sm hover:bg-muted"
           disabled={disabled}
           title={disabled ? 'Faça login para acessar' : ''}
         >

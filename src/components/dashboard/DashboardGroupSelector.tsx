@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
-import { Wind, Palette, Calendar } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Wind, Palette, Calendar, ChevronDown, FileSpreadsheet, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ListaFuncionariosSetor } from '@/components/dashboard/ListaFuncionariosSetor';
 import { ListaFuncionariosExperiencia } from '@/components/dashboard/ListaFuncionariosExperiencia';
@@ -21,6 +22,8 @@ interface DashboardGroupSelectorProps {
   todosSopro: any[];
   todosDecoracao: any[];
   todosFuncionarios: any[];
+  podeExportar?: boolean;
+  onExportarPorTurma?: () => void;
 }
 
 export function DashboardGroupSelector({
@@ -33,10 +36,12 @@ export function DashboardGroupSelector({
   todosSopro,
   todosDecoracao,
   todosFuncionarios,
+  podeExportar,
+  onExportarPorTurma,
 }: DashboardGroupSelectorProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
-      <div className="flex gap-2">
+      <div className="flex gap-2 rounded-lg border bg-card p-1 shadow-sm">
         {GRUPOS.filter(grupo => {
           if (grupo === 'SOPRO') return temAcessoSopro;
           if (grupo === 'DECORAÇÃO') return temAcessoDecoracao;
@@ -44,12 +49,12 @@ export function DashboardGroupSelector({
         }).map(grupo => (
           <Button
             key={grupo}
-            variant={grupoSelecionado === grupo ? 'default' : 'outline'}
+            variant="ghost"
             size="lg"
             onClick={() => setGrupoSelecionado(grupo)}
             className={cn(
-              'min-w-[150px] font-bold text-lg gap-2',
-              grupoSelecionado === grupo && 'shadow-lg'
+              'min-w-[150px] gap-2 rounded-md text-base font-semibold text-muted-foreground hover:bg-muted hover:text-foreground',
+              grupoSelecionado === grupo && 'bg-primary text-primary-foreground shadow-sm hover:bg-primary hover:text-primary-foreground'
             )}
           >
             {grupo === 'SOPRO' ? <Wind className="h-5 w-5" /> : <Palette className="h-5 w-5" />}
@@ -58,32 +63,46 @@ export function DashboardGroupSelector({
         ))}
       </div>
 
-      <div className="flex gap-2">
-        <ListaFuncionariosSetor
-          grupo={grupoSelecionado}
-          funcionarios={grupoSelecionado === 'SOPRO' ? todosSopro : todosDecoracao}
-          disabled={!isRHMode}
-        />
-        <ListaFuncionariosExperiencia
-          funcionarios={todosFuncionarios}
-          grupo={grupoSelecionado}
-          disabled={!isRHMode}
-        />
-        {isRHMode && !isGestorSetor && (
-          <ListaFuncionariosExperienciaGeral
-            funcionarios={todosFuncionarios}
-            disabled={!isRHMode}
-          />
-        )}
+      <div className="flex flex-wrap gap-2">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2 shrink-0 font-semibold">
+              <Users className="h-4 w-4" />
+              Funcionários
+              <ChevronDown className="h-3.5 w-3.5 opacity-60" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-64 space-y-2 p-2">
+            <ListaFuncionariosSetor
+              grupo={grupoSelecionado}
+              funcionarios={grupoSelecionado === 'SOPRO' ? todosSopro : todosDecoracao}
+              disabled={!isRHMode}
+            />
+            <ListaFuncionariosExperiencia
+              funcionarios={todosFuncionarios}
+              grupo={grupoSelecionado}
+              disabled={!isRHMode}
+            />
+            {isRHMode && !isGestorSetor && (
+              <ListaFuncionariosExperienciaGeral
+                funcionarios={todosFuncionarios}
+                disabled={!isRHMode}
+              />
+            )}
+            {podeExportar && onExportarPorTurma && (
+              <Button variant="outline" size="sm" className="w-full justify-start gap-2 font-semibold" onClick={onExportarPorTurma}>
+                <FileSpreadsheet className="h-4 w-4" />
+                Excel por Turma
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
+
         {grupoSelecionado === 'DECORAÇÃO' && <EscalaFolgaDialog />}
         {grupoSelecionado === 'SOPRO' && (
           <Dialog>
             <DialogTrigger asChild>
-              <Button
-                variant="default"
-                size="sm"
-                className="gap-2 shrink-0 font-semibold bg-green-700 hover:bg-green-800"
-              >
+              <Button variant="outline" size="sm" className="gap-2 shrink-0 font-semibold">
                 <Calendar className="h-4 w-4" />
                 Escala
               </Button>

@@ -191,8 +191,6 @@ export default function Dashboard() {
         isRHMode={data.isRHMode}
         podeExportar={data.canExportExcel}
         onExportarExcel={exportarExcel}
-        onExportarPorTurma={exportarExcelPorTurma}
-        grupoSelecionado={data.grupoSelecionado}
       />
 
       <DashboardGroupSelector
@@ -205,6 +203,8 @@ export default function Dashboard() {
         todosSopro={data.todosSopro}
         todosDecoracao={data.todosDecoracao}
         todosFuncionarios={data.todosFuncionarios}
+        podeExportar={data.canExportExcel}
+        onExportarPorTurma={exportarExcelPorTurma}
       />
 
       <MetricasTurmaCards

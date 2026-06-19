@@ -587,8 +587,9 @@ export function ListaFuncionariosExperienciaGeral({ funcionarios, disabled = fal
     <>
       {!fullPage && (
         <Button
-          size="lg"
-          className="gap-2 font-semibold bg-violet-700 text-white hover:bg-violet-800 shadow-md whitespace-normal text-center leading-tight"
+          variant="outline"
+          size="sm"
+          className="w-full justify-start gap-2 shrink-0 border-border bg-card font-semibold text-foreground shadow-sm hover:bg-muted whitespace-normal text-left leading-tight"
           onClick={() => setDialogAberto(true)}
           disabled={disabled}
           title={disabled ? 'Faça login para acessar' : ''}
@@ -598,7 +599,7 @@ export function ListaFuncionariosExperienciaGeral({ funcionarios, disabled = fal
             <span>Experiência</span>
             <span>Geral</span>
           </span>
-          <Badge variant="secondary" className="ml-1 bg-violet-500/30 text-white">
+          <Badge variant="secondary" className="ml-1 bg-violet-500/10 text-violet-700">
             {funcionariosExperiencia.length}
           </Badge>
         </Button>

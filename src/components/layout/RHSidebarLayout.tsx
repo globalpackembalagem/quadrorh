@@ -82,7 +82,6 @@ const allRHNavigation: NavItem[] = [
   
   { name: 'FUNCIONÁRIOS', href: '/funcionarios', icon: Users },
   { name: 'PREVISÃO ADMISSÃO', href: '/previsao-admissao', icon: UserPlus },
-  { name: 'COB. FÉRIAS / TREINAMENTO', href: '/coberturas-treinamentos', icon: UserCheck },
   { 
     name: 'CONTROLE DE FALTAS', 
     href: '/faltas', 
@@ -125,6 +124,7 @@ const adminNavigation = [
   { name: 'USUÁRIOS', href: '/admin/usuarios', icon: UserCog },
   { name: 'BACKUP', href: '/admin/backup', icon: Database },
   { name: 'REFERÊNCIA', href: '/admin/referencia', icon: Lightbulb },
+  { name: 'MANUAL DO GESTOR', href: '/manual', icon: BookOpen },
 ];
 
 // Item do manual - acessível para todos os logados
@@ -200,10 +200,6 @@ function getNavigationForUser(
       gestorItems.push({ name: 'FUNCIONÁRIOS', href: '/funcionarios', icon: Users, viewOnly: !perms?.pode_editar_funcionarios });
     }
 
-    if (!perms || perms.pode_visualizar_coberturas) {
-      gestorItems.push({ name: 'COB. FÉRIAS / TREINAMENTO', href: '/coberturas-treinamentos', icon: UserCheck, viewOnly: true });
-    }
-
     gestorItems.push({ 
       name: 'CONTROLE DE FALTAS', 
       href: '/faltas', 
@@ -243,11 +239,6 @@ function getNavigationForUser(
   // Previsão Admissão
   if (!perms || perms.pode_visualizar_previsao) {
     items.push({ name: 'PREVISÃO ADMISSÃO', href: '/previsao-admissao', icon: UserPlus, viewOnly: perms && !perms.pode_editar_previsao });
-  }
-
-  // Coberturas
-  if (!perms || perms.pode_visualizar_coberturas) {
-    items.push({ name: 'COB. FÉRIAS / TREINAMENTO', href: '/coberturas-treinamentos', icon: UserCheck, viewOnly: perms && !perms.pode_editar_coberturas });
   }
 
   // Controle de Faltas
@@ -618,14 +609,6 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
         {/* Alterar Senha + Acesso RH */}
         <div className="mt-auto px-4 pb-6 space-y-2.5">
           <div className="h-px bg-sidebar-border/50 mb-4 mx-2" />
-          <Link
-            to="/manual"
-            onClick={closeFn}
-            className="flex items-center gap-3.5 rounded-xl px-4 py-3 text-[13px] font-semibold text-sidebar-foreground/90 hover:bg-sidebar-primary/5 hover:text-sidebar-primary border border-transparent hover:border-sidebar-primary/10 transition-all duration-200"
-          >
-            <BookOpen className="h-5 w-5 shrink-0 opacity-70" />
-            MANUAL DO GESTOR
-          </Link>
           {isRHMode && (
             <button
               onClick={() => { setAlterarSenhaOpen(true); closeFn?.(); }}
@@ -648,13 +631,13 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
   return (
     <div className="min-h-screen w-full flex flex-col bg-background">
       {/* Top Header com botão de menu */}
-      <header className="sticky top-0 z-50 h-14 flex items-center justify-between px-4 border-b bg-sidebar">
+      <header className="sticky top-0 z-50 h-14 flex items-center justify-between px-4 border-b border-border bg-card/95 backdrop-blur">
         <div className="flex items-center gap-2">
           {/* Botão Menu - abre drawer à esquerda (só quando não fixo) */}
           {!showPinnedSidebar && (
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-sidebar-foreground gap-1.5 px-2">
+                <Button variant="ghost" size="sm" className="text-foreground gap-1.5 px-2">
                   <Menu className="h-5 w-5" />
                   <span className="text-xs font-bold">MENU</span>
                 </Button>
@@ -666,22 +649,22 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
           )}
 
           <Link to="/home" className="flex items-center gap-4 hover:opacity-90 transition-all group">
-            <div className="bg-white p-1 rounded-lg shadow-sm border border-sidebar-border/20 group-hover:shadow-md transition-all">
-              <img src={logoGlobalpack} alt="GlobalPack" className="h-10 w-auto" />
-            </div>
+              <div className="rounded-md overflow-hidden border border-border bg-background/60">
+                <img src={logoGlobalpack} alt="GlobalPack" className="h-8 w-auto" />
+              </div>
             {!isMobile && (
               <div className="flex flex-col">
-                <span className="font-black text-sidebar-foreground text-lg tracking-tighter leading-none">QUADRO <span className="text-sidebar-primary">RH</span></span>
-                <span className="text-[10px] font-bold text-sidebar-foreground/40 tracking-[0.2em] mt-0.5">GLOBALPACK</span>
+                <span className="font-extrabold text-foreground text-base tracking-tight leading-none">Quadro<span className="text-primary">RH</span></span>
+                <span className="text-[10px] font-semibold text-muted-foreground tracking-[0.18em] mt-0.5">GLOBALPACK</span>
               </div>
             )}
           </Link>
           {isRHMode && (
-            <div className="hidden lg:flex items-center gap-2 ml-10 pl-6 border-l border-sidebar-border/60">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <div className="hidden lg:flex items-center gap-2 ml-10 pl-6 border-l border-border">
+              <div className="w-2 h-2 rounded-full bg-primary" />
               <span className="text-[11px] font-bold uppercase tracking-wider">
-                <span className="text-sidebar-foreground/60">SESSÃO:</span>
-                <span className="ml-1 text-white">{userRole.nome}</span>
+                <span className="text-muted-foreground">SESSAO:</span>
+                <span className="ml-1 text-foreground">{userRole.nome}</span>
               </span>
             </div>
           )}
@@ -745,3 +728,4 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
     </div>
   );
 }
+

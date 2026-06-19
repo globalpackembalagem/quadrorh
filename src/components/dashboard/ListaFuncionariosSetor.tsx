@@ -202,15 +202,16 @@ export function ListaFuncionariosSetor({ grupo, funcionarios, disabled = false }
   return (
     <>
       <Button 
-        size="lg"
-        className="gap-2 font-semibold shadow-md"
+        variant="outline"
+        size="sm"
+        className="w-full justify-start gap-2 shrink-0 border-border bg-card font-semibold text-foreground shadow-sm hover:bg-muted"
         onClick={() => setDialogAberto(true)}
         disabled={disabled}
         title={disabled ? 'Faça login para acessar' : ''}
       >
         <Users className="h-5 w-5" />
         Funcionários
-        <Badge variant="secondary" className="ml-1 bg-primary-foreground/20 text-primary-foreground">
+        <Badge variant="secondary" className="ml-1 bg-primary/10 text-primary">
           {funcionariosSetor.length}
         </Badge>
       </Button>

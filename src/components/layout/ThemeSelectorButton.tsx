@@ -7,9 +7,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { useTheme, THEME_OPTIONS, Theme } from '@/contexts/ThemeContext';
+import { useTheme, THEME_OPTIONS } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
-import { Check } from 'lucide-react';
+import { Check, Palette } from 'lucide-react';
 
 export function ThemeSelectorButton() {
   const { theme, setTheme } = useTheme();
@@ -21,68 +21,50 @@ export function ThemeSelectorButton() {
         <Button
           variant="ghost"
           size="sm"
-          className="gap-2 text-sidebar-foreground hover:bg-sidebar-accent"
+          className="gap-2 text-muted-foreground hover:bg-muted hover:text-foreground"
           title="Escolher tema"
         >
-          <span>🎨</span>
-          TEMA
+          <Palette className="h-4 w-4" />
+          Tema
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle className="text-lg">🎨 GALERIA DE TEMAS</DialogTitle>
+          <DialogTitle className="text-lg">Tema do sistema</DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
           {THEME_OPTIONS.map((opt) => {
             const isActive = theme === opt.id;
             return (
-              <div
+              <button
+                type="button"
                 key={opt.id}
                 className={cn(
-                  'rounded-lg border-2 overflow-hidden cursor-pointer transition-all hover:scale-[1.02]',
-                  isActive ? 'border-primary ring-2 ring-primary/30' : 'border-border hover:border-primary/50'
+                  'rounded-lg border overflow-hidden text-left transition-all hover:border-primary/60',
+                  isActive ? 'border-primary ring-2 ring-primary/20' : 'border-border'
                 )}
-                onClick={() => setTheme(opt.id)}
+                onClick={() => {
+                  setTheme(opt.id);
+                  setOpen(false);
+                }}
               >
-                {/* Mini mockup */}
                 <div className="flex h-28" style={{ background: opt.colors.background }}>
-                  {/* Sidebar */}
-                  <div className="w-1/4 p-1.5 flex flex-col gap-1" style={{ background: opt.colors.sidebar }}>
-                    <div className="h-2 w-full rounded-sm opacity-60" style={{ background: opt.colors.primary }} />
-                    <div className="h-1.5 w-3/4 rounded-sm opacity-30" style={{ background: opt.colors.text }} />
-                    <div className="h-1.5 w-2/3 rounded-sm opacity-30" style={{ background: opt.colors.text }} />
-                    <div className="h-1.5 w-3/4 rounded-sm opacity-30" style={{ background: opt.colors.text }} />
+                  <div className="w-1/4 p-2 flex flex-col gap-1" style={{ background: opt.colors.sidebar }}>
+                    <div className="h-2 w-full rounded-sm" style={{ background: opt.colors.primary }} />
+                    <div className="h-1.5 w-3/4 rounded-sm opacity-40" style={{ background: opt.colors.text }} />
+                    <div className="h-1.5 w-2/3 rounded-sm opacity-40" style={{ background: opt.colors.text }} />
+                    <div className="h-1.5 w-3/4 rounded-sm opacity-40" style={{ background: opt.colors.text }} />
                   </div>
-                  {/* Content */}
-                  <div className="flex-1 p-2 flex flex-col gap-1.5">
-                    <div className="flex gap-1">
-                      <div className="h-6 flex-1 rounded" style={{ background: opt.colors.card, border: `1px solid ${opt.colors.primary}22` }}>
-                        <div className="h-1.5 w-1/2 rounded-sm m-1" style={{ background: opt.colors.primary, opacity: 0.7 }} />
-                      </div>
-                      <div className="h-6 flex-1 rounded" style={{ background: opt.colors.card, border: `1px solid ${opt.colors.primary}22` }}>
-                        <div className="h-1.5 w-2/3 rounded-sm m-1" style={{ background: opt.colors.primary, opacity: 0.7 }} />
-                      </div>
-                    </div>
-                    <div className="flex-1 rounded" style={{ background: opt.colors.card, border: `1px solid ${opt.colors.primary}22` }}>
-                      <div className="h-1 w-full mt-2 mx-1" style={{ background: opt.colors.text, opacity: 0.1 }} />
-                      <div className="h-1 w-full mt-1 mx-1" style={{ background: opt.colors.text, opacity: 0.1 }} />
-                      <div className="h-1 w-3/4 mt-1 mx-1" style={{ background: opt.colors.text, opacity: 0.1 }} />
-                    </div>
+                  <div className="flex-1 p-2 flex flex-col gap-2">
+                    <div className="h-6 rounded" style={{ background: opt.colors.card }} />
+                    <div className="flex-1 rounded" style={{ background: opt.colors.card }} />
                   </div>
                 </div>
-                {/* Label */}
-                <div className="p-2 flex items-center justify-between bg-card">
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-0.5">
-                      <div className="w-3 h-3 rounded-full border border-border/40" style={{ background: opt.colors.primary }} />
-                      <div className="w-3 h-3 rounded-full border border-border/40" style={{ background: opt.colors.sidebar }} />
-                      <div className="w-3 h-3 rounded-full border border-border/40" style={{ background: opt.colors.background }} />
-                    </div>
-                    <span className="text-[10px] font-semibold">{opt.label}</span>
-                  </div>
+                <div className="p-3 flex items-center justify-between bg-card">
+                  <span className="text-xs font-semibold">{opt.label}</span>
                   {isActive && <Check className="w-4 h-4 text-primary" />}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
