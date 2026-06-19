@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Funcionario, SexoTipo } from '@/types/database';
 import { toast } from 'sonner';
 import { criarEventoENotificar } from '@/hooks/useEventosSistema';
+import { normalizarFuncionarioPayload } from '@/lib/normalizacao';
 
 export function useDeleteFuncionario() {
   const queryClient = useQueryClient();
@@ -177,9 +178,10 @@ export function useCreateFuncionario() {
   
   return useMutation({
     mutationFn: async (funcionario: CreateFuncionarioInput) => {
+      const funcionarioNormalizado = normalizarFuncionarioPayload(funcionario);
       const { data, error } = await supabase
         .from('funcionarios')
-        .insert(funcionario)
+        .insert(funcionarioNormalizado)
         .select()
         .single();
       
@@ -240,11 +242,11 @@ export function useUpdateFuncionario() {
       const estaMudandoParaAtivo = novaSituacaoNome.toUpperCase() === 'ATIVO';
       
       // Se estava em demissão e está voltando para Ativo, limpa a data de demissão
-      const updateData = {
+      const updateData = normalizarFuncionarioPayload({
         ...funcionario,
         situacao_id,
         ...(estaVindoDeDesligamento && estaMudandoParaAtivo ? { data_demissao: null } : {}),
-      };
+      });
       
       const { data, error } = await supabase
         .from('funcionarios')

@@ -100,6 +100,28 @@ export default function Dashboard() {
     const XLSX = await loadXLSX();
     const wb = XLSX.utils.book_new();
 
+    const aplicarPadraoExcel = (ws: any) => {
+      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
+      for (let row = range.s.r; row <= range.e.r; row++) {
+        for (let col = range.s.c; col <= range.e.c; col++) {
+          const cellRef = XLSX.utils.encode_cell({ r: row, c: col });
+          const cell = ws[cellRef];
+          if (!cell) continue;
+          cell.s = {
+            ...(cell.s || {}),
+            font: { name: 'Calibri', sz: 10, bold: row === 0 },
+            alignment: { vertical: 'center' },
+          };
+        }
+      }
+    };
+
+    const noQuadro = (f: any) => {
+      const setorConta = f.setor?.conta_no_quadro === true;
+      const situacaoNome = (f.situacao?.nome || '').toUpperCase();
+      return setorConta && situacaoNome === 'ATIVO' ? 'SIM' : 'NAO';
+    };
+
     const resumoSoproData = data.quadroPlanejado.map(q => {
       const funcTurma = data.funcionariosSopro.filter(f => {
         const turma = f.turma?.toUpperCase() || '';
@@ -118,6 +140,7 @@ export default function Dashboard() {
       };
     });
     const wsSopro = XLSX.utils.json_to_sheet(resumoSoproData);
+    aplicarPadraoExcel(wsSopro);
     XLSX.utils.book_append_sheet(wb, wsSopro, 'Resumo SOPRO');
 
     const resumoDecoData = data.quadroDecoracao.map(q => {
@@ -144,7 +167,35 @@ export default function Dashboard() {
       };
     });
     const wsDeco = XLSX.utils.json_to_sheet(resumoDecoData);
+    aplicarPadraoExcel(wsDeco);
     XLSX.utils.book_append_sheet(wb, wsDeco, 'Resumo DECORAÇÃO');
+
+    const todosFuncionariosData = data.todosFuncionarios
+      .slice()
+      .sort((a, b) => (a.nome_completo || '').localeCompare(b.nome_completo || ''))
+      .map(f => ({
+        'ID': f.matricula || '',
+        'NOME': f.nome_completo || '',
+        'CPF': (f as any).cpf || '',
+        'SEXO': f.sexo || '',
+        'EMPRESA': f.empresa || '',
+        'SETOR': f.setor?.nome || '',
+        'GRUPO_SETOR': f.setor?.grupo || '',
+        'FUNCAO': f.cargo || '',
+        'TURMA': f.turma || '',
+        'SITUACAO': f.situacao?.nome || '',
+        'ADMISSAO': f.data_admissao || '',
+        'DEMISSAO': f.data_demissao || '',
+        'NO_QUADRO': noQuadro(f),
+      }));
+    const wsTodos = XLSX.utils.json_to_sheet(todosFuncionariosData);
+    wsTodos['!cols'] = [
+      { wch: 12 }, { wch: 34 }, { wch: 18 }, { wch: 12 }, { wch: 18 },
+      { wch: 32 }, { wch: 22 }, { wch: 30 }, { wch: 12 }, { wch: 20 },
+      { wch: 14 }, { wch: 14 }, { wch: 14 },
+    ];
+    aplicarPadraoExcel(wsTodos);
+    XLSX.utils.book_append_sheet(wb, wsTodos, 'FUNCIONARIOS_COMPLETO');
 
     const situacoesExcluidasExport = ['DEMISSÃO', 'DEMISSAO', 'PED. DEMISSÃO', 'PED. DEMISSAO'];
     const funcSoproData = data.funcionariosSopro.filter(f => !situacoesExcluidasExport.includes((f.situacao?.nome || '').toUpperCase())).map(f => ({
@@ -157,6 +208,7 @@ export default function Dashboard() {
       'Admissão': f.data_admissao || '',
     }));
     const wsFuncSopro = XLSX.utils.json_to_sheet(funcSoproData);
+    aplicarPadraoExcel(wsFuncSopro);
     XLSX.utils.book_append_sheet(wb, wsFuncSopro, 'Funcionários SOPRO');
 
     const funcDecoData = data.funcionariosDecoracao.filter(f => !situacoesExcluidasExport.includes((f.situacao?.nome || '').toUpperCase())).map(f => ({
@@ -169,6 +221,7 @@ export default function Dashboard() {
       'Admissão': f.data_admissao || '',
     }));
     const wsFuncDeco = XLSX.utils.json_to_sheet(funcDecoData);
+    aplicarPadraoExcel(wsFuncDeco);
     XLSX.utils.book_append_sheet(wb, wsFuncDeco, 'Funcionários DECORAÇÃO');
 
     const dataAtual = new Date().toISOString().split('T')[0];

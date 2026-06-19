@@ -50,7 +50,6 @@ function lazyRetry(factory: () => Promise<{ default: ComponentType<any> }>) {
 const GateAcesso = lazyRetry(() => import("./pages/GateAcesso"));
 const Home = lazyRetry(() => import("./pages/Home"));
 const Dashboard = lazyRetry(() => import("./pages/Dashboard"));
-const HistoricoQuadro = lazyRetry(() => import("./pages/HistoricoQuadro"));
 const Funcionarios = lazyRetry(() => import("./pages/Funcionarios"));
 const PrevisaoAdmissao = lazyRetry(() => import("./pages/PrevisaoAdmissao"));
 const CoberturasTreinamentos = lazyRetry(() => import("./pages/CoberturasTreinamentos"));
@@ -112,6 +111,17 @@ function SafePage({ children }: { children: React.ReactNode }) {
   );
 }
 
+function HistoricoQuadroInativo() {
+  return (
+    <div className="rounded-xl border bg-card p-8 text-center shadow-sm">
+      <h1 className="text-xl font-bold text-foreground">HISTÓRICO DO QUADRO INATIVO</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Histórico bloqueado até definição da data inicial do quadro.
+      </p>
+    </div>
+  );
+}
+
 // Componente que ativa realtime e decide qual layout usar
 function LayoutRouter() {
   const location = useLocation();
@@ -156,7 +166,7 @@ function LayoutRouter() {
             <Route path="/home" element={<Home />} />
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/historico-quadro" element={<HistoricoQuadro />} />
+            <Route path="/historico-quadro" element={<HistoricoQuadroInativo />} />
             <Route path="/experiencia-geral" element={<RotaProtegida requireFaltas><ExperienciaGeral /></RotaProtegida>} />
             
             <Route path="/funcionarios" element={<RotaProtegida requireFuncionarios><Funcionarios /></RotaProtegida>} />
@@ -216,8 +226,7 @@ function LayoutRouter() {
 // Tela de manutenção com botão de login para teste
 function TelaManutencaoComLogin() {
   const [mostrarLogin, setMostrarLogin] = useState(false);
-  const navigate = useNavigate();
-  const { setUsuarioAtual, isRHMode } = useUsuario();
+  const { setUsuarioAtual } = useUsuario();
   const [nome, setNome] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
@@ -263,12 +272,7 @@ function TelaManutencaoComLogin() {
           </div>
 
           {!mostrarLogin ? (
-            <button
-              onClick={() => setMostrarLogin(true)}
-              className="text-xs text-slate-500 hover:text-slate-300 underline transition-colors"
-            >
-              Acesso administrativo
-            </button>
+            null
           ) : (
             <div className="space-y-3 mt-4 animate-in fade-in duration-300">
               <input
@@ -318,16 +322,35 @@ function ManutencaoRouter() {
   // Se não logado, mostra tela de manutenção
   return (
     <Routes>
-      <Route path="*" element={<TelaManutencaoComLogin />} />
+      <Route path="*" element={<TelaManutencaoPublica />} />
     </Routes>
   );
 }
 
 function TelaManutencaoPublica() {
+  const [cliquesLogo, setCliquesLogo] = useState(0);
+  const [liberado, setLiberado] = useState(() => localStorage.getItem('manutencao_luciano_liberado') === 'SIM');
+
+  const handleLogoClick = () => {
+    const novoTotal = cliquesLogo + 1;
+    setCliquesLogo(novoTotal);
+    if (novoTotal >= 2) {
+      localStorage.setItem('manutencao_luciano_liberado', 'SIM');
+      setLiberado(true);
+    }
+    window.setTimeout(() => setCliquesLogo(0), 900);
+  };
+
+  if (liberado) {
+    return <TelaManutencaoComLogin />;
+  }
+
   return (
     <div className="min-h-screen bg-[#f4f7fb] flex items-center justify-center p-6">
       <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-        <img src={logoGlobalpack} alt="Globalpack" className="h-14 mx-auto mb-8 object-contain" />
+        <button type="button" onClick={handleLogoClick} className="mx-auto mb-8 block cursor-default">
+          <img src={logoGlobalpack} alt="Globalpack" className="h-14 object-contain" />
+        </button>
         <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-700">
           <Construction className="h-7 w-7" />
         </div>
@@ -361,7 +384,7 @@ const App = () => {
               <Sonner />
               <BrowserRouter>
                 <Routes>
-                  <Route path="*" element={<TelaManutencaoPublica />} />
+                  <Route path="*" element={<ManutencaoRouter />} />
                 </Routes>
               </BrowserRouter>
             </TooltipProvider>

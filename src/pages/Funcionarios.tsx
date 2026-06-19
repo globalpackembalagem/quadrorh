@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, Users, Trash2, Plus, X, ArrowRightLeft, Upload, Undo2, ChevronDown, ChevronUp, Filter, Download, Type, Clock } from 'lucide-react';
+import { Search, Users, Trash2, Plus, X, ArrowRightLeft, Upload, Undo2, ChevronDown, ChevronUp, Filter, Download, Clock } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 import { useFuncionarios, useUpdateFuncionario, useDeleteFuncionario, useCreateFuncionario } from '@/hooks/useFuncionarios';
@@ -856,18 +856,6 @@ export default function Funcionarios() {
             {podeEditarFuncionarios && <ZerarBaseDialog />}
             <ExportarFuncionariosDialog funcionarios={funcionarios} setores={setores} situacoes={todasSituacoes} />
             {podeEditarFuncionarios && <ImportarFuncionarios setores={setores} situacoes={todasSituacoes} />}
-            {isAdmin && (
-              <>
-                <Button size="sm" variant="outline" onClick={handleRemoverAcentos} className="gap-1">
-                  <Type className="h-4 w-4" />
-                  TIRAR ACENTOS
-                </Button>
-                <Button size="sm" variant="outline" onClick={handleMaiusculo} className="gap-1">
-                  <Type className="h-4 w-4" />
-                  MAIÚSCULO
-                </Button>
-              </>
-            )}
           </div>
         </div>
       </div>

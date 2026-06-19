@@ -409,8 +409,10 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
     const registrosComAvisos = paraImportar.filter(d => d.avisos.length > 0);
     
     try {
-      const normUpper = (v: string | null | undefined) => 
-        v ? v.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') : null;
+      const normUpper = (v: string | null | undefined) => {
+        const valor = v ? v.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim() : '';
+        return valor || null;
+      };
       
       const registros = paraImportar.map(d => ({
         nome_completo: normUpper(d.nome_completo) || d.nome_completo,
@@ -418,12 +420,12 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
         setor_id: d.setor_id,
         situacao_id: d.situacao_id,
         empresa: d.empresa || 'GLOBALPACK',
-        matricula: d.matricula || null,
+        matricula: normUpper(d.matricula),
         data_admissao: d.data_admissao || null,
         cargo: normUpper(d.cargo),
-        turma: d.turma?.toUpperCase() || null,
+        turma: normUpper(d.turma),
         data_demissao: d.data_demissao || null,
-        observacoes: d.observacoes || null,
+        observacoes: normUpper(d.observacoes),
       }));
       
       // Importar em lotes de 500 para evitar limites do Supabase
