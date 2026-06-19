@@ -328,12 +328,12 @@ function ManutencaoRouter() {
 }
 
 function TelaManutencaoPublica() {
-  const [liberado, setLiberado] = useState(() => localStorage.getItem('manutencao_luciano_liberado') === 'SIM');
-
-  const liberarAcesso = () => {
-    localStorage.setItem('manutencao_luciano_liberado', 'SIM');
-    setLiberado(true);
-  };
+  const [liberado] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const acessoLuciano = params.get('luciano') === '1';
+    if (acessoLuciano) localStorage.setItem('manutencao_luciano_liberado', 'SIM');
+    return acessoLuciano || localStorage.getItem('manutencao_luciano_liberado') === 'SIM';
+  });
 
   if (liberado) {
     return <TelaManutencaoComLogin />;
@@ -342,9 +342,7 @@ function TelaManutencaoPublica() {
   return (
     <div className="min-h-screen bg-[#f4f7fb] flex items-center justify-center p-6">
       <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-        <button type="button" onDoubleClick={liberarAcesso} className="mx-auto mb-8 block cursor-default select-none">
-          <img src={logoGlobalpack} alt="Globalpack" className="h-14 object-contain" />
-        </button>
+        <img src={logoGlobalpack} alt="Globalpack" className="h-14 mx-auto mb-8 object-contain" />
         <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 text-blue-700">
           <Construction className="h-7 w-7" />
         </div>
