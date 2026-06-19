@@ -225,7 +225,7 @@ function LayoutRouter() {
 
 // Tela de manutenção com botão de login para teste
 function TelaManutencaoComLogin() {
-  const [mostrarLogin, setMostrarLogin] = useState(false);
+  const [mostrarLogin] = useState(true);
   const { setUsuarioAtual } = useUsuario();
   const [nome, setNome] = useState('');
   const [senha, setSenha] = useState('');
