@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useFuncionariosNoQuadro, useFuncionarios } from '@/hooks/useFuncionarios';
+import { useFuncionariosQuadroConferido, useFuncionarios } from '@/hooks/useFuncionarios';
 import { useSetoresAtivos } from '@/hooks/useSetores';
 import { useSituacoesAtivas } from '@/hooks/useSituacoes';
 import { useQuadroPlanejado } from '@/hooks/useQuadroPlanejado';
@@ -18,7 +18,7 @@ export function useDashboardData() {
   const { usuarioAtual, canExportExcel, isAdmin, isRHMode } = useUsuario();
   const { setoresNomes, isGestorSetor, temAcessoSopro, temAcessoDecoracao } = useSetoresUsuario();
 
-  const { data: funcionariosQuadro = [], isLoading: loadingFunc } = useFuncionariosNoQuadro();
+  const { data: funcionariosQuadro = [], isLoading: loadingFunc } = useFuncionariosQuadroConferido();
   const { data: todosFuncionarios = [] } = useFuncionarios();
   const { data: setores = [], isLoading: loadingSetores } = useSetoresAtivos();
   const { data: situacoes = [], isLoading: loadingSituacoes } = useSituacoesAtivas();

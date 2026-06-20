@@ -73,19 +73,8 @@ export function useFuncionarios() {
 
 export function useFuncionariosNoQuadro() {
   return useQuery({
-    queryKey: ['funcionarios', 'quadro', 'conferidos'],
+    queryKey: ['funcionarios', 'quadro'],
     queryFn: async () => {
-      const { data: conferidos, error: conferenciaError } = await (supabase as any)
-        .from('conferencia_funcionarios')
-        .select('funcionario_id')
-        .eq('status', 'CONFERIDO');
-
-      if (conferenciaError) throw conferenciaError;
-
-      const idsConferidos = new Set<string>((conferidos || []).map((item: { funcionario_id: string }) => item.funcionario_id));
-      if (idsConferidos.size === 0) return [];
-      const idsConferidosLista = Array.from(idsConferidos);
-
       // Buscar em lotes para suportar mais de 1000 registros
       const pageSize = 1000;
       let allData: Funcionario[] = [];
@@ -107,7 +96,6 @@ export function useFuncionariosNoQuadro() {
           .eq('setor.ativo', true)
           .eq('situacao.conta_no_quadro', true)
           .eq('situacao.ativa', true)
-          .in('id', idsConferidosLista)
           .order('nome_completo')
           .range(from, to);
         
@@ -123,6 +111,28 @@ export function useFuncionariosNoQuadro() {
       }
       
       return allData;
+    },
+  });
+}
+
+export function useFuncionariosQuadroConferido() {
+  const funcionariosQuadro = useFuncionariosNoQuadro();
+
+  return useQuery({
+    queryKey: ['funcionarios', 'quadro', 'conferidos'],
+    enabled: !funcionariosQuadro.isLoading && !funcionariosQuadro.error,
+    queryFn: async () => {
+      const { data: conferidos, error: conferenciaError } = await (supabase as any)
+        .from('conferencia_funcionarios')
+        .select('funcionario_id')
+        .eq('status', 'CONFERIDO');
+
+      if (conferenciaError) throw conferenciaError;
+
+      const idsConferidos = new Set<string>((conferidos || []).map((item: { funcionario_id: string }) => item.funcionario_id));
+      if (idsConferidos.size === 0) return [];
+
+      return (funcionariosQuadro.data || []).filter((funcionario) => idsConferidos.has(funcionario.id));
     },
   });
 }
