@@ -9,7 +9,20 @@ export function normalizarTextoSistema(valor?: string | null): string | null {
 }
 
 export function normalizarFuncionarioPayload<T extends Record<string, any>>(payload: T): T {
-  const camposTexto = ['nome_completo', 'matricula', 'cargo', 'turma', 'observacoes'];
+  const camposTexto = [
+    'nome_completo',
+    'matricula',
+    'cargo',
+    'turma',
+    'observacoes',
+    'empresa',
+    'centro_custo',
+    'cpf',
+    'tamanho_uniforme',
+    'tamanho_calca',
+    'tamanho_camiseta',
+    'tamanho_calcado',
+  ];
   const normalizado = { ...payload };
 
   camposTexto.forEach((campo) => {

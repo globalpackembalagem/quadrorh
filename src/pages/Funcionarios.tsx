@@ -52,6 +52,7 @@ import { Funcionario, SexoTipo, EmpresaTipo } from '@/types/database';
 import { format, parseISO, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { loadXLSX } from '@/lib/xlsx';
+import { normalizarTextoSistema } from '@/lib/normalizacao';
 // xlsx-js-style loaded dynamically
 import { toast } from 'sonner';
 
@@ -76,7 +77,8 @@ function TemporariosTab({ funcionarios }: { funcionarios: Funcionario[] }) {
   const temporarios = useMemo(() => {
     return funcionarios.filter(f => {
       const mat = f.matricula?.toUpperCase() || '';
-      return mat.startsWith('TEMP');
+      const situacao = normalizarTextoSistema(f.situacao?.nome) || '';
+      return mat.startsWith('TEMP') && situacao === 'ATIVO';
     });
   }, [funcionarios]);
 
@@ -113,12 +115,13 @@ function TemporariosTab({ funcionarios }: { funcionarios: Funcionario[] }) {
               <th className="w-[80px]">Turma</th>
               <th className="w-[100px]">Admissão</th>
               <th className="w-[100px]">Data 90 Dias</th>
+              <th className="w-[100px]">Data 180 Dias</th>
             </tr>
           </thead>
           <tbody>
             {filtrados.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-8 text-muted-foreground">
+                <td colSpan={7} className="text-center py-8 text-muted-foreground">
                   <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
                   <p>Nenhum temporário encontrado</p>
                 </td>
@@ -127,8 +130,10 @@ function TemporariosTab({ funcionarios }: { funcionarios: Funcionario[] }) {
               filtrados.map(func => {
                 const dataAdm = func.data_admissao ? parseISO(func.data_admissao) : null;
                 const data90 = dataAdm ? addDays(dataAdm, 90) : null;
+                const data180 = dataAdm ? addDays(dataAdm, 180) : null;
                 const hoje = new Date();
                 const vencido = data90 && data90 <= hoje;
+                const vencido180 = data180 && data180 <= hoje;
 
                 return (
                   <tr key={func.id} className="hover:bg-muted/50">
@@ -144,6 +149,16 @@ function TemporariosTab({ funcionarios }: { funcionarios: Funcionario[] }) {
                           style={{ backgroundColor: vencido ? 'hsl(var(--destructive))' : 'hsl(var(--primary))' }}
                         >
                           {format(data90, 'dd/MM/yyyy')}
+                        </Badge>
+                      ) : '-'}
+                    </td>
+                    <td>
+                      {data180 ? (
+                        <Badge
+                          className="text-white border-0 text-[10px]"
+                          style={{ backgroundColor: vencido180 ? 'hsl(var(--destructive))' : 'hsl(var(--primary))' }}
+                        >
+                          {format(data180, 'dd/MM/yyyy')}
                         </Badge>
                       ) : '-'}
                     </td>
