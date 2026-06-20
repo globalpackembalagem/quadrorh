@@ -51,6 +51,7 @@ const GateAcesso = lazyRetry(() => import("./pages/GateAcesso"));
 const Home = lazyRetry(() => import("./pages/Home"));
 const Dashboard = lazyRetry(() => import("./pages/Dashboard"));
 const Funcionarios = lazyRetry(() => import("./pages/Funcionarios"));
+const ConferenciaFuncionarios = lazyRetry(() => import("./pages/ConferenciaFuncionarios"));
 const PrevisaoAdmissao = lazyRetry(() => import("./pages/PrevisaoAdmissao"));
 const CoberturasTreinamentos = lazyRetry(() => import("./pages/CoberturasTreinamentos"));
 const ControleFaltas = lazyRetry(() => import("./pages/ControleFaltas"));
@@ -170,6 +171,7 @@ function LayoutRouter() {
             <Route path="/experiencia-geral" element={<RotaProtegida requireFaltas><ExperienciaGeral /></RotaProtegida>} />
             
             <Route path="/funcionarios" element={<RotaProtegida requireFuncionarios><Funcionarios /></RotaProtegida>} />
+            <Route path="/conferencia-funcionarios" element={<RotaProtegida requireFuncionarios><ConferenciaFuncionarios /></RotaProtegida>} />
             <Route path="/demissoes" element={<RotaProtegida requireDemissoes><Demissoes /></RotaProtegida>} />
             <Route path="/carta-desligamento" element={<RotaProtegida requireDemissoes><CartaDesligamento /></RotaProtegida>} />
             <Route path="/homologacoes" element={<RotaProtegida requireHomologacoes><Homologacoes /></RotaProtegida>} />

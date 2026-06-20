@@ -14,6 +14,7 @@ import {
 import { Funcionario, Setor, Situacao } from '@/types/database';
 import { format } from 'date-fns';
 import { loadXLSX } from '@/lib/xlsx';
+import { normalizarTextoSistema } from '@/lib/normalizacao';
 // xlsx-js-style loaded dynamically
 import { toast } from 'sonner';
 
@@ -23,18 +24,12 @@ interface ExportarFuncionariosDialogProps {
   situacoes: Situacao[];
 }
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const EXCEL_EPOCH_UTC = Date.UTC(1899, 11, 30);
-
 function isoDateToExcelSerial(isoDate?: string | null) {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate || '');
   if (!match) return '';
 
   const [, year, month, day] = match;
-  const utcDate = Date.UTC(Number(year), Number(month) - 1, Number(day));
-  if (Number.isNaN(utcDate)) return '';
-
-  return Math.floor((utcDate - EXCEL_EPOCH_UTC) / MS_PER_DAY);
+  return `${day}/${month}/${year}`;
 }
 
 export function ExportarFuncionariosDialog({ 
@@ -209,6 +204,12 @@ export function ExportarFuncionariosDialog({
     });
 
     const ws = XLSX.utils.json_to_sheet(dados);
+    Object.keys(ws).forEach((cellRef) => {
+      const cell = ws[cellRef];
+      if (cellRef[0] !== '!' && cell?.t === 's') {
+        cell.v = normalizarTextoSistema(cell.v) || '';
+      }
+    });
     const headers = Object.keys(dados[0]);
     const colDataAdmissao = XLSX.utils.encode_col(headers.indexOf('Data Admissão'));
     const colDataDemissao = XLSX.utils.encode_col(headers.indexOf('Data Demissão'));

@@ -80,6 +80,7 @@ const allRHNavigation: NavItem[] = [
   { name: 'QUADRO DE FUNCIONÁRIOS', href: '/', icon: LayoutDashboard },
   
   { name: 'FUNCIONÁRIOS', href: '/funcionarios', icon: Users },
+  { name: 'CONFERENCIA FUNCIONARIOS', href: '/conferencia-funcionarios', icon: ClipboardCheck },
   { name: 'PREVISÃO ADMISSÃO', href: '/previsao-admissao', icon: UserPlus },
   { 
     name: 'CONTROLE DE FALTAS', 
@@ -233,6 +234,7 @@ function getNavigationForUser(
   // Funcionários
   if (!perms || perms.pode_visualizar_funcionarios) {
     items.push({ name: 'FUNCIONÁRIOS', href: '/funcionarios', icon: Users, viewOnly: perms && !perms.pode_editar_funcionarios });
+    items.push({ name: 'CONFERENCIA FUNCIONARIOS', href: '/conferencia-funcionarios', icon: ClipboardCheck, viewOnly: perms && !perms.pode_editar_funcionarios });
   }
 
   // Previsão Admissão

@@ -18,6 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { loadXLSX } from '@/lib/xlsx';
+import { normalizarTextoSistema } from '@/lib/normalizacao';
 
 interface ImportarFuncionariosProps {
   setores: Setor[];
@@ -58,6 +59,13 @@ const COLUNAS_EXEMPLO = [
   'Data Demissão',
   'Observações',
 ];
+
+const formatarDataExcel = (isoDate?: string | null) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate || '');
+  if (!match) return '';
+  const [, year, month, day] = match;
+  return `${day}/${month}/${year}`;
+};
 
 export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionariosProps) {
   const queryClient = useQueryClient();
@@ -365,6 +373,13 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
       ['Maria Santos', 'F', 'DECORAÇÃO', 'Ativo', 'G+P', 'TEMP', '15/03/2024', 'Operador', 'T2', '', 'Exemplo'],
     ]);
     
+    Object.keys(ws).forEach((cellRef) => {
+      const cell = ws[cellRef];
+      if (cellRef[0] !== '!' && cell?.t === 's') {
+        cell.v = normalizarTextoSistema(cell.v) || '';
+      }
+    });
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Funcionários');
     XLSX.writeFile(wb, 'modelo_importacao_funcionarios.xlsx');
@@ -388,7 +403,20 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
       'Ajustes': item.avisos.join(' | ') || '-',
     }));
 
+    dadosExport.forEach((item) => {
+      const colunaAdmissao = Object.keys(item).find((key) => normalizarTextoSistema(key) === 'ADMISSAO');
+      if (colunaAdmissao) {
+        item[colunaAdmissao as keyof typeof item] = formatarDataExcel(item[colunaAdmissao as keyof typeof item] as string) as never;
+      }
+    });
+
     const ws = XLSX.utils.json_to_sheet(dadosExport);
+    Object.keys(ws).forEach((cellRef) => {
+      const cell = ws[cellRef];
+      if (cellRef[0] !== '!' && cell?.t === 's') {
+        cell.v = normalizarTextoSistema(cell.v) || '';
+      }
+    });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Importados');
     
