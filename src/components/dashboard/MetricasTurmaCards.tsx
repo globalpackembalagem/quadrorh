@@ -166,8 +166,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
           return grupoSetor === grupoEsperado;
         });
         
-        const fakeValue = usuarioAtual?.fake_quadro_ativo ? (usuarioAtual?.fake_quadro_config?.sopro?.[turma] || 0) : 0;
-        result[turma].total = funcTurma.length - fakeValue;
+        result[turma].total = funcTurma.length;
         result[turma].homens = funcTurma.filter(f => f.sexo === 'masculino').length;
         result[turma].mulheres = funcTurma.filter(f => f.sexo === 'feminino').length;
         
@@ -210,8 +209,6 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
         if (planejado) {
           result[turma].quadroNecessario = calcularTotalPlanejadoDecoracao(planejado);
         }
-        const fakeValue = usuarioAtual?.fake_quadro_ativo ? (usuarioAtual?.fake_quadro_config?.deco?.[turma] || 0) : 0;
-        result[turma].total = result[turma].total - fakeValue;
         result[turma].diferenca = result[turma].total - result[turma].quadroNecessario;
       });
     }
