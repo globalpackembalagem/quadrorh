@@ -456,7 +456,7 @@ export default function ConferenciaFuncionarios() {
 
       <div className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
         <AlertTriangle className="mt-0.5 h-4 w-4" />
-        <p>NA ABA EXCLUIR, O BOTAO EXCLUIR DEFINITIVO APAGA O CADASTRO DO FUNCIONARIO.</p>
+        <p>NO BOTAO EXCLUIR, DIGITE DUPLICADO PARA APAGAR DIRETO OU ANALISAR PARA ENVIAR PARA A ABA EXCLUIR.</p>
       </div>
 
       <Dialog open={!!funcionarioSelecionado} onOpenChange={(open) => !open && setFuncionarioSelecionado(null)}>
@@ -554,7 +554,15 @@ export default function ConferenciaFuncionarios() {
                     variant="outline"
                     className="gap-1 text-red-700 hover:text-red-700"
                     onClick={() => {
-                      marcarStatus.mutate({ funcionarioId: funcionarioSelecionado.id, status: 'ANALISAR_EXCLUSAO' });
+                      const acao = normalizarTextoSistema(window.prompt('DIGITE DUPLICADO PARA EXCLUIR AGORA OU ANALISAR PARA ENVIAR PARA A ABA EXCLUIR') || '');
+                      if (acao === 'DUPLICADO') {
+                        excluirFuncionario.mutate(funcionarioSelecionado.id);
+                      } else if (acao === 'ANALISAR') {
+                        marcarStatus.mutate({ funcionarioId: funcionarioSelecionado.id, status: 'ANALISAR_EXCLUSAO' });
+                      } else {
+                        toast.info('NENHUMA ACAO REALIZADA');
+                        return;
+                      }
                       setFuncionarioSelecionado(null);
                     }}
                   >
