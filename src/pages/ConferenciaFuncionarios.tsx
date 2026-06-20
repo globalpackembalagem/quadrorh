@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 
 type StatusConferencia = 'CONFERIDO' | 'VER_DEPOIS' | 'ANALISAR_EXCLUSAO' | 'PENDENTE';
+type SetorFiltro = 'TODOS' | 'SOPRO_A' | 'SOPRO_B' | 'SOPRO_C' | 'DECORACAO_DIA' | 'DECORACAO_NOITE';
 
 interface ConferenciaRegistro {
   funcionario_id: string;
@@ -47,6 +48,38 @@ const ROW_CLASS: Record<StatusConferencia, string> = {
   ANALISAR_EXCLUSAO: 'bg-red-50 hover:bg-red-100',
 };
 
+const SETOR_FILTROS: Array<{ value: SetorFiltro; label: string }> = [
+  { value: 'TODOS', label: 'TODOS SETORES' },
+  { value: 'SOPRO_A', label: 'SOPRO A' },
+  { value: 'SOPRO_B', label: 'SOPRO B' },
+  { value: 'SOPRO_C', label: 'SOPRO C' },
+  { value: 'DECORACAO_DIA', label: 'DECORACAO DIA' },
+  { value: 'DECORACAO_NOITE', label: 'DECORACAO NOITE' },
+];
+
+function temLetraSetor(texto: string, letra: 'A' | 'B' | 'C') {
+  return new RegExp(`(^|[^A-Z0-9])${letra}([^A-Z0-9]|$)`).test(texto);
+}
+
+function obterSetorFiltro(func: Funcionario): Exclude<SetorFiltro, 'TODOS'> | null {
+  const nomeSetor = normalizarTextoSistema(func.setor?.nome) || '';
+  const grupoSetor = normalizarTextoSistema(func.setor?.grupo) || '';
+  const texto = `${nomeSetor} ${grupoSetor}`;
+
+  if (texto.includes('SOPRO')) {
+    if (temLetraSetor(texto, 'A')) return 'SOPRO_A';
+    if (temLetraSetor(texto, 'B')) return 'SOPRO_B';
+    if (temLetraSetor(texto, 'C')) return 'SOPRO_C';
+  }
+
+  if (texto.includes('DECORACAO')) {
+    if (texto.includes('NOITE')) return 'DECORACAO_NOITE';
+    if (texto.includes('DIA')) return 'DECORACAO_DIA';
+  }
+
+  return null;
+}
+
 function formatarData(isoDate?: string | null) {
   if (!isoDate) return '-';
   try {
@@ -59,6 +92,7 @@ function formatarData(isoDate?: string | null) {
 export default function ConferenciaFuncionarios() {
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState<StatusConferencia | 'TODOS'>('PENDENTE');
+  const [setorFiltro, setSetorFiltro] = useState<SetorFiltro>('TODOS');
   const [turmaFiltro, setTurmaFiltro] = useState('TODAS');
   const [funcionarioSelecionado, setFuncionarioSelecionado] = useState<Funcionario | null>(null);
   const [setorEdit, setSetorEdit] = useState('');
@@ -196,6 +230,7 @@ export default function ConferenciaFuncionarios() {
       })
       .filter(({ func, status }) => {
         if (filtro !== 'TODOS' && status !== filtro) return false;
+        if (setorFiltro !== 'TODOS' && obterSetorFiltro(func) !== setorFiltro) return false;
         const turma = normalizarTextoSistema(func.turma) || 'SEM TURMA';
         if (turmaFiltro !== 'TODAS' && turma !== turmaFiltro) return false;
         if (!termo) return true;
@@ -215,11 +250,36 @@ export default function ConferenciaFuncionarios() {
         const nomeB = normalizarTextoSistema(b.func.nome_completo) || '';
         return nomeA.localeCompare(nomeB);
       });
-  }, [busca, conferenciaMap, filtro, funcionarios, turmaFiltro]);
+  }, [busca, conferenciaMap, filtro, funcionarios, setorFiltro, turmaFiltro]);
+
+  const funcionariosBaseFiltros = useMemo(() => {
+    return funcionarios.filter((func) => {
+      const status = conferenciaMap.get(func.id)?.status || 'PENDENTE';
+      if (filtro !== 'TODOS' && status !== filtro) return false;
+      if (setorFiltro !== 'TODOS' && obterSetorFiltro(func) !== setorFiltro) return false;
+      return true;
+    });
+  }, [conferenciaMap, filtro, funcionarios, setorFiltro]);
+
+  const setoresFiltroTotais = useMemo(() => {
+    const map = new Map<SetorFiltro, number>();
+    SETOR_FILTROS.forEach((item) => map.set(item.value, 0));
+
+    funcionarios.forEach((func) => {
+      const status = conferenciaMap.get(func.id)?.status || 'PENDENTE';
+      if (filtro !== 'TODOS' && status !== filtro) return;
+
+      map.set('TODOS', (map.get('TODOS') || 0) + 1);
+      const grupo = obterSetorFiltro(func);
+      if (grupo) map.set(grupo, (map.get(grupo) || 0) + 1);
+    });
+
+    return map;
+  }, [conferenciaMap, filtro, funcionarios]);
 
   const turmas = useMemo(() => {
     const map = new Map<string, number>();
-    funcionarios.forEach((func) => {
+    funcionariosBaseFiltros.forEach((func) => {
       const turma = normalizarTextoSistema(func.turma) || 'SEM TURMA';
       map.set(turma, (map.get(turma) || 0) + 1);
     });
@@ -228,7 +288,7 @@ export default function ConferenciaFuncionarios() {
       if (b === 'SEM TURMA') return -1;
       return a.localeCompare(b);
     });
-  }, [funcionarios]);
+  }, [funcionariosBaseFiltros]);
 
   const totais = useMemo(() => {
     const base = { TODOS: funcionarios.length, PENDENTE: 0, CONFERIDO: 0, VER_DEPOIS: 0, ANALISAR_EXCLUSAO: 0 };
@@ -284,15 +344,33 @@ export default function ConferenciaFuncionarios() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <Button size="sm" variant={turmaFiltro === 'TODAS' ? 'default' : 'outline'} onClick={() => setTurmaFiltro('TODAS')}>
-          TODAS TURMAS ({funcionarios.length})
-        </Button>
-        {turmas.map(([turma, total]) => (
-          <Button key={turma} size="sm" variant={turmaFiltro === turma ? 'default' : 'outline'} onClick={() => setTurmaFiltro(turma)}>
-            {turma} ({total})
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          {SETOR_FILTROS.map((item) => (
+            <Button
+              key={item.value}
+              size="sm"
+              variant={setorFiltro === item.value ? 'default' : 'outline'}
+              onClick={() => {
+                setSetorFiltro(item.value);
+                setTurmaFiltro('TODAS');
+              }}
+            >
+              {item.label} ({setoresFiltroTotais.get(item.value) || 0})
+            </Button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant={turmaFiltro === 'TODAS' ? 'default' : 'outline'} onClick={() => setTurmaFiltro('TODAS')}>
+            TODAS TURMAS ({funcionariosBaseFiltros.length})
           </Button>
-        ))}
+          {turmas.map(([turma, total]) => (
+            <Button key={turma} size="sm" variant={turmaFiltro === turma ? 'default' : 'outline'} onClick={() => setTurmaFiltro(turma)}>
+              {turma} ({total})
+            </Button>
+          ))}
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-lg border bg-card">
