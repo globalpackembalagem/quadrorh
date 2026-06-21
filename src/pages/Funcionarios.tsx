@@ -208,7 +208,7 @@ export default function Funcionarios() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importarTurmasOpen, setImportarTurmasOpen] = useState(false);
   const [turmaFilter, setTurmaFilter] = useFilterPersistence<string>('func_turma', 'TODOS');
-  const [grupoFilter, setGrupoFilter] = useFilterPersistence<'TODOS' | 'SOPRO' | 'DECORACAO'>('func_grupo', 'TODOS');
+  const [grupoFilter, setGrupoFilter] = useFilterPersistence<'TODOS' | 'SOPRO' | 'DECORACAO' | 'AJUSTAR_SITUACAO'>('func_grupo', 'TODOS');
   const [editingFuncionario, setEditingFuncionario] = useState<Funcionario | null>(null);
 
   // Form state
@@ -243,6 +243,9 @@ export default function Funcionarios() {
   // Funcionários pré-filtrados pelo grupo selecionado
   const funcionariosDoGrupo = useMemo(() => {
     if (grupoFilter === 'TODOS') return funcionarios;
+    if (grupoFilter === 'AJUSTAR_SITUACAO') {
+      return funcionarios.filter(f => normalizarTextoSistema(f.situacao?.nome) === 'AJUSTAR SITUACAO');
+    }
     if (grupoFilter === 'SOPRO') {
       return funcionarios.filter(f => {
         const grupo = (f.setor as any)?.grupo?.toUpperCase() || '';
@@ -912,7 +915,8 @@ export default function Funcionarios() {
                     { key: 'TODOS', label: 'TODOS', count: funcionarios.filter(f => { const s = f.situacao?.nome?.toUpperCase() || ''; return s === 'ATIVO' || s === 'FÉRIAS'; }).length },
                     { key: 'SOPRO', label: 'SOPRO', count: funcionarios.filter(f => { const s = f.situacao?.nome?.toUpperCase() || ''; const g = ((f.setor as any)?.grupo || '').toUpperCase(); return (s === 'ATIVO' || s === 'FÉRIAS') && g.startsWith('SOPRO'); }).length },
                     { key: 'DECORACAO', label: 'DECORAÇÃO', count: funcionarios.filter(f => { const s = f.situacao?.nome?.toUpperCase() || ''; const g = ((f.setor as any)?.grupo || '').toUpperCase(); return (s === 'ATIVO' || s === 'FÉRIAS') && (g.startsWith('DECORAÇÃO') || g.startsWith('DECORACAO')); }).length },
-                  ] as { key: 'TODOS' | 'SOPRO' | 'DECORACAO'; label: string; count: number }[]).map(g => {
+                    { key: 'AJUSTAR_SITUACAO', label: 'AJUSTAR SITUACAO', count: funcionarios.filter(f => normalizarTextoSistema(f.situacao?.nome) === 'AJUSTAR SITUACAO').length },
+                  ] as { key: 'TODOS' | 'SOPRO' | 'DECORACAO' | 'AJUSTAR_SITUACAO'; label: string; count: number }[]).map(g => {
                     const active = grupoFilter === g.key;
                     return (
                       <button
