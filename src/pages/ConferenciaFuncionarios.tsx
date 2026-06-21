@@ -209,20 +209,24 @@ export default function ConferenciaFuncionarios() {
     setAdmissaoEdit(func.data_admissao || '');
   };
 
+  const salvarCamposFuncionario = async (funcionarioId: string) => {
+    const { error: updateError } = await supabase
+      .from('funcionarios')
+      .update({
+        setor_id: setorEdit,
+        turma: normalizarTextoSistema(turmaEdit === 'SEM TURMA' ? null : turmaEdit),
+        situacao_id: situacaoEdit,
+        data_admissao: admissaoEdit || null,
+      })
+      .eq('id', funcionarioId);
+
+    if (updateError) throw updateError;
+  };
+
   const salvarAjustes = useMutation({
     mutationFn: async () => {
       if (!funcionarioSelecionado) return;
-      const { error: updateError } = await supabase
-        .from('funcionarios')
-        .update({
-          setor_id: setorEdit,
-          turma: normalizarTextoSistema(turmaEdit === 'SEM TURMA' ? null : turmaEdit),
-          situacao_id: situacaoEdit,
-          data_admissao: admissaoEdit || null,
-        })
-        .eq('id', funcionarioSelecionado.id);
-
-      if (updateError) throw updateError;
+      await salvarCamposFuncionario(funcionarioSelecionado.id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
@@ -608,8 +612,16 @@ export default function ConferenciaFuncionarios() {
                 <div className="flex flex-wrap gap-2">
                   <Button
                     className="gap-1"
-                    onClick={() => {
-                      marcarStatus.mutate({ funcionarioId: funcionarioSelecionado.id, status: 'CONFERIDO' });
+                    onClick={async () => {
+                      try {
+                        await salvarCamposFuncionario(funcionarioSelecionado.id);
+                        await marcarStatus.mutateAsync({ funcionarioId: funcionarioSelecionado.id, status: 'CONFERIDO' });
+                        queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
+                        toast.success('FUNCIONARIO CONFERIDO');
+                      } catch {
+                        toast.error('ERRO AO SALVAR E CONFERIR');
+                        return;
+                      }
                       setFuncionarioSelecionado(null);
                       setMostrarOpcoesExclusao(false);
                     }}
