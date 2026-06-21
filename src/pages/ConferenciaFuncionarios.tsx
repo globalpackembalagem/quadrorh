@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 
 type StatusConferencia = 'CONFERIDO' | 'VER_DEPOIS' | 'ANALISAR_EXCLUSAO' | 'PENDENTE';
 type SetorFiltro = 'TODOS' | 'SOPRO_A' | 'SOPRO_B' | 'SOPRO_C' | 'DECORACAO_DIA' | 'DECORACAO_NOITE';
+type TipoFiltro = 'TODOS' | 'EFETIVOS' | 'TEMPORARIOS';
 
 interface ConferenciaRegistro {
   funcionario_id: string;
@@ -57,6 +58,17 @@ const SETOR_FILTROS: Array<{ value: SetorFiltro; label: string }> = [
   { value: 'DECORACAO_NOITE', label: 'DECORACAO NOITE' },
 ];
 
+const TIPO_FILTROS: Array<{ value: TipoFiltro; label: string }> = [
+  { value: 'TODOS', label: 'TODOS' },
+  { value: 'EFETIVOS', label: 'EFETIVOS' },
+  { value: 'TEMPORARIOS', label: 'TEMPORARIOS' },
+];
+
+function obterTipoFuncionario(func: Funcionario): Exclude<TipoFiltro, 'TODOS'> {
+  const matricula = normalizarTextoSistema(func.matricula) || '';
+  return matricula.startsWith('TEMP') ? 'TEMPORARIOS' : 'EFETIVOS';
+}
+
 function temLetraSetor(texto: string, letra: 'A' | 'B' | 'C') {
   return new RegExp(`(^|[^A-Z0-9])${letra}([^A-Z0-9]|$)`).test(texto);
 }
@@ -92,9 +104,11 @@ function formatarData(isoDate?: string | null) {
 export default function ConferenciaFuncionarios() {
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState<StatusConferencia | 'TODOS'>('PENDENTE');
+  const [tipoFiltro, setTipoFiltro] = useState<TipoFiltro>('TODOS');
   const [setorFiltro, setSetorFiltro] = useState<SetorFiltro>('TODOS');
   const [turmaFiltro, setTurmaFiltro] = useState('TODAS');
   const [funcionarioSelecionado, setFuncionarioSelecionado] = useState<Funcionario | null>(null);
+  const [mostrarOpcoesExclusao, setMostrarOpcoesExclusao] = useState(false);
   const [setorEdit, setSetorEdit] = useState('');
   const [turmaEdit, setTurmaEdit] = useState('');
   const [situacaoEdit, setSituacaoEdit] = useState('');
@@ -188,6 +202,7 @@ export default function ConferenciaFuncionarios() {
 
   const abrirModal = (func: Funcionario) => {
     setFuncionarioSelecionado(func);
+    setMostrarOpcoesExclusao(false);
     setSetorEdit(func.setor_id || '');
     setTurmaEdit(normalizarTextoSistema(func.turma) || '');
     setSituacaoEdit(func.situacao_id || '');
@@ -230,6 +245,7 @@ export default function ConferenciaFuncionarios() {
       })
       .filter(({ func, status }) => {
         if (filtro !== 'TODOS' && status !== filtro) return false;
+        if (tipoFiltro !== 'TODOS' && obterTipoFuncionario(func) !== tipoFiltro) return false;
         if (setorFiltro !== 'TODOS' && obterSetorFiltro(func) !== setorFiltro) return false;
         const turma = normalizarTextoSistema(func.turma) || 'SEM TURMA';
         if (turmaFiltro !== 'TODAS' && turma !== turmaFiltro) return false;
@@ -250,16 +266,17 @@ export default function ConferenciaFuncionarios() {
         const nomeB = normalizarTextoSistema(b.func.nome_completo) || '';
         return nomeA.localeCompare(nomeB);
       });
-  }, [busca, conferenciaMap, filtro, funcionarios, setorFiltro, turmaFiltro]);
+  }, [busca, conferenciaMap, filtro, funcionarios, setorFiltro, tipoFiltro, turmaFiltro]);
 
   const funcionariosBaseFiltros = useMemo(() => {
     return funcionarios.filter((func) => {
       const status = conferenciaMap.get(func.id)?.status || 'PENDENTE';
       if (filtro !== 'TODOS' && status !== filtro) return false;
+      if (tipoFiltro !== 'TODOS' && obterTipoFuncionario(func) !== tipoFiltro) return false;
       if (setorFiltro !== 'TODOS' && obterSetorFiltro(func) !== setorFiltro) return false;
       return true;
     });
-  }, [conferenciaMap, filtro, funcionarios, setorFiltro]);
+  }, [conferenciaMap, filtro, funcionarios, setorFiltro, tipoFiltro]);
 
   const setoresFiltroTotais = useMemo(() => {
     const map = new Map<SetorFiltro, number>();
@@ -268,6 +285,7 @@ export default function ConferenciaFuncionarios() {
     funcionarios.forEach((func) => {
       const status = conferenciaMap.get(func.id)?.status || 'PENDENTE';
       if (filtro !== 'TODOS' && status !== filtro) return;
+      if (tipoFiltro !== 'TODOS' && obterTipoFuncionario(func) !== tipoFiltro) return;
 
       map.set('TODOS', (map.get('TODOS') || 0) + 1);
       const grupo = obterSetorFiltro(func);
@@ -275,7 +293,24 @@ export default function ConferenciaFuncionarios() {
     });
 
     return map;
-  }, [conferenciaMap, filtro, funcionarios]);
+  }, [conferenciaMap, filtro, funcionarios, tipoFiltro]);
+
+  const tiposFiltroTotais = useMemo(() => {
+    const map = new Map<TipoFiltro, number>();
+    TIPO_FILTROS.forEach((item) => map.set(item.value, 0));
+
+    funcionarios.forEach((func) => {
+      const status = conferenciaMap.get(func.id)?.status || 'PENDENTE';
+      if (filtro !== 'TODOS' && status !== filtro) return;
+      if (setorFiltro !== 'TODOS' && obterSetorFiltro(func) !== setorFiltro) return;
+
+      map.set('TODOS', (map.get('TODOS') || 0) + 1);
+      const tipo = obterTipoFuncionario(func);
+      map.set(tipo, (map.get(tipo) || 0) + 1);
+    });
+
+    return map;
+  }, [conferenciaMap, filtro, funcionarios, setorFiltro]);
 
   const turmas = useMemo(() => {
     const map = new Map<string, number>();
@@ -294,10 +329,19 @@ export default function ConferenciaFuncionarios() {
     const base = { TODOS: funcionarios.length, PENDENTE: 0, CONFERIDO: 0, VER_DEPOIS: 0, ANALISAR_EXCLUSAO: 0 };
     funcionarios.forEach((func) => {
       const status = conferenciaMap.get(func.id)?.status || 'PENDENTE';
+      if (tipoFiltro !== 'TODOS' && obterTipoFuncionario(func) !== tipoFiltro) return;
+      if (setorFiltro !== 'TODOS' && obterSetorFiltro(func) !== setorFiltro) return;
+      if (turmaFiltro !== 'TODAS' && (normalizarTextoSistema(func.turma) || 'SEM TURMA') !== turmaFiltro) return;
       if (status in base) base[status] += 1;
     });
+    base.TODOS = funcionarios.filter((func) => {
+      if (tipoFiltro !== 'TODOS' && obterTipoFuncionario(func) !== tipoFiltro) return false;
+      if (setorFiltro !== 'TODOS' && obterSetorFiltro(func) !== setorFiltro) return false;
+      if (turmaFiltro !== 'TODAS' && (normalizarTextoSistema(func.turma) || 'SEM TURMA') !== turmaFiltro) return false;
+      return true;
+    }).length;
     return base;
-  }, [conferenciaMap, funcionarios]);
+  }, [conferenciaMap, funcionarios, setorFiltro, tipoFiltro, turmaFiltro]);
 
   if (error) {
     return (
@@ -346,6 +390,19 @@ export default function ConferenciaFuncionarios() {
 
       <div className="space-y-2">
         <div className="flex flex-wrap gap-2">
+          {TIPO_FILTROS.map((item) => (
+            <Button
+              key={item.value}
+              size="sm"
+              variant={tipoFiltro === item.value ? 'default' : 'outline'}
+              onClick={() => setTipoFiltro(item.value)}
+            >
+              {item.label} ({tiposFiltroTotais.get(item.value) || 0})
+            </Button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
           {SETOR_FILTROS.map((item) => (
             <Button
               key={item.value}
@@ -378,36 +435,43 @@ export default function ConferenciaFuncionarios() {
           <thead className="bg-muted/60 text-left text-xs font-bold uppercase text-muted-foreground">
             <tr>
               <th className="px-4 py-3">ID</th>
+              <th className="px-4 py-3">TIPO</th>
               <th className="px-4 py-3">NOME</th>
               <th className="px-4 py-3">SETOR</th>
               <th className="px-4 py-3">TURMA</th>
               <th className="px-4 py-3">ADMISSAO</th>
               <th className="px-4 py-3">SITUACAO</th>
               <th className="px-4 py-3">STATUS</th>
+              {filtro === 'CONFERIDO' && <th className="px-4 py-3">CONFERIDO</th>}
               <th className="px-4 py-3 text-right">ACAO</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">
+                <td colSpan={filtro === 'CONFERIDO' ? 10 : 9} className="px-4 py-10 text-center text-muted-foreground">
                   CARREGANDO...
                 </td>
               </tr>
             ) : lista.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-10 text-center text-muted-foreground">
+                <td colSpan={filtro === 'CONFERIDO' ? 10 : 9} className="px-4 py-10 text-center text-muted-foreground">
                   NENHUM FUNCIONARIO ENCONTRADO.
                 </td>
               </tr>
             ) : (
-              lista.map(({ func, status }) => (
+              lista.map(({ func, registro, status }) => (
                 <tr
                   key={func.id}
                   className={`cursor-pointer border-t ${ROW_CLASS[status] || ROW_CLASS.PENDENTE}`}
                   onClick={() => abrirModal(func)}
                 >
                   <td className="px-4 py-3 font-medium">{normalizarTextoSistema(func.matricula) || '-'}</td>
+                  <td className="px-4 py-3">
+                    <Badge variant="secondary">
+                      {obterTipoFuncionario(func) === 'TEMPORARIOS' ? 'TEMPORARIO' : 'EFETIVO'}
+                    </Badge>
+                  </td>
                   <td className="px-4 py-3 font-semibold">{normalizarTextoSistema(func.nome_completo)}</td>
                   <td className="px-4 py-3">{normalizarTextoSistema(func.setor?.nome) || '-'}</td>
                   <td className="px-4 py-3 font-semibold">{normalizarTextoSistema(func.turma) || 'SEM TURMA'}</td>
@@ -418,6 +482,12 @@ export default function ConferenciaFuncionarios() {
                       {STATUS_LABEL[status] || status}
                     </Badge>
                   </td>
+                  {filtro === 'CONFERIDO' && (
+                    <td className="px-4 py-3 text-xs text-muted-foreground">
+                      <div>{normalizarTextoSistema(registro?.atualizado_por) || '-'}</div>
+                      <div>{formatarData(registro?.updated_at)}</div>
+                    </td>
+                  )}
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       {status === 'ANALISAR_EXCLUSAO' ? (
@@ -456,10 +526,15 @@ export default function ConferenciaFuncionarios() {
 
       <div className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
         <AlertTriangle className="mt-0.5 h-4 w-4" />
-        <p>NO BOTAO EXCLUIR, DIGITE DUPLICADO PARA APAGAR DIRETO OU ANALISAR PARA ENVIAR PARA A ABA EXCLUIR.</p>
+        <p>NO BOTAO EXCLUIR, ESCOLHA DUPLICADO PARA APAGAR DIRETO OU ANALISAR PARA ENVIAR PARA A ABA EXCLUIR.</p>
       </div>
 
-      <Dialog open={!!funcionarioSelecionado} onOpenChange={(open) => !open && setFuncionarioSelecionado(null)}>
+      <Dialog open={!!funcionarioSelecionado} onOpenChange={(open) => {
+        if (!open) {
+          setFuncionarioSelecionado(null);
+          setMostrarOpcoesExclusao(false);
+        }
+      }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>CONFERIR FUNCIONARIO</DialogTitle>
@@ -536,6 +611,7 @@ export default function ConferenciaFuncionarios() {
                     onClick={() => {
                       marcarStatus.mutate({ funcionarioId: funcionarioSelecionado.id, status: 'CONFERIDO' });
                       setFuncionarioSelecionado(null);
+                      setMostrarOpcoesExclusao(false);
                     }}
                   >
                     <CheckCircle2 className="h-4 w-4" /> OK
@@ -546,6 +622,7 @@ export default function ConferenciaFuncionarios() {
                     onClick={() => {
                       marcarStatus.mutate({ funcionarioId: funcionarioSelecionado.id, status: 'VER_DEPOIS' });
                       setFuncionarioSelecionado(null);
+                      setMostrarOpcoesExclusao(false);
                     }}
                   >
                     <Clock className="h-4 w-4" /> AGUARDAR
@@ -553,22 +630,45 @@ export default function ConferenciaFuncionarios() {
                   <Button
                     variant="outline"
                     className="gap-1 text-red-700 hover:text-red-700"
-                    onClick={() => {
-                      const acao = normalizarTextoSistema(window.prompt('DIGITE DUPLICADO PARA EXCLUIR AGORA OU ANALISAR PARA ENVIAR PARA A ABA EXCLUIR') || '');
-                      if (acao === 'DUPLICADO') {
-                        excluirFuncionario.mutate(funcionarioSelecionado.id);
-                      } else if (acao === 'ANALISAR') {
-                        marcarStatus.mutate({ funcionarioId: funcionarioSelecionado.id, status: 'ANALISAR_EXCLUSAO' });
-                      } else {
-                        toast.info('NENHUMA ACAO REALIZADA');
-                        return;
-                      }
-                      setFuncionarioSelecionado(null);
-                    }}
+                    onClick={() => setMostrarOpcoesExclusao((atual) => !atual)}
                   >
                     <Trash2 className="h-4 w-4" /> EXCLUIR?
                   </Button>
                 </div>
+
+                {mostrarOpcoesExclusao && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                    <div className="mb-2 text-sm font-semibold text-red-800">ESCOLHA O TIPO DE EXCLUSAO</div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          excluirFuncionario.mutate(funcionarioSelecionado.id);
+                          setFuncionarioSelecionado(null);
+                          setMostrarOpcoesExclusao(false);
+                        }}
+                      >
+                        DUPLICADO - EXCLUIR AGORA
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-red-300 text-red-700 hover:text-red-700"
+                        onClick={() => {
+                          marcarStatus.mutate({ funcionarioId: funcionarioSelecionado.id, status: 'ANALISAR_EXCLUSAO' });
+                          setFuncionarioSelecionado(null);
+                          setMostrarOpcoesExclusao(false);
+                        }}
+                      >
+                        ANALISAR - ENVIAR PARA ABA EXCLUIR
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setMostrarOpcoesExclusao(false)}>
+                        CANCELAR
+                      </Button>
+                    </div>
+                  </div>
+                )}
 
                 <Button onClick={() => salvarAjustes.mutate()} disabled={salvarAjustes.isPending}>
                   {salvarAjustes.isPending ? 'SALVANDO...' : 'SALVAR AJUSTES'}
