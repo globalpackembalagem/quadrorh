@@ -5,7 +5,7 @@ import { isFolgaEscalaDecoracao } from '@/lib/escalaPanama';
 import { isFolgaEscalaSopro } from '@/lib/escalaSopro';
 import { supabase } from '@/integrations/supabase/client';
 import { format, parseISO, eachDayOfInterval, isWeekend, isBefore, isAfter, differenceInDays, startOfDay } from 'date-fns';
-import { useFuncionariosNoQuadro } from '@/hooks/useFuncionarios';
+import { useFuncionariosQuadroConferido } from '@/hooks/useFuncionarios';
 import { ptBR } from 'date-fns/locale';
 import { Plus, Lock, Unlock, Calendar, AlertTriangle, Filter, BarChart3, Users, Wind, Palette, Layers, Search, Info, Eye, KeyRound, Bell, CheckCircle } from 'lucide-react';
 import { useLiberacoesFaltas } from '@/hooks/useLiberacoesFaltas';
@@ -507,7 +507,7 @@ export default function ControleFaltas() {
   }, [quadroPlanejadoSopro, quadroDecoracaoData]);
 
   // Calcular sobra do quadro por setor
-  const { data: funcionariosQuadro = [] } = useFuncionariosNoQuadro();
+  const { data: funcionariosQuadro = [] } = useFuncionariosQuadroConferido();
   
   const sobraPorSetor = useMemo(() => {
     const map: Record<string, number> = {};
