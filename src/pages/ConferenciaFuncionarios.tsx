@@ -104,9 +104,9 @@ function formatarData(isoDate?: string | null) {
 export default function ConferenciaFuncionarios() {
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState<StatusConferencia | 'TODOS'>('PENDENTE');
-  const [tipoFiltro, setTipoFiltro] = useState<TipoFiltro>('TODOS');
-  const [setorFiltro, setSetorFiltro] = useState<SetorFiltro>('TODOS');
-  const [turmaFiltro, setTurmaFiltro] = useState('TODAS');
+  const [tipoFiltro, setTipoFiltro] = useState<Exclude<TipoFiltro, 'TODOS'>[]>([]);
+  const [setorFiltro, setSetorFiltro] = useState<Exclude<SetorFiltro, 'TODOS'>[]>([]);
+  const [turmaFiltro, setTurmaFiltro] = useState<string[]>([]);
   const [funcionarioSelecionado, setFuncionarioSelecionado] = useState<Funcionario | null>(null);
   const [mostrarOpcoesExclusao, setMostrarOpcoesExclusao] = useState(false);
   const [setorEdit, setSetorEdit] = useState('');
@@ -118,6 +118,10 @@ export default function ConferenciaFuncionarios() {
   const { data: funcionarios = [], isLoading: loadingFuncionarios } = useFuncionariosNoQuadro();
   const { data: setores = [] } = useSetores();
   const { data: situacoes = [] } = useSituacoes();
+
+  const toggleArrayFiltro = <T extends string>(valor: T, atual: T[], setter: (value: T[]) => void) => {
+    setter(atual.includes(valor) ? atual.filter(item => item !== valor) : [...atual, valor]);
+  };
 
   const setoresOrdenados = useMemo(() => {
     return [...setores]
@@ -249,10 +253,11 @@ export default function ConferenciaFuncionarios() {
       })
       .filter(({ func, status }) => {
         if (filtro !== 'TODOS' && status !== filtro) return false;
-        if (tipoFiltro !== 'TODOS' && obterTipoFuncionario(func) !== tipoFiltro) return false;
-        if (setorFiltro !== 'TODOS' && obterSetorFiltro(func) !== setorFiltro) return false;
+        if (tipoFiltro.length > 0 && !tipoFiltro.includes(obterTipoFuncionario(func))) return false;
+        const setorFunc = obterSetorFiltro(func);
+        if (setorFiltro.length > 0 && (!setorFunc || !setorFiltro.includes(setorFunc))) return false;
         const turma = normalizarTextoSistema(func.turma) || 'SEM TURMA';
-        if (turmaFiltro !== 'TODAS' && turma !== turmaFiltro) return false;
+        if (turmaFiltro.length > 0 && !turmaFiltro.includes(turma)) return false;
         if (!termo) return true;
 
         const textoBusca = [
@@ -276,8 +281,9 @@ export default function ConferenciaFuncionarios() {
     return funcionarios.filter((func) => {
       const status = conferenciaMap.get(func.id)?.status || 'PENDENTE';
       if (filtro !== 'TODOS' && status !== filtro) return false;
-      if (tipoFiltro !== 'TODOS' && obterTipoFuncionario(func) !== tipoFiltro) return false;
-      if (setorFiltro !== 'TODOS' && obterSetorFiltro(func) !== setorFiltro) return false;
+      if (tipoFiltro.length > 0 && !tipoFiltro.includes(obterTipoFuncionario(func))) return false;
+      const setorFunc = obterSetorFiltro(func);
+      if (setorFiltro.length > 0 && (!setorFunc || !setorFiltro.includes(setorFunc))) return false;
       return true;
     });
   }, [conferenciaMap, filtro, funcionarios, setorFiltro, tipoFiltro]);
@@ -289,7 +295,7 @@ export default function ConferenciaFuncionarios() {
     funcionarios.forEach((func) => {
       const status = conferenciaMap.get(func.id)?.status || 'PENDENTE';
       if (filtro !== 'TODOS' && status !== filtro) return;
-      if (tipoFiltro !== 'TODOS' && obterTipoFuncionario(func) !== tipoFiltro) return;
+      if (tipoFiltro.length > 0 && !tipoFiltro.includes(obterTipoFuncionario(func))) return;
 
       map.set('TODOS', (map.get('TODOS') || 0) + 1);
       const grupo = obterSetorFiltro(func);
@@ -306,7 +312,8 @@ export default function ConferenciaFuncionarios() {
     funcionarios.forEach((func) => {
       const status = conferenciaMap.get(func.id)?.status || 'PENDENTE';
       if (filtro !== 'TODOS' && status !== filtro) return;
-      if (setorFiltro !== 'TODOS' && obterSetorFiltro(func) !== setorFiltro) return;
+      const setorFunc = obterSetorFiltro(func);
+      if (setorFiltro.length > 0 && (!setorFunc || !setorFiltro.includes(setorFunc))) return;
 
       map.set('TODOS', (map.get('TODOS') || 0) + 1);
       const tipo = obterTipoFuncionario(func);
@@ -333,15 +340,17 @@ export default function ConferenciaFuncionarios() {
     const base = { TODOS: funcionarios.length, PENDENTE: 0, CONFERIDO: 0, VER_DEPOIS: 0, ANALISAR_EXCLUSAO: 0 };
     funcionarios.forEach((func) => {
       const status = conferenciaMap.get(func.id)?.status || 'PENDENTE';
-      if (tipoFiltro !== 'TODOS' && obterTipoFuncionario(func) !== tipoFiltro) return;
-      if (setorFiltro !== 'TODOS' && obterSetorFiltro(func) !== setorFiltro) return;
-      if (turmaFiltro !== 'TODAS' && (normalizarTextoSistema(func.turma) || 'SEM TURMA') !== turmaFiltro) return;
+      if (tipoFiltro.length > 0 && !tipoFiltro.includes(obterTipoFuncionario(func))) return;
+      const setorFunc = obterSetorFiltro(func);
+      if (setorFiltro.length > 0 && (!setorFunc || !setorFiltro.includes(setorFunc))) return;
+      if (turmaFiltro.length > 0 && !turmaFiltro.includes(normalizarTextoSistema(func.turma) || 'SEM TURMA')) return;
       if (status in base) base[status] += 1;
     });
     base.TODOS = funcionarios.filter((func) => {
-      if (tipoFiltro !== 'TODOS' && obterTipoFuncionario(func) !== tipoFiltro) return false;
-      if (setorFiltro !== 'TODOS' && obterSetorFiltro(func) !== setorFiltro) return false;
-      if (turmaFiltro !== 'TODAS' && (normalizarTextoSistema(func.turma) || 'SEM TURMA') !== turmaFiltro) return false;
+      if (tipoFiltro.length > 0 && !tipoFiltro.includes(obterTipoFuncionario(func))) return false;
+      const setorFunc = obterSetorFiltro(func);
+      if (setorFiltro.length > 0 && (!setorFunc || !setorFiltro.includes(setorFunc))) return false;
+      if (turmaFiltro.length > 0 && !turmaFiltro.includes(normalizarTextoSistema(func.turma) || 'SEM TURMA')) return false;
       return true;
     }).length;
     return base;
@@ -398,8 +407,11 @@ export default function ConferenciaFuncionarios() {
             <Button
               key={item.value}
               size="sm"
-              variant={tipoFiltro === item.value ? 'default' : 'outline'}
-              onClick={() => setTipoFiltro(item.value)}
+              variant={item.value === 'TODOS' ? (tipoFiltro.length === 0 ? 'default' : 'outline') : (tipoFiltro.includes(item.value) ? 'default' : 'outline')}
+              onClick={() => {
+                if (item.value === 'TODOS') setTipoFiltro([]);
+                else toggleArrayFiltro(item.value, tipoFiltro, setTipoFiltro);
+              }}
             >
               {item.label} ({tiposFiltroTotais.get(item.value) || 0})
             </Button>
@@ -411,10 +423,11 @@ export default function ConferenciaFuncionarios() {
             <Button
               key={item.value}
               size="sm"
-              variant={setorFiltro === item.value ? 'default' : 'outline'}
+              variant={item.value === 'TODOS' ? (setorFiltro.length === 0 ? 'default' : 'outline') : (setorFiltro.includes(item.value) ? 'default' : 'outline')}
               onClick={() => {
-                setSetorFiltro(item.value);
-                setTurmaFiltro('TODAS');
+                if (item.value === 'TODOS') setSetorFiltro([]);
+                else toggleArrayFiltro(item.value, setorFiltro, setSetorFiltro);
+                setTurmaFiltro([]);
               }}
             >
               {item.label} ({setoresFiltroTotais.get(item.value) || 0})
@@ -423,11 +436,11 @@ export default function ConferenciaFuncionarios() {
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant={turmaFiltro === 'TODAS' ? 'default' : 'outline'} onClick={() => setTurmaFiltro('TODAS')}>
+          <Button size="sm" variant={turmaFiltro.length === 0 ? 'default' : 'outline'} onClick={() => setTurmaFiltro([])}>
             TODAS TURMAS ({funcionariosBaseFiltros.length})
           </Button>
           {turmas.map(([turma, total]) => (
-            <Button key={turma} size="sm" variant={turmaFiltro === turma ? 'default' : 'outline'} onClick={() => setTurmaFiltro(turma)}>
+            <Button key={turma} size="sm" variant={turmaFiltro.includes(turma) ? 'default' : 'outline'} onClick={() => toggleArrayFiltro(turma, turmaFiltro, setTurmaFiltro)}>
               {turma} ({total})
             </Button>
           ))}
