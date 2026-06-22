@@ -3,7 +3,7 @@ import { format, parseISO } from 'date-fns';
 import { CheckCircle2, Clock, Search, Trash2, AlertTriangle } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useFuncionariosNoQuadro } from '@/hooks/useFuncionarios';
+import { invalidarFuncionarios, useFuncionariosNoQuadro } from '@/hooks/useFuncionarios';
 import { useSetores } from '@/hooks/useSetores';
 import { useSituacoes } from '@/hooks/useSituacoes';
 import { Funcionario } from '@/types/database';
@@ -233,7 +233,7 @@ export default function ConferenciaFuncionarios() {
       await salvarCamposFuncionario(funcionarioSelecionado.id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
+      invalidarFuncionarios(queryClient);
       toast.success('AJUSTES SALVOS');
       setFuncionarioSelecionado(null);
     },

@@ -1,9 +1,34 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient, QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Funcionario, SexoTipo } from '@/types/database';
 import { toast } from 'sonner';
 import { criarEventoENotificar } from '@/hooks/useEventosSistema';
 import { normalizarFuncionarioPayload } from '@/lib/normalizacao';
+
+export const invalidarFuncionarios = (queryClient: QueryClient) => {
+  queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
+  queryClient.invalidateQueries({ queryKey: ['funcionarios', 'quadro'] });
+  queryClient.invalidateQueries({ queryKey: ['funcionarios', 'quadro', 'conferidos'] });
+  queryClient.invalidateQueries({ queryKey: ['funcionarios', 'ponto'] });
+};
+
+export function useFuncionariosRealtime() {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('funcionarios-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'funcionarios' }, () => {
+        invalidarFuncionarios(queryClient);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+}
 
 export function useDeleteFuncionario() {
   const queryClient = useQueryClient();
@@ -18,7 +43,7 @@ export function useDeleteFuncionario() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
+      invalidarFuncionarios(queryClient);
       toast.success('Funcionário excluído com sucesso!');
     },
     onError: (error: Error) => {
@@ -212,7 +237,7 @@ export function useCreateFuncionario() {
       return data;
     },
     onSuccess: async (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
+      invalidarFuncionarios(queryClient);
       toast.success('Funcionário cadastrado com sucesso!');
 
       // Buscar nome do setor para a notificação
@@ -282,7 +307,7 @@ export function useUpdateFuncionario() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
+      invalidarFuncionarios(queryClient);
       toast.success('Funcionário atualizado com sucesso!');
     },
     onError: () => {

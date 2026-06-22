@@ -45,6 +45,7 @@ import { ThemeSelectorButton } from '@/components/layout/ThemeSelectorButton';
 import { cn } from '@/lib/utils';
 import { BotaoAcessoRH } from '@/components/auth/BotaoAcessoRH';
 import { useAuth } from '@/hooks/useAuth';
+import { useFuncionariosRealtime } from '@/hooks/useFuncionarios';
 import { UsuarioLocal, useUsuario } from '@/contexts/UserContext';
 import logoGlobalpack from '@/assets/logo-globalpack-new.png';
 
@@ -296,6 +297,7 @@ function getNavigationForUser(
 }
 
 export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
+  useFuncionariosRealtime();
   const location = useLocation();
   const { isRHMode, userRole, isAdmin, isVisualizacao, canEditFaltas } = useAuth();
   const { usuarioAtual } = useUsuario();
