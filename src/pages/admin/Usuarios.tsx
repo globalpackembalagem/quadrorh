@@ -77,6 +77,7 @@ interface UserRole {
   pode_exportar_excel: boolean;
   acesso_admin: boolean;
   recebe_notificacoes: boolean;
+  tipos_notificacao?: string[] | null;
 }
 
 const DEFAULT_PERMISSOES: Permissoes = {
@@ -104,6 +105,17 @@ const DEFAULT_PERMISSOES: Permissoes = {
   acesso_admin: false,
   recebe_notificacoes: true,
 };
+
+const TIPOS_NOTIFICACAO = [
+  { value: 'troca_turno', label: 'TROCA DE TURNO' },
+  { value: 'demissao_temporario', label: 'DESLIGAMENTO TEMPORARIO' },
+  { value: 'demissao', label: 'DEMISSAO' },
+  { value: 'divergencia', label: 'DIVERGENCIAS' },
+  { value: 'faltas', label: 'FALTAS' },
+  { value: 'previsao_admissao', label: 'PREVISAO ADMISSAO' },
+  { value: 'evento_sistema_modal', label: 'EVENTOS / CIENTES' },
+  { value: 'armarios', label: 'ARMARIOS' },
+];
 
 // Determinar grupo/tipo do usuário
 function getTipoUsuario(user: UserRole): { label: string; icon: React.ReactNode; color: string } {
@@ -163,6 +175,7 @@ export default function Usuarios() {
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [setoresIds, setSetoresIds] = useState<string[]>([]);
   const [permissoes, setPermissoes] = useState<Permissoes>(DEFAULT_PERMISSOES);
+  const [tiposNotificacao, setTiposNotificacao] = useState<string[]>(TIPOS_NOTIFICACAO.map(t => t.value));
   const [ativo, setAtivo] = useState(true);
   const [tempoInatividade, setTempoInatividade] = useState(4);
   const [tipoAcesso, setTipoAcesso] = useState<'admin' | 'rh' | 'gestor' | 'visualizacao'>('visualizacao');
@@ -194,8 +207,8 @@ export default function Usuarios() {
   });
 
   const createUserMutation = useMutation({
-    mutationFn: async ({ nome, email, senha, setoresIds, permissoes }: {
-      nome: string; email: string; senha: string; setoresIds: string[]; permissoes: Permissoes;
+    mutationFn: async ({ nome, email, senha, setoresIds, permissoes, tiposNotificacao }: {
+      nome: string; email: string; senha: string; setoresIds: string[]; permissoes: Permissoes; tiposNotificacao: string[];
     }) => {
       const { pode_visualizar_integracoes, pode_editar_integracoes, ...permissoesRestritas } = permissoes;
       
@@ -209,9 +222,8 @@ export default function Usuarios() {
           senha: 'temp_placeholder',
           setor_id: setoresIds[0] || null,
           tempo_inatividade: tempoInatividade,
+          tipos_notificacao: tiposNotificacao,
           ...permissoesRestritas,
-          pode_visualizar_integracao: pode_visualizar_integracoes,
-          pode_editar_integracao: pode_editar_integracoes,
         } as any)
         .select()
         .single();
@@ -244,16 +256,14 @@ export default function Usuarios() {
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: async ({ id, nome, email, senha, setoresIds, permissoes, ativo, tempoInatividade }: {
+    mutationFn: async ({ id, nome, email, senha, setoresIds, permissoes, ativo, tempoInatividade, tiposNotificacao }: {
       id: string; nome: string; email: string; senha?: string;
-      setoresIds: string[]; permissoes: Permissoes; ativo: boolean; tempoInatividade: number;
+      setoresIds: string[]; permissoes: Permissoes; ativo: boolean; tempoInatividade: number; tiposNotificacao: string[];
     }) => {
       const { pode_visualizar_integracoes, pode_editar_integracoes, ...permissoesRestritas } = permissoes;
       const updateData: Record<string, unknown> = {
         nome, email: email || null, setor_id: setoresIds[0] || null,
-        ativo, tempo_inatividade: tempoInatividade, ...permissoesRestritas,
-        pode_visualizar_integracao: pode_visualizar_integracoes,
-        pode_editar_integracao: pode_editar_integracoes,
+        ativo, tempo_inatividade: tempoInatividade, tipos_notificacao: tiposNotificacao, ...permissoesRestritas,
       };
       // NÃO salvar senha diretamente no update
 
@@ -304,6 +314,7 @@ export default function Usuarios() {
   const resetForm = () => {
     setNome(''); setEmail(''); setSenha(''); setMostrarSenha(false);
     setSetoresIds([]); setPermissoes(DEFAULT_PERMISSOES);
+    setTiposNotificacao(TIPOS_NOTIFICACAO.map(t => t.value));
     setAtivo(true); setTempoInatividade(4); setEditingUser(null);
     setTipoAcesso('visualizacao');
   };
@@ -400,8 +411,15 @@ export default function Usuarios() {
       recebe_notificacoes: user.recebe_notificacoes ?? true,
     });
     setTempoInatividade(user.tempo_inatividade ?? 4);
+    setTiposNotificacao(user.tipos_notificacao?.length ? user.tipos_notificacao : TIPOS_NOTIFICACAO.map(t => t.value));
     setTipoAcesso(detectTipoAcesso(user));
     setDialogOpen(true);
+  };
+
+  const handleTipoNotificacaoToggle = (tipo: string) => {
+    setTiposNotificacao(prev =>
+      prev.includes(tipo) ? prev.filter(t => t !== tipo) : [...prev, tipo]
+    );
   };
 
   const handleSetorToggle = (setorId: string) =>
@@ -439,9 +457,9 @@ export default function Usuarios() {
     e.preventDefault();
     if (!nome) { toast.error('Informe o nome do usuário'); return; }
     if (editingUser) {
-      await updateUserMutation.mutateAsync({ id: editingUser.id, nome, email, senha, setoresIds, permissoes, ativo, tempoInatividade });
+      await updateUserMutation.mutateAsync({ id: editingUser.id, nome, email, senha, setoresIds, permissoes, ativo, tempoInatividade, tiposNotificacao });
     } else {
-      await createUserMutation.mutateAsync({ nome, email, senha, setoresIds, permissoes });
+      await createUserMutation.mutateAsync({ nome, email, senha, setoresIds, permissoes, tiposNotificacao });
     }
   };
 
@@ -836,6 +854,39 @@ export default function Usuarios() {
                 ))}
               </div>
               {setoresIds.length > 0 && <p className="text-xs text-muted-foreground">{setoresIds.length} setor(es) selecionado(s)</p>}
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Tipos de Notificação</Label>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="notificacoes-todas"
+                    checked={tiposNotificacao.length === TIPOS_NOTIFICACAO.length}
+                    onCheckedChange={(checked) => setTiposNotificacao(checked ? TIPOS_NOTIFICACAO.map(t => t.value) : [])}
+                  />
+                  <label htmlFor="notificacoes-todas" className="text-xs font-medium leading-none cursor-pointer text-muted-foreground">
+                    Selecionar Todas
+                  </label>
+                </div>
+              </div>
+              <div className="border rounded-lg p-3 grid grid-cols-2 gap-2">
+                {TIPOS_NOTIFICACAO.map((tipo) => (
+                  <div key={tipo.value} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`notif-${tipo.value}`}
+                      checked={tiposNotificacao.includes(tipo.value)}
+                      onCheckedChange={() => handleTipoNotificacaoToggle(tipo.value)}
+                    />
+                    <label htmlFor={`notif-${tipo.value}`} className="text-xs font-medium leading-none cursor-pointer">
+                      {tipo.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                O usuário só verá na central os tipos marcados aqui.
+              </p>
             </div>
 
             {/* Permissões */}

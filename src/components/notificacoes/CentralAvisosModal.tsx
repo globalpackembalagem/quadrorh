@@ -23,6 +23,22 @@ interface AvisoNotificacao {
   lida: boolean;
 }
 
+const tipoNotificacaoLiberado = (tipo: string | null | undefined, liberados?: string[] | null) => {
+  if (!liberados) return true;
+  if (liberados.length === 0) return false;
+  const t = (tipo || '').toLowerCase();
+  return liberados.some(liberado => {
+    const l = liberado.toLowerCase();
+    if (t === l || t.includes(l) || l.includes(t)) return true;
+    if (l === 'troca_turno' && t.includes('transferencia')) return true;
+    if (l === 'demissao' && t.includes('demissao')) return true;
+    if (l === 'divergencia' && t.includes('divergencia')) return true;
+    if (l === 'previsao_admissao' && (t.includes('previsao') || t.includes('admissao'))) return true;
+    if (l === 'evento_sistema_modal' && (t.includes('evento_sistema') || t.includes('ciencia'))) return true;
+    return false;
+  });
+};
+
 const TIPO_BADGE_LABELS: Record<string, string> = {
   demissao_lancada: 'DEMISSÃO',
   pedido_demissao_lancado: 'PED. DEMISSÃO',
@@ -129,6 +145,7 @@ export function CentralAvisosModal() {
   const [cienteIds, setCienteIds] = useState<Set<string>>(new Set());
   const [filtroTurma, setFiltroTurma] = useState<string | null>(null);
   const [filtroStatus, setFiltroStatus] = useState<'todas' | 'enviada' | 'vista'>('todas');
+  const [tiposLiberados, setTiposLiberados] = useState<string[] | null>(null);
 
   const removerAvisoDaTela = useCallback((id: string) => {
     setAvisos(prev => {
@@ -176,11 +193,12 @@ export function CentralAvisosModal() {
     // Verificar se este usuário tem permissão para receber notificações
     const { data: roleData } = await supabase
       .from('user_roles')
-      .select('recebe_notificacoes')
+      .select('recebe_notificacoes, tipos_notificacao')
       .eq('id', userRole.id)
       .single();
 
     if (roleData && roleData.recebe_notificacoes === false) return;
+    setTiposLiberados((roleData as any)?.tipos_notificacao ?? null);
 
     const { data } = await supabase
       .from('notificacoes')
@@ -191,8 +209,11 @@ export function CentralAvisosModal() {
       .limit(20);
 
     if (data && data.length > 0) {
-      setAvisos(data as AvisoNotificacao[]);
-      setVisible(true);
+      const filtradas = (data as AvisoNotificacao[]).filter(n =>
+        tipoNotificacaoLiberado(n.tipo, (roleData as any)?.tipos_notificacao)
+      );
+      setAvisos(filtradas);
+      setVisible(filtradas.length > 0);
     }
   }, [isVisualizacao, isRealParceria, userRole?.id]);
 
@@ -211,7 +232,7 @@ export function CentralAvisosModal() {
         { event: 'INSERT', schema: 'public', table: 'notificacoes' },
         (payload) => {
           const notif = payload.new as any;
-          if (notif.user_role_id === userRole.id && !notif.lida) {
+          if (notif.user_role_id === userRole.id && !notif.lida && tipoNotificacaoLiberado(notif.tipo, tiposLiberados)) {
             setAvisos(prev => {
               if (prev.some(a => a.id === notif.id)) return prev;
               return [notif as AvisoNotificacao, ...prev];
@@ -223,7 +244,7 @@ export function CentralAvisosModal() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [isVisualizacao, isRealParceria, userRole?.id]);
+  }, [isVisualizacao, isRealParceria, userRole?.id, tiposLiberados]);
 
   // ESC para fechar
   useEffect(() => {
