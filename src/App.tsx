@@ -86,6 +86,7 @@ const MockupGate = lazyRetry(() => import("./pages/MockupGate"));
 const FakeQuadro = lazyRetry(() => import("./pages/admin/FakeQuadro"));
 const ArmariosFemininos = lazyRetry(() => import("./pages/ArmariosFemininos"));
 const ManualArmarios = lazyRetry(() => import("./pages/ManualArmarios"));
+const ArmariosFemininoCadastro = lazyRetry(() => import("./pages/ArmariosFemininoCadastro"));
 
 
 export const queryClient = new QueryClient({
@@ -145,6 +146,16 @@ function LayoutRouter() {
       <SafePage>
         <Routes>
           <Route path="/" element={<GateAcesso />} />
+        </Routes>
+      </SafePage>
+    );
+  }
+
+  if (location.pathname === '/armarios-feminino-cadastro') {
+    return (
+      <SafePage>
+        <Routes>
+          <Route path="/armarios-feminino-cadastro" element={<ArmariosFemininoCadastro />} />
         </Routes>
       </SafePage>
     );

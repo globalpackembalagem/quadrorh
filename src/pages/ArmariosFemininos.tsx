@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Search, Download, UserPlus, LayoutGrid, Settings, UserX, UserMinus, Pencil, Trash2, HardHat, Plus, X } from 'lucide-react';
+import { Search, Download, UserPlus, LayoutGrid, Settings, UserX, UserMinus, Pencil, Trash2, HardHat, Plus, X, Link2 } from 'lucide-react';
 import ManualArmariosPDF from '@/components/armarios/ManualArmariosPDF';
 import MapaVisualArmarios from '@/components/armarios/MapaVisualArmarios';
 // xlsx-js-style loaded dynamically
@@ -115,6 +115,16 @@ export default function ArmariosFemininos() {
 
   // Edit prestador
   const [editandoPrestador, setEditandoPrestador] = useState<any | null>(null);
+
+  const copiarLinkCadastroSopro = async () => {
+    const link = `${window.location.origin}/armarios-feminino-cadastro`;
+    try {
+      await navigator.clipboard.writeText(link);
+      toast.success('LINK COPIADO');
+    } catch {
+      toast.info(link);
+    }
+  };
 
   // Buscar configuração de capacidade
   const { data: configLocais = [] } = useQuery({
@@ -1002,6 +1012,9 @@ export default function ArmariosFemininos() {
             </Button>
           )}
           <ManualArmariosPDF />
+          <Button variant="outline" size="sm" onClick={copiarLinkCadastroSopro}>
+            <Link2 className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Link Cadastro Sopro</span>
+          </Button>
           <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Exportar</span>
           </Button>
