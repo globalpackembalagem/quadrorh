@@ -8,13 +8,8 @@ import { Label } from '@/components/ui/label';
 import logoGlobalpack from '@/assets/logo-globalpack-new.png';
 
 type FuncionarioArmario = {
-  id: string;
-  nome_completo: string;
-  matricula: string | null;
-  cpf: string | null;
-  sexo: string;
-  setor?: { nome: string } | null;
-  situacao?: { nome: string } | null;
+  nome: string;
+  setor: string;
 };
 
 const somenteNumeros = (valor: string) => valor.replace(/\D/g, '');
@@ -26,13 +21,6 @@ const formatarCpf = (valor: string) => {
     .replace(/(\d{3})(\d)/, '$1.$2')
     .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 };
-
-const isSetorSopro = (nome?: string | null) => {
-  const n = (nome || '').toUpperCase();
-  return n.includes('SOPRO') && !n.includes('DECOR');
-};
-
-const isAtivo = (nome?: string | null) => (nome || '').toUpperCase().trim() === 'ATIVO';
 
 export default function ArmariosFemininoCadastro() {
   const [cpf, setCpf] = useState('');
@@ -62,37 +50,18 @@ export default function ArmariosFemininoCadastro() {
 
     setCarregando(true);
     try {
-      const { data, error } = await (supabase as any)
-        .from('funcionarios')
-        .select('id,nome_completo,matricula,cpf,sexo,setor:setores!funcionarios_setor_id_fkey(nome),situacao:situacoes!funcionarios_situacao_id_fkey(nome)')
-        .or(`cpf.eq.${cpfNumeros},cpf.eq.${formatarCpf(cpfNumeros)}`)
-        .limit(1)
-        .maybeSingle();
+      const { data, error } = await (supabase as any).rpc('buscar_funcionaria_armario_sopro', {
+        p_cpf: cpfNumeros,
+      });
 
       if (error) throw error;
 
-      const func = data as FuncionarioArmario | null;
-      const cpfNaoLocalizado = 'CPF NAO LOCALIZADO PARA CADASTRO DE ARMARIO DO VESTIARIO FEMININO DO SOPRO. PROCURE O RH.';
-
-      if (!func || !isSetorSopro(func.setor?.nome) || func.sexo !== 'feminino' || !isAtivo(func.situacao?.nome)) {
-        setErro(cpfNaoLocalizado);
+      if (!data?.ok) {
+        setErro(data?.message || 'CPF NAO LOCALIZADO PARA CADASTRO DE ARMARIO DO VESTIARIO FEMININO DO SOPRO. PROCURE O RH.');
         return;
       }
 
-      const { data: armarioExistente, error: armarioError } = await supabase
-        .from('armarios_femininos')
-        .select('id')
-        .eq('funcionario_id', func.id)
-        .maybeSingle();
-
-      if (armarioError) throw armarioError;
-
-      if (armarioExistente) {
-        setErro('CADASTRO JA REALIZADO. PARA ALTERACAO, PROCURE O RH.');
-        return;
-      }
-
-      setFuncionario(func);
+      setFuncionario({ nome: data.nome, setor: data.setor });
       setMensagem('CONFIRME SEUS DADOS E INFORME O NUMERO DO ARMARIO UTILIZADO.');
     } catch (e) {
       console.error(e);
@@ -115,56 +84,21 @@ export default function ArmariosFemininoCadastro() {
     setErro('');
 
     try {
-      const { data: jaCadastrado, error: jaCadastradoError } = await supabase
-        .from('armarios_femininos')
-        .select('id')
-        .eq('funcionario_id', funcionario.id)
-        .maybeSingle();
+      const { data, error } = await (supabase as any).rpc('cadastrar_armario_sopro', {
+        p_cpf: somenteNumeros(cpf),
+        p_numero: numero,
+      });
 
-      if (jaCadastradoError) throw jaCadastradoError;
+      if (error) throw error;
 
-      if (jaCadastrado) {
-        setErro('CADASTRO JA REALIZADO. PARA ALTERACAO, PROCURE O RH.');
-        setFuncionario(null);
+      if (!data?.ok) {
+        setErro(data?.message || 'ERRO AO REGISTRAR ARMARIO. PROCURE O RH.');
         return;
-      }
-
-      const { data: armario, error: armarioError } = await supabase
-        .from('armarios_femininos')
-        .select('id, funcionario_id, nome_prestador, bloqueado, quebrado')
-        .eq('numero', numero)
-        .eq('local', 'SOPRO')
-        .maybeSingle();
-
-      if (armarioError) throw armarioError;
-
-      if (armario?.funcionario_id || armario?.nome_prestador || armario?.bloqueado || armario?.quebrado) {
-        setErro('ARMARIO JA CADASTRADO OU INDISPONIVEL. PROCURE O RH.');
-        return;
-      }
-
-      const payload = {
-        funcionario_id: funcionario.id,
-        matricula: funcionario.matricula,
-        observacoes: 'CADASTRO REALIZADO PELO LINK DO VESTIARIO FEMININO DO SOPRO',
-        updated_at: new Date().toISOString(),
-      };
-
-      if (armario?.id) {
-        const { error } = await supabase.from('armarios_femininos').update(payload).eq('id', armario.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('armarios_femininos').insert({
-          numero,
-          local: 'SOPRO',
-          ...payload,
-        });
-        if (error) throw error;
       }
 
       setFinalizado(true);
       setFuncionario(null);
-      setMensagem('CADASTRO REALIZADO COM SUCESSO. O NUMERO DO ARMARIO FOI REGISTRADO NO SISTEMA.');
+      setMensagem(data.message || 'CADASTRO REALIZADO COM SUCESSO. O NUMERO DO ARMARIO FOI REGISTRADO NO SISTEMA.');
     } catch (e) {
       console.error(e);
       setErro('ERRO AO REGISTRAR ARMARIO. PROCURE O RH.');
@@ -211,11 +145,11 @@ export default function ArmariosFemininoCadastro() {
             <div className="rounded-lg border bg-slate-50 p-4 space-y-4">
               <div>
                 <p className="text-xs text-slate-500">NOME</p>
-                <p className="font-bold">{funcionario.nome_completo.toUpperCase()}</p>
+                <p className="font-bold">{funcionario.nome}</p>
               </div>
               <div>
                 <p className="text-xs text-slate-500">SETOR</p>
-                <p className="font-semibold">{funcionario.setor?.nome?.toUpperCase()}</p>
+                <p className="font-semibold">{funcionario.setor}</p>
               </div>
               <div className="space-y-2">
                 <Label>NUMERO DO ARMARIO</Label>
