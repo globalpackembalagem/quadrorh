@@ -5,6 +5,7 @@ import { Funcionario, SexoTipo } from '@/types/database';
 import { toast } from 'sonner';
 import { criarEventoENotificar } from '@/hooks/useEventosSistema';
 import { normalizarFuncionarioPayload } from '@/lib/normalizacao';
+import { useAuth } from '@/hooks/useAuth';
 
 export const invalidarFuncionarios = (queryClient: QueryClient) => {
   queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
@@ -28,6 +29,67 @@ export function useFuncionariosRealtime() {
       supabase.removeChannel(channel);
     };
   }, [queryClient]);
+}
+
+function normalizarTextoHistorico(valor: unknown): string {
+  if (valor === null || valor === undefined || valor === '') return '';
+  return String(valor).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+}
+
+function areaDoFuncionario(funcionario: any): 'SOPRO' | 'DECORACAO' | null {
+  const texto = normalizarTextoHistorico(`${funcionario?.setor?.nome || ''} ${funcionario?.setor?.grupo || ''}`);
+  if (texto.includes('DECORACAO')) return 'DECORACAO';
+  if (texto.includes('SOPRO')) return 'SOPRO';
+  return null;
+}
+
+async function registrarHistoricoQuadroSeTravado(funcionarioAntes: any, funcionarioDepois: any, usuarioNome: string) {
+  if (!funcionarioAntes || !funcionarioDepois) return;
+
+  const areas = Array.from(new Set([
+    areaDoFuncionario(funcionarioAntes),
+    areaDoFuncionario(funcionarioDepois),
+  ].filter(Boolean))) as Array<'SOPRO' | 'DECORACAO'>;
+
+  if (areas.length === 0) return;
+
+  const { data: travas, error: travasError } = await (supabase as any)
+    .from('quadro_travas')
+    .select('id, area')
+    .in('area', areas)
+    .eq('ativo', true);
+
+  if (travasError || !travas?.length) return;
+
+  const campos = [
+    { campo: 'SETOR', antes: funcionarioAntes.setor?.nome, depois: funcionarioDepois.setor?.nome },
+    { campo: 'TURMA', antes: funcionarioAntes.turma, depois: funcionarioDepois.turma },
+    { campo: 'SITUACAO', antes: funcionarioAntes.situacao?.nome, depois: funcionarioDepois.situacao?.nome },
+    { campo: 'DATA_ADMISSAO', antes: funcionarioAntes.data_admissao, depois: funcionarioDepois.data_admissao },
+    { campo: 'DATA_DEMISSAO', antes: funcionarioAntes.data_demissao, depois: funcionarioDepois.data_demissao },
+    { campo: 'CARGO', antes: funcionarioAntes.cargo, depois: funcionarioDepois.cargo },
+    { campo: 'EMPRESA', antes: funcionarioAntes.empresa, depois: funcionarioDepois.empresa },
+  ];
+
+  const registros = travas.flatMap((trava: { id: string }) => campos
+    .filter(({ antes, depois }) => normalizarTextoHistorico(antes) !== normalizarTextoHistorico(depois))
+    .map(({ campo, antes, depois }) => ({
+      trava_id: trava.id,
+      funcionario_id: funcionarioDepois.id,
+      funcionario_nome: funcionarioDepois.nome_completo,
+      matricula: funcionarioDepois.matricula,
+      campo_alterado: campo,
+      valor_anterior: normalizarTextoHistorico(antes),
+      valor_novo: normalizarTextoHistorico(depois),
+      usuario_nome: usuarioNome,
+      origem: 'FUNCIONARIOS',
+    })));
+
+  if (registros.length === 0) return;
+
+  await (supabase as any)
+    .from('quadro_historico')
+    .insert(registros);
 }
 
 export function useDeleteFuncionario() {
@@ -264,6 +326,7 @@ export function useCreateFuncionario() {
 
 export function useUpdateFuncionario() {
   const queryClient = useQueryClient();
+  const { userRole } = useAuth();
   
   return useMutation({
     mutationFn: async ({ id, situacao_id, situacaoAtualNome, ...funcionario }: Partial<Funcionario> & { 
@@ -296,14 +359,30 @@ export function useUpdateFuncionario() {
         ...(estaVindoDeDesligamento && estaMudandoParaAtivo ? { data_demissao: null } : {}),
       });
       
+      const { data: funcionarioAntes } = await supabase
+        .from('funcionarios')
+        .select(`
+          *,
+          setor:setores!setor_id(*),
+          situacao:situacoes(*)
+        `)
+        .eq('id', id)
+        .single();
+
       const { data, error } = await supabase
         .from('funcionarios')
         .update(updateData)
         .eq('id', id)
-        .select()
+        .select(`
+          *,
+          setor:setores!setor_id(*),
+          situacao:situacoes(*)
+        `)
         .single();
       
       if (error) throw error;
+
+      await registrarHistoricoQuadroSeTravado(funcionarioAntes as any, data as any, userRole?.nome || 'SISTEMA');
       return data;
     },
     onSuccess: () => {
