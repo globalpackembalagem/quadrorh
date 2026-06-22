@@ -14,7 +14,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
@@ -214,6 +213,7 @@ export default function Funcionarios() {
   // Form state
   const [empresa, setEmpresa] = useState<EmpresaTipo>('GLOBALPACK');
   const [matricula, setMatricula] = useState('');
+  const [cpf, setCpf] = useState('');
   const [nome, setNome] = useState('');
   const [dataAdmissao, setDataAdmissao] = useState('');
   const [cargo, setCargo] = useState('');
@@ -353,6 +353,7 @@ export default function Funcionarios() {
   const resetForm = () => {
     setEmpresa('GLOBALPACK');
     setMatricula('');
+    setCpf('');
     setNome('');
     setDataAdmissao('');
     setCargo('');
@@ -373,6 +374,7 @@ export default function Funcionarios() {
     setEditingFuncionario(func);
     setEmpresa(func.empresa as EmpresaTipo || 'GLOBALPACK');
     setMatricula(func.matricula || '');
+    setCpf((func as any).cpf || '');
     setNome(func.nome_completo);
     setDataAdmissao(func.data_admissao || '');
     setCargo(func.cargo || '');
@@ -436,6 +438,7 @@ export default function Funcionarios() {
     const data = {
       empresa,
       matricula: matricula || null,
+      cpf: cpf || null,
       nome_completo: nome,
       data_admissao: dataAdmissao || null,
       cargo: cargo || null,
@@ -1107,6 +1110,11 @@ export default function Funcionarios() {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label>CPF</Label>
+              <Input value={cpf} onChange={e => setCpf(e.target.value)} placeholder="000.000.000-00" />
+            </div>
+
             {/* Nome */}
             <div className="space-y-2">
               <Label>Nome Completo</Label>
@@ -1202,12 +1210,6 @@ export default function Funcionarios() {
             <div className="space-y-2">
               <Label>Data de Demissão</Label>
               <Input type="date" value={dataDemissao} onChange={e => setDataDemissao(e.target.value)} />
-            </div>
-
-            {/* Observações */}
-            <div className="space-y-2">
-              <Label>Observações</Label>
-              <Textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} placeholder="Observações (opcional)" rows={2} />
             </div>
 
             <div className="flex justify-between pt-4 flex-wrap gap-2">

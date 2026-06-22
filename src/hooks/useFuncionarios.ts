@@ -185,6 +185,7 @@ interface CreateFuncionarioInput {
   sexo: SexoTipo;
   setor_id: string;
   situacao_id: string;
+  cpf?: string | null;
   observacoes?: string | null;
   empresa?: string;
   matricula?: string | null;
