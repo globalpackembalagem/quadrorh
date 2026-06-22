@@ -81,7 +81,6 @@ const allRHNavigation: NavItem[] = [
   { name: 'QUADRO DE FUNCIONÁRIOS', href: '/', icon: LayoutDashboard },
   
   { name: 'FUNCIONÁRIOS', href: '/funcionarios', icon: Users },
-  { name: 'CONFERENCIA FUNCIONARIOS', href: '/conferencia-funcionarios', icon: ClipboardCheck },
   { name: 'PREVISÃO ADMISSÃO', href: '/previsao-admissao', icon: UserPlus },
   { 
     name: 'CONTROLE DE FALTAS', 
@@ -116,7 +115,6 @@ const adminMainItems: NavItem[] = [
 
 const adminNavigation = [
   { name: 'SIMULAÇÃO', href: '/admin/simulacao', icon: LayoutDashboard },
-  { name: 'CONFERÊNCIA GESTOR', href: '/admin/conferencia', icon: ClipboardCheck },
   { name: 'CONCILIAÇÃO DE DADOS', href: '/admin/comparar', icon: ClipboardList },
   { name: 'SETORES', href: '/admin/setores', icon: Building2 },
   { name: 'SITUAÇÕES', href: '/admin/situacoes', icon: FileText },
@@ -235,7 +233,6 @@ function getNavigationForUser(
   // Funcionários
   if (!perms || perms.pode_visualizar_funcionarios) {
     items.push({ name: 'FUNCIONÁRIOS', href: '/funcionarios', icon: Users, viewOnly: perms && !perms.pode_editar_funcionarios });
-    items.push({ name: 'CONFERENCIA FUNCIONARIOS', href: '/conferencia-funcionarios', icon: ClipboardCheck, viewOnly: perms && !perms.pode_editar_funcionarios });
   }
 
   // Previsão Admissão
