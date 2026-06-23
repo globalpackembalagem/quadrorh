@@ -43,7 +43,7 @@ function areaDoFuncionario(funcionario: any): 'SOPRO' | 'DECORACAO' | null {
   return null;
 }
 
-async function registrarHistoricoQuadroSeTravado(funcionarioAntes: any, funcionarioDepois: any, usuarioNome: string) {
+export async function registrarHistoricoQuadroSeTravado(funcionarioAntes: any, funcionarioDepois: any, usuarioNome: string, origem = 'FUNCIONARIOS') {
   if (!funcionarioAntes || !funcionarioDepois) return;
 
   const areas = Array.from(new Set([
@@ -69,6 +69,10 @@ async function registrarHistoricoQuadroSeTravado(funcionarioAntes: any, funciona
     { campo: 'DATA_DEMISSAO', antes: funcionarioAntes.data_demissao, depois: funcionarioDepois.data_demissao },
     { campo: 'CARGO', antes: funcionarioAntes.cargo, depois: funcionarioDepois.cargo },
     { campo: 'EMPRESA', antes: funcionarioAntes.empresa, depois: funcionarioDepois.empresa },
+    { campo: 'COBERTURA_INICIO', antes: funcionarioAntes.cobertura_data_inicio, depois: funcionarioDepois.cobertura_data_inicio },
+    { campo: 'COBERTURA_FIM', antes: funcionarioAntes.cobertura_data_fim, depois: funcionarioDepois.cobertura_data_fim },
+    { campo: 'COBERTURA_FUNCIONARIO', antes: funcionarioAntes.cobertura_funcionario_id, depois: funcionarioDepois.cobertura_funcionario_id },
+    { campo: 'TREINAMENTO_SETOR', antes: funcionarioAntes.treinamento_setor_id, depois: funcionarioDepois.treinamento_setor_id },
   ];
 
   const registros = travas.flatMap((trava: { id: string }) => campos
@@ -82,7 +86,7 @@ async function registrarHistoricoQuadroSeTravado(funcionarioAntes: any, funciona
       valor_anterior: normalizarTextoHistorico(antes),
       valor_novo: normalizarTextoHistorico(depois),
       usuario_nome: usuarioNome,
-      origem: 'FUNCIONARIOS',
+      origem,
     })));
 
   if (registros.length === 0) return;

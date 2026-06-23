@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { criarEventoENotificar, inserirEventoSemDuplicata } from '@/hooks/useEventosSistema';
+import { registrarHistoricoQuadroSeTravado } from '@/hooks/useFuncionarios';
 
 const invalidarBaseFuncionarios = (queryClient: ReturnType<typeof useQueryClient>) => {
   queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
@@ -259,7 +260,7 @@ export function useEfetivarTrocaTurno() {
       // 0. Buscar dados atuais do funcionário para o histórico
       const { data: funcAtual } = await supabase
         .from('funcionarios')
-        .select('setor_id, turma, setor:setores!setor_id(nome)')
+        .select('*, setor:setores!setor_id(*), situacao:situacoes!situacao_id(*)')
         .eq('id', params.funcionario_id)
         .single();
 
@@ -317,6 +318,14 @@ export function useEfetivarTrocaTurno() {
         .eq('id', params.funcionario_id);
 
       if (fErr) throw fErr;
+
+      const { data: funcDepois } = await supabase
+        .from('funcionarios')
+        .select('*, setor:setores!setor_id(*), situacao:situacoes!situacao_id(*)')
+        .eq('id', params.funcionario_id)
+        .single();
+
+      await registrarHistoricoQuadroSeTravado(funcAtual as any, funcDepois as any, params.usuario_nome || 'SISTEMA', 'TROCA_TURNO');
 
       // 4. Registrar no histórico com dados detalhados
       const setorOrigemNome = (funcAtual?.setor as any)?.nome || 'Desconhecido';

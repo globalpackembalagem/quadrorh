@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Demissao, PeriodoDemissao } from '@/types/demissao';
 import { toast } from 'sonner';
 import { criarEventoENotificar } from '@/hooks/useEventosSistema';
+import { registrarHistoricoQuadroSeTravado } from '@/hooks/useFuncionarios';
 
 const invalidarBaseFuncionarios = (queryClient: ReturnType<typeof useQueryClient>) => {
   queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
@@ -143,6 +144,12 @@ export function useCreateDemissao() {
 
       // Atualizar situação do funcionário para o tipo correspondente
       if (situacaoAlvo && !skipSituacaoUpdate) {
+        const { data: funcionarioAntes } = await supabase
+          .from('funcionarios')
+          .select('*, setor:setores!setor_id(*), situacao:situacoes!situacao_id(*)')
+          .eq('id', demissao.funcionario_id)
+          .single();
+
         const updateData: Record<string, any> = { situacao_id: situacaoAlvo };
         updateData.data_demissao = demissao.data_prevista || new Date().toISOString().split('T')[0];
         const { error: funcError } = await supabase
@@ -235,6 +242,14 @@ export function useUpdateDemissao() {
           .update({ data_demissao: demissao.data_prevista })
           .eq('id', data.funcionario_id);
         if (funcError) throw funcError;
+
+        const { data: funcionarioDepois } = await supabase
+          .from('funcionarios')
+          .select('*, setor:setores!setor_id(*), situacao:situacoes!situacao_id(*)')
+          .eq('id', demissao.funcionario_id)
+          .single();
+
+        await registrarHistoricoQuadroSeTravado(funcionarioAntes as any, funcionarioDepois as any, criado_por_nome || 'SISTEMA', 'DEMISSAO');
       }
 
       return data;
@@ -305,6 +320,12 @@ export function useRealizarDemissao() {
 
       // 3. Só atualiza situação se não for para pular
       if (!skipSituacaoUpdate) {
+        const { data: funcionarioAntes } = await supabase
+          .from('funcionarios')
+          .select('*, setor:setores!setor_id(*), situacao:situacoes!situacao_id(*)')
+          .eq('id', funcionarioId)
+          .single();
+
         const { error: funcError } = await supabase
           .from('funcionarios')
           .update({ 
@@ -314,6 +335,14 @@ export function useRealizarDemissao() {
           .eq('id', funcionarioId);
         
         if (funcError) throw funcError;
+
+        const { data: funcionarioDepois } = await supabase
+          .from('funcionarios')
+          .select('*, setor:setores!setor_id(*), situacao:situacoes!situacao_id(*)')
+          .eq('id', funcionarioId)
+          .single();
+
+        await registrarHistoricoQuadroSeTravado(funcionarioAntes as any, funcionarioDepois as any, criadoPorNome || 'SISTEMA', 'DEMISSAO');
       }
 
       // 4. Remover registros de falta após a data da demissão

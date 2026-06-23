@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Users, Edit, RefreshCw, Bell, Loader2, CalendarDays, Plus, Search, Download } from 'lucide-react';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useFuncionarios, useUpdateFuncionario } from '@/hooks/useFuncionarios';
+import { registrarHistoricoQuadroSeTravado, useFuncionarios, useUpdateFuncionario } from '@/hooks/useFuncionarios';
 import { useSituacoesAtivas } from '@/hooks/useSituacoes';
 import { useSetoresAtivos } from '@/hooks/useSetores';
 import { useAuth } from '@/hooks/useAuth';
@@ -160,6 +160,12 @@ export default function CoberturasTreinamentos() {
       return;
     }
     try {
+      const { data: funcionarioAntes } = await supabase
+        .from('funcionarios')
+        .select('*, setor:setores!setor_id(*), situacao:situacoes!situacao_id(*)')
+        .eq('id', novoFormData.funcionario_id)
+        .single();
+
       const { error } = await supabase.from('funcionarios').update({
         situacao_id: novoFormData.situacao_id,
         observacoes: novoFormData.observacoes || null,
@@ -167,6 +173,14 @@ export default function CoberturasTreinamentos() {
         cobertura_data_fim: novoFormData.cobertura_data_fim || null,
       }).eq('id', novoFormData.funcionario_id);
       if (error) throw error;
+
+      const { data: funcionarioDepois } = await supabase
+        .from('funcionarios')
+        .select('*, setor:setores!setor_id(*), situacao:situacoes!situacao_id(*)')
+        .eq('id', novoFormData.funcionario_id)
+        .single();
+
+      await registrarHistoricoQuadroSeTravado(funcionarioAntes as any, funcionarioDepois as any, userRole?.nome || 'SISTEMA', 'COBERTURA_TREINAMENTO');
       toast.success('Funcionário adicionado à cobertura/treinamento!');
       setShowNovoDialog(false);
       setNovoFormData({ funcionario_id: '', situacao_id: '', observacoes: '', cobertura_data_inicio: '', cobertura_data_fim: '' });
@@ -202,11 +216,26 @@ export default function CoberturasTreinamentos() {
       });
 
       // Atualizar datas de cobertura diretamente
+      const { data: funcionarioAntesDatas } = await supabase
+        .from('funcionarios')
+        .select('*, setor:setores!setor_id(*), situacao:situacoes!situacao_id(*)')
+        .eq('id', editingFunc.id)
+        .single();
+
       const { error } = await supabase.from('funcionarios').update({
         cobertura_data_inicio: formData.cobertura_data_inicio || null,
         cobertura_data_fim: formData.cobertura_data_fim || null,
       }).eq('id', editingFunc.id);
       if (error) throw error;
+
+      const { data: funcionarioDepoisDatas } = await supabase
+        .from('funcionarios')
+        .select('*, setor:setores!setor_id(*), situacao:situacoes!situacao_id(*)')
+        .eq('id', editingFunc.id)
+        .single();
+
+      await registrarHistoricoQuadroSeTravado(funcionarioAntesDatas as any, funcionarioDepoisDatas as any, userRole?.nome || 'SISTEMA', 'COBERTURA_TREINAMENTO');
+
       setEditingFunc(null);
       toast.success('Funcionário atualizado com sucesso!');
     } catch (error) {
