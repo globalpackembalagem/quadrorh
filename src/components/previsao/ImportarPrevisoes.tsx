@@ -69,7 +69,8 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
   const somenteNumeros = (valor: string) => valor?.toString().replace(/\D/g, '') || '';
 
   const formatarCpf = (valor: string) => {
-    const n = somenteNumeros(valor).slice(0, 11);
+    const numeros = somenteNumeros(valor);
+    const n = numeros ? numeros.padStart(11, '0').slice(0, 11) : '';
     return n
       .replace(/(\d{3})(\d)/, '$1.$2')
       .replace(/(\d{3})(\d)/, '$1.$2')
