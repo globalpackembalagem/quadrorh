@@ -48,6 +48,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { criarEventoSistema } from '@/hooks/useEventosSistema';
+import { normalizarTextoSistema } from '@/lib/normalizacao';
 
 const formSchema = z.object({
   funcionario_id: z.string().min(1, 'Selecione um funcionário'),
@@ -65,7 +66,7 @@ interface NovaDemissaoFormProps {
   onSuccess: () => void;
 }
 
-const isPedidoDemissao = (tipo?: string | null) => tipo === 'Pedido de Demissão';
+const isPedidoDemissao = (tipo?: string | null) => (normalizarTextoSistema(tipo) || '').includes('PEDIDO');
 
 const getTipoEventoSaida = (tipo?: string | null) => isPedidoDemissao(tipo) ? 'pedido_demissao' : 'demissao';
 
@@ -83,12 +84,12 @@ export function NovaDemissaoForm({ onSuccess }: NovaDemissaoFormProps) {
 
   // Buscar situação "PED. DEMISSÃO" para usar quando for Pedido de Demissão
   const situacaoPedidoDemissao = situacoes.find(s => 
-    s.nome.toUpperCase() === 'PED. DEMISSÃO'
+    ['PED. DEMISSAO', 'PEDIDO DEMISSAO'].includes(normalizarTextoSistema(s.nome) || '')
   );
 
   // Buscar situação "DEMISSÃO" para verificar se já está nessa situação
   const situacaoDemissao = situacoes.find(s => 
-    s.nome.toUpperCase() === 'DEMISSÃO'
+    normalizarTextoSistema(s.nome) === 'DEMISSAO'
   );
 
   const form = useForm<FormData>({
@@ -209,8 +210,8 @@ export function NovaDemissaoForm({ onSuccess }: NovaDemissaoFormProps) {
       // Sem duplicata - fluxo normal
       // Verificar se funcionário já está na situação correta
       if (funcionarioSelecionado) {
-        const situacaoAtualNome = funcionarioSelecionado.situacao?.nome?.toUpperCase() || '';
-        const jaEstaNaSituacao = situacaoAtualNome === 'DEMISSÃO' || situacaoAtualNome === 'PED. DEMISSÃO';
+        const situacaoAtualNome = normalizarTextoSistema(funcionarioSelecionado.situacao?.nome) || '';
+        const jaEstaNaSituacao = ['DEMISSAO', 'PED. DEMISSAO', 'PEDIDO DEMISSAO', 'TERMINO CONTRATO'].includes(situacaoAtualNome);
         await criarDemissao(data, jaEstaNaSituacao);
       } else {
         await criarDemissao(data, false);
@@ -633,3 +634,4 @@ export function NovaDemissaoForm({ onSuccess }: NovaDemissaoFormProps) {
     </Form>
   );
 }
+

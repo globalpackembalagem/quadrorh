@@ -273,16 +273,27 @@ export function useUpdateDemissao() {
       
       if (error) throw error;
 
-      if (data.funcionario_id && demissao.data_prevista) {
+      if (data.funcionario_id && (demissao.data_prevista || demissao.tipo_desligamento !== undefined)) {
         const { data: funcionarioAntes } = await supabase
           .from('funcionarios')
           .select('*, setor:setores!setor_id(*), situacao:situacoes!situacao_id(*)')
           .eq('id', data.funcionario_id)
           .single();
 
+        const updateFuncionario: Record<string, any> = {};
+        if (demissao.data_prevista) {
+          updateFuncionario.data_demissao = demissao.data_prevista;
+        }
+        if (demissao.tipo_desligamento !== undefined) {
+          const situacaoAlvo = await buscarSituacaoDesligamento(demissao.tipo_desligamento);
+          if (situacaoAlvo) {
+            updateFuncionario.situacao_id = situacaoAlvo;
+          }
+        }
+
         const { error: funcError } = await supabase
           .from('funcionarios')
-          .update({ data_demissao: demissao.data_prevista })
+          .update(updateFuncionario)
           .eq('id', data.funcionario_id);
         if (funcError) throw funcError;
 
