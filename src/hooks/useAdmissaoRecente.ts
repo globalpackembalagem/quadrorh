@@ -37,7 +37,7 @@ export function useAdmissaoRecente(grupo?: 'SOPRO' | 'DECORAÇÃO') {
         return true;
       });
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 0,
   });
 }
 

@@ -108,6 +108,9 @@ export function useCreateTreinamento() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['treinamentos_previsao'] });
+      queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
+      queryClient.invalidateQueries({ queryKey: ['funcionarios', 'quadro'] });
+      queryClient.invalidateQueries({ queryKey: ['admissao-recente'] });
     },
   });
 }

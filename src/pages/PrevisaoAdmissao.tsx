@@ -218,6 +218,7 @@ export default function PrevisaoAdmissao() {
     }
     const func = funcionarios.find(f => f.id === funcionarioId);
     const situacaoAtualNome = func?.situacao?.nome || '';
+    const dataAdmissaoFinal = func?.data_admissao || format(new Date(), 'yyyy-MM-dd');
     
     try {
       // Atualizar situação para ATIVO e definir data_admissao se não existir
@@ -225,7 +226,7 @@ export default function PrevisaoAdmissao() {
         id: funcionarioId, 
         situacao_id: situacaoAtivo.id,
         situacaoAtualNome,
-        ...(!func?.data_admissao ? { data_admissao: format(new Date(), 'yyyy-MM-dd') } : {}),
+        data_admissao: dataAdmissaoFinal,
       });
       
       // Criar evento na central de notificações + registro de treinamento
@@ -244,7 +245,7 @@ export default function PrevisaoAdmissao() {
             setor_grupo: setor?.grupo ?? null,
             turma: func.turma ?? null,
             cargo: func.cargo ?? null,
-            data_previsao: func.data_admissao ?? null,
+            data_previsao: dataAdmissaoFinal,
           };
           console.log('[Treinamento] Criando registro:', JSON.stringify(treinamentoPayload));
           const result = await createTreinamento.mutateAsync(treinamentoPayload);
@@ -271,6 +272,11 @@ export default function PrevisaoAdmissao() {
         }
       }
       
+      queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
+      queryClient.invalidateQueries({ queryKey: ['funcionarios', 'quadro'] });
+      queryClient.invalidateQueries({ queryKey: ['funcionarios', 'previsao'] });
+      queryClient.invalidateQueries({ queryKey: ['treinamentos_previsao'] });
+      queryClient.invalidateQueries({ queryKey: ['admissao-recente'] });
       toast.success('Funcionário ativado e movido para o quadro!');
     } catch (err) {
       console.error('Erro ao ativar funcionário:', err);
