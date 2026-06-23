@@ -99,11 +99,13 @@ export default function ArmariosFemininos() {
   const [filtroLocalPrestador, setFiltroLocalPrestador] = useState<string>('todos');
 
   const [configDialog, setConfigDialog] = useState(false);
-  const [configTab, setConfigTab] = useState<'totais' | 'setores' | 'quebrados'>('totais');
+  const [configTab, setConfigTab] = useState<'totais' | 'setores' | 'quebrados' | 'link'>('totais');
   const [quebradoNumero, setQuebradoNumero] = useState('');
   const [quebradoLocal, setQuebradoLocal] = useState('SOPRO');
   const [configValues, setConfigValues] = useState<Record<string, number>>({});
   const [novoSetorPrestador, setNovoSetorPrestador] = useState('');
+  const [novoSetorBloqueadoLink, setNovoSetorBloqueadoLink] = useState('');
+  const [novaFuncaoBloqueadaLink, setNovaFuncaoBloqueadaLink] = useState('');
 
   // Prestador dialog
   const [prestadorDialog, setPrestadorDialog] = useState(false);
@@ -145,6 +147,20 @@ export default function ArmariosFemininos() {
         .select('*')
         .eq('ativo', true)
         .order('nome');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: bloqueiosLink = [] } = useQuery({
+    queryKey: ['armarios-link-bloqueios'],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('armarios_link_bloqueios')
+        .select('*')
+        .eq('ativo', true)
+        .order('tipo')
+        .order('valor');
       if (error) throw error;
       return data || [];
     },
@@ -193,6 +209,34 @@ export default function ArmariosFemininos() {
       queryClient.invalidateQueries({ queryKey: ['armarios-setores-prestador'] });
       toast.success('Setor removido!');
     },
+  });
+
+  const addBloqueioLinkMutation = useMutation({
+    mutationFn: async ({ tipo, valor }: { tipo: 'SETOR' | 'FUNCAO'; valor: string }) => {
+      const { error } = await (supabase as any)
+        .from('armarios_link_bloqueios')
+        .insert({ tipo, valor: valor.toUpperCase().trim() });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setNovoSetorBloqueadoLink('');
+      setNovaFuncaoBloqueadaLink('');
+      queryClient.invalidateQueries({ queryKey: ['armarios-link-bloqueios'] });
+      toast.success('Bloqueio cadastrado');
+    },
+    onError: () => toast.error('Erro ao cadastrar bloqueio (pode ja existir)'),
+  });
+
+  const removeBloqueioLinkMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await (supabase as any).from('armarios_link_bloqueios').update({ ativo: false }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['armarios-link-bloqueios'] });
+      toast.success('Bloqueio removido');
+    },
+    onError: () => toast.error('Erro ao remover bloqueio'),
   });
 
   // Mutation para marcar/desmarcar armário como quebrado
@@ -2084,6 +2128,7 @@ export default function ArmariosFemininos() {
               <TabsTrigger value="totais" className="flex-1">Qtd. Armários</TabsTrigger>
               <TabsTrigger value="quebrados" className="flex-1">Quebrados</TabsTrigger>
               <TabsTrigger value="setores" className="flex-1">Setores Prestador</TabsTrigger>
+              <TabsTrigger value="link" className="flex-1">Bloqueios Link</TabsTrigger>
             </TabsList>
             <TabsContent value="totais" className="space-y-3 mt-3">
               {LOCAIS.map(l => (
@@ -2215,6 +2260,77 @@ export default function ArmariosFemininos() {
                     </div>
                   ))
                 )}
+              </div>
+            </TabsContent>
+            <TabsContent value="link" className="space-y-4 mt-3">
+              <p className="text-xs text-muted-foreground">
+                Bloqueie setores e funcoes que nao devem usar o link publico de cadastro do armario.
+              </p>
+
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase">Setores bloqueados</p>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Ex: DECORACAO MOD DIA"
+                    value={novoSetorBloqueadoLink}
+                    onChange={e => setNovoSetorBloqueadoLink(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && novoSetorBloqueadoLink.trim()) {
+                        addBloqueioLinkMutation.mutate({ tipo: 'SETOR', valor: novoSetorBloqueadoLink });
+                      }
+                    }}
+                  />
+                  <Button
+                    size="icon"
+                    onClick={() => addBloqueioLinkMutation.mutate({ tipo: 'SETOR', valor: novoSetorBloqueadoLink })}
+                    disabled={!novoSetorBloqueadoLink.trim() || addBloqueioLinkMutation.isPending}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="space-y-1 max-h-28 overflow-y-auto">
+                  {bloqueiosLink.filter((b: any) => b.tipo === 'SETOR').map((b: any) => (
+                    <div key={b.id} className="flex items-center justify-between p-2 rounded border">
+                      <span className="text-sm font-medium">{b.valor}</span>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeBloqueioLinkMutation.mutate(b.id)}>
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs font-bold uppercase">Funcoes bloqueadas</p>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Ex: AUXILIAR ADMINISTRATIVO"
+                    value={novaFuncaoBloqueadaLink}
+                    onChange={e => setNovaFuncaoBloqueadaLink(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && novaFuncaoBloqueadaLink.trim()) {
+                        addBloqueioLinkMutation.mutate({ tipo: 'FUNCAO', valor: novaFuncaoBloqueadaLink });
+                      }
+                    }}
+                  />
+                  <Button
+                    size="icon"
+                    onClick={() => addBloqueioLinkMutation.mutate({ tipo: 'FUNCAO', valor: novaFuncaoBloqueadaLink })}
+                    disabled={!novaFuncaoBloqueadaLink.trim() || addBloqueioLinkMutation.isPending}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="space-y-1 max-h-28 overflow-y-auto">
+                  {bloqueiosLink.filter((b: any) => b.tipo === 'FUNCAO').map((b: any) => (
+                    <div key={b.id} className="flex items-center justify-between p-2 rounded border">
+                      <span className="text-sm font-medium">{b.valor}</span>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeBloqueioLinkMutation.mutate(b.id)}>
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </TabsContent>
           </Tabs>

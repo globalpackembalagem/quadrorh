@@ -10,6 +10,7 @@ import logoGlobalpack from '@/assets/logo-globalpack-new.png';
 type FuncionarioArmario = {
   nome: string;
   setor: string;
+  cargo?: string;
 };
 
 const somenteNumeros = (valor: string) => valor.replace(/\D/g, '');
@@ -61,7 +62,12 @@ export default function ArmariosFemininoCadastro() {
         return;
       }
 
-      setFuncionario({ nome: data.nome, setor: data.setor });
+      const funcionarioRetorno = data.funcionario || data;
+      setFuncionario({
+        nome: funcionarioRetorno.nome,
+        setor: funcionarioRetorno.setor,
+        cargo: funcionarioRetorno.cargo,
+      });
       setMensagem('CONFIRME SEUS DADOS E INFORME O NUMERO DO ARMARIO UTILIZADO.');
     } catch (e) {
       console.error(e);
@@ -151,6 +157,12 @@ export default function ArmariosFemininoCadastro() {
                 <p className="text-xs text-slate-500">SETOR</p>
                 <p className="font-semibold">{funcionario.setor}</p>
               </div>
+              {funcionario.cargo && (
+                <div>
+                  <p className="text-xs text-slate-500">FUNCAO</p>
+                  <p className="font-semibold">{funcionario.cargo}</p>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>NUMERO DO ARMARIO</Label>
                 <Input
