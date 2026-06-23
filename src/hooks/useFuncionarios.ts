@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+﻿import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient, QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Funcionario, SexoTipo } from '@/types/database';
@@ -110,13 +110,13 @@ export function useDeleteFuncionario() {
     },
     onSuccess: () => {
       invalidarFuncionarios(queryClient);
-      toast.success('Funcionário excluído com sucesso!');
+      toast.success('FuncionÃ¡rio excluÃ­do com sucesso!');
     },
     onError: (error: Error) => {
       if (error.message.includes('violates foreign key')) {
-        toast.error('Não é possível excluir: funcionário possui registros vinculados');
+        toast.error('NÃ£o Ã© possÃ­vel excluir: funcionÃ¡rio possui registros vinculados');
       } else {
-        toast.error('Erro ao excluir funcionário');
+        toast.error('Erro ao excluir funcionÃ¡rio');
       }
     },
   });
@@ -126,7 +126,7 @@ export function useFuncionarios() {
   return useQuery({
     queryKey: ['funcionarios'],
     queryFn: async () => {
-      // Buscar todos os funcionários em lotes para superar limite de 1000
+      // Buscar todos os funcionÃ¡rios em lotes para superar limite de 1000
       const pageSize = 1000;
       let allData: Funcionario[] = [];
       let page = 0;
@@ -304,9 +304,9 @@ export function useCreateFuncionario() {
     },
     onSuccess: async (data, variables) => {
       invalidarFuncionarios(queryClient);
-      toast.success('Funcionário cadastrado com sucesso!');
+      toast.success('FuncionÃ¡rio cadastrado com sucesso!');
 
-      // Buscar nome do setor para a notificação
+      // Buscar nome do setor para a notificaÃ§Ã£o
       const { data: setor } = await supabase
         .from('setores')
         .select('nome')
@@ -315,7 +315,7 @@ export function useCreateFuncionario() {
 
       criarEventoENotificar({
         tipo: 'admissao',
-        descricao: 'Nova admissão cadastrada',
+        descricao: 'Nova admissÃ£o cadastrada',
         funcionario_nome: variables.nome_completo,
         setor_id: variables.setor_id,
         setor_nome: setor?.nome || '',
@@ -323,7 +323,7 @@ export function useCreateFuncionario() {
       });
     },
     onError: () => {
-      toast.error('Erro ao cadastrar funcionário');
+      toast.error('Erro ao cadastrar funcionÃ¡rio');
     },
   });
 }
@@ -335,15 +335,15 @@ export function useUpdateFuncionario() {
   return useMutation({
     mutationFn: async ({ id, situacao_id, situacaoAtualNome, ...funcionario }: Partial<Funcionario> & { 
       id: string;
-      situacaoAtualNome?: string; // Nome da situação atual para detectar mudança
+      situacaoAtualNome?: string; // Nome da situaÃ§Ã£o atual para detectar mudanÃ§a
     }) => {
-      // Se está mudando de uma situação de demissão para ATIVO, limpar data_demissao
+      // Se estÃ¡ mudando de uma situaÃ§Ã£o de demissÃ£o para ATIVO, limpar data_demissao
       const situacoesDesligamento = ['DEMISSAO', 'PED. DEMISSAO', 'PEDIDO DEMISSAO', 'TERMINO CONTRATO'];
       const estaVindoDeDesligamento = situacoesDesligamento.some(s => 
         normalizarTexto(situacaoAtualNome).includes(s)
       );
       
-      // Buscar nome da nova situação
+      // Buscar nome da nova situaÃ§Ã£o
       let novaSituacaoNome = '';
       if (situacao_id) {
         const { data: situacao } = await supabase
@@ -356,7 +356,7 @@ export function useUpdateFuncionario() {
       
       const estaMudandoParaAtivo = normalizarTexto(novaSituacaoNome) === 'ATIVO';
       
-      // Se estava em demissão e está voltando para Ativo, limpa a data de demissão
+      // Se estava em demissÃ£o e estÃ¡ voltando para Ativo, limpa a data de demissÃ£o
       const updateData = normalizarFuncionarioPayload({
         ...funcionario,
         situacao_id,
@@ -391,10 +391,11 @@ export function useUpdateFuncionario() {
     },
     onSuccess: () => {
       invalidarFuncionarios(queryClient);
-      toast.success('Funcionário atualizado com sucesso!');
+      toast.success('FuncionÃ¡rio atualizado com sucesso!');
     },
-    onError: () => {
-      toast.error('Erro ao atualizar funcionário');
+    onError: (error: any) => {
+      toast.error(error?.message || 'Erro ao atualizar funcionario');
     },
   });
 }
+

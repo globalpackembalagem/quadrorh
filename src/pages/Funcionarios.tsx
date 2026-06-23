@@ -228,6 +228,15 @@ export default function Funcionarios() {
   const [sumidoDesde, setSumidoDesde] = useState('');
   const [naoEMeuFuncionario, setNaoEMeuFuncionario] = useState(false);
 
+  const somenteNumerosCpf = (valor: string) => valor.replace(/\D/g, '');
+  const formatarCpf = (valor: string) => {
+    const n = somenteNumerosCpf(valor).slice(0, 11);
+    return n
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  };
+
   // funcionariosAtivosParaContagem mantido para compatibilidade com view do gestor
   const funcionariosAtivosParaContagem = useMemo(() => {
     return funcionarios.filter(f => {
@@ -435,10 +444,16 @@ export default function Funcionarios() {
       return;
     }
 
+    const cpfFormatado = cpf.trim() ? formatarCpf(cpf) : null;
+    if (cpfFormatado && somenteNumerosCpf(cpfFormatado).length !== 11) {
+      toast.error('CPF INVALIDO. INFORME 11 NUMEROS.');
+      return;
+    }
+
     const data = {
       empresa,
       matricula: matricula || null,
-      cpf: cpf || null,
+      cpf: cpfFormatado,
       nome_completo: nome,
       data_admissao: dataAdmissao || null,
       cargo: cargo || null,
@@ -1112,7 +1127,13 @@ export default function Funcionarios() {
 
             <div className="space-y-2">
               <Label>CPF</Label>
-              <Input value={cpf} onChange={e => setCpf(e.target.value)} placeholder="000.000.000-00" />
+              <Input
+                value={cpf}
+                onChange={e => setCpf(formatarCpf(e.target.value))}
+                placeholder="000.000.000-00"
+                inputMode="numeric"
+                maxLength={14}
+              />
             </div>
 
             {/* Nome */}
