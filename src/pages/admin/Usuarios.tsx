@@ -107,14 +107,9 @@ const DEFAULT_PERMISSOES: Permissoes = {
 };
 
 const TIPOS_NOTIFICACAO = [
-  { value: 'troca_turno', label: 'TROCA DE TURNO' },
-  { value: 'demissao_temporario', label: 'DESLIGAMENTO TEMPORARIO' },
-  { value: 'demissao', label: 'DEMISSAO' },
-  { value: 'divergencia', label: 'DIVERGENCIAS' },
-  { value: 'faltas', label: 'FALTAS' },
-  { value: 'previsao_admissao', label: 'PREVISAO ADMISSAO' },
-  { value: 'evento_sistema_modal', label: 'EVENTOS / CIENTES' },
-  { value: 'armarios', label: 'ARMARIOS' },
+  { value: 'admissao', label: 'ADMISSAO' },
+  { value: 'transferencia', label: 'TRANSFERENCIA / TROCA TURNO' },
+  { value: 'turma_pendente', label: 'TURMA PENDENTE' },
 ];
 
 // Determinar grupo/tipo do usuário

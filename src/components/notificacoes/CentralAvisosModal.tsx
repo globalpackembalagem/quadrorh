@@ -30,7 +30,10 @@ const tipoNotificacaoLiberado = (tipo: string | null | undefined, liberados?: st
   return liberados.some(liberado => {
     const l = liberado.toLowerCase();
     if (t === l || t.includes(l) || l.includes(t)) return true;
+    if (l === 'admissao' && t.includes('admissao')) return true;
+    if (l === 'transferencia' && (t.includes('transferencia') || t.includes('troca_turno'))) return true;
     if (l === 'troca_turno' && t.includes('transferencia')) return true;
+    if (l === 'turma_pendente' && t.includes('turma_pendente')) return true;
     if (l === 'demissao' && t.includes('demissao')) return true;
     if (l === 'divergencia' && t.includes('divergencia')) return true;
     if (l === 'previsao_admissao' && (t.includes('previsao') || t.includes('admissao'))) return true;

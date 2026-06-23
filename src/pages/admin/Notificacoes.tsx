@@ -86,86 +86,28 @@ const TIPO_LABELS: Record<string, string> = {
 
 const TIPOS_RECEBIMENTO = [
   { value: 'admissao', label: 'ADMISSAO' },
-  { value: 'ativacao', label: 'ADMISSAO ATIVADA' },
-  { value: 'demissao', label: 'DEMISSAO' },
-  { value: 'pedido_demissao', label: 'PEDIDO DEMISSAO' },
-  { value: 'transferencia', label: 'TRANSFERENCIA' },
-  { value: 'troca_turno', label: 'TROCA TURNO' },
-  { value: 'previsao_admissao', label: 'PREVISAO ADMISSAO' },
-  { value: 'divergencia_nova', label: 'DIVERGENCIA NOVA' },
-  { value: 'divergencia_retorno', label: 'DIVERGENCIA AGUARDANDO' },
-  { value: 'divergencia_feedback', label: 'DIVERGENCIA RESOLVIDA' },
-  { value: 'experiencia_consulta', label: 'EXPERIENCIA' },
-  { value: 'cobertura_treinamento', label: 'COBERTURA / TREINAMENTO' },
+  { value: 'transferencia', label: 'TRANSFERENCIA / TROCA TURNO' },
   { value: 'turma_pendente', label: 'TURMA PENDENTE' },
 ];
 
 const REGRAS_NOTIFICACOES = [
   {
-    tipo: 'PREVISAO ADMISSAO',
-    recebe: 'Gestor do setor do funcionario; REAL PARCERIA ve previsoes TEMP',
-    acao: 'Responde INICIOU ou NAO INICIOU',
-    retorno: 'Admin, RH Completo e RH Demissoes',
-  },
-  {
-    tipo: 'ADMISSAO ATIVADA',
-    recebe: 'Gestor do setor; REAL PARCERIA recebe aviso quando for TEMP',
-    acao: 'Gestor confirma; REAL PARCERIA da CIENTE',
-    retorno: 'Admin, RH Completo e RH Demissoes',
-  },
-  {
-    tipo: 'DEMISSAO',
-    recebe: 'Gestor do setor; REAL PARCERIA recebe quando for TEMP',
-    acao: 'Ciente',
-    retorno: 'LUCIANO e MAURICIO recebem o ciente',
-  },
-  {
-    tipo: 'PEDIDO DE DEMISSAO',
-    recebe: 'Gestor do setor; REAL PARCERIA recebe quando for TEMP',
-    acao: 'Ciente',
-    retorno: 'LUCIANO e MAURICIO recebem o ciente',
+    tipo: 'ADMISSAO',
+    recebe: 'Usuarios selecionados em RECEBIMENTO POR USUARIO. Principais lideres: ALEX, LEILA, AMILTON E SILVIA.',
+    acao: 'Mensagem: FUNCIONARIO INICIOU NO QUADRO. CONFIRME CIENCIA.',
+    retorno: 'Quem der CIENTE fica registrado no historico da notificacao.',
   },
   {
     tipo: 'TRANSFERENCIA / TROCA TURNO',
-    recebe: 'Gestores de origem e destino',
-    acao: 'Ciente ou aprovacao conforme o fluxo',
-    retorno: 'LUCIANO e MAURICIO recebem o ciente',
-  },
-  {
-    tipo: 'EXPERIENCIA',
-    recebe: 'Gestor do setor do funcionario',
-    acao: 'Decide EFETIVAR ou DESLIGAR',
-    retorno: 'Admin, RH Completo e RH Demissoes',
-  },
-  {
-    tipo: 'COBERTURA / TREINAMENTO',
-    recebe: 'Gestor do setor do funcionario',
-    acao: 'Confirma se esta na situacao',
-    retorno: 'Admin, RH Completo e RH Demissoes',
+    recebe: 'Usuarios selecionados em RECEBIMENTO POR USUARIO. Normalmente lider de origem e lider de destino.',
+    acao: 'Mensagem: FUNCIONARIO SOLICITOU/FOI PROGRAMADO PARA TROCA OU TRANSFERENCIA. CONFIRME CIENCIA.',
+    retorno: 'LUCIANO acompanha pela central e pelo historico de cientes.',
   },
   {
     tipo: 'TURMA PENDENTE',
-    recebe: 'Gestor do setor do funcionario',
-    acao: 'Informa a turma correta',
-    retorno: 'Admin e RH Completo',
-  },
-  {
-    tipo: 'DIVERGENCIA',
-    recebe: 'Gestor ou RH/Admin conforme origem da acao',
-    acao: 'Analisa, responde ou acompanha',
-    retorno: 'Usuario envolvido no fluxo',
-  },
-  {
-    tipo: 'ALERTA TEMP SUMIDO',
-    recebe: 'RH e LUCIANO',
-    acao: 'Ciente / acompanhamento',
-    retorno: 'Sem retorno automatico especifico',
-  },
-  {
-    tipo: 'AVISO RH / EVENTO MANUAL',
-    recebe: 'Destinatarios escolhidos na Central',
-    acao: 'Ciente quando enviado como modal',
-    retorno: 'Historico mostra quem viu',
+    recebe: 'Usuarios selecionados em RECEBIMENTO POR USUARIO. Principais lideres: ALEX, LEILA, AMILTON E SILVIA.',
+    acao: 'Mensagem: FUNCIONARIO ESTA SEM TURMA. INFORME A TURMA CORRETA.',
+    retorno: 'Resposta atualiza o funcionario e fica registrada.',
   },
 ];
 
