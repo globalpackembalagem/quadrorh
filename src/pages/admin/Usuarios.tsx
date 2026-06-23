@@ -283,6 +283,15 @@ export default function Usuarios() {
           .insert(setoresIds.map(setorId => ({ user_role_id: id, setor_id: setorId })));
         if (insertError) throw insertError;
       }
+
+      if (id === usuarioAtual.id) {
+        const { data: usuarioAtualizado } = await supabase
+          .from('user_roles')
+          .select('*, user_roles_setores(setor_id)')
+          .eq('id', id)
+          .single();
+        if (usuarioAtualizado) setUsuarioAtual(montarUsuarioLocal(usuarioAtualizado));
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_roles'] });

@@ -16,7 +16,7 @@ export function useInactivityLogout() {
   // Manter nome atualizado sem causar re-renders do effect
   nomeRef.current = userRole?.nome;
 
-  const tempoMinutos = usuarioAtual.tempo_inatividade || 4;
+  const tempoMinutos = usuarioAtual.tempo_inatividade ?? 4;
   const timeoutMs = tempoMinutos * 60 * 1000;
 
   const doLogout = useCallback(() => {

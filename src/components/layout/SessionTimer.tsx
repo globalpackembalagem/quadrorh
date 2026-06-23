@@ -10,7 +10,7 @@ export function SessionTimer() {
   const [remaining, setRemaining] = useState<number | null>(null);
   const lastActivityRef = useRef(Date.now());
 
-  const tempoMinutos = usuarioAtual.tempo_inatividade || 4;
+  const tempoMinutos = usuarioAtual.tempo_inatividade ?? 4;
 
   // Atualizar último timestamp de atividade
   const updateActivity = useCallback(() => {
