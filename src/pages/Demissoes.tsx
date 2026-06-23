@@ -221,9 +221,9 @@ export default function Demissoes() {
         // Buscar gestores vinculados ao setor
         const { data: gestoresDoSetor } = await supabase
           .from('user_roles')
-          .select('id, nome, setor_id')
+          .select('id, nome, setor_id, recebe_notificacoes')
           .eq('ativo', true)
-          .eq('perfil', 'gestor_setor');
+          .eq('recebe_notificacoes', true);
 
         // Buscar setores adicionais dos gestores
         const { data: setoresAdicionais } = await supabase
