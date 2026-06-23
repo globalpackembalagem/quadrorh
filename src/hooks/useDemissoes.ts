@@ -4,6 +4,13 @@ import { Demissao, PeriodoDemissao } from '@/types/demissao';
 import { toast } from 'sonner';
 import { criarEventoENotificar } from '@/hooks/useEventosSistema';
 
+const invalidarBaseFuncionarios = (queryClient: ReturnType<typeof useQueryClient>) => {
+  queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
+  queryClient.invalidateQueries({ queryKey: ['funcionarios', 'quadro'] });
+  queryClient.invalidateQueries({ queryKey: ['funcionarios', 'quadro', 'conferidos'] });
+  queryClient.invalidateQueries({ queryKey: ['funcionarios', 'ponto'] });
+};
+
 
 // Eventos são registrados automaticamente na central de notificações
 
@@ -137,9 +144,7 @@ export function useCreateDemissao() {
       // Atualizar situação do funcionário para o tipo correspondente
       if (situacaoAlvo && !skipSituacaoUpdate) {
         const updateData: Record<string, any> = { situacao_id: situacaoAlvo };
-        if (!isPedido) {
-          updateData.data_demissao = new Date().toISOString().split('T')[0];
-        }
+        updateData.data_demissao = demissao.data_prevista || new Date().toISOString().split('T')[0];
         const { error: funcError } = await supabase
           .from('funcionarios')
           .update(updateData)
@@ -178,7 +183,7 @@ export function useCreateDemissao() {
     },
     onSuccess: async (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['demissoes'] });
-      queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
+      invalidarBaseFuncionarios(queryClient);
       
       // Resolver divergências pendentes do funcionário desligado
       try {
@@ -223,10 +228,20 @@ export function useUpdateDemissao() {
         .single();
       
       if (error) throw error;
+
+      if (data.funcionario_id && demissao.data_prevista) {
+        const { error: funcError } = await supabase
+          .from('funcionarios')
+          .update({ data_demissao: demissao.data_prevista })
+          .eq('id', data.funcionario_id);
+        if (funcError) throw funcError;
+      }
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['demissoes'] });
+      invalidarBaseFuncionarios(queryClient);
       toast.success('Demissão atualizada com sucesso!');
     },
     onError: () => {
@@ -294,7 +309,7 @@ export function useRealizarDemissao() {
           .from('funcionarios')
           .update({ 
             situacao_id: situacaoDemitidoId,
-            data_demissao: new Date().toISOString().split('T')[0]
+            data_demissao: demissaoData?.data_prevista || new Date().toISOString().split('T')[0]
           })
           .eq('id', funcionarioId);
         
@@ -317,7 +332,7 @@ export function useRealizarDemissao() {
     },
     onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['demissoes'] });
-      queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
+      invalidarBaseFuncionarios(queryClient);
       
       // Resolver divergências pendentes do funcionário desligado
       try {
@@ -502,7 +517,7 @@ export function useImportDemissoesDoCadastro() {
     onSuccess: (result) => {
       if (result.count > 0) {
         queryClient.invalidateQueries({ queryKey: ['demissoes'] });
-        queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
+        invalidarBaseFuncionarios(queryClient);
         toast.success(`${result.count} demissões importadas com sucesso!`);
       } else {
         toast.info('Nenhuma nova demissão para importar deste mês.');

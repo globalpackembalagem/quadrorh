@@ -4,6 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { criarEventoENotificar, inserirEventoSemDuplicata } from '@/hooks/useEventosSistema';
 
+const invalidarBaseFuncionarios = (queryClient: ReturnType<typeof useQueryClient>) => {
+  queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
+  queryClient.invalidateQueries({ queryKey: ['funcionarios', 'quadro'] });
+  queryClient.invalidateQueries({ queryKey: ['funcionarios', 'quadro', 'conferidos'] });
+  queryClient.invalidateQueries({ queryKey: ['funcionarios', 'ponto'] });
+};
+
 
 export interface TrocaTurno {
   id: string;
@@ -408,7 +415,7 @@ export function useEfetivarTrocaTurno() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trocas_turno'] });
-      queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
+      invalidarBaseFuncionarios(queryClient);
       toast.success('Movimentação efetivada!');
     },
     onError: () => {
