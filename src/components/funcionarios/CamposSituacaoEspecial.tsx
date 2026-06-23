@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/select';
 import { Funcionario, Setor } from '@/types/database';
 import { AlertCircle } from 'lucide-react';
+import { normalizarTextoSistema } from '@/lib/normalizacao';
 
 interface CamposSituacaoEspecialProps {
   situacaoNome: string;
@@ -36,11 +37,11 @@ export function CamposSituacaoEspecial({
   sumidoDesde,
   setSumidoDesde,
 }: CamposSituacaoEspecialProps) {
-  const situacaoUpper = situacaoNome?.toUpperCase() || '';
+  const situacaoUpper = normalizarTextoSistema(situacaoNome) || '';
   
-  const isCobertura = situacaoUpper.includes('COB') && situacaoUpper.includes('FÉRIAS') || 
-                      situacaoUpper.includes('COB. FÉRIAS') ||
-                      situacaoUpper === 'COBERTURA FÉRIAS';
+  const isCobertura = situacaoUpper.includes('COB') && situacaoUpper.includes('FERIAS') ||
+                      situacaoUpper.includes('COB. FERIAS') ||
+                      situacaoUpper === 'COBERTURA FERIAS';
   const isTreinamento = situacaoUpper.includes('TREINAMENTO');
   const isSumido = situacaoUpper.includes('SUMIDO');
 
@@ -126,3 +127,4 @@ export function CamposSituacaoEspecial({
     </div>
   );
 }
+

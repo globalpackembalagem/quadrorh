@@ -3,6 +3,7 @@ import { Users } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Funcionario, Setor } from '@/types/database';
+import { normalizarTextoSistema } from '@/lib/normalizacao';
 
 interface FuncionariosPorSetorTabsProps {
   funcionarios: Funcionario[];
@@ -59,8 +60,8 @@ export function FuncionariosPorSetorTabs({ funcionarios, setores }: Funcionarios
 
       {setoresAtivos.map(setor => {
         const funcs = funcionariosPorSetor[setor.id] || [];
-        const ativos = funcs.filter(f => f.situacao?.nome === 'Ativo');
-        const ferias = funcs.filter(f => f.situacao?.nome === 'Férias');
+        const ativos = funcs.filter(f => normalizarTextoSistema(f.situacao?.nome) === 'ATIVO');
+        const ferias = funcs.filter(f => normalizarTextoSistema(f.situacao?.nome) === 'FERIAS');
 
         return (
           <TabsContent key={setor.id} value={setor.id} className="mt-4">

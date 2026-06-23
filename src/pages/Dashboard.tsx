@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 // xlsx-js-style loaded dynamically
 import { format } from 'date-fns';
 import { loadXLSX } from '@/lib/xlsx';
+import { normalizarTextoSistema } from '@/lib/normalizacao';
 
 export default function Dashboard() {
   const data = useDashboardData();
@@ -39,9 +40,9 @@ export default function Dashboard() {
   const exportarExcelPorTurma = async () => {
     const XLSX = await loadXLSX();
     const grupo = data.grupoSelecionado;
-    const situacoesExcluidas = ['DEMISSÃO', 'DEMISSAO', 'PED. DEMISSÃO', 'PED. DEMISSAO'];
+    const situacoesExcluidas = ['DEMISSAO', 'PED. DEMISSAO', 'PEDIDO DEMISSAO', 'TERMINO CONTRATO'];
     const funcionarios = (grupo === 'SOPRO' ? data.funcionariosSopro : data.funcionariosDecoracao)
-      .filter(f => !situacoesExcluidas.includes((f.situacao?.nome || '').toUpperCase()));
+      .filter(f => !situacoesExcluidas.includes(normalizarTextoSistema(f.situacao?.nome) || ''));
 
     if (funcionarios.length === 0) {
       toast.error('Nenhum funcionário para exportar');
@@ -197,8 +198,8 @@ export default function Dashboard() {
     aplicarPadraoExcel(wsTodos);
     XLSX.utils.book_append_sheet(wb, wsTodos, 'FUNCIONARIOS_COMPLETO');
 
-    const situacoesExcluidasExport = ['DEMISSÃO', 'DEMISSAO', 'PED. DEMISSÃO', 'PED. DEMISSAO'];
-    const funcSoproData = data.funcionariosSopro.filter(f => !situacoesExcluidasExport.includes((f.situacao?.nome || '').toUpperCase())).map(f => ({
+    const situacoesExcluidasExport = ['DEMISSAO', 'PED. DEMISSAO', 'PEDIDO DEMISSAO', 'TERMINO CONTRATO'];
+    const funcSoproData = data.funcionariosSopro.filter(f => !situacoesExcluidasExport.includes(normalizarTextoSistema(f.situacao?.nome) || '')).map(f => ({
       'Matrícula': f.matricula || '',
       'Nome': f.nome_completo,
       'Setor': f.setor?.nome || '',
@@ -211,7 +212,7 @@ export default function Dashboard() {
     aplicarPadraoExcel(wsFuncSopro);
     XLSX.utils.book_append_sheet(wb, wsFuncSopro, 'Funcionários SOPRO');
 
-    const funcDecoData = data.funcionariosDecoracao.filter(f => !situacoesExcluidasExport.includes((f.situacao?.nome || '').toUpperCase())).map(f => ({
+    const funcDecoData = data.funcionariosDecoracao.filter(f => !situacoesExcluidasExport.includes(normalizarTextoSistema(f.situacao?.nome) || '')).map(f => ({
       'Matrícula': f.matricula || '',
       'Nome': f.nome_completo,
       'Setor': f.setor?.nome || '',
@@ -290,4 +291,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
 

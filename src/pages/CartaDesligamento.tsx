@@ -26,6 +26,7 @@ import { useTiposDesligamentoAtivos, TipoDesligamento } from '@/hooks/useTiposDe
 import { toast } from 'sonner';
 import logoGlobalpack from '@/assets/logo-globalpack-new.png';
 import { cn } from '@/lib/utils';
+import { normalizarTextoSistema } from '@/lib/normalizacao';
 
 // ── Gerador de texto de carta por tipo (usa template do banco) ────────────────
 function gerarTextoCarta(
@@ -104,7 +105,7 @@ export default function CartaDesligamento() {
   const createDemissao = useCreateDemissao();
   const { userRole } = useAuth();
 
-  const situacaoPedidoDemissao = situacoes.find(s => s.nome.toUpperCase() === 'PED. DEMISSÃO');
+  const situacaoPedidoDemissao = situacoes.find(s => ['PEDIDO DEMISSAO', 'PED. DEMISSAO'].includes(normalizarTextoSistema(s.nome) || ''));
 
   const funcionariosFiltrados = funcionarios.filter((f) => {
     const termo = searchTerm.toLowerCase();
@@ -185,8 +186,8 @@ export default function CartaDesligamento() {
   const handleCadastrarDemissao = async () => {
     if (!funcionarioSelecionado || !tipoSelecionado) return;
     try {
-      const situacaoNome = funcionarioSelecionado.situacao?.nome?.toUpperCase() || '';
-      const jaDesligado = situacaoNome === 'DEMISSÃO' || situacaoNome === 'PED. DEMISSÃO';
+      const situacaoNome = normalizarTextoSistema(funcionarioSelecionado.situacao?.nome) || '';
+      const jaDesligado = ['DEMISSAO', 'PEDIDO DEMISSAO', 'PED. DEMISSAO', 'TERMINO CONTRATO'].includes(situacaoNome);
       await createDemissao.mutateAsync({
         funcionario_id: funcionarioId,
         tipo_desligamento: tipoSelecionado.nome,
@@ -612,3 +613,4 @@ export default function CartaDesligamento() {
     </div>
   );
 }
+

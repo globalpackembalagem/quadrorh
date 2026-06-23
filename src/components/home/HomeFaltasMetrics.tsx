@@ -5,6 +5,7 @@ import { useQuadroPlanejado } from '@/hooks/useQuadroPlanejado';
 import { useQuadroDecoracao } from '@/hooks/useQuadroDecoracao';
 import { DashboardFaltasDiario } from '@/components/faltas/DashboardFaltasDiario';
 import { useFuncionariosNoQuadro } from '@/hooks/useFuncionarios';
+import { normalizarTextoSistema } from '@/lib/normalizacao';
 
 function isSetorDoQuadro(setor: { nome?: string; conta_no_quadro?: boolean } | null): boolean {
   if (!setor) return false;
@@ -76,9 +77,10 @@ export function HomeFaltasMetrics() {
     return funcionarios
       .filter(func => isSetorDoQuadro(func.setor))
       .map(func => {
-        const situacaoNome = (func.situacao?.nome || '').toUpperCase();
-        const isDesligado = situacaoNome.includes('DEMISSÃO') || situacaoNome.includes('DEMISS') || 
-                            situacaoNome.includes('PED. DEMISSÃO') || situacaoNome.includes('TÉRMINO') || 
+        const situacaoNome = normalizarTextoSistema(func.situacao?.nome) || '';
+        const isDesligado = situacaoNome.includes('DEMISS') ||
+                            situacaoNome.includes('PED. DEMISSAO') ||
+                            situacaoNome.includes('PEDIDO DEMISSAO') ||
                             situacaoNome.includes('TERMINO');
         
         // CORREÇÃO: Demitidos dentro do período devem contar no quadro (conta_no_quadro = true)
@@ -235,3 +237,5 @@ export function HomeFaltasMetrics() {
     />
   );
 }
+
+

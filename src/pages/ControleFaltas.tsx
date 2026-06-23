@@ -671,7 +671,7 @@ export default function ControleFaltas() {
     
     // Só considera data de demissão para situações de desligamento
     const situacaoNome = (func.situacao?.nome || '').toUpperCase();
-    const isDesligado = situacaoNome.includes('DEMISSÃO') || situacaoNome.includes('DEMISS') || situacaoNome.includes('PED. DEMISSÃO');
+    const isDesligado = situacaoNome.includes('DEMISS') || situacaoNome.includes('PEDIDO DEMISSAO') || situacaoNome.includes('PED. DEMISSAO');
     const dataDemissaoEfetiva = isDesligado ? (func.data_demissao || format(new Date(), 'yyyy-MM-dd')) : null;
     if (dataDemissaoEfetiva) {
       const demissao = parseISO(dataDemissaoEfetiva);
@@ -713,7 +713,7 @@ export default function ControleFaltas() {
   // Helper: verifica se funcionário está desligado
   const isFuncionarioDesligado = (func: Funcionario): boolean => {
     const situacaoNome = (func.situacao?.nome || '').toUpperCase();
-    return situacaoNome.includes('DEMISSÃO') || situacaoNome.includes('DEMISS') || situacaoNome.includes('PED. DEMISSÃO');
+    return situacaoNome.includes('DEMISS') || situacaoNome.includes('PEDIDO DEMISSAO') || situacaoNome.includes('PED. DEMISSAO');
   };
 
   const getDataDemissaoParaBloqueio = (func: Funcionario): string | null => {
@@ -2112,3 +2112,4 @@ export default function ControleFaltas() {
     </div>
   );
 }
+

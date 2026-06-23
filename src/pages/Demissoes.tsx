@@ -53,13 +53,14 @@ import { PeriodosConfig } from '@/components/demissoes/PeriodosConfig';
 import { criarEventoSistema } from '@/hooks/useEventosSistema';
 
 import { Demissao } from '@/types/demissao';
+import { normalizarTextoSistema } from '@/lib/normalizacao';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { loadXLSX } from '@/lib/xlsx';
 // xlsx-js-style loaded dynamically
 
 // Gera opções de período para os últimos/próximos meses
-const isPedidoDemissao = (tipo?: string | null) => tipo === 'Pedido de Demissão';
+const isPedidoDemissao = (tipo?: string | null) => normalizarTextoSistema(tipo) === 'PEDIDO DE DEMISSAO';
 
 const getTipoEventoSaida = (tipo?: string | null) => isPedidoDemissao(tipo) ? 'pedido_demissao' : 'demissao';
 
@@ -123,7 +124,7 @@ export default function Demissoes() {
 
   // Encontrar a situação "Demissão"
   const situacaoDemissao = useMemo(() => {
-    return situacoes.find(s => s.nome.toLowerCase().includes('demissão') || s.nome.toLowerCase().includes('demissao'));
+    return situacoes.find(s => normalizarTextoSistema(s.nome) === 'DEMISSAO');
   }, [situacoes]);
 
   const handleRealizar = async (demissao: Demissao) => {
@@ -138,8 +139,8 @@ export default function Demissoes() {
       .eq('id', demissao.funcionario_id)
       .single();
     
-    const situacaoNome = (funcAtual?.situacao as any)?.nome?.toUpperCase() || '';
-    const jaEstaNaSituacao = situacaoNome === 'DEMISSÃO' || situacaoNome === 'PED. DEMISSÃO';
+    const situacaoNome = normalizarTextoSistema((funcAtual?.situacao as any)?.nome) || '';
+    const jaEstaNaSituacao = ['DEMISSAO', 'PED. DEMISSAO', 'PEDIDO DEMISSAO', 'TERMINO CONTRATO'].includes(situacaoNome);
     
     if (jaEstaNaSituacao) {
       toast.info('Situação já correta — registrando apenas como realizada.');
@@ -937,4 +938,6 @@ export default function Demissoes() {
     </div>
   );
 }
+
+
 

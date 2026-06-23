@@ -24,6 +24,7 @@ import { useSetoresAtivos } from '@/hooks/useSetores';
 import { useAuth } from '@/hooks/useAuth';
 import { useRegistrarHistoricoFuncionario } from '@/hooks/useHistoricoFuncionarios';
 import { Funcionario } from '@/types/database';
+import { normalizarTextoSistema } from '@/lib/normalizacao';
 import { toast } from 'sonner';
 
 interface TrocaUnificadaDialogProps {
@@ -65,8 +66,8 @@ export function TrocaUnificadaDialog({ funcionarios }: TrocaUnificadaDialogProps
 
   const funcionariosFiltrados = useMemo(() => {
     const ativos = funcionarios.filter(f => {
-      const sit = f.situacao?.nome?.toUpperCase() || '';
-      return sit === 'ATIVO' || sit === 'FÉRIAS' || sit === 'SUMIDO';
+      const sit = normalizarTextoSistema(f.situacao?.nome) || '';
+      return sit === 'ATIVO' || sit === 'FERIAS' || sit === 'SUMIDO';
     });
 
     if (!search) return ativos;
@@ -328,3 +329,4 @@ export function TrocaUnificadaDialog({ funcionarios }: TrocaUnificadaDialogProps
     </>
   );
 }
+

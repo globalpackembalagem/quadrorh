@@ -338,9 +338,9 @@ export function useUpdateFuncionario() {
       situacaoAtualNome?: string; // Nome da situação atual para detectar mudança
     }) => {
       // Se está mudando de uma situação de demissão para ATIVO, limpar data_demissao
-      const situacoesDesligamento = ['DEMISSÃO', 'PED. DEMISSÃO'];
+      const situacoesDesligamento = ['DEMISSAO', 'PED. DEMISSAO', 'PEDIDO DEMISSAO', 'TERMINO CONTRATO'];
       const estaVindoDeDesligamento = situacoesDesligamento.some(s => 
-        situacaoAtualNome?.toUpperCase().includes(s.toUpperCase())
+        normalizarTexto(situacaoAtualNome).includes(s)
       );
       
       // Buscar nome da nova situação
@@ -354,7 +354,7 @@ export function useUpdateFuncionario() {
         novaSituacaoNome = situacao?.nome || '';
       }
       
-      const estaMudandoParaAtivo = novaSituacaoNome.toUpperCase() === 'ATIVO';
+      const estaMudandoParaAtivo = normalizarTexto(novaSituacaoNome) === 'ATIVO';
       
       // Se estava em demissão e está voltando para Ativo, limpa a data de demissão
       const updateData = normalizarFuncionarioPayload({

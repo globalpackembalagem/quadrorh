@@ -82,7 +82,7 @@ export function ImportarTurmasDialog({ open, onOpenChange, onSuccess }: Importar
       const sopro = allFuncionarios.filter(f => {
         const setor = (f.setor as any)?.nome?.toUpperCase() || '';
         const sit = (f.situacao as any)?.nome?.toUpperCase() || '';
-        return setor.includes('SOPRO') && (sit === 'ATIVO' || sit === 'FÉRIAS' || sit.includes('ATIVO'));
+        return setor.includes('SOPRO') && (sit === 'ATIVO' || sit === 'FERIAS' || sit.includes('ATIVO'));
       });
 
       const dados = sopro.map(f => ({
@@ -403,4 +403,5 @@ export function ImportarTurmasDialog({ open, onOpenChange, onSuccess }: Importar
     </Dialog>
   );
 }
+
 

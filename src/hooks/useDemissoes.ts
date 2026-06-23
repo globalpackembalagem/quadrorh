@@ -4,6 +4,7 @@ import { Demissao, PeriodoDemissao } from '@/types/demissao';
 import { toast } from 'sonner';
 import { criarEventoENotificar } from '@/hooks/useEventosSistema';
 import { registrarHistoricoQuadroSeTravado } from '@/hooks/useFuncionarios';
+import { normalizarTextoSistema } from '@/lib/normalizacao';
 
 const invalidarBaseFuncionarios = (queryClient: ReturnType<typeof useQueryClient>) => {
   queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
@@ -11,6 +12,24 @@ const invalidarBaseFuncionarios = (queryClient: ReturnType<typeof useQueryClient
   queryClient.invalidateQueries({ queryKey: ['funcionarios', 'quadro', 'conferidos'] });
   queryClient.invalidateQueries({ queryKey: ['funcionarios', 'ponto'] });
 };
+
+function nomesSituacaoPorTipoDesligamento(tipoDesligamento?: string | null) {
+  const tipo = normalizarTextoSistema(tipoDesligamento) || '';
+  if (tipo.includes('TERMINO') || tipo.includes('CONTRATO')) return ['TERMINO CONTRATO'];
+  if (tipo.includes('PED')) return ['PEDIDO DEMISSAO', 'PED. DEMISSAO'];
+  return ['DEMISSAO'];
+}
+
+async function buscarSituacaoDesligamento(tipoDesligamento?: string | null) {
+  const { data, error } = await supabase
+    .from('situacoes')
+    .select('id, nome')
+    .eq('ativa', true);
+  if (error) throw error;
+
+  const nomes = nomesSituacaoPorTipoDesligamento(tipoDesligamento);
+  return data?.find((s) => nomes.includes(normalizarTextoSistema(s.nome) || ''))?.id;
+}
 
 
 // Eventos são registrados automaticamente na central de notificações
@@ -139,8 +158,18 @@ export function useCreateDemissao() {
       // Separar campos extras do resto dos dados
       const { situacaoPedidoDemissaoId, situacaoDemissaoId, setor_nome, criado_por_nome, funcionario_nome, setor_id, turma, skipSituacaoUpdate, ...demissao } = input;
       
-      const isPedido = demissao.tipo_desligamento === 'Pedido de Demissão';
-      const situacaoAlvo = isPedido ? situacaoPedidoDemissaoId : situacaoDemissaoId;
+      const tipoNormalizado = normalizarTextoSistema(demissao.tipo_desligamento) || '';
+      const nomesSituacaoAlvo = nomesSituacaoPorTipoDesligamento(demissao.tipo_desligamento);
+      const situacaoAlvoManual = nomesSituacaoAlvo.some((nome) => nome.includes('PED'))
+        ? situacaoPedidoDemissaoId
+        : tipoNormalizado.includes('TERMINO') || tipoNormalizado.includes('CONTRATO')
+          ? undefined
+          : situacaoDemissaoId;
+      const situacaoAlvo = situacaoAlvoManual || await buscarSituacaoDesligamento(demissao.tipo_desligamento);
+
+      if (!situacaoAlvo && !skipSituacaoUpdate) {
+        throw new Error('Situacao de desligamento nao encontrada.');
+      }
 
       // Atualizar situação do funcionário para o tipo correspondente
       if (situacaoAlvo && !skipSituacaoUpdate) {
@@ -158,6 +187,14 @@ export function useCreateDemissao() {
           .eq('id', demissao.funcionario_id);
         
         if (funcError) throw funcError;
+      
+        const { data: funcionarioDepois } = await supabase
+          .from('funcionarios')
+          .select('*, setor:setores!setor_id(*), situacao:situacoes!situacao_id(*)')
+          .eq('id', demissao.funcionario_id)
+          .single();
+
+        await registrarHistoricoQuadroSeTravado(funcionarioAntes as any, funcionarioDepois as any, criado_por_nome || 'SISTEMA', 'DEMISSAO');
       }
 
       // Criar demissão como realizada
@@ -237,6 +274,12 @@ export function useUpdateDemissao() {
       if (error) throw error;
 
       if (data.funcionario_id && demissao.data_prevista) {
+        const { data: funcionarioAntes } = await supabase
+          .from('funcionarios')
+          .select('*, setor:setores!setor_id(*), situacao:situacoes!situacao_id(*)')
+          .eq('id', data.funcionario_id)
+          .single();
+
         const { error: funcError } = await supabase
           .from('funcionarios')
           .update({ data_demissao: demissao.data_prevista })
@@ -246,10 +289,10 @@ export function useUpdateDemissao() {
         const { data: funcionarioDepois } = await supabase
           .from('funcionarios')
           .select('*, setor:setores!setor_id(*), situacao:situacoes!situacao_id(*)')
-          .eq('id', demissao.funcionario_id)
+          .eq('id', data.funcionario_id)
           .single();
 
-        await registrarHistoricoQuadroSeTravado(funcionarioAntes as any, funcionarioDepois as any, criado_por_nome || 'SISTEMA', 'DEMISSAO');
+        await registrarHistoricoQuadroSeTravado(funcionarioAntes as any, funcionarioDepois as any, 'SISTEMA', 'DEMISSAO');
       }
 
       return data;
@@ -320,6 +363,9 @@ export function useRealizarDemissao() {
 
       // 3. Só atualiza situação se não for para pular
       if (!skipSituacaoUpdate) {
+        const situacaoAlvo = await buscarSituacaoDesligamento(demissaoData?.tipo_desligamento) || situacaoDemitidoId;
+        if (!situacaoAlvo) throw new Error('Situacao de desligamento nao encontrada.');
+
         const { data: funcionarioAntes } = await supabase
           .from('funcionarios')
           .select('*, setor:setores!setor_id(*), situacao:situacoes!situacao_id(*)')
@@ -329,7 +375,7 @@ export function useRealizarDemissao() {
         const { error: funcError } = await supabase
           .from('funcionarios')
           .update({ 
-            situacao_id: situacaoDemitidoId,
+            situacao_id: situacaoAlvo,
             data_demissao: demissaoData?.data_prevista || new Date().toISOString().split('T')[0]
           })
           .eq('id', funcionarioId);
@@ -501,8 +547,8 @@ export function useImportDemissoesDoCadastro() {
       if (funcError) throw funcError;
 
       const paraImportar = funcionarios?.filter(f => {
-        const situacaoNome = (f.situacao as any)?.nome?.toUpperCase() || '';
-        return situacaoNome.includes('DEMISS');
+        const situacaoNome = normalizarTextoSistema((f.situacao as any)?.nome) || '';
+        return situacaoNome.includes('DEMISS') || situacaoNome.includes('TERMINO CONTRATO');
       }) || [];
 
       if (paraImportar.length === 0) return { count: 0 };
@@ -523,8 +569,8 @@ export function useImportDemissoesDoCadastro() {
 
       // 3. Criar os registros de demissão
       const payloads = novos.map(f => {
-        const situacaoNome = (f.situacao as any)?.nome?.toUpperCase() || '';
-        const tipoDesligamento = situacaoNome === 'PED. DEMISSÃO' ? 'Pedido de Demissão' : null;
+        const situacaoNome = normalizarTextoSistema((f.situacao as any)?.nome) || '';
+        const tipoDesligamento = situacaoNome.includes('PED') ? 'Pedido de Demissao' : null;
         
         return {
           funcionario_id: f.id,
@@ -558,3 +604,8 @@ export function useImportDemissoesDoCadastro() {
     }
   });
 }
+
+
+
+
+

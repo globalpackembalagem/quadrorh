@@ -57,13 +57,13 @@ export function ExportarFuncionariosDialog({
   }, [situacoes]);
 
   // Inicializar seleção com TODOS os setores ativos e situações ativas (exceto demissão)
-  const situacoesExcluidas = ['DEMISSÃO', 'DEMISSAO', 'PED. DEMISSÃO', 'PED. DEMISSAO'];
+  const situacoesExcluidas = ['DEMISSAO', 'PED. DEMISSAO', 'PEDIDO DEMISSAO', 'TERMINO CONTRATO'];
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
       setSetoresSelecionados(new Set(setores.filter(s => s.ativo).map(s => s.id)));
       setSituacoesSelecionadas(new Set(
         todasSituacoesAtivas
-          .filter(s => !situacoesExcluidas.includes(s.nome.toUpperCase()))
+          .filter(s => !situacoesExcluidas.includes(normalizarTextoSistema(s.nome) || ''))
           .map(s => s.id)
       ));
     }
@@ -335,3 +335,4 @@ export function ExportarFuncionariosDialog({
     </Dialog>
   );
 }
+
