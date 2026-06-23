@@ -437,6 +437,11 @@ export default function Funcionarios() {
 
     const situacaoSelecionada = situacoesAtivas.find(s => s.id === situacaoId);
     const situacaoNome = situacaoSelecionada?.nome || '';
+    const situacaoNormalizada = normalizarTextoSistema(situacaoNome) || '';
+    const situacoesSemCpfObrigatorio = [
+      'DEMISSAO', 'PED. DEMISSAO', 'PEDIDO DEMISSAO',
+      'PEDIDO DE DEMISSAO', 'TERMINO CONTRATO', 'TERMINO DE CONTRATO',
+    ];
 
     // Validação: SUMIDO exige data obrigatória
     if (situacaoNome.toUpperCase().includes('SUMIDO') && !sumidoDesde) {
@@ -445,6 +450,10 @@ export default function Funcionarios() {
     }
 
     const cpfFormatado = cpf.trim() ? formatarCpf(cpf) : null;
+    if (!situacoesSemCpfObrigatorio.includes(situacaoNormalizada) && !cpfFormatado) {
+      toast.error('CPF E OBRIGATORIO PARA FUNCIONARIO ATUAL.');
+      return;
+    }
     if (cpfFormatado && somenteNumerosCpf(cpfFormatado).length !== 11) {
       toast.error('CPF INVALIDO. INFORME 11 NUMEROS.');
       return;
@@ -1126,7 +1135,7 @@ export default function Funcionarios() {
             </div>
 
             <div className="space-y-2">
-              <Label>CPF</Label>
+              <Label>CPF * (OBRIGATORIO PARA FUNCIONARIO ATUAL)</Label>
               <Input
                 value={cpf}
                 onChange={e => setCpf(formatarCpf(e.target.value))}

@@ -28,6 +28,7 @@ interface ImportarFuncionariosProps {
 interface FuncionarioImport {
   linha: number;
   nome_completo: string;
+  cpf?: string;
   sexo: SexoTipo;
   setor_nome: string;
   setor_original: string;
@@ -48,6 +49,7 @@ interface FuncionarioImport {
 
 const COLUNAS_EXEMPLO = [
   'Nome Completo',
+  'CPF',
   'Sexo (M/F)',
   'Setor',
   'Situação',
@@ -59,6 +61,21 @@ const COLUNAS_EXEMPLO = [
   'Data Demissão',
   'Observações',
 ];
+
+const formatarCpfImportacao = (valor: unknown): string | undefined => {
+  const original = String(valor ?? '').trim();
+  if (!original) return undefined;
+  const digitosOriginais = original.replace(/\D/g, '');
+  if (digitosOriginais.length > 11) return undefined;
+  const digitos = digitosOriginais.padStart(11, '0');
+  if (digitos.length !== 11) return undefined;
+  return digitos.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+};
+
+const situacaoDispensaCpf = (nome?: string | null) => [
+  'DEMISSAO', 'PED. DEMISSAO', 'PEDIDO DEMISSAO',
+  'PEDIDO DE DEMISSAO', 'TERMINO CONTRATO', 'TERMINO DE CONTRATO',
+].includes(normalizarTextoSistema(nome) || '');
 
 const formatarDataExcel = (isoDate?: string | null) => {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate || '');
@@ -204,7 +221,9 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
       errosCriticos.push('Nome é obrigatório');
     }
     
-    const sexoRaw = colunas[1]?.toString().trim() || '';
+    const cpf = formatarCpfImportacao(colunas[1]);
+
+    const sexoRaw = colunas[2]?.toString().trim() || '';
     let sexo = parseSexo(sexoRaw);
     if (!sexo) {
       sexo = 'masculino';
@@ -213,7 +232,7 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
       }
     }
     
-    const setor_original = colunas[2]?.toString().trim() || '';
+    const setor_original = colunas[3]?.toString().trim() || '';
     const setorResult = encontrarSetor(setor_original);
     let setor = setorResult.setor;
     let setor_nome = setor?.nome || setor_original;
@@ -235,7 +254,7 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
       }
     }
     
-    const situacao_original = colunas[3]?.toString().trim() || '';
+    const situacao_original = colunas[4]?.toString().trim() || '';
     let situacao = encontrarSituacao(situacao_original);
     let situacao_nome = situacao_original;
     
@@ -252,13 +271,17 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
       }
     }
 
-    const dataAdmissaoRaw = colunas[6]?.toString().trim() || '';
+    if (!situacaoDispensaCpf(situacao?.nome || situacao_nome) && !cpf) {
+      errosCriticos.push('CPF E OBRIGATORIO COM 11 DIGITOS');
+    }
+
+    const dataAdmissaoRaw = colunas[7]?.toString().trim() || '';
     let dataAdmissao = parseData(dataAdmissaoRaw);
     if (dataAdmissaoRaw && !dataAdmissao) {
       avisos.push(`Data admissão "${dataAdmissaoRaw}" ignorada`);
     }
 
-    const dataDemissaoRaw = colunas[9]?.toString().trim() || '';
+    const dataDemissaoRaw = colunas[10]?.toString().trim() || '';
     let dataDemissao = parseData(dataDemissaoRaw);
     if (dataDemissaoRaw && !dataDemissao) {
       avisos.push(`Data demissão "${dataDemissaoRaw}" ignorada`);
@@ -267,18 +290,19 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
     return {
       linha: numeroLinha,
       nome_completo,
+      cpf,
       sexo,
       setor_nome,
       setor_original,
       situacao_nome,
       situacao_original,
-      empresa: parseEmpresa(colunas[4] || ''),
-      matricula: colunas[5]?.toString().trim() || undefined,
+      empresa: parseEmpresa(colunas[5] || ''),
+      matricula: colunas[6]?.toString().trim() || undefined,
       data_admissao: dataAdmissao,
-      cargo: colunas[7]?.toString().trim() || undefined,
-      turma: colunas[8]?.toString().trim() || undefined,
+      cargo: colunas[8]?.toString().trim() || undefined,
+      turma: colunas[9]?.toString().trim() || undefined,
       data_demissao: dataDemissao,
-      observacoes: colunas[10]?.toString().trim() || undefined,
+      observacoes: colunas[11]?.toString().trim() || undefined,
       avisos,
       errosCriticos,
       setor_id: setor?.id || '',
@@ -369,8 +393,9 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
   const downloadModelo = async () => {
     const XLSX = await loadXLSX();
     const ws = XLSX.utils.aoa_to_sheet([
-      ['João Silva', 'M', 'SOPRO', 'Ativo', 'GLOBALPACK', '12345', '01/01/2024', 'Auxiliar', 'T1', '', ''],
-      ['Maria Santos', 'F', 'DECORAÇÃO', 'Ativo', 'G+P', 'TEMP', '15/03/2024', 'Operador', 'T2', '', 'Exemplo'],
+      COLUNAS_EXEMPLO,
+      ['João Silva', '12345678901', 'M', 'SOPRO', 'Ativo', 'GLOBALPACK', '12345', '01/01/2024', 'Auxiliar', 'T1', '', ''],
+      ['Maria Santos', '01234567890', 'F', 'DECORAÇÃO', 'Ativo', 'G+P', 'TEMP', '15/03/2024', 'Operador', 'T2', '', 'Exemplo'],
     ]);
     
     Object.keys(ws).forEach((cellRef) => {
@@ -390,6 +415,7 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
     const dadosExport = registros.map(item => ({
       'Matrícula': item.matricula || '',
       'Nome': item.nome_completo,
+      'CPF': item.cpf || '',
       'Sexo': item.sexo === 'masculino' ? 'M' : 'F',
       'Setor Original': item.setor_original || '(vazio)',
       'Setor Usado': item.setor_nome,
@@ -444,6 +470,7 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
       
       const registros = paraImportar.map(d => ({
         nome_completo: normUpper(d.nome_completo) || d.nome_completo,
+        cpf: d.cpf || null,
         sexo: d.sexo,
         setor_id: d.setor_id,
         situacao_id: d.situacao_id,
