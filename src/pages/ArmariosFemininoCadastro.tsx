@@ -57,7 +57,7 @@ export default function ArmariosFemininoCadastro() {
       if (error) throw error;
 
       if (!data?.ok) {
-        setErro(data?.message || 'CPF NAO LOCALIZADO PARA CADASTRO DE ARMARIO DO VESTIARIO FEMININO DO SOPRO. PROCURE O RH.');
+        setErro(data?.message || 'CPF NAO LOCALIZADO PARA CADASTRO DE ARMARIO DO VESTIARIO FEMININO. PROCURE O RH.');
         return;
       }
 
@@ -113,7 +113,7 @@ export default function ArmariosFemininoCadastro() {
         <CardHeader className="text-center border-b bg-slate-50">
           <img src={logoGlobalpack} alt="GLOBALPACK" className="h-14 object-contain mx-auto mb-3" />
           <CardTitle className="text-xl tracking-wide">CADASTRO DE ARMARIO</CardTitle>
-          <p className="text-sm font-semibold text-slate-600">VESTIARIO FEMININO DO SOPRO</p>
+          <p className="text-sm font-semibold text-slate-600">VESTIARIO FEMININO</p>
         </CardHeader>
         <CardContent className="space-y-5 pt-6">
           <p className="text-sm text-slate-600">

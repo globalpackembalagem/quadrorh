@@ -41,6 +41,15 @@ export function EditarPrevisaoDialog({ funcionario, open, onOpenChange }: Editar
   const { data: setores = [] } = useSetoresAtivos();
   const updateFuncionario = useUpdateFuncionario();
 
+  const somenteNumeros = (valor: string) => valor.replace(/\D/g, '');
+  const formatarCpf = (valor: string) => {
+    const n = somenteNumeros(valor).slice(0, 11);
+    return n
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  };
+
   const [formData, setFormData] = useState({
     nome_completo: '',
     empresa: 'GLOBALPACK' as 'GLOBALPACK' | 'G+P',
@@ -48,6 +57,7 @@ export function EditarPrevisaoDialog({ funcionario, open, onOpenChange }: Editar
     setor_id: '',
     turma: '',
     cargo: '',
+    cpf: '',
     data_admissao: null as Date | null,
     sexo: 'masculino' as 'masculino' | 'feminino',
   });
@@ -61,6 +71,7 @@ export function EditarPrevisaoDialog({ funcionario, open, onOpenChange }: Editar
         setor_id: funcionario.setor_id || '',
         turma: funcionario.turma || '',
         cargo: funcionario.cargo || '',
+        cpf: funcionario.cpf || '',
         // data_admissao é YYYY-MM-DD; parseISO evita dia "voltar" por fuso.
         data_admissao: funcionario.data_admissao ? parseISO(funcionario.data_admissao) : null,
         sexo: funcionario.sexo || 'masculino',
@@ -82,6 +93,10 @@ export function EditarPrevisaoDialog({ funcionario, open, onOpenChange }: Editar
       toast.error('Setor é obrigatório');
       return;
     }
+    if (somenteNumeros(formData.cpf).length !== 11) {
+      toast.error('CPF e obrigatorio para previsao de admissao');
+      return;
+    }
 
     try {
       await updateFuncionario.mutateAsync({
@@ -92,6 +107,7 @@ export function EditarPrevisaoDialog({ funcionario, open, onOpenChange }: Editar
         setor_id: formData.setor_id,
         turma: formData.turma?.trim() || null,
         cargo: formData.cargo || null,
+        cpf: formatarCpf(formData.cpf) || null,
         data_admissao: formData.data_admissao ? format(formData.data_admissao, 'yyyy-MM-dd') : null,
         sexo: formData.sexo,
       });
@@ -122,8 +138,19 @@ export function EditarPrevisaoDialog({ funcionario, open, onOpenChange }: Editar
               placeholder="Nome do candidato"
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-cpf">CPF *</Label>
+            <Input
+              id="edit-cpf"
+              value={formData.cpf}
+              onChange={(e) => setFormData({ ...formData, cpf: formatarCpf(e.target.value) })}
+              placeholder="000.000.000-00"
+              inputMode="numeric"
+              maxLength={14}
+            />
+          </div>
 
-          {/* Empresa e Matrícula */}
+          {/* Empresa e Matricula */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Empresa</Label>

@@ -27,6 +27,7 @@ interface ImportarPrevisoesProps {
 interface PrevisaoImport {
   linha: number;
   nome_completo: string;
+  cpf: string;
   sexo: SexoTipo;
   setor_nome: string;
   setor_original: string;
@@ -39,11 +40,10 @@ interface PrevisaoImport {
   avisos: string[];
   errosCriticos: string[];
   setor_id: string;
-}
-
-// Colunas para previsão: Nome | Sexo | Setor | Empresa | Matrícula | Data Prevista | Cargo | Turma | Observações
+}// Colunas para previsao: Nome | CPF | Sexo | Setor | Empresa | Matricula | Data Prevista | Cargo | Turma | Observacoes
 const COLUNAS_PREVISAO = [
   'Nome Completo',
+  'CPF',
   'Sexo (M/F)',
   'Setor',
   'Empresa',
@@ -66,6 +66,15 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
     return texto?.toString().trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') || '';
   };
 
+  const somenteNumeros = (valor: string) => valor?.toString().replace(/\D/g, '') || '';
+
+  const formatarCpf = (valor: string) => {
+    const n = somenteNumeros(valor).slice(0, 11);
+    return n
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  };
   const encontrarSetor = (nome: string): { setor: Setor | undefined; aviso?: string } => {
     const nomeNorm = normalizarTexto(nome);
     
@@ -75,10 +84,10 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
     if (nomeNorm.includes('decoracao')) {
       if (nomeNorm.includes('noite')) {
         const setorNoite = setores.find(s => normalizarTexto(s.nome) === 'decoracao mod noite');
-        if (setorNoite) return { setor: setorNoite, aviso: `Setor "${nome}" → ${setorNoite.nome}` };
+        if (setorNoite) return { setor: setorNoite, aviso: `Setor "${nome}" �  ${setorNoite.nome}` };
       }
       const setorDia = setores.find(s => normalizarTexto(s.nome) === 'decoracao mod dia');
-      if (setorDia) return { setor: setorDia, aviso: nomeNorm !== 'decoracao mod dia' ? `Setor "${nome}" → ${setorDia.nome}` : undefined };
+      if (setorDia) return { setor: setorDia, aviso: nomeNorm !== 'decoracao mod dia' ? `Setor "${nome}" �  ${setorDia.nome}` : undefined };
     }
     
     if (nomeNorm.includes('sopro')) {
@@ -86,7 +95,7 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
       if (turmaMatch) {
         const turmaLetra = turmaMatch[1].toLowerCase();
         const setorSopro = setores.find(s => normalizarTexto(s.nome).includes('sopro') && normalizarTexto(s.nome).endsWith(turmaLetra));
-        if (setorSopro) return { setor: setorSopro, aviso: `Setor "${nome}" → ${setorSopro.nome}` };
+        if (setorSopro) return { setor: setorSopro, aviso: `Setor "${nome}" �  ${setorSopro.nome}` };
       }
     }
     
@@ -154,7 +163,7 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
 
   const processarDados = useCallback((linhas: string[][]) => {
     if (!situacaoPrevisao) {
-      toast.error('Situação PREVISÃO não encontrada no sistema');
+      toast.error('Situação PREVISÒO não encontrada no sistema');
       return;
     }
 
@@ -175,19 +184,23 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
       const avisos: string[] = [];
       const errosCriticos: string[] = [];
       
-      // Ordem: Nome | Sexo | Setor | Empresa | Matrícula | Data Prevista | Cargo | Turma | Observações
-      const [nome, sexoStr, setorStr, empresaStr, matricula, dataAdmStr, cargo, turma, obs] = linha;
+      // Ordem: Nome | CPF | Sexo | Setor | Empresa | Matricula | Data Prevista | Cargo | Turma | Observacoes
+      const [nome, cpfStr, sexoStr, setorStr, empresaStr, matricula, dataAdmStr, cargo, turma, obs] = linha;
       
       // Nome (obrigatório)
       const nomeCompleto = nome?.toString().trim().toUpperCase();
       if (!nomeCompleto) {
         errosCriticos.push('Nome é obrigatório');
       }
+      const cpf = formatarCpf(cpfStr?.toString() || '');
+      if (somenteNumeros(cpf).length !== 11) {
+        errosCriticos.push('CPF e obrigatorio com 11 digitos');
+      }
       
       // Sexo
       let sexo = parseSexo(sexoStr || '');
       if (!sexo) {
-        avisos.push('Sexo inválido → Masculino');
+        avisos.push('Sexo inválido �  Masculino');
         sexo = 'masculino';
       }
       
@@ -203,7 +216,7 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
       }
       
       if (!setor && setorPadrao) {
-        avisos.push(`Setor não encontrado → ${setorPadrao.nome}`);
+        avisos.push(`Setor não encontrado �  ${setorPadrao.nome}`);
         setorNome = setorPadrao.nome;
         setorId = setorPadrao.id;
       } else if (!setor) {
@@ -219,6 +232,7 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
       return {
         linha: index + 1,
         nome_completo: nomeCompleto || '',
+        cpf,
         sexo,
         setor_nome: setorNome,
         setor_original: setorOriginal,
@@ -287,8 +301,8 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
     // Aba principal com exemplo preenchido
     const wsModelo = XLSX.utils.aoa_to_sheet([
       COLUNAS_PREVISAO,
-      ['JOÃO SILVA', 'M', setores[0]?.nome || 'NOME DO SETOR', 'GLOBALPACK', '', '01/03/2026', 'AUXILIAR DE PRODUÇÃO', 'T1', ''],
-      ['MARIA SANTOS', 'F', setores[1]?.nome || 'NOME DO SETOR', 'G+P', '', '05/03/2026', 'AUXILIAR DE PRODUÇÃO', 'T2', ''],
+      ['JOAO SILVA', '000.000.000-00', 'M', setores[0]?.nome || 'NOME DO SETOR', 'GLOBALPACK', '', '01/03/2026', 'AUXILIAR DE PRODUCAO', 'T1', ''],
+      ['MARIA SANTOS', '000.000.000-00', 'F', setores[1]?.nome || 'NOME DO SETOR', 'G+P', '', '05/03/2026', 'AUXILIAR DE PRODUCAO', 'T2', ''],
     ]);
 
     // Aba de referência com setores cadastrados
@@ -318,7 +332,7 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
 
   const importarDados = async () => {
     if (!situacaoPrevisao) {
-      toast.error('Situação PREVISÃO não encontrada');
+      toast.error('Situação PREVISÒO não encontrada');
       return;
     }
 
@@ -334,9 +348,10 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
     try {
       const registros = paraImportar.map(d => ({
         nome_completo: d.nome_completo,
+        cpf: d.cpf,
         sexo: d.sexo,
         setor_id: d.setor_id,
-        situacao_id: situacaoPrevisao.id, // Sempre PREVISÃO
+        situacao_id: situacaoPrevisao.id, // Sempre PREVISÒO
         empresa: d.empresa || 'GLOBALPACK',
         matricula: d.matricula || null,
         data_admissao: d.data_admissao || null,
@@ -393,7 +408,7 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5" />
-            IMPORTAR PREVISÕES DE ADMISSÃO
+            IMPORTAR PREVIS�"ES DE ADMISSÒO
           </DialogTitle>
         </DialogHeader>
 
@@ -403,9 +418,9 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
             <HelpCircle className="h-4 w-4" />
             <AlertTitle>Ordem das Colunas</AlertTitle>
             <AlertDescription className="text-xs">
-              Nome | Sexo (M/F) | Setor | Empresa | Matrícula | Data Prevista | Cargo | Turma | Observações
+              Nome | CPF | Sexo (M/F) | Setor | Empresa | Matricula | Data Prevista | Cargo | Turma | Observacoes
               <br />
-              <strong>Todos serão importados com situação PREVISÃO</strong>
+              <strong>Todos serão importados com situação PREVISÒO</strong>
             </AlertDescription>
           </Alert>
 
@@ -537,7 +552,7 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
                   onClick={importarDados}
                   disabled={isImporting || registrosValidos.length === 0}
                 >
-                  {isImporting ? 'IMPORTANDO...' : `IMPORTAR ${registrosValidos.length} PREVISÕES`}
+                  {isImporting ? 'IMPORTANDO...' : `IMPORTAR ${registrosValidos.length} PREVIS�"ES`}
                 </Button>
               </div>
             </div>

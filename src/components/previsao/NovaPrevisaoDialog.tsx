@@ -40,8 +40,15 @@ const initialForm = {
   setor_id: '',
   turma: '',
   cargo: '',
+  cpf: '',
   data_admissao: null as Date | null,
   sexo: 'masculino' as 'masculino' | 'feminino',
+};
+
+const somenteNumeros = (valor: string) => valor.replace(/\D/g, '');
+const formatarCpf = (valor: string) => {
+  const n = somenteNumeros(valor).slice(0, 11);
+  return n.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 };
 
 export function NovaPrevisaoDialog() {
@@ -53,22 +60,26 @@ export function NovaPrevisaoDialog() {
   const [formData, setFormData] = useState(initialForm);
 
   const situacaoPrevisao = situacoes.find(s =>
-    s.nome.toUpperCase().includes('PREVISÃO') || s.nome.toUpperCase().includes('PREVISAO')
+    s.nome.toUpperCase().includes('PREVIS�O') || s.nome.toUpperCase().includes('PREVISAO')
   );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.nome_completo.trim()) {
-      toast.error('Nome é obrigatório');
+      toast.error('Nome � obrigat�rio');
       return;
     }
     if (!formData.setor_id) {
-      toast.error('Setor é obrigatório');
+      toast.error('Setor � obrigat�rio');
+      return;
+    }
+    if (somenteNumeros(formData.cpf).length !== 11) {
+      toast.error('CPF e obrigatorio para previsao de admissao');
       return;
     }
     if (!situacaoPrevisao) {
-      toast.error('Situação "PREVISÃO" não encontrada');
+      toast.error('Situa��o "PREVIS�O" n�o encontrada');
       return;
     }
 
@@ -83,12 +94,13 @@ export function NovaPrevisaoDialog() {
         matricula: formData.matricula || null,
         turma: formData.turma || null,
         cargo: formData.cargo || null,
+        cpf: formatarCpf(formData.cpf) || null,
         data_admissao: formData.data_admissao ? format(formData.data_admissao, 'yyyy-MM-dd') : null,
       }).select('id').single();
 
       if (error) throw error;
 
-      toast.success('Previsão adicionada com sucesso!');
+      toast.success('Previs�o adicionada com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
       setFormData(initialForm);
       setOpen(false);
@@ -104,12 +116,12 @@ export function NovaPrevisaoDialog() {
       <DialogTrigger asChild>
         <Button className="gap-2">
           <Plus className="h-4 w-4" />
-          Nova Previsão
+          Nova Previs�o
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Nova Previsão de Admissão</DialogTitle>
+          <DialogTitle>Nova Previs�o de Admiss�o</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -120,6 +132,17 @@ export function NovaPrevisaoDialog() {
               value={formData.nome_completo}
               onChange={(e) => setFormData({ ...formData, nome_completo: e.target.value })}
               placeholder="Nome do candidato"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="novo-cpf">CPF *</Label>
+            <Input
+              id="novo-cpf"
+              value={formData.cpf}
+              onChange={(e) => setFormData({ ...formData, cpf: formatarCpf(e.target.value) })}
+              placeholder="000.000.000-00"
+              inputMode="numeric"
+              maxLength={14}
             />
           </div>
 
@@ -135,8 +158,8 @@ export function NovaPrevisaoDialog() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="novo-matricula">Matrícula</Label>
-              <Input id="novo-matricula" value={formData.matricula} onChange={(e) => setFormData({ ...formData, matricula: e.target.value })} placeholder="Matrícula" />
+              <Label htmlFor="novo-matricula">Matr�cula</Label>
+              <Input id="novo-matricula" value={formData.matricula} onChange={(e) => setFormData({ ...formData, matricula: e.target.value })} placeholder="Matr�cula" />
             </div>
           </div>
 
@@ -182,7 +205,7 @@ export function NovaPrevisaoDialog() {
           </div>
 
           <div className="space-y-2">
-            <Label>Data Prevista de Admissão</Label>
+            <Label>Data Prevista de Admiss�o</Label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
