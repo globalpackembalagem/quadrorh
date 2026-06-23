@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useEventosSistema, useEnviarNotificacaoEventos, useDeleteEvento, useCreateEvento, useUpdateEvento, EventoSistema } from '@/hooks/useEventosSistema';
 import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
@@ -83,6 +83,22 @@ const TIPO_LABELS: Record<string, string> = {
   cobertura_treinamento: 'COB. FÉRIAS / TREINAMENTO',
   turma_pendente: 'TURMA PENDENTE',
 };
+
+const TIPOS_RECEBIMENTO = [
+  { value: 'admissao', label: 'ADMISSAO' },
+  { value: 'ativacao', label: 'ADMISSAO ATIVADA' },
+  { value: 'demissao', label: 'DEMISSAO' },
+  { value: 'pedido_demissao', label: 'PEDIDO DEMISSAO' },
+  { value: 'transferencia', label: 'TRANSFERENCIA' },
+  { value: 'troca_turno', label: 'TROCA TURNO' },
+  { value: 'previsao_admissao', label: 'PREVISAO ADMISSAO' },
+  { value: 'divergencia_nova', label: 'DIVERGENCIA NOVA' },
+  { value: 'divergencia_retorno', label: 'DIVERGENCIA AGUARDANDO' },
+  { value: 'divergencia_feedback', label: 'DIVERGENCIA RESOLVIDA' },
+  { value: 'experiencia_consulta', label: 'EXPERIENCIA' },
+  { value: 'cobertura_treinamento', label: 'COBERTURA / TREINAMENTO' },
+  { value: 'turma_pendente', label: 'TURMA PENDENTE' },
+];
 
 const REGRAS_NOTIFICACOES = [
   {
@@ -258,7 +274,7 @@ function useUsuariosAtivos() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_roles')
-        .select('id, nome, setor_id, perfil, recebe_notificacoes, setor:setores!setor_id(nome)')
+        .select('id, nome, setor_id, perfil, recebe_notificacoes, tipos_notificacao, setor:setores!setor_id(nome)')
         .eq('ativo', true)
         .order('nome', { ascending: true });
       if (error) throw error;
@@ -268,6 +284,7 @@ function useUsuariosAtivos() {
         setor_id: string | null;
         perfil: string;
         recebe_notificacoes: boolean;
+        tipos_notificacao?: string[] | null;
         setor: { nome: string } | null;
       }>;
     },
@@ -308,6 +325,42 @@ export default function Notificacoes() {
   const [consultaExperienciaOpen, setConsultaExperienciaOpen] = useState(false);
   const [isInserindoCobTrein, setIsInserindoCobTrein] = useState(false);
   const [galeriaOpen, setGaleriaOpen] = useState(false);
+  const [salvandoRecebimento, setSalvandoRecebimento] = useState<string | null>(null);
+
+  const salvarRecebimentoMutation = useMutation({
+    mutationFn: async ({ userId, tipos }: { userId: string; tipos: string[] }) => {
+      const { error } = await supabase
+        .from('user_roles')
+        .update({ tipos_notificacao: tipos, recebe_notificacoes: tipos.length > 0 })
+        .eq('id', userId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['usuarios-ativos-reenvio'] });
+      queryClient.invalidateQueries({ queryKey: ['user_roles'] });
+    },
+    onError: () => toast.error('ERRO AO SALVAR RECEBIMENTO'),
+  });
+
+  const toggleRecebimentoUsuario = async (userId: string, tipo: string) => {
+    const usuario = usuarios?.find(u => u.id === userId);
+    if (!usuario) return;
+
+    const atuais = usuario.tipos_notificacao?.length
+      ? usuario.tipos_notificacao
+      : TIPOS_RECEBIMENTO.map(t => t.value);
+    const proximos = atuais.includes(tipo)
+      ? atuais.filter(t => t !== tipo)
+      : [...atuais, tipo];
+
+    setSalvandoRecebimento(`${userId}-${tipo}`);
+    try {
+      await salvarRecebimentoMutation.mutateAsync({ userId, tipos: proximos });
+      toast.success('RECEBIMENTO ATUALIZADO');
+    } finally {
+      setSalvandoRecebimento(null);
+    }
+  };
 
   const inserirTodosCobTrein = async () => {
     setIsInserindoCobTrein(true);
@@ -714,6 +767,10 @@ export default function Notificacoes() {
           <TabsTrigger value="agendamentos" className="gap-1.5">
             <Clock className="h-3.5 w-3.5" />
             AGENDAMENTOS
+          </TabsTrigger>
+          <TabsTrigger value="recebimento" className="gap-1.5">
+            <Users className="h-3.5 w-3.5" />
+            RECEBIMENTO
           </TabsTrigger>
           <TabsTrigger value="regras" className="gap-1.5">
             <Users className="h-3.5 w-3.5" />
@@ -1129,6 +1186,66 @@ export default function Notificacoes() {
         {/* Aba Agendamentos */}
         <TabsContent value="agendamentos" className="space-y-4 mt-4">
           <HorariosNotificacaoConfig />
+        </TabsContent>
+
+        {/* Aba Recebimento */}
+        <TabsContent value="recebimento" className="space-y-4 mt-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="mb-4">
+                <h2 className="text-lg font-bold">RECEBIMENTO POR USUARIO</h2>
+                <p className="text-sm text-muted-foreground">
+                  MARQUE QUAIS USUARIOS RECEBEM CADA TIPO DE NOTIFICACAO.
+                </p>
+              </div>
+
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[220px]">TIPO</TableHead>
+                      {(usuarios || []).map((usuario) => (
+                        <TableHead key={usuario.id} className="min-w-[150px] text-center">
+                          <div className="font-bold">{usuario.nome.toUpperCase()}</div>
+                          <div className="text-[10px] text-muted-foreground font-normal">
+                            {usuario.setor?.nome?.toUpperCase() || usuario.perfil.toUpperCase()}
+                          </div>
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {TIPOS_RECEBIMENTO.map((tipo) => (
+                      <TableRow key={tipo.value}>
+                        <TableCell>
+                          <Badge variant="outline" className="text-[10px] font-bold">
+                            {tipo.label}
+                          </Badge>
+                        </TableCell>
+                        {(usuarios || []).map((usuario) => {
+                          const tiposUsuario = usuario.tipos_notificacao?.length
+                            ? usuario.tipos_notificacao
+                            : TIPOS_RECEBIMENTO.map(t => t.value);
+                          const checked = usuario.recebe_notificacoes !== false && tiposUsuario.includes(tipo.value);
+                          const saving = salvandoRecebimento === `${usuario.id}-${tipo.value}`;
+
+                          return (
+                            <TableCell key={`${usuario.id}-${tipo.value}`} className="text-center">
+                              <Checkbox
+                                checked={checked}
+                                disabled={saving || salvarRecebimentoMutation.isPending}
+                                onCheckedChange={() => toggleRecebimentoUsuario(usuario.id, tipo.value)}
+                              />
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Aba Quem Recebe */}
