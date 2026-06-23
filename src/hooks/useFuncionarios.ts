@@ -340,7 +340,7 @@ export function useUpdateFuncionario() {
       // Se estÃ¡ mudando de uma situaÃ§Ã£o de demissÃ£o para ATIVO, limpar data_demissao
       const situacoesDesligamento = ['DEMISSAO', 'PED. DEMISSAO', 'PEDIDO DEMISSAO', 'TERMINO CONTRATO'];
       const estaVindoDeDesligamento = situacoesDesligamento.some(s => 
-        normalizarTexto(situacaoAtualNome).includes(s)
+        normalizarTextoHistorico(situacaoAtualNome).includes(s)
       );
       
       // Buscar nome da nova situaÃ§Ã£o
@@ -354,7 +354,7 @@ export function useUpdateFuncionario() {
         novaSituacaoNome = situacao?.nome || '';
       }
       
-      const estaMudandoParaAtivo = normalizarTexto(novaSituacaoNome) === 'ATIVO';
+      const estaMudandoParaAtivo = normalizarTextoHistorico(novaSituacaoNome) === 'ATIVO';
       
       // Se estava em demissÃ£o e estÃ¡ voltando para Ativo, limpa a data de demissÃ£o
       const updateData = normalizarFuncionarioPayload({
