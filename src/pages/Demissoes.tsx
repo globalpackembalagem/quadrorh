@@ -69,6 +69,24 @@ const getTipoLabelSaida = (tipo?: string | null) => (tipo || 'Demissão').toUppe
 const normalizarTexto = (valor: string) =>
   valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
 
+function grupoResponsavelSetor(nome?: string | null) {
+  const n = normalizarTexto(nome || '');
+  if (n.includes('SOPRO') && n.includes(' A')) return 'SOPRO_A';
+  if (n.includes('SOPRO') && n.includes(' B')) return 'SOPRO_B';
+  if (n.includes('SOPRO') && n.includes(' C')) return 'SOPRO_C';
+  if (n.includes('DECORACAO') && (n.includes('MOD DIA') || n.includes('MOD NOITE'))) return 'DECORACAO';
+  return null;
+}
+
+function grupoResponsavelUsuario(nome?: string | null) {
+  const n = normalizarTexto(nome || '');
+  if (n.includes('LEILA')) return 'SOPRO_A';
+  if (n.includes('ALEX')) return 'SOPRO_B';
+  if (n.includes('AMILTON')) return 'SOPRO_C';
+  if (n.includes('SILVIA')) return 'DECORACAO';
+  return null;
+}
+
 function gerarOpcoesPeriodo() {
   const base = new Date(2026, 1, 1); // Fev 2026
   const options: { value: string; label: string }[] = [
@@ -212,11 +230,27 @@ export default function Demissoes() {
           .from('user_roles_setores')
           .select('user_role_id, setor_id');
 
+        const { data: todosSetores } = await supabase
+          .from('setores')
+          .select('id, nome');
+
+        const grupoEvento = grupoResponsavelSetor(demissao.funcionario?.setor?.nome);
+        const setoresEquivalentes = new Set<string>([setorId]);
+        if (grupoEvento) {
+          todosSetores?.forEach(setor => {
+            if (grupoResponsavelSetor(setor.nome) === grupoEvento) {
+              setoresEquivalentes.add(setor.id);
+            }
+          });
+        }
+
         const gestoresIds = new Set<string>();
         gestoresDoSetor?.forEach(g => {
-          if (g.setor_id === setorId) gestoresIds.add(g.id);
+          const grupoUsuario = grupoResponsavelUsuario(g.nome);
+          if (g.setor_id && setoresEquivalentes.has(g.setor_id)) gestoresIds.add(g.id);
+          if (grupoEvento && grupoUsuario === grupoEvento) gestoresIds.add(g.id);
           const extras = setoresAdicionais?.filter(s => s.user_role_id === g.id) || [];
-          if (extras.some(s => s.setor_id === setorId)) gestoresIds.add(g.id);
+          if (extras.some(s => setoresEquivalentes.has(s.setor_id))) gestoresIds.add(g.id);
         });
 
         const { data: funcionarioSexo } = await supabase

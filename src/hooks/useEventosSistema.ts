@@ -2,6 +2,27 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+const normalizarTextoSetor = (valor?: string | null) =>
+  (valor || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+
+function grupoResponsavelSetor(nome?: string | null) {
+  const n = normalizarTextoSetor(nome);
+  if (n.includes('SOPRO') && n.includes(' A')) return 'SOPRO_A';
+  if (n.includes('SOPRO') && n.includes(' B')) return 'SOPRO_B';
+  if (n.includes('SOPRO') && n.includes(' C')) return 'SOPRO_C';
+  if (n.includes('DECORACAO') && (n.includes('MOD DIA') || n.includes('MOD NOITE'))) return 'DECORACAO';
+  return null;
+}
+
+function grupoResponsavelUsuario(nome?: string | null) {
+  const n = normalizarTextoSetor(nome);
+  if (n.includes('LEILA')) return 'SOPRO_A';
+  if (n.includes('ALEX')) return 'SOPRO_B';
+  if (n.includes('AMILTON')) return 'SOPRO_C';
+  if (n.includes('SILVIA')) return 'DECORACAO';
+  return null;
+}
+
 /**
  * Insere um evento na central de notificações apenas se não existir
  * outro evento pendente (notificado=false) com mesmo funcionario_nome + tipo.
@@ -324,6 +345,15 @@ export function useEnviarNotificacaoEventos() {
         }
         if (grupo.setor_origem_id) setorIdsDoEvento.add(grupo.setor_origem_id);
         if (grupo.setor_destino_id) setorIdsDoEvento.add(grupo.setor_destino_id);
+        const gruposResponsaveisDoEvento = new Set<string>();
+        const grupoPorNomeEvento = grupoResponsavelSetor(grupo.setor_nome);
+        if (grupoPorNomeEvento) gruposResponsaveisDoEvento.add(grupoPorNomeEvento);
+        todosSetores?.forEach(s => {
+          if (setorIdsDoEvento.has(s.id)) {
+            const grupoSetor = grupoResponsavelSetor(s.nome);
+            if (grupoSetor) gruposResponsaveisDoEvento.add(grupoSetor);
+          }
+        });
 
         userRoles.forEach(ur => {
           // Pular usuários sem permissão de receber notificações
@@ -388,11 +418,14 @@ export function useEnviarNotificacaoEventos() {
               break;
             }
           }
+          const grupoUsuario = grupoResponsavelUsuario(ur.nome);
+          const isResponsavelGrupo = !!grupoUsuario && gruposResponsaveisDoEvento.has(grupoUsuario);
+
 
           // REGRA: Sem destinatários fixos, só envia para GESTORES DE SETOR do setor envolvido
           if (!destinatariosFixos) {
-            if (ur.perfil !== 'gestor_setor') return;
-            if (!isGestorDaArea) return;
+            if (ur.perfil !== 'gestor_setor' && !isResponsavelGrupo) return;
+            if (!isGestorDaArea && !isResponsavelGrupo) return;
           }
 
           // Para admissão: APENAS gestores do setor recebem notificação interativa (confirmar se iniciou)
@@ -401,7 +434,7 @@ export function useEnviarNotificacaoEventos() {
           const isExperienciaConsulta = grupo.tipo === 'experiencia_consulta';
           const isCoberturaTreinamento = grupo.tipo === 'cobertura_treinamento';
           const isTurmaPendente = grupo.tipo === 'turma_pendente';
-          const isGestorDoSetor = isGestorDaArea && ur.perfil !== 'visualizacao';
+          const isGestorDoSetor = (isGestorDaArea || isResponsavelGrupo) && ur.perfil !== 'visualizacao';
 
           let tipoNotif: string;
           if (isRH) {
@@ -560,3 +593,4 @@ function normalizarTexto(valor: string): string {
     .replace(/[\u0300-\u036f]/g, '')
     .toUpperCase();
 }
+
