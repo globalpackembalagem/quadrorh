@@ -23,6 +23,11 @@ const formatarCpf = (valor: string) => {
     .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 };
 
+const extrairNumeroArmarioCadastrado = (mensagem: string) => {
+  const match = mensagem.match(/ARMARIO NUMERO\s+(\d+)/i);
+  return match?.[1] || null;
+};
+
 export default function ArmariosFemininoCadastro() {
   const [cpf, setCpf] = useState('');
   const [numeroArmario, setNumeroArmario] = useState('');
@@ -32,6 +37,7 @@ export default function ArmariosFemininoCadastro() {
   const [carregando, setCarregando] = useState(false);
   const [finalizado, setFinalizado] = useState(false);
   const numeroArmarioRef = useRef<HTMLInputElement>(null);
+  const numeroJaCadastrado = extrairNumeroArmarioCadastrado(erro);
 
   const limparEstado = () => {
     setFuncionario(null);
@@ -190,10 +196,22 @@ export default function ArmariosFemininoCadastro() {
           )}
 
           {erro && (
-            <div className="flex gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
-              <Lock className="h-5 w-5 shrink-0" />
-              <span>{erro}</span>
-            </div>
+            numeroJaCadastrado ? (
+              <div className="rounded-lg border-2 border-red-300 bg-red-50 p-4 text-center text-red-800">
+                <div className="flex items-center justify-center gap-2 text-sm font-black">
+                  <Lock className="h-5 w-5" />
+                  VOCE JA CADASTROU ARMARIO
+                </div>
+                <div className="mt-3 text-xs font-bold text-red-700">NUMERO DO ARMARIO</div>
+                <div className="mt-1 text-5xl font-black leading-none text-red-700">{numeroJaCadastrado}</div>
+                <div className="mt-3 text-xs font-bold">QUALQUER DUVIDA, PROCURE O RH.</div>
+              </div>
+            ) : (
+              <div className="flex gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+                <Lock className="h-5 w-5 shrink-0" />
+                <span>{erro}</span>
+              </div>
+            )
           )}
         </CardContent>
       </Card>
