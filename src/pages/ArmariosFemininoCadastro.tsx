@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { CheckCircle2, Lock, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,7 @@ export default function ArmariosFemininoCadastro() {
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
   const [finalizado, setFinalizado] = useState(false);
+  const numeroArmarioRef = useRef<HTMLInputElement>(null);
 
   const limparEstado = () => {
     setFuncionario(null);
@@ -69,6 +70,7 @@ export default function ArmariosFemininoCadastro() {
         cargo: funcionarioRetorno.cargo,
       });
       setMensagem('CONFIRME SEUS DADOS E INFORME O NUMERO DO ARMARIO UTILIZADO.');
+      setTimeout(() => numeroArmarioRef.current?.focus(), 100);
     } catch (e) {
       console.error(e);
       setErro('ERRO AO CONSULTAR CPF. PROCURE O RH.');
@@ -163,13 +165,15 @@ export default function ArmariosFemininoCadastro() {
                   <p className="font-semibold">{funcionario.cargo}</p>
                 </div>
               )}
-              <div className="space-y-2">
-                <Label>NUMERO DO ARMARIO</Label>
+              <div className="space-y-2 rounded-lg border-2 border-blue-500 bg-blue-50 p-3 shadow-sm">
+                <Label className="text-base font-black text-blue-800">DIGITE AQUI O NUMERO DO ARMARIO</Label>
                 <Input
+                  ref={numeroArmarioRef}
                   value={numeroArmario}
                   onChange={(e) => setNumeroArmario(somenteNumeros(e.target.value))}
                   placeholder="EX: 125"
                   inputMode="numeric"
+                  className="h-12 border-blue-500 bg-white text-center text-2xl font-black tracking-wide focus-visible:ring-blue-600"
                 />
               </div>
               <Button onClick={enviarCadastro} disabled={carregando} className="w-full">
