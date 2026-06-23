@@ -729,7 +729,7 @@ export function CentralAvisosModal() {
   // RH/Admin NUNCA é bloqueado — pode fechar tudo com CIENTE
   const TIPOS_EXIGEM_CONFIRMACAO = isRHUser 
     ? [] 
-    : ['admissao_confirmacao', 'previsao_confirmacao', 'experiencia_consulta', 'cobertura_treinamento_consulta', 'turma_pendente_consulta'];
+    : ['turma_pendente_consulta'];
 
   const handleFecharTodos = useCallback(async () => {
     const avisosSnapshot = [...avisos];
@@ -877,6 +877,7 @@ export function CentralAvisosModal() {
             const config = getTipoConfig(aviso.tipo);
             const Icon = config.icon;
             const isCiente = cienteIds.has(aviso.id);
+            const tipoAcao = aviso.tipo === 'turma_pendente_consulta' ? aviso.tipo : 'ciente';
 
             return (
               <div
@@ -906,12 +907,12 @@ export function CentralAvisosModal() {
                           aviso.tipo === 'transferencia_realizada' && 'ring-green-400',
                           aviso.tipo === 'demissao_lancada' && 'ring-red-400',
                           aviso.tipo === 'pedido_demissao_lancado' && 'ring-amber-400',
-                          aviso.tipo === 'experiencia_consulta' && 'ring-amber-400 animate-pulse',
-                          aviso.tipo === 'cobertura_treinamento_consulta' && 'ring-orange-400 animate-pulse',
+                          tipoAcao === 'experiencia_consulta' && 'ring-amber-400 animate-pulse',
+                          tipoAcao === 'cobertura_treinamento_consulta' && 'ring-orange-400 animate-pulse',
                           aviso.tipo === 'divergencia_nova' && 'ring-orange-400',
                           aviso.tipo === 'admissao_confirmacao' && 'ring-emerald-400 animate-pulse',
                           aviso.tipo === 'previsao_confirmacao' && 'ring-purple-400 animate-pulse',
-                          aviso.tipo === 'turma_pendente_consulta' && 'ring-amber-400 animate-pulse',
+                          tipoAcao === 'turma_pendente_consulta' && 'ring-amber-400 animate-pulse',
                           !['transferencia_pendente','transferencia_realizada','demissao_lancada','pedido_demissao_lancado','experiencia_consulta','cobertura_treinamento_consulta','divergencia_nova','admissao_confirmacao','previsao_confirmacao','turma_pendente_consulta'].includes(aviso.tipo) && 'ring-border',
                         )}>
                           {TIPO_BADGE_LABELS[aviso.tipo] || 'AVISO'}
@@ -941,7 +942,7 @@ export function CentralAvisosModal() {
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         CIENTE
                       </Button>
-                    ) : aviso.tipo === 'cobertura_treinamento_consulta' ? (
+                    ) : tipoAcao === 'cobertura_treinamento_consulta' ? (
                       <>
                         <Button
                           size="sm"
@@ -973,7 +974,7 @@ export function CentralAvisosModal() {
                           JÁ RETORNOU
                         </Button>
                       </>
-                    ) : aviso.tipo === 'experiencia_consulta' ? (
+                    ) : tipoAcao === 'experiencia_consulta' ? (
                       <>
                         <Button
                           size="sm"
@@ -995,7 +996,7 @@ export function CentralAvisosModal() {
                           DESLIGAR
                         </Button>
                       </>
-                    ) : (aviso.tipo === 'previsao_confirmacao' || aviso.tipo === 'admissao_confirmacao') ? (
+                    ) : (tipoAcao === 'previsao_confirmacao' || tipoAcao === 'admissao_confirmacao') ? (
                       <>
                         <Button
                           size="sm"
@@ -1021,7 +1022,7 @@ export function CentralAvisosModal() {
                           NÃO INICIOU
                         </Button>
                       </>
-                    ) : aviso.tipo === 'turma_pendente_consulta' ? (
+                    ) : tipoAcao === 'turma_pendente_consulta' ? (
                       <TurmaPendenteActions
                         aviso={aviso}
                         isCiente={isCiente}
@@ -1050,10 +1051,11 @@ export function CentralAvisosModal() {
         {/* Footer */}
         <div className="px-6 py-4 border-t shrink-0 bg-muted/30 rounded-b-2xl">
           <p className="text-xs text-muted-foreground text-center">
-            Clique em <strong>CIENTE</strong> para dar baixa. Notificações com botões de confirmação <strong>não somem</strong> até você responder.
+            Clique em <strong>CIENTE</strong> para dar baixa. Apenas notificacoes de <strong>TURMA</strong> exigem preenchimento antes de sair da tela.
           </p>
         </div>
       </div>
     </div>
   );
 }
+
