@@ -37,7 +37,11 @@ export function normalizarFuncionarioPayload<T extends Record<string, any>>(payl
 const CAMPOS_PRESERVADOS = /(email|senha|password|cpf|token|secret|chave|key|url|link)/i;
 
 export function instalarNormalizacaoGlobalCampos(): () => void {
+  let normalizando = false;
+
   const normalizarCampo = (event: Event) => {
+    if (normalizando) return;
+
     const campo = event.target;
     const entradaTexto = campo instanceof HTMLInputElement
       && ['text', 'search', 'tel'].includes(campo.type);
@@ -54,10 +58,19 @@ export function instalarNormalizacaoGlobalCampos(): () => void {
 
     const inicio = campo.selectionStart;
     const fim = campo.selectionEnd;
-    campo.value = normalizado;
+
+    const prototipo = entradaTexto ? HTMLInputElement.prototype : HTMLTextAreaElement.prototype;
+    const setterNativo = Object.getOwnPropertyDescriptor(prototipo, 'value')?.set;
+    if (!setterNativo) return;
+
+    setterNativo.call(campo, normalizado);
     if (inicio !== null && fim !== null) campo.setSelectionRange(inicio, fim);
+
+    normalizando = true;
+    campo.dispatchEvent(new Event('input', { bubbles: true }));
+    normalizando = false;
   };
 
-  document.addEventListener('input', normalizarCampo, true);
-  return () => document.removeEventListener('input', normalizarCampo, true);
+  document.addEventListener('input', normalizarCampo);
+  return () => document.removeEventListener('input', normalizarCampo);
 }
