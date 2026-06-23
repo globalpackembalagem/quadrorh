@@ -4,6 +4,9 @@ import { createRoot } from "react-dom/client";
 import { ErrorBoundary } from "./components/layout/ErrorBoundary";
 import App from "./App.tsx";
 import "./index.css";
+import { instalarNormalizacaoGlobalCampos } from "./lib/normalizacao";
+
+instalarNormalizacaoGlobalCampos();
 
 // Sinaliza para o fallback global que o React montou com sucesso
 (window as any).__APP_LOADED = true;

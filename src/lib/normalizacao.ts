@@ -33,3 +33,31 @@ export function normalizarFuncionarioPayload<T extends Record<string, any>>(payl
 
   return normalizado;
 }
+
+const CAMPOS_PRESERVADOS = /(email|senha|password|cpf|token|secret|chave|key|url|link)/i;
+
+export function instalarNormalizacaoGlobalCampos(): () => void {
+  const normalizarCampo = (event: Event) => {
+    const campo = event.target;
+    const entradaTexto = campo instanceof HTMLInputElement
+      && ['text', 'search', 'tel'].includes(campo.type);
+    const areaTexto = campo instanceof HTMLTextAreaElement;
+
+    if (!entradaTexto && !areaTexto) return;
+    if (campo.dataset.noNormalize === 'true') return;
+
+    const identificador = `${campo.name || ''} ${campo.id || ''} ${campo.autocomplete || ''}`;
+    if (CAMPOS_PRESERVADOS.test(identificador)) return;
+
+    const normalizado = removerAcentos(campo.value).toUpperCase();
+    if (normalizado === campo.value) return;
+
+    const inicio = campo.selectionStart;
+    const fim = campo.selectionEnd;
+    campo.value = normalizado;
+    if (inicio !== null && fim !== null) campo.setSelectionRange(inicio, fim);
+  };
+
+  document.addEventListener('input', normalizarCampo, true);
+  return () => document.removeEventListener('input', normalizarCampo, true);
+}
