@@ -114,8 +114,6 @@ const adminMainItems: NavItem[] = [
 ];
 
 const adminNavigation = [
-  { name: 'SIMULAÇÃO', href: '/admin/simulacao', icon: LayoutDashboard },
-  { name: 'CONCILIAÇÃO DE DADOS', href: '/admin/comparar', icon: ClipboardList },
   { name: 'SETORES', href: '/admin/setores', icon: Building2 },
   { name: 'SITUAÇÕES', href: '/admin/situacoes', icon: FileText },
   { name: 'TIPOS DESLIGAMENTO', href: '/admin/tipos-desligamento', icon: UserMinus },

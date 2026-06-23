@@ -67,7 +67,6 @@ interface NavItem {
 }
 
 const adminNavigation = [
-  { name: 'SIMULAÇÃO', href: '/admin/simulacao', icon: LayoutList },
   { name: 'NOTIFICAÇÕES', href: '/admin/notificacoes', icon: Megaphone },
   { name: 'SETORES', href: '/admin/setores', icon: Building2 },
   { name: 'SITUAÇÕES', href: '/admin/situacoes', icon: FileText },
