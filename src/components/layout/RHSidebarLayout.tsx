@@ -155,6 +155,7 @@ function getNavigationForUser(
         viewOnly: true,
         subItems: [
           { name: 'MÉTRICAS SETOR/DIA', href: '/faltas', icon: ClipboardList },
+          { name: 'ALERTAS 3+', href: '/faltas/alertas', icon: AlertTriangle, viewOnly: true },
         ]
       },
     ];
@@ -247,6 +248,7 @@ function getNavigationForUser(
       viewOnly: !perms.pode_editar_faltas,
       subItems: [
         { name: 'POR FUNCIONÁRIOS', href: '/faltas', icon: ClipboardList },
+        { name: 'ALERTAS 3+', href: '/faltas/alertas', icon: AlertTriangle, viewOnly: true },
         { name: 'ALERTAS 3+', href: '/faltas/alertas', icon: AlertTriangle },
         ...(perms.pode_editar_faltas ? [{ name: 'INTEGRAÇÃO', href: '/faltas/integracao', icon: ListChecks }] : []),
       ]

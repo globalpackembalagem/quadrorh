@@ -182,24 +182,25 @@ export function ExportarFuncionariosDialog({
       const turmaQuadro = calcularTurmaQuadro(f);
       
       return {
-        'Matrícula': f.matricula || '',
-        'Nome': f.nome_completo,
-        'Sexo': f.sexo === 'masculino' ? 'M' : 'F',
+        'Nome Completo': f.nome_completo,
+        'CPF': (f as any).cpf || '',
+        'Sexo (M/F)': f.sexo === 'masculino' ? 'M' : 'F',
         'Setor': f.setor?.nome || '',
         'Situação': f.situacao?.nome || '',
         'Empresa': f.empresa || '',
+        'Matrícula': f.matricula || '',
         'Data Admissão': isoDateToExcelSerial(f.data_admissao),
         'Cargo': f.cargo || '',
         'Turma': f.turma || '',
+        'Data Demissão': isoDateToExcelSerial(f.data_demissao),
+        'Observações': f.observacoes || '',
         'Conta no Quadro': contaNoQuadro ? 'SIM' : 'NÃO',
         'Turma Quadro': turmaQuadro,
-        'Data Demissão': isoDateToExcelSerial(f.data_demissao),
         'Tamanho Uniforme': f.tamanho_uniforme || '',
         'Tamanho Calça': f.tamanho_calca || '',
         'Tamanho Camiseta': f.tamanho_camiseta || '',
         'Tamanho Calçado': f.tamanho_calcado || '',
         'Usa Óculos': f.usa_oculos ? 'SIM' : 'NÃO',
-        'Observações': f.observacoes || '',
       };
     });
 

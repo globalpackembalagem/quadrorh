@@ -22,11 +22,21 @@ function normalizar(texto?: string | null) {
     .toUpperCase();
 }
 
+function isTemporario(funcionario: any) {
+  const matricula = normalizar(funcionario.matricula);
+  const situacao = normalizar(funcionario.situacao?.nome);
+  return matricula.startsWith('TEMP') && situacao === 'ATIVO';
+}
+
+const RH_ALERTA_3_MAIS = ['ELIANE', 'KARINA', 'GILMARA'];
+
 export default function FaltasAlertas() {
   const { isAdmin, isRHMode, canEditFaltas } = useAuth();
   const { usuarioAtual } = useUsuario();
   const queryClient = useQueryClient();
-  const podeVer = isRHMode && (isAdmin || !canEditFaltas());
+  const nomeUsuario = normalizar(usuarioAtual.nome);
+  const podeVer = isRHMode;
+  const podeResolver = isAdmin || RH_ALERTA_3_MAIS.includes(nomeUsuario);
 
   const { data: periodos = [] } = usePeriodosFaltas();
   const periodo = useMemo(() => periodos.find(p => p.status === 'aberto') || periodos[0], [periodos]);
@@ -61,7 +71,7 @@ export default function FaltasAlertas() {
         .filter(func => {
           const situacao = normalizar(func.situacao?.nome);
           const desligado = situacao.includes('DEMISS') || situacao.includes('DESLIG') || !!func.data_demissao;
-          return !desligado;
+          return !desligado && isTemporario(func);
         })
         .map(func => [func.id, func])
     );
@@ -86,11 +96,12 @@ export default function FaltasAlertas() {
 
     return Array.from(faltasPorFuncionario.values())
       .filter(item => item.dias.length >= 3)
+      .filter(item => !controlesPorFuncionario.get(item.funcionario.id)?.resolvido)
       .map(item => ({
         ...item,
         dias: item.dias.sort(),
         total: item.dias.length,
-        controle: controlesPorFuncionario.get(item.funcionario.id)?.resolvido ? undefined : controlesPorFuncionario.get(item.funcionario.id),
+        controle: controlesPorFuncionario.get(item.funcionario.id),
       }))
       .sort((a, b) => b.total - a.total || a.funcionario.nome_completo.localeCompare(b.funcionario.nome_completo));
   }, [podeVer, periodoId, funcionarios, registros, controlesPorFuncionario]);
@@ -179,16 +190,18 @@ export default function FaltasAlertas() {
                     <p className="text-xs text-muted-foreground mt-1">{setor}{funcionario.turma ? ` - Turma ${funcionario.turma}` : ''}</p>
                     <p className="text-xs text-muted-foreground mt-1">Dias: {diasFormatados}</p>
                   </div>
-                  <Button
-                    size="sm"
-                    variant={resolvido ? 'outline' : 'default'}
-                    onClick={() => salvarStatus.mutate({ funcionarioId: funcionario.id, resolvido: !resolvido, total: alerta.total, dias: alerta.dias })}
-                    disabled={salvarStatus.isPending}
-                    className="gap-1.5"
-                  >
-                    {resolvido ? <RotateCcw className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-                    {resolvido ? 'Reabrir' : 'Marcar resolvido'}
-                  </Button>
+                  {podeResolver && (
+                    <Button
+                      size="sm"
+                      variant={resolvido ? 'outline' : 'default'}
+                      onClick={() => salvarStatus.mutate({ funcionarioId: funcionario.id, resolvido: !resolvido, total: alerta.total, dias: alerta.dias })}
+                      disabled={salvarStatus.isPending}
+                      className="gap-1.5"
+                    >
+                      {resolvido ? <RotateCcw className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                      {resolvido ? 'Reabrir' : 'Marcar resolvido'}
+                    </Button>
+                  )}
                 </div>
               </div>
             );
