@@ -112,7 +112,7 @@ export default function ArmariosFemininoCadastro() {
 
       setFinalizado(true);
       setFuncionario(null);
-      setMensagem(data.message || 'CADASTRO REALIZADO COM SUCESSO. O NUMERO DO ARMARIO FOI REGISTRADO NO SISTEMA.');
+      setMensagem('OBRIGADO! SEU CADASTRO FOI ENVIADO COM SUCESSO. O NUMERO DO ARMARIO FOI REGISTRADO NO SISTEMA.');
     } catch (e) {
       console.error(e);
       setErro('ERRO AO REGISTRAR ARMARIO. PROCURE O RH.');
