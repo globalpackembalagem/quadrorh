@@ -284,7 +284,25 @@ export default function PrevisaoAdmissao() {
   };
 
   const handleExcluir = async (funcionarioId: string) => {
-    await deleteFuncionario.mutateAsync(funcionarioId);
+    try {
+      const { error: docsError } = await supabase
+        .from('previsao_documentos')
+        .delete()
+        .eq('funcionario_id', funcionarioId);
+      if (docsError) throw docsError;
+
+      await deleteFuncionario.mutateAsync(funcionarioId);
+
+      queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
+      queryClient.invalidateQueries({ queryKey: ['funcionarios', 'previsao'] });
+      queryClient.invalidateQueries({ queryKey: ['previsao_documentos'] });
+      queryClient.invalidateQueries({ queryKey: ['previsao_documentos_historico'] });
+      queryClient.invalidateQueries({ queryKey: ['treinamentos_previsao'] });
+      toast.success('Previsao excluida com sucesso.');
+    } catch (err: any) {
+      toast.error(`Erro ao excluir previsao: ${err?.message || 'erro desconhecido'}`);
+      throw err;
+    }
   };
 
   const handleExportar = async () => {
