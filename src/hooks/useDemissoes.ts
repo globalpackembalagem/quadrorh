@@ -581,7 +581,11 @@ export function useImportDemissoesDoCadastro() {
       // 3. Criar os registros de demissão
       const payloads = novos.map(f => {
         const situacaoNome = normalizarTextoSistema((f.situacao as any)?.nome) || '';
-        const tipoDesligamento = situacaoNome.includes('PED') ? 'Pedido de Demissao' : null;
+        const tipoDesligamento = situacaoNome.includes('PED')
+          ? 'Pedido de Demissao'
+          : situacaoNome.includes('TERMINO') || situacaoNome.includes('CONTRATO')
+            ? 'Termino de Contrato'
+            : 'Demissao';
         
         return {
           funcionario_id: f.id,

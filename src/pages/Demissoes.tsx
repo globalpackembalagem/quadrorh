@@ -108,7 +108,7 @@ export default function Demissoes() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [periodosOpen, setPeriodosOpen] = useState(false);
   const [editingDemissao, setEditingDemissao] = useState<Demissao | null>(null);
-  const [periodoFiltro, setPeriodoFiltro] = useState('2026-02');
+  const [periodoFiltro, setPeriodoFiltro] = useState('2026-06');
   const [confirmRealizarDemissao, setConfirmRealizarDemissao] = useState<Demissao | null>(null);
   const [confirmExcluirDemissao, setConfirmExcluirDemissao] = useState<Demissao | null>(null);
   const [acoesDemissao, setAcoesDemissao] = useState<{ demissao: Demissao; showRealizar: boolean; anchor: { x: number; y: number } } | null>(null);
@@ -524,7 +524,7 @@ export default function Demissoes() {
           
           <Button variant="secondary" size="sm" className="gap-2" onClick={handleExportarExcel}>
             <Download className="h-4 w-4" />
-            EXPORTAR
+            EXPORTAR EXCEL
           </Button>
 
           <Button 
@@ -535,7 +535,7 @@ export default function Demissoes() {
             disabled={importarDemissoes.isPending || !isAdmin}
           >
             <RefreshCw className={cn("h-4 w-4", importarDemissoes.isPending && "animate-spin")} />
-            IMPORTAR DO MÊS
+            IMPORTAR DESLIGADOS DO MES
           </Button>
           
           <Dialog open={periodosOpen} onOpenChange={setPeriodosOpen}>
@@ -555,7 +555,7 @@ export default function Demissoes() {
           
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="gap-2" disabled={!canEditDemissoes}>
+              <Button size="sm" className="gap-2 bg-red-600 text-white hover:bg-red-700" disabled={!canEditDemissoes}>
                 <Plus className="h-4 w-4" />
                 NOVA DEMISSÃO
               </Button>
