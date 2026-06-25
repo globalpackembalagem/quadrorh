@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRegistrarHistoricoFuncionario, formatarDadosFuncionario } from '@/hooks/useHistoricoFuncionarios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -64,8 +65,33 @@ function isoDateToExcelSerial(isoDate?: string | null) {
 }
 
 // ─── Componente de Temporários ──────────────────────────────────────────────────
-function TemporariosTab({ funcionarios }: { funcionarios: Funcionario[] }) {
+type OrdenacaoTemporarios = 'nome' | 'admissao';
+
+const LIDERES_SOLICITAM_DESLIGAMENTO_TEMP = ['ALEX', 'AMILTON', 'LEILA', 'SILVIA'];
+const DESTINATARIOS_SOLICITACAO_TEMP = ['LUCIANO', 'SONIA', 'MAURICIO', 'MAURICO', 'PAULO', 'REAL PARCERIA'];
+
+function normalizarNomeUsuario(nome?: string | null) {
+  return normalizarTextoSistema(nome || '').trim();
+}
+
+function TemporariosTab({
+  funcionarios,
+  userRole,
+  isRHMode,
+}: {
+  funcionarios: Funcionario[];
+  userRole?: { nome?: string | null; id?: string | null } | null;
+  isRHMode: boolean;
+}) {
   const [search, setSearch] = useState('');
+  const [ordenacao, setOrdenacao] = useState<OrdenacaoTemporarios>('nome');
+  const [funcionarioSolicitado, setFuncionarioSolicitado] = useState<Funcionario | null>(null);
+  const [motivoSolicitacao, setMotivoSolicitacao] = useState('');
+  const [observacaoSolicitacao, setObservacaoSolicitacao] = useState('');
+  const [enviandoSolicitacao, setEnviandoSolicitacao] = useState(false);
+
+  const podeSolicitarDesligamentoTemp = isRHMode
+    && LIDERES_SOLICITAM_DESLIGAMENTO_TEMP.includes(normalizarNomeUsuario(userRole?.nome));
 
   const temporarios = useMemo(() => {
     return funcionarios.filter(f => {
@@ -76,19 +102,118 @@ function TemporariosTab({ funcionarios }: { funcionarios: Funcionario[] }) {
   }, [funcionarios]);
 
   const filtrados = useMemo(() => {
-    if (!search.trim()) return temporarios;
-    const s = search.toLowerCase();
-    return temporarios.filter(f =>
-      f.nome_completo.toLowerCase().includes(s) ||
-      f.matricula?.toLowerCase().includes(s) ||
-      f.setor?.nome?.toLowerCase().includes(s) ||
-      f.turma?.toLowerCase().includes(s)
-    );
-  }, [temporarios, search]);
+    const lista = !search.trim() ? temporarios : temporarios.filter(f => {
+      const s = search.toLowerCase();
+      return (
+        f.nome_completo.toLowerCase().includes(s) ||
+        f.matricula?.toLowerCase().includes(s) ||
+        f.setor?.nome?.toLowerCase().includes(s) ||
+        f.turma?.toLowerCase().includes(s)
+      );
+    });
+
+    return [...lista].sort((a, b) => {
+      if (ordenacao === 'admissao') {
+        const dataA = a.data_admissao || '';
+        const dataB = b.data_admissao || '';
+        return dataA.localeCompare(dataB) || a.nome_completo.localeCompare(b.nome_completo);
+      }
+      return a.nome_completo.localeCompare(b.nome_completo);
+    });
+  }, [temporarios, search, ordenacao]);
+
+  const enviarSolicitacaoDesligamento = async () => {
+    if (!funcionarioSolicitado) return;
+    if (!motivoSolicitacao.trim()) {
+      toast.error('Informe o motivo da solicitacao.');
+      return;
+    }
+
+    setEnviandoSolicitacao(true);
+    try {
+      const nomeFunc = funcionarioSolicitado.nome_completo;
+      const setorNome = funcionarioSolicitado.setor?.nome || 'SEM SETOR';
+      const mensagem = [
+        `Lider ${userRole?.nome || 'GESTOR'} informou interesse em desligar o temporario:`,
+        '',
+        `Funcionario: ${nomeFunc}`,
+        `Matricula: ${funcionarioSolicitado.matricula || '-'}`,
+        `Setor: ${setorNome}`,
+        `Turma: ${funcionarioSolicitado.turma || '-'}`,
+        `Admissao: ${funcionarioSolicitado.data_admissao ? isoDateToExcelSerial(funcionarioSolicitado.data_admissao) : '-'}`,
+        '',
+        `Motivo: ${motivoSolicitacao.trim()}`,
+        observacaoSolicitacao.trim() ? `Observacao: ${observacaoSolicitacao.trim()}` : '',
+        '',
+        'Atencao: esta solicitacao NAO desligou o funcionario automaticamente.',
+      ].filter(Boolean).join('\n');
+
+      const { data: evento, error: eventoError } = await supabase
+        .from('eventos_sistema')
+        .insert({
+          tipo: 'pedido_demissao',
+          descricao: `Solicitacao de desligamento de temporario: ${nomeFunc}`,
+          funcionario_id: funcionarioSolicitado.id,
+          funcionario_nome: nomeFunc,
+          setor_id: funcionarioSolicitado.setor_id,
+          setor_nome: setorNome,
+          turma: funcionarioSolicitado.turma,
+          criado_por: userRole?.nome || 'GESTOR',
+          dados_extra: {
+            origem: 'aba_temporarios_funcionarios',
+            solicitante: userRole?.nome || null,
+            motivo: motivoSolicitacao.trim(),
+            observacao: observacaoSolicitacao.trim() || null,
+            nao_desligar_automaticamente: true,
+          },
+        })
+        .select('id')
+        .single();
+
+      if (eventoError) throw eventoError;
+
+      const { data: destinatarios, error: destinatariosError } = await supabase
+        .from('user_roles')
+        .select('id, nome')
+        .eq('ativo', true);
+
+      if (destinatariosError) throw destinatariosError;
+
+      const destinatariosSelecionados = (destinatarios || []).filter(dest =>
+        DESTINATARIOS_SOLICITACAO_TEMP.includes(normalizarNomeUsuario(dest.nome))
+      );
+
+      if (destinatariosSelecionados.length === 0) {
+        throw new Error('Nenhum destinatario encontrado para receber a solicitacao.');
+      }
+
+      const { error: notificacoesError } = await supabase.from('notificacoes').insert(
+        destinatariosSelecionados.map(dest => ({
+          user_role_id: dest.id,
+          tipo: 'pedido_demissao_lancado',
+          titulo: 'SOLICITACAO DE DESLIGAMENTO TEMPORARIO',
+          mensagem,
+          referencia_id: evento?.id || null,
+        }))
+      );
+
+      if (notificacoesError) throw notificacoesError;
+
+      toast.success('Solicitacao enviada. O funcionario nao foi desligado.');
+      setFuncionarioSolicitado(null);
+      setMotivoSolicitacao('');
+      setObservacaoSolicitacao('');
+    } catch (error: any) {
+      toast.error(`Erro ao enviar solicitacao: ${error?.message || 'erro desconhecido'}`);
+    } finally {
+      setEnviandoSolicitacao(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
-      <div className="relative max-w-md">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="relative max-w-md flex-1">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input placeholder="Buscar por nome, matrícula, setor..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 pr-8" />
         {search && (
@@ -96,6 +221,17 @@ function TemporariosTab({ funcionarios }: { funcionarios: Funcionario[] }) {
             <X className="h-3 w-3" />
           </Button>
         )}
+        </div>
+
+        <Select value={ordenacao} onValueChange={(value) => setOrdenacao(value as OrdenacaoTemporarios)}>
+          <SelectTrigger className="w-full md:w-[210px]">
+            <SelectValue placeholder="Ordenar por" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="nome">Ordem alfabetica</SelectItem>
+            <SelectItem value="admissao">Ordem de admissao</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="rounded-lg border bg-card overflow-x-auto">
@@ -129,7 +265,13 @@ function TemporariosTab({ funcionarios }: { funcionarios: Funcionario[] }) {
                 const vencido180 = data180 && data180 <= hoje;
 
                 return (
-                  <tr key={func.id} className="hover:bg-muted/50">
+                  <tr
+                    key={func.id}
+                    className={podeSolicitarDesligamentoTemp ? 'hover:bg-muted/50 cursor-pointer' : 'hover:bg-muted/50'}
+                    onClick={() => {
+                      if (podeSolicitarDesligamentoTemp) setFuncionarioSolicitado(func);
+                    }}
+                  >
                     <td className="text-muted-foreground">{func.matricula || '-'}</td>
                     <td className="font-medium">{func.nome_completo}</td>
                     <td className="text-xs text-muted-foreground">{func.setor?.nome || '-'}</td>
@@ -166,6 +308,44 @@ function TemporariosTab({ funcionarios }: { funcionarios: Funcionario[] }) {
       <div className="text-sm text-muted-foreground">
         Total: {filtrados.length} temporário(s)
       </div>
+      <Dialog open={!!funcionarioSolicitado} onOpenChange={(open) => {
+        if (!open) {
+          setFuncionarioSolicitado(null);
+          setMotivoSolicitacao('');
+          setObservacaoSolicitacao('');
+        }
+      }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Solicitar avaliacao de desligamento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-md border bg-muted/30 p-3 text-sm">
+              <p className="font-semibold">{funcionarioSolicitado?.nome_completo}</p>
+              <p className="text-muted-foreground">
+                {funcionarioSolicitado?.matricula || '-'} | {funcionarioSolicitado?.setor?.nome || '-'} | {funcionarioSolicitado?.turma || '-'}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Motivo</Label>
+              <Input value={motivoSolicitacao} onChange={e => setMotivoSolicitacao(e.target.value)} placeholder="Informe o motivo principal" />
+            </div>
+            <div className="space-y-2">
+              <Label>Observacao</Label>
+              <Textarea value={observacaoSolicitacao} onChange={e => setObservacaoSolicitacao(e.target.value)} placeholder="Detalhe a solicitacao, se necessario" rows={4} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Essa acao apenas envia notificacao. O funcionario nao sera desligado automaticamente.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setFuncionarioSolicitado(null)} disabled={enviandoSolicitacao}>Cancelar</Button>
+              <Button onClick={enviarSolicitacaoDesligamento} disabled={enviandoSolicitacao}>
+                {enviandoSolicitacao ? 'Enviando...' : 'Enviar solicitacao'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -843,7 +1023,7 @@ export default function Funcionarios() {
           </TabsContent>
 
           <TabsContent value="temporarios" className="mt-4">
-            <TemporariosTab funcionarios={funcionarios} />
+            <TemporariosTab funcionarios={funcionarios} userRole={userRole} isRHMode={isRHMode} />
           </TabsContent>
         </Tabs>
 
@@ -1103,7 +1283,7 @@ export default function Funcionarios() {
         </TabsContent>
 
         <TabsContent value="temporarios" className="mt-4">
-          <TemporariosTab funcionarios={funcionarios} />
+          <TemporariosTab funcionarios={funcionarios} userRole={userRole} isRHMode={isRHMode} />
         </TabsContent>
       </Tabs>
 
