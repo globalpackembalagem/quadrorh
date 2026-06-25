@@ -175,7 +175,7 @@ export function EventoFormDialog({ open, onOpenChange, evento, onSave, isSaving 
       setDestinatariosSelecionados(new Set());
       setModoDestinatario('todos');
     } else {
-      setTipo('admissao');
+      setTipo('evento_sistema_modal');
       setMensagemPersonalizada('');
       setDestinatariosSelecionados(new Set());
       setModoDestinatario('todos');
@@ -231,7 +231,7 @@ export function EventoFormDialog({ open, onOpenChange, evento, onSave, isSaving 
       <DialogContent className="sm:max-w-lg max-h-[92vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {isEdit ? 'EDITAR EVENTO' : 'NOVO EVENTO MANUAL'}
+            {isEdit ? 'EDITAR COMUNICADO' : 'NOVO COMUNICADO'}
           </DialogTitle>
         </DialogHeader>
 

@@ -649,7 +649,7 @@ export default function Notificacoes() {
             onClick={() => { setEditingEvento(null); setFormDialogOpen(true); }}
           >
             <Plus className="h-3.5 w-3.5" />
-            NOVO EVENTO
+            NOVO COMUNICADO
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
