@@ -68,7 +68,7 @@ const TIPO_BADGE_LABELS: Record<string, string> = {
 
 const TIPO_CONFIG: Record<string, { icon: typeof Bell; color: string; bgColor: string; borderColor: string; badgeClass: string }> = {
   demissao_lancada: { icon: UserMinus, color: 'text-destructive', bgColor: 'bg-red-50 dark:bg-red-950/30', borderColor: 'border-red-200 dark:border-red-800', badgeClass: 'bg-red-600 text-white' },
-  pedido_demissao_lancado: { icon: AlertTriangle, color: 'text-amber-600', bgColor: 'bg-amber-50 dark:bg-amber-950/30', borderColor: 'border-amber-200 dark:border-amber-800', badgeClass: 'bg-amber-600 text-white' },
+  pedido_demissao_lancado: { icon: AlertTriangle, color: 'text-destructive', bgColor: 'bg-red-50 dark:bg-red-950/30', borderColor: 'border-red-200 dark:border-red-800', badgeClass: 'bg-red-600 text-white' },
   evento_sistema_modal: { icon: Bell, color: 'text-primary', bgColor: 'bg-primary/5', borderColor: 'border-primary/20', badgeClass: 'bg-primary text-primary-foreground' },
   evento_sistema_sino: { icon: Bell, color: 'text-primary', bgColor: 'bg-primary/5', borderColor: 'border-primary/20', badgeClass: 'bg-primary text-primary-foreground' },
   transferencia_pendente: { icon: ArrowRightLeft, color: 'text-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-950/30', borderColor: 'border-blue-200 dark:border-blue-800', badgeClass: 'bg-blue-600 text-white' },
@@ -76,10 +76,11 @@ const TIPO_CONFIG: Record<string, { icon: typeof Bell; color: string; bgColor: s
   divergencia_nova: { icon: AlertTriangle, color: 'text-orange-600', bgColor: 'bg-orange-50 dark:bg-orange-950/30', borderColor: 'border-orange-200 dark:border-orange-800', badgeClass: 'bg-orange-600 text-white' },
   divergencia_retorno: { icon: RefreshCw, color: 'text-amber-600', bgColor: 'bg-amber-50 dark:bg-amber-950/30', borderColor: 'border-amber-200 dark:border-amber-800', badgeClass: 'bg-amber-600 text-white' },
   divergencia_feedback: { icon: CheckCircle2, color: 'text-green-600', bgColor: 'bg-green-50 dark:bg-green-950/30', borderColor: 'border-green-200 dark:border-green-800', badgeClass: 'bg-green-600 text-white' },
-  previsao_confirmacao: { icon: UserPlus, color: 'text-purple-600', bgColor: 'bg-purple-50 dark:bg-purple-950/30', borderColor: 'border-purple-200 dark:border-purple-800', badgeClass: 'bg-purple-600 text-white' },
-  previsao_resposta: { icon: UserPlus, color: 'text-indigo-600', bgColor: 'bg-indigo-50 dark:bg-indigo-950/30', borderColor: 'border-indigo-200 dark:border-indigo-800', badgeClass: 'bg-indigo-600 text-white' },
-  admissao_confirmacao: { icon: UserPlus, color: 'text-emerald-600', bgColor: 'bg-emerald-50 dark:bg-emerald-950/30', borderColor: 'border-emerald-200 dark:border-emerald-800', badgeClass: 'bg-emerald-600 text-white' },
-  admissao_resposta: { icon: UserPlus, color: 'text-teal-600', bgColor: 'bg-teal-50 dark:bg-teal-950/30', borderColor: 'border-teal-200 dark:border-teal-800', badgeClass: 'bg-teal-600 text-white' },
+  previsao_admissao: { icon: UserPlus, color: 'text-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-950/30', borderColor: 'border-blue-200 dark:border-blue-800', badgeClass: 'bg-blue-600 text-white' },
+  previsao_confirmacao: { icon: UserPlus, color: 'text-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-950/30', borderColor: 'border-blue-200 dark:border-blue-800', badgeClass: 'bg-blue-600 text-white' },
+  previsao_resposta: { icon: UserPlus, color: 'text-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-950/30', borderColor: 'border-blue-200 dark:border-blue-800', badgeClass: 'bg-blue-600 text-white' },
+  admissao_confirmacao: { icon: UserPlus, color: 'text-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-950/30', borderColor: 'border-blue-200 dark:border-blue-800', badgeClass: 'bg-blue-600 text-white' },
+  admissao_resposta: { icon: UserPlus, color: 'text-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-950/30', borderColor: 'border-blue-200 dark:border-blue-800', badgeClass: 'bg-blue-600 text-white' },
   experiencia_consulta: { icon: UserPlus, color: 'text-amber-600', bgColor: 'bg-amber-50 dark:bg-amber-950/30', borderColor: 'border-amber-200 dark:border-amber-800', badgeClass: 'bg-amber-600 text-white' },
   experiencia_resposta: { icon: UserPlus, color: 'text-cyan-600', bgColor: 'bg-cyan-50 dark:bg-cyan-950/30', borderColor: 'border-cyan-200 dark:border-cyan-800', badgeClass: 'bg-cyan-600 text-white' },
   cobertura_treinamento_consulta: { icon: AlertTriangle, color: 'text-orange-600', bgColor: 'bg-orange-50 dark:bg-orange-950/30', borderColor: 'border-orange-200 dark:border-orange-800', badgeClass: 'bg-orange-600 text-white' },
@@ -90,7 +91,36 @@ const TIPO_CONFIG: Record<string, { icon: typeof Bell; color: string; bgColor: s
   ciencia_retorno: { icon: CheckCheck, color: 'text-emerald-600', bgColor: 'bg-emerald-50 dark:bg-emerald-950/30', borderColor: 'border-emerald-200 dark:border-emerald-800', badgeClass: 'bg-emerald-600 text-white' },
 };
 
-function getTipoConfig(tipo: string) {
+function normalizarAvisoTexto(texto: string) {
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase();
+}
+
+function getTipoConfig(tipo: string, aviso?: Pick<AvisoNotificacao, 'titulo' | 'mensagem'>) {
+  const texto = normalizarAvisoTexto(`${tipo} ${aviso?.titulo || ''} ${aviso?.mensagem || ''}`);
+
+  if (
+    texto.includes('REDUCAO')
+    || texto.includes('DEMISSAO')
+    || texto.includes('PEDIDO')
+    || texto.includes('TERMINO DE CONTRATO')
+    || texto.includes('TERMINO CONTRATO')
+  ) {
+    return TIPO_CONFIG.demissao_lancada;
+  }
+
+  if (
+    texto.includes('INCLUSAO')
+    || texto.includes('INCLUIR')
+    || texto.includes('ADMISSAO')
+    || texto.includes('ATIVACAO')
+    || texto.includes('PREVISAO')
+  ) {
+    return TIPO_CONFIG.previsao_admissao;
+  }
+
   return TIPO_CONFIG[tipo] || TIPO_CONFIG.default;
 }
 
@@ -872,7 +902,7 @@ export function CentralAvisosModal() {
               Nenhum aviso encontrado com os filtros selecionados.
             </div>
           ) : avisosFiltrados.map((aviso) => {
-            const config = getTipoConfig(aviso.tipo);
+            const config = getTipoConfig(aviso.tipo, aviso);
             const Icon = config.icon;
             const isCiente = cienteIds.has(aviso.id);
             const tipoAcao = aviso.tipo === 'turma_pendente_consulta' ? aviso.tipo : 'ciente';
@@ -904,11 +934,11 @@ export function CentralAvisosModal() {
                           aviso.tipo === 'transferencia_pendente' && 'ring-blue-400 animate-pulse',
                           aviso.tipo === 'transferencia_realizada' && 'ring-green-400',
                           aviso.tipo === 'demissao_lancada' && 'ring-red-400',
-                          aviso.tipo === 'pedido_demissao_lancado' && 'ring-amber-400',
+                          aviso.tipo === 'pedido_demissao_lancado' && 'ring-red-400',
                           tipoAcao === 'experiencia_consulta' && 'ring-amber-400 animate-pulse',
                           tipoAcao === 'cobertura_treinamento_consulta' && 'ring-orange-400 animate-pulse',
                           aviso.tipo === 'divergencia_nova' && 'ring-orange-400',
-                          aviso.tipo === 'admissao_confirmacao' && 'ring-emerald-400 animate-pulse',
+                          aviso.tipo === 'admissao_confirmacao' && 'ring-blue-400 animate-pulse',
                           aviso.tipo === 'previsao_confirmacao' && 'ring-purple-400 animate-pulse',
                           tipoAcao === 'turma_pendente_consulta' && 'ring-amber-400 animate-pulse',
                           !['transferencia_pendente','transferencia_realizada','demissao_lancada','pedido_demissao_lancado','experiencia_consulta','cobertura_treinamento_consulta','divergencia_nova','admissao_confirmacao','previsao_confirmacao','turma_pendente_consulta'].includes(aviso.tipo) && 'ring-border',
