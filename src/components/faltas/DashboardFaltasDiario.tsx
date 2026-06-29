@@ -40,6 +40,7 @@ interface DashboardFaltasDiarioProps {
   diasPeriodo: Date[];
   periodo?: PeriodoBase;
   reservaFaltasPorSetor?: Record<string, number>;
+  reservaFaltasHistoricaPorSetor?: Record<string, number>;
   sobraPorSetor?: Record<string, number>;
   necessarioPorSetor?: Record<string, number>;
 }
@@ -50,9 +51,18 @@ export function DashboardFaltasDiario({
   diasPeriodo,
   periodo,
   reservaFaltasPorSetor = {},
+  reservaFaltasHistoricaPorSetor = {},
   sobraPorSetor = {},
   necessarioPorSetor = {},
 }: DashboardFaltasDiarioProps) {
+  const DATA_TRAVA_RESERVA_FALTAS = '2026-06-25';
+  const getReservaFaltasPorData = (setor: string, dataStr: string) => {
+    const atual = reservaFaltasPorSetor[setor] ?? 0;
+    if (dataStr <= DATA_TRAVA_RESERVA_FALTAS) {
+      return Math.max(atual, reservaFaltasHistoricaPorSetor[setor] ?? 0);
+    }
+    return atual;
+  };
   // Blocos de dias
   const blocosDias = useMemo(() => {
     if (diasPeriodo.length === 0) return [];
@@ -841,19 +851,20 @@ export function DashboardFaltasDiario({
                       const totalAusencias = f + a + da;
                       const isSopro = setor.toUpperCase().includes('SOPRO');
                       const isFimDeSemana = dia.getDay() === 0 || dia.getDay() === 6;
+                      const reservaData = getReservaFaltasPorData(setor, dataStr);
                       // SALDO dinâmico: usa totalQuadro (apenas conta_no_quadro) para calcular sobra real
                       let saldo: number | undefined;
                       let saldoDetalhe: { sobra: number; reserva: number; treinamento: number; faltas: number; atestados: number; dayoff: number; saldo: number } | undefined;
                       if (reserva != null && sobra != null) {
                         const sobraDia = sobra;
                         const sobraEfetiva = isSopro && isFimDeSemana ? Math.round(sobraDia / 4) : sobraDia;
-                        const reservaEfetiva = isSopro && isFimDeSemana ? Math.round(reserva / 4) : reserva;
+                        const reservaEfetiva = isSopro && isFimDeSemana ? Math.round(reservaData / 4) : reservaData;
                         saldo = totalAusencias > 0 ? sobraEfetiva + reservaEfetiva - treinamento - totalAusencias : undefined;
                         if (saldo != null) saldoDetalhe = { sobra: sobraEfetiva, reserva: reservaEfetiva, treinamento, faltas: f, atestados: a, dayoff: da, saldo };
                       } else if (reserva != null || sobra != null) {
                         // Fallback: usar sobra estática se necessário não estiver disponível
                         const sobraEfetiva = isSopro && isFimDeSemana ? Math.round((sobra || 0) / 4) : (sobra || 0);
-                        const reservaEfetiva = isSopro && isFimDeSemana ? Math.round((reserva || 0) / 4) : (reserva || 0);
+                        const reservaEfetiva = isSopro && isFimDeSemana ? Math.round(reservaData / 4) : reservaData;
                         saldo = totalAusencias > 0 ? sobraEfetiva + reservaEfetiva - treinamento - totalAusencias : undefined;
                         if (saldo != null) saldoDetalhe = { sobra: sobraEfetiva, reserva: reservaEfetiva, treinamento, faltas: f, atestados: a, dayoff: da, saldo };
                       }

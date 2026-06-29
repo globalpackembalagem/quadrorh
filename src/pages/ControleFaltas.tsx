@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 import { isFolgaEscalaDecoracao } from '@/lib/escalaPanama';
@@ -520,6 +521,47 @@ export default function ControleFaltas() {
     });
     return map;
   }, [quadroPlanejadoSopro, quadroDecoracaoData]);
+
+  const { data: historicoReservasFaltas = [] } = useQuery({
+    queryKey: ['historico-reservas-faltas-ate-2026-06-25'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('historico_quadro')
+        .select('tabela, campo, valor_anterior, valor_novo, grupo, turma, created_at')
+        .gte('created_at', '2026-06-01T00:00:00')
+        .lte('created_at', '2026-06-25T23:59:59')
+        .in('campo', ['reserva_faltas_industria', 'reserva_faltas_gp', 'reserva_faltas']);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const reservaFaltasHistoricaPorSetor = useMemo(() => {
+    const porCampo: Record<string, number> = {};
+    historicoReservasFaltas.forEach((h: any) => {
+      const valor = Math.max(Number(h.valor_anterior || 0), Number(h.valor_novo || 0));
+      if (h.tabela === 'quadro_planejado') {
+        const key = `SOPRO ${h.turma}`;
+        porCampo[`${key}:${h.campo}`] = Math.max(porCampo[`${key}:${h.campo}`] || 0, valor);
+      }
+      if (h.tabela === 'quadro_decoracao') {
+        const turmaMap: Record<string, string> = {
+          'DIA-T1': 'DECORAÇÃO DIA - T1',
+          'DIA-T2': 'DECORAÇÃO DIA - T2',
+          'NOITE-T1': 'DECORAÇÃO NOITE - T1',
+          'NOITE-T2': 'DECORAÇÃO NOITE - T2',
+        };
+        const key = turmaMap[h.turma];
+        if (key) porCampo[`${key}:${h.campo}`] = Math.max(porCampo[`${key}:${h.campo}`] || 0, valor);
+      }
+    });
+    const map: Record<string, number> = {};
+    Object.entries(porCampo).forEach(([chave, valor]) => {
+      const setor = chave.split(':')[0];
+      map[setor] = (map[setor] || 0) + valor;
+    });
+    return map;
+  }, [historicoReservasFaltas]);
 
   // Calcular sobra do quadro por setor
   const { data: funcionariosQuadro = [] } = useFuncionariosQuadroConferido();
@@ -1323,6 +1365,7 @@ export default function ControleFaltas() {
           diasPeriodo={diasPeriodo}
           periodo={periodo}
           reservaFaltasPorSetor={reservaFaltasPorSetor}
+          reservaFaltasHistoricaPorSetor={reservaFaltasHistoricaPorSetor}
           sobraPorSetor={sobraPorSetor}
           necessarioPorSetor={necessarioPorSetor}
         />
