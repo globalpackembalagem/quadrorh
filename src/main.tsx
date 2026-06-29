@@ -21,7 +21,9 @@ createRoot(document.getElementById("root")!).render(
 
 if ("serviceWorker" in navigator && import.meta.env.PROD) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch((error) => {
+    navigator.serviceWorker.register("/sw.js?v=reserva-faltas-20260629").then((registration) => {
+      registration.update();
+    }).catch((error) => {
       console.warn("[PWA] Service worker nao registrado:", error);
     });
   });

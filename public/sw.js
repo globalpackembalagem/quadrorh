@@ -1,4 +1,4 @@
-const SW_VERSION = 'quadro-rh-pwa-v1';
+const SW_VERSION = 'quadro-rh-pwa-v2-reserva-faltas-20260629';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
