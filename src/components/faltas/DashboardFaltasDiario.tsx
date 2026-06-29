@@ -16,6 +16,8 @@ interface FuncionarioBase {
   matricula?: string | null;
   data_admissao: string | null;
   data_demissao: string | null;
+  cobertura_data_inicio?: string | null;
+  cobertura_data_fim?: string | null;
   situacao?: {
     nome?: string | null;
   } | null;
@@ -234,14 +236,45 @@ export function DashboardFaltasDiario({
 
   const isTreinamentoNaData = (func: FuncionarioBase, data: Date): boolean => {
     const situacaoNome = func.situacao?.nome?.toUpperCase() || '';
-    const isAtivoOuTreinamento = situacaoNome === 'ATIVO' || situacaoNome.includes('TREINAMENTO');
+    const dataStr = format(data, 'yyyy-MM-dd');
+    const isStatusTreinamento = situacaoNome.includes('TREINAMENTO');
+    const isAtivoOuTreinamento = situacaoNome === 'ATIVO' || isStatusTreinamento;
     if (!isAtivoOuTreinamento || !func.data_admissao) return false;
+
+    if (isStatusTreinamento) {
+      return isDentroPeriodoEspecial(func, dataStr);
+    }
 
     const admissao = startOfDay(parseISO(func.data_admissao));
     if (Number.isNaN(admissao.getTime())) return false;
 
     const diasDesdeAdmissao = differenceInCalendarDays(startOfDay(data), admissao);
     return diasDesdeAdmissao >= 0 && diasDesdeAdmissao <= 1;
+  };
+
+  const isDentroPeriodoEspecial = (func: FuncionarioBase, dataStr: string): boolean => {
+    if (func.cobertura_data_inicio && dataStr < func.cobertura_data_inicio) return false;
+    if (func.cobertura_data_fim && dataStr > func.cobertura_data_fim) return false;
+    return true;
+  };
+
+  const situacaoTemporariaUsaPeriodo = (func: FuncionarioBase): boolean => {
+    const nome = func.situacao?.nome?.toUpperCase() || '';
+    return nome.includes('TREINAMENTO') ||
+      nome.includes('COBERTURA') ||
+      nome.includes('FÉRIAS') ||
+      nome.includes('FERIAS') ||
+      nome.includes('AUXILIO') ||
+      nome.includes('AUXÍLIO') ||
+      nome.includes('DOENÇA') ||
+      nome.includes('DOENCA') ||
+      nome.includes('AFAST');
+  };
+
+  const contaNoQuadroNaData = (func: FuncionarioBase, dataStr: string): boolean => {
+    if (func.situacao_conta_no_quadro !== false) return true;
+    if (situacaoTemporariaUsaPeriodo(func) && !isDentroPeriodoEspecial(func, dataStr)) return true;
+    return false;
   };
 
   // Métricas por setor por dia
@@ -252,7 +285,7 @@ export function DashboardFaltasDiario({
       diasPeriodo.forEach(dia => {
         const dataStr = format(dia, 'yyyy-MM-dd');
         const ativos = funcionarios.filter(f => funcionarioAtivoNaData(f, dia));
-        const ativosQuadro = ativos.filter(f => f.situacao_conta_no_quadro !== false);
+        const ativosQuadro = ativos.filter(f => contaNoQuadroNaData(f, dataStr));
         const treinamento = ativosQuadro.filter(f => isTreinamentoNaData(f, dia)).length;
         const totalQuadroDisponivel = Math.max(ativosQuadro.length - treinamento, 0);
         const folga = isFolgaSetorDia(setor, dia);
@@ -287,7 +320,7 @@ export function DashboardFaltasDiario({
           const tipo = registrosPorFuncData.get(`${func.id}-${dataStr}`);
           const idPrefix = func.matricula ? `(${func.matricula}) ` : '';
           const nome = `${idPrefix}${func.nome_completo || 'Sem nome'}`;
-          if (func.situacao_conta_no_quadro !== false && isTreinamentoNaData(func, dia)) treinamento.push(nome);
+          if (contaNoQuadroNaData(func, dataStr) && isTreinamentoNaData(func, dia)) treinamento.push(nome);
           if (tipo === 'F') faltas.push(nome);
           else if (tipo === 'SS') suspensao.push(nome);
           else if (tipo === 'A') atestados.push(nome);

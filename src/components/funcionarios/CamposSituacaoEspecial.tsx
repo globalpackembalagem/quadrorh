@@ -17,6 +17,10 @@ interface CamposSituacaoEspecialProps {
   coberturaFuncionarioId: string;
   setCoberturaFuncionarioId: (value: string) => void;
   funcionariosParaCobertura: Funcionario[];
+  coberturaDataInicio: string;
+  setCoberturaDataInicio: (value: string) => void;
+  coberturaDataFim: string;
+  setCoberturaDataFim: (value: string) => void;
   // Treinamento
   treinamentoSetorId: string;
   setTreinamentoSetorId: (value: string) => void;
@@ -31,6 +35,10 @@ export function CamposSituacaoEspecial({
   coberturaFuncionarioId,
   setCoberturaFuncionarioId,
   funcionariosParaCobertura,
+  coberturaDataInicio,
+  setCoberturaDataInicio,
+  coberturaDataFim,
+  setCoberturaDataFim,
   treinamentoSetorId,
   setTreinamentoSetorId,
   setoresDisponiveis,
@@ -43,9 +51,12 @@ export function CamposSituacaoEspecial({
                       situacaoUpper.includes('COB. FERIAS') ||
                       situacaoUpper === 'COBERTURA FERIAS';
   const isTreinamento = situacaoUpper.includes('TREINAMENTO');
+  const isAuxilioDoenca = situacaoUpper.includes('AUXILIO') && situacaoUpper.includes('DOENCA');
+  const isFerias = situacaoUpper === 'FERIAS' || situacaoUpper.includes('FERIAS');
   const isSumido = situacaoUpper.includes('SUMIDO');
+  const exigePeriodo = isCobertura || isTreinamento || isAuxilioDoenca || isFerias;
 
-  if (!isCobertura && !isTreinamento && !isSumido) {
+  if (!exigePeriodo && !isSumido) {
     return null;
   }
 
@@ -55,6 +66,35 @@ export function CamposSituacaoEspecial({
         <AlertCircle className="h-4 w-4" />
         <span className="text-sm font-medium">INFORMAÇÕES ADICIONAIS - {situacaoNome?.toUpperCase()}</span>
       </div>
+
+      {exigePeriodo && (
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="coberturaDataInicio" className="text-foreground font-medium">
+              Data início
+            </Label>
+            <Input
+              id="coberturaDataInicio"
+              type="date"
+              value={coberturaDataInicio}
+              onChange={(e) => setCoberturaDataInicio(e.target.value)}
+              className="bg-background"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="coberturaDataFim" className="text-foreground font-medium">
+              Data término
+            </Label>
+            <Input
+              id="coberturaDataFim"
+              type="date"
+              value={coberturaDataFim}
+              onChange={(e) => setCoberturaDataFim(e.target.value)}
+              className="bg-background"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Campo Cobertura de Férias */}
       {isCobertura && (

@@ -404,6 +404,8 @@ export default function Funcionarios() {
   const [dataDemissao, setDataDemissao] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [coberturaFuncionarioId, setCoberturaFuncionarioId] = useState('');
+  const [coberturaDataInicio, setCoberturaDataInicio] = useState('');
+  const [coberturaDataFim, setCoberturaDataFim] = useState('');
   const [treinamentoSetorId, setTreinamentoSetorId] = useState('');
   const [sumidoDesde, setSumidoDesde] = useState('');
   const [naoEMeuFuncionario, setNaoEMeuFuncionario] = useState(false);
@@ -553,6 +555,8 @@ export default function Funcionarios() {
     setDataDemissao('');
     setObservacoes('');
     setCoberturaFuncionarioId('');
+    setCoberturaDataInicio('');
+    setCoberturaDataFim('');
     setTreinamentoSetorId('');
     setSumidoDesde('');
     setNaoEMeuFuncionario(false);
@@ -574,6 +578,8 @@ export default function Funcionarios() {
     setDataDemissao(func.data_demissao || '');
     setObservacoes(func.observacoes || '');
     setCoberturaFuncionarioId(func.cobertura_funcionario_id || '');
+    setCoberturaDataInicio(func.cobertura_data_inicio || '');
+    setCoberturaDataFim(func.cobertura_data_fim || '');
     setTreinamentoSetorId(func.treinamento_setor_id || '');
     setSumidoDesde(func.sumido_desde || '');
     setNaoEMeuFuncionario(func.nao_e_meu_funcionario || false);
@@ -653,6 +659,8 @@ export default function Funcionarios() {
       data_demissao: dataDemissao || null,
       observacoes: observacoes || null,
       cobertura_funcionario_id: coberturaFuncionarioId && coberturaFuncionarioId !== 'nenhum' ? coberturaFuncionarioId : null,
+      cobertura_data_inicio: coberturaDataInicio || null,
+      cobertura_data_fim: coberturaDataFim || null,
       treinamento_setor_id: treinamentoSetorId && treinamentoSetorId !== 'nenhum' ? treinamentoSetorId : null,
       sumido_desde: sumidoDesde || null,
       nao_e_meu_funcionario: naoEMeuFuncionario,
@@ -1396,6 +1404,10 @@ export default function Funcionarios() {
                 f.id !== editingFuncionario?.id &&
                 f.situacao?.nome?.toUpperCase() === 'FÉRIAS'
               )}
+              coberturaDataInicio={coberturaDataInicio}
+              setCoberturaDataInicio={setCoberturaDataInicio}
+              coberturaDataFim={coberturaDataFim}
+              setCoberturaDataFim={setCoberturaDataFim}
               treinamentoSetorId={treinamentoSetorId}
               setTreinamentoSetorId={setTreinamentoSetorId}
               setoresDisponiveis={setoresAtivos}
