@@ -529,7 +529,7 @@ export default function ControleFaltas() {
         .from('historico_quadro')
         .select('tabela, campo, valor_anterior, valor_novo, grupo, turma, created_at')
         .gte('created_at', '2026-06-01T00:00:00')
-        .lte('created_at', '2026-06-25T23:59:59')
+        .lt('created_at', '2026-06-27T00:00:00')
         .in('campo', ['reserva_faltas_industria', 'reserva_faltas_gp', 'reserva_faltas']);
       if (error) throw error;
       return data || [];
@@ -540,8 +540,9 @@ export default function ControleFaltas() {
     const porCampo: Record<string, number> = {};
     historicoReservasFaltas.forEach((h: any) => {
       const valor = Math.max(Number(h.valor_anterior || 0), Number(h.valor_novo || 0));
+      const turma = String(h.turma || '').trim().toUpperCase();
       if (h.tabela === 'quadro_planejado') {
-        const key = `SOPRO ${h.turma}`;
+        const key = `SOPRO ${turma}`;
         porCampo[`${key}:${h.campo}`] = Math.max(porCampo[`${key}:${h.campo}`] || 0, valor);
       }
       if (h.tabela === 'quadro_decoracao') {
@@ -551,7 +552,7 @@ export default function ControleFaltas() {
           'NOITE-T1': 'DECORAÇÃO NOITE - T1',
           'NOITE-T2': 'DECORAÇÃO NOITE - T2',
         };
-        const key = turmaMap[h.turma];
+        const key = turmaMap[turma];
         if (key) porCampo[`${key}:${h.campo}`] = Math.max(porCampo[`${key}:${h.campo}`] || 0, valor);
       }
     });
