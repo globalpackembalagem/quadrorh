@@ -56,10 +56,24 @@ export function DashboardFaltasDiario({
   necessarioPorSetor = {},
 }: DashboardFaltasDiarioProps) {
   const DATA_TRAVA_RESERVA_FALTAS = '2026-06-25';
+  const RESERVA_FALTAS_TRAVADA_ATE_25_06: Record<string, number> = {
+    'SOPRO A': 13,
+    'SOPRO B': 21,
+    'SOPRO C': 13,
+    'DECORAÇÃO DIA - T1': 3,
+    'DECORAÇÃO DIA - T2': 3,
+    'DECORAÇÃO NOITE - T1': 3,
+    'DECORAÇÃO NOITE - T2': 3,
+  };
+
   const getReservaFaltasPorData = (setor: string, dataStr: string) => {
     const atual = reservaFaltasPorSetor[setor] ?? 0;
     if (dataStr <= DATA_TRAVA_RESERVA_FALTAS) {
-      return Math.max(atual, reservaFaltasHistoricaPorSetor[setor] ?? 0);
+      return Math.max(
+        atual,
+        reservaFaltasHistoricaPorSetor[setor] ?? 0,
+        RESERVA_FALTAS_TRAVADA_ATE_25_06[setor] ?? 0
+      );
     }
     return atual;
   };
