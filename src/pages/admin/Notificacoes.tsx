@@ -50,6 +50,7 @@ const TIPO_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
   experiencia_consulta: ClipboardList,
   cobertura_treinamento: Users,
   turma_pendente: AlertTriangle,
+  preencher_faltas: ClipboardList,
 };
 
 const podeCobrarTurmaNaSegundaSeguinte = (dataAdmissao?: string | null) => {
@@ -82,12 +83,14 @@ const TIPO_LABELS: Record<string, string> = {
   experiencia_consulta: 'CONSULTA EXPERIÊNCIA',
   cobertura_treinamento: 'COB. FÉRIAS / TREINAMENTO',
   turma_pendente: 'TURMA PENDENTE',
+  preencher_faltas: 'PREENCHER FALTAS',
 };
 
 const TIPOS_RECEBIMENTO = [
   { value: 'admissao', label: 'ADMISSAO' },
   { value: 'transferencia', label: 'TRANSFERENCIA / TROCA TURNO' },
   { value: 'turma_pendente', label: 'TURMA PENDENTE' },
+  { value: 'preencher_faltas', label: 'PREENCHER FALTAS' },
 ];
 
 const REGRAS_NOTIFICACOES = [
@@ -266,6 +269,7 @@ export default function Notificacoes() {
   const [filtroHistorico, setFiltroHistorico] = useState<'todos' | 'nao_vistas'>('nao_vistas');
   const [consultaExperienciaOpen, setConsultaExperienciaOpen] = useState(false);
   const [isInserindoCobTrein, setIsInserindoCobTrein] = useState(false);
+  const [isInserindoFaltas, setIsInserindoFaltas] = useState(false);
   const [galeriaOpen, setGaleriaOpen] = useState(false);
   const [salvandoRecebimento, setSalvandoRecebimento] = useState<string | null>(null);
 
@@ -457,6 +461,57 @@ export default function Notificacoes() {
     }
   };
 
+  const inserirLembreteFaltas = async () => {
+    setIsInserindoFaltas(true);
+    try {
+      const { data: lideres, error: lideresError } = await supabase
+        .from('user_roles')
+        .select('id, nome')
+        .eq('ativo', true);
+
+      if (lideresError) throw lideresError;
+
+      const nomesLideres = new Set(['ALEX', 'AMILTON', 'LEILA', 'SILVIA']);
+      const destinatarios = (lideres || [])
+        .filter(lider => nomesLideres.has((lider.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase()))
+        .map(lider => lider.id);
+      if (destinatarios.length === 0) {
+        toast.info('Nenhum líder ativo encontrado para receber o lembrete.');
+        return;
+      }
+
+      const agora = new Date();
+      const hora = agora.getHours();
+      const janela = hora < 12 ? '07:00' : '15:00';
+      const hoje = format(agora, 'dd/MM/yyyy');
+
+      const { error } = await supabase.from('eventos_sistema').insert({
+        tipo: 'preencher_faltas',
+        descricao: `LEMBRETE PREENCHER FALTAS — ${hoje} ${janela}`,
+        funcionario_nome: 'LIDERES',
+        setor_nome: 'CONTROLE DE FALTAS',
+        criado_por: userRole?.nome || 'LUCIANO',
+        dados_extra: {
+          destinatarios,
+          mensagem_personalizada: `Favor preencher/conferir as faltas no Controle de Faltas. Lembrete autorizado por ${userRole?.nome || 'LUCIANO'} às ${janela}.`,
+          link: '/faltas',
+          horario_referencia: janela,
+        },
+        notificado: false,
+      });
+
+      if (error) throw error;
+
+      toast.success('Lembrete de faltas criado na Central. Agora selecione e envie para os líderes.');
+      queryClient.invalidateQueries({ queryKey: ['eventos-sistema'] });
+    } catch (err) {
+      toast.error('Erro ao criar lembrete de faltas.');
+      console.error(err);
+    } finally {
+      setIsInserindoFaltas(false);
+    }
+  };
+
   // Mapa de vistas por evento_id
   const vistasPorEvento = useMemo(() => {
     const map: Record<string, NotificacaoVista[]> = {};
@@ -632,6 +687,16 @@ export default function Notificacoes() {
           >
             {isInserindoCobTrein ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Users className="h-3.5 w-3.5" />}
             COB/TREIN.
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-blue-600 border-blue-300 hover:bg-blue-50"
+            onClick={inserirLembreteFaltas}
+            disabled={isInserindoFaltas}
+          >
+            {isInserindoFaltas ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ClipboardList className="h-3.5 w-3.5" />}
+            FALTAS
           </Button>
           <Button
             size="sm"

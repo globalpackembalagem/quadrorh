@@ -582,6 +582,7 @@ function getTipoLabel(tipo: string, tipoDesligamento?: string | null): string {
     cobertura_treinamento_consulta: 'COB. FÉRIAS / TREINAMENTO',
     cobertura_treinamento_resposta: 'RESPOSTA COB/TREIN.',
     turma_pendente: 'TURMA PENDENTE',
+    preencher_faltas: 'PREENCHER FALTAS',
   };
   return labels[tipo] || tipo.toUpperCase();
 }
