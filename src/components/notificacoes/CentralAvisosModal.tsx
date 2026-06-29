@@ -63,6 +63,7 @@ const TIPO_BADGE_LABELS: Record<string, string> = {
   cobertura_treinamento_resposta: 'RESPOSTA COB/TREIN.',
   turma_pendente_consulta: 'TURMA PENDENTE',
   turma_pendente_resposta: 'RESPOSTA TURMA',
+  alerta_temp_sumido: 'ALERTA 3+',
   ciencia_retorno: 'CIÊNCIA DO GESTOR',
 };
 
@@ -88,6 +89,7 @@ const TIPO_CONFIG: Record<string, { icon: typeof Bell; color: string; bgColor: s
   default: { icon: Bell, color: 'text-muted-foreground', bgColor: 'bg-muted/30', borderColor: 'border-border', badgeClass: 'bg-muted-foreground text-white' },
   turma_pendente_consulta: { icon: AlertTriangle, color: 'text-amber-600', bgColor: 'bg-amber-50 dark:bg-amber-950/30', borderColor: 'border-amber-200 dark:border-amber-800', badgeClass: 'bg-amber-600 text-white' },
   turma_pendente_resposta: { icon: CheckCircle2, color: 'text-teal-600', bgColor: 'bg-teal-50 dark:bg-teal-950/30', borderColor: 'border-teal-200 dark:border-teal-800', badgeClass: 'bg-teal-600 text-white' },
+  alerta_temp_sumido: { icon: AlertTriangle, color: 'text-amber-700', bgColor: 'bg-amber-50 dark:bg-amber-950/30', borderColor: 'border-amber-300 dark:border-amber-800', badgeClass: 'bg-amber-700 text-white' },
   ciencia_retorno: { icon: CheckCheck, color: 'text-emerald-600', bgColor: 'bg-emerald-50 dark:bg-emerald-950/30', borderColor: 'border-emerald-200 dark:border-emerald-800', badgeClass: 'bg-emerald-600 text-white' },
 };
 
@@ -412,6 +414,52 @@ export function CentralAvisosModal() {
       toast.warning('CIENTE removido da tela. Houve falha ao salvar no servidor.');
     }
   }, [avisos, registrarCienciaNotificacoes, removerAvisoDaTela]);
+
+  const marcarCienteTemporario = useCallback((id: string) => {
+    setCienteIds(prev => new Set([...prev, id]));
+    addSeenIds([id]);
+    removerAvisoDaTela(id);
+    toast.success('Ciente registrado nesta tela. O aviso volta a aparecer enquanto nao houver resposta ou resolucao do RH.');
+  }, [removerAvisoDaTela]);
+
+  const responderAlertaTemp = useCallback(async (aviso: AvisoNotificacao) => {
+    if (!userRole?.id || !userRole?.nome) return;
+    const resposta = window.prompt('Digite a resposta da agencia para o RH:');
+    if (!resposta?.trim()) return;
+
+    try {
+      const { data: admins } = await supabase
+        .from('user_roles')
+        .select('id, nome')
+        .eq('ativo', true)
+        .or('nome.ilike.LUCIANO,nome.ilike.SONIA,nome.ilike.MAURICIO,nome.ilike.MAURICO,nome.ilike.PAULO,perfil.eq.rh_completo,perfil.eq.rh_demissoes');
+
+      const destinatarios = (admins || []).filter((admin: any) => admin.id !== userRole.id);
+      if (destinatarios.length > 0) {
+        await supabase.from('notificacoes').insert(destinatarios.map((admin: any) => ({
+          user_role_id: admin.id,
+          tipo: 'alerta_temp_sumido_resposta',
+          titulo: 'RESPOSTA AGENCIA - ALERTA 3+',
+          mensagem: `${userRole.nome} respondeu:\n\n${resposta.trim()}\n\nAviso original:\n${aviso.mensagem}`,
+          referencia_id: aviso.referencia_id,
+        })));
+      }
+
+      await supabase
+        .from('notificacoes')
+        .update({ lida: true })
+        .eq('id', aviso.id)
+        .eq('user_role_id', userRole.id);
+
+      setCienteIds(prev => new Set([...prev, aviso.id]));
+      addSeenIds([aviso.id]);
+      removerAvisoDaTela(aviso.id);
+      toast.success('Resposta enviada ao RH.');
+    } catch (err) {
+      console.error('Erro ao responder alerta TEMP:', err);
+      toast.error('Erro ao enviar resposta.');
+    }
+  }, [userRole?.id, userRole?.nome, removerAvisoDaTela]);
   // Handler para confirmação de previsão (SIM/NÃO)
   const handleConfirmacaoPrevisao = useCallback(async (aviso: AvisoNotificacao, iniciou: boolean) => {
     if (!aviso.referencia_id || !userRole?.id) return;
@@ -905,7 +953,7 @@ export function CentralAvisosModal() {
             const config = getTipoConfig(aviso.tipo, aviso);
             const Icon = config.icon;
             const isCiente = cienteIds.has(aviso.id);
-            const tipoAcao = aviso.tipo === 'turma_pendente_consulta' ? aviso.tipo : 'ciente';
+            const tipoAcao = ['turma_pendente_consulta', 'alerta_temp_sumido'].includes(aviso.tipo) ? aviso.tipo : 'ciente';
 
             return (
               <div
@@ -941,7 +989,7 @@ export function CentralAvisosModal() {
                           aviso.tipo === 'admissao_confirmacao' && 'ring-blue-400 animate-pulse',
                           aviso.tipo === 'previsao_confirmacao' && 'ring-purple-400 animate-pulse',
                           tipoAcao === 'turma_pendente_consulta' && 'ring-amber-400 animate-pulse',
-                          !['transferencia_pendente','transferencia_realizada','demissao_lancada','pedido_demissao_lancado','experiencia_consulta','cobertura_treinamento_consulta','divergencia_nova','admissao_confirmacao','previsao_confirmacao','turma_pendente_consulta'].includes(aviso.tipo) && 'ring-border',
+                          !['transferencia_pendente','transferencia_realizada','demissao_lancada','pedido_demissao_lancado','experiencia_consulta','cobertura_treinamento_consulta','divergencia_nova','admissao_confirmacao','previsao_confirmacao','turma_pendente_consulta','alerta_temp_sumido'].includes(aviso.tipo) && 'ring-border',
                         )}>
                           {TIPO_BADGE_LABELS[aviso.tipo] || 'AVISO'}
                         </span>
@@ -958,7 +1006,29 @@ export function CentralAvisosModal() {
 
                   {/* Ações da mensagem */}
                   <div className="flex items-center gap-2 mt-3">
-                    {isRHUser ? (
+                    {tipoAcao === 'alerta_temp_sumido' ? (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className={cn('gap-1.5 text-xs h-8', config.color, 'border-current')}
+                          onClick={() => marcarCienteTemporario(aviso.id)}
+                          disabled={isCiente}
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          CIENTE
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="gap-1.5 text-xs h-8 bg-amber-700 hover:bg-amber-800 text-white"
+                          onClick={() => responderAlertaTemp(aviso)}
+                          disabled={isCiente}
+                        >
+                          <RefreshCw className="h-3.5 w-3.5" />
+                          RESPONDER
+                        </Button>
+                      </>
+                    ) : isRHUser ? (
                       /* RH/Admin: sempre só CIENTE — apenas visualiza */
                       <Button
                         size="sm"

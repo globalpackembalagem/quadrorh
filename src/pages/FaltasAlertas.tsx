@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { AlertTriangle, CheckCircle2, Clock, RotateCcw } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, Download, Hourglass, RotateCcw } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,6 +10,7 @@ import { usePeriodosFaltas, useRegistrosFaltas, useFuncionariosFaltas } from '@/
 import { useUsuario } from '@/contexts/UserContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { loadXLSX } from '@/lib/xlsx';
 
 const TIPO_DIVERGENCIA = 'FALTAS_3_MAIS_RH';
 const DATA_INICIO_CONTAGEM = '2026-06-01';
@@ -50,7 +51,7 @@ export default function FaltasAlertas() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('divergencias_quadro')
-        .select('id, funcionario_id, resolvido, observacoes, resolvido_por, resolvido_em')
+        .select('id, funcionario_id, resolvido, status, observacoes, resolvido_por, resolvido_em')
         .eq('tipo_divergencia', TIPO_DIVERGENCIA);
       if (error) throw error;
       return data || [];
@@ -106,19 +107,46 @@ export default function FaltasAlertas() {
       .sort((a, b) => b.total - a.total || a.funcionario.nome_completo.localeCompare(b.funcionario.nome_completo));
   }, [podeVer, periodoId, funcionarios, registros, controlesPorFuncionario]);
 
+  const exportarExcel = async () => {
+    if (alertas.length === 0) {
+      toast.info('Nenhum alerta para exportar.');
+      return;
+    }
+
+    const XLSX = await loadXLSX();
+    const linhas = alertas.map(alerta => {
+      const funcionario = alerta.funcionario;
+      return {
+        Nome: funcionario.nome_completo,
+        Matricula: funcionario.matricula || '',
+        Setor: funcionario.setor?.nome || funcionario.setor?.grupo || '',
+        Turma: funcionario.turma || '',
+        Faltas: alerta.total,
+        Dias: alerta.dias.map(d => format(parseISO(d), 'dd/MM/yyyy', { locale: ptBR })).join(', '),
+        Status: alerta.controle?.resolvido ? 'Resolvido' : alerta.controle?.status === 'aguardando' ? 'Aguardando agência' : 'Pendente',
+      };
+    });
+    const ws = XLSX.utils.json_to_sheet(linhas);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Alertas 3+');
+    XLSX.writeFile(wb, `alertas_faltas_3_mais_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+  };
+
   const salvarStatus = useMutation({
-    mutationFn: async ({ funcionarioId, resolvido, total, dias }: { funcionarioId: string; resolvido: boolean; total: number; dias: string[] }) => {
+    mutationFn: async ({ funcionarioId, acao, total, dias }: { funcionarioId: string; acao: 'resolvido' | 'reabrir' | 'aguardando'; total: number; dias: string[] }) => {
       const existente = controlesPorFuncionario.get(funcionarioId);
       const funcionario = funcionarios.find(f => f.id === funcionarioId);
       const usuarioNome = usuarioAtual?.nome || 'SISTEMA';
       const observacoes = `Acompanhamento RH: ${total} falta(s) desde ${DATA_INICIO_CONTAGEM}. Dias: ${dias.join(', ')}`;
+      const resolvido = acao === 'resolvido';
+      const status = acao === 'aguardando' ? 'aguardando' : resolvido ? 'resolvido' : 'pendente';
 
       if (existente) {
         const { error } = await supabase
           .from('divergencias_quadro')
           .update({
             resolvido,
-            status: resolvido ? 'resolvido' : 'pendente',
+            status,
             resolvido_por: resolvido ? usuarioNome : null,
             resolvido_em: resolvido ? new Date().toISOString() : null,
             feedback_rh: resolvido ? `RH confirmou contato/acompanhamento em ${format(new Date(), 'dd/MM/yyyy HH:mm')}.` : null,
@@ -126,21 +154,42 @@ export default function FaltasAlertas() {
           })
           .eq('id', existente.id);
         if (error) throw error;
-        return;
+      } else {
+        const { error } = await supabase.from('divergencias_quadro').insert({
+          funcionario_id: funcionarioId,
+          tipo_divergencia: TIPO_DIVERGENCIA,
+          criado_por: usuarioNome,
+          observacoes,
+          descricao_acao: funcionario ? `Funcionario com 3+ faltas: ${funcionario.nome_completo}` : 'Funcionario com 3+ faltas',
+          resolvido,
+          status,
+          resolvido_por: resolvido ? usuarioNome : null,
+          resolvido_em: resolvido ? new Date().toISOString() : null,
+        });
+        if (error) throw error;
       }
 
-      const { error } = await supabase.from('divergencias_quadro').insert({
-        funcionario_id: funcionarioId,
-        tipo_divergencia: TIPO_DIVERGENCIA,
-        criado_por: usuarioNome,
-        observacoes,
-        descricao_acao: funcionario ? `Funcionario com 3+ faltas: ${funcionario.nome_completo}` : 'Funcionario com 3+ faltas',
-        resolvido,
-        status: resolvido ? 'resolvido' : 'pendente',
-        resolvido_por: resolvido ? usuarioNome : null,
-        resolvido_em: resolvido ? new Date().toISOString() : null,
-      });
-      if (error) throw error;
+      if (acao === 'aguardando' && funcionario) {
+        const { data: realParceria } = await supabase
+          .from('user_roles')
+          .select('id')
+          .eq('ativo', true)
+          .ilike('nome', 'REAL PARCERIA');
+
+        const setor = funcionario.setor?.nome || funcionario.setor?.grupo || 'Sem setor';
+        const diasFormatados = dias.map(d => format(parseISO(d), 'dd/MM', { locale: ptBR })).join(', ');
+        const referenciaId = `faltas-3-mais-${funcionario.id}`;
+
+        if (realParceria?.length) {
+          await supabase.from('notificacoes').insert(realParceria.map((destinatario: any) => ({
+            user_role_id: destinatario.id,
+            tipo: 'alerta_temp_sumido',
+            titulo: 'Verificar TEMP com 3+ faltas',
+            mensagem: `${usuarioNome} enviou para a agência verificar:\n\n${funcionario.matricula || 'TEMP'} - ${funcionario.nome_completo}\nSetor: ${setor}${funcionario.turma ? `\nTurma: ${funcionario.turma}` : ''}\nFaltas (${total}): ${diasFormatados}\n\nClique em CIENTE para ocultar nesta sessão ou RESPONDER se tiver retorno.`,
+            referencia_id: referenciaId,
+          })));
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['faltas-3-mais-controles'] });
@@ -156,13 +205,21 @@ export default function FaltasAlertas() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-lg font-bold text-foreground tracking-wide flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-destructive" />
-          ALERTAS DE FALTAS 3+
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Conta faltas a partir de 01/06/2026. Quando um alerta e resolvido, a contagem zera e so volta com 3 novas faltas.
-        </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-lg font-bold text-foreground tracking-wide flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              ALERTAS DE FALTAS 3+
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Conta faltas a partir de 01/06/2026. Quando um alerta e resolvido, a contagem zera e so volta com 3 novas faltas.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={exportarExcel} disabled={alertas.length === 0} className="gap-1.5">
+            <Download className="h-3.5 w-3.5" />
+            Excel
+          </Button>
+        </div>
       </div>
 
       {!periodo ? (
@@ -174,6 +231,7 @@ export default function FaltasAlertas() {
           {alertas.map(alerta => {
             const funcionario = alerta.funcionario;
             const resolvido = alerta.controle?.resolvido === true;
+            const aguardando = alerta.controle?.status === 'aguardando' && !resolvido;
             const setor = funcionario.setor?.nome || funcionario.setor?.grupo || 'Sem setor';
             const diasFormatados = alerta.dias.map(d => format(parseISO(d), 'dd/MM', { locale: ptBR })).join(', ');
 
@@ -185,22 +243,38 @@ export default function FaltasAlertas() {
                       <p className="font-bold text-sm">{funcionario.nome_completo}</p>
                       <Badge variant="secondary">{funcionario.matricula || 'Sem matricula'}</Badge>
                       <Badge variant="destructive">{alerta.total} faltas</Badge>
-                      <Badge variant={resolvido ? 'default' : 'outline'}>{resolvido ? 'Resolvido' : 'Nao resolvido'}</Badge>
+                      <Badge variant={resolvido ? 'default' : aguardando ? 'secondary' : 'outline'}>
+                        {resolvido ? 'Resolvido' : aguardando ? 'Aguardando agência' : 'Nao resolvido'}
+                      </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">{setor}{funcionario.turma ? ` - Turma ${funcionario.turma}` : ''}</p>
                     <p className="text-xs text-muted-foreground mt-1">Dias: {diasFormatados}</p>
                   </div>
                   {podeResolver && (
-                    <Button
-                      size="sm"
-                      variant={resolvido ? 'outline' : 'default'}
-                      onClick={() => salvarStatus.mutate({ funcionarioId: funcionario.id, resolvido: !resolvido, total: alerta.total, dias: alerta.dias })}
-                      disabled={salvarStatus.isPending}
-                      className="gap-1.5"
-                    >
-                      {resolvido ? <RotateCcw className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-                      {resolvido ? 'Reabrir' : 'Marcar resolvido'}
-                    </Button>
+                    <div className="flex flex-wrap gap-2 sm:justify-end">
+                      {!resolvido && (
+                        <Button
+                          size="sm"
+                          variant={aguardando ? 'secondary' : 'outline'}
+                          onClick={() => salvarStatus.mutate({ funcionarioId: funcionario.id, acao: 'aguardando', total: alerta.total, dias: alerta.dias })}
+                          disabled={salvarStatus.isPending}
+                          className="gap-1.5"
+                        >
+                          <Hourglass className="h-3.5 w-3.5" />
+                          Aguardando
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant={resolvido ? 'outline' : 'default'}
+                        onClick={() => salvarStatus.mutate({ funcionarioId: funcionario.id, acao: resolvido ? 'reabrir' : 'resolvido', total: alerta.total, dias: alerta.dias })}
+                        disabled={salvarStatus.isPending}
+                        className="gap-1.5"
+                      >
+                        {resolvido ? <RotateCcw className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                        {resolvido ? 'Reabrir' : 'Marcar resolvido'}
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>
