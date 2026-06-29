@@ -60,19 +60,28 @@ export function DashboardFaltasDiario({
     'SOPRO A': 13,
     'SOPRO B': 21,
     'SOPRO C': 13,
-    'DECORAÇÃO DIA - T1': 3,
-    'DECORAÇÃO DIA - T2': 3,
-    'DECORAÇÃO NOITE - T1': 3,
-    'DECORAÇÃO NOITE - T2': 3,
+    'DECORACAO DIA - T1': 3,
+    'DECORACAO DIA - T2': 3,
+    'DECORACAO NOITE - T1': 3,
+    'DECORACAO NOITE - T2': 3,
   };
+
+  const normalizarSetorReserva = (setor: string) =>
+    setor
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toUpperCase();
 
   const getReservaFaltasPorData = (setor: string, dataStr: string) => {
     const atual = reservaFaltasPorSetor[setor] ?? 0;
+    const setorKey = normalizarSetorReserva(setor);
     if (dataStr <= DATA_TRAVA_RESERVA_FALTAS) {
       return Math.max(
         atual,
         reservaFaltasHistoricaPorSetor[setor] ?? 0,
-        RESERVA_FALTAS_TRAVADA_ATE_25_06[setor] ?? 0
+        RESERVA_FALTAS_TRAVADA_ATE_25_06[setorKey] ?? 0
       );
     }
     return atual;
