@@ -47,6 +47,7 @@ export function useUpdateQuadroDecoracao() {
       // Registrar histórico para cada campo alterado
       const camposAlterados = Object.keys(data).filter(
         key => key !== 'id' && key !== 'updated_at' && key !== 'created_at' && 
+        key !== 'reserva_faltas' &&
         anterior[key as keyof typeof anterior] !== data[key as keyof typeof data]
       );
 

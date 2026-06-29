@@ -48,6 +48,7 @@ export function useUpdateQuadroPlanejado() {
       // Registrar histórico para cada campo alterado
       const camposAlterados = Object.keys(data).filter(
         key => key !== 'id' && key !== 'updated_at' && key !== 'created_at' && 
+        key !== 'reserva_faltas_industria' && key !== 'reserva_faltas_gp' &&
         (anterior as Record<string, unknown>)[key] !== (data as Record<string, unknown>)[key]
       );
 
