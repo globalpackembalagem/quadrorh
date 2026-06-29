@@ -7,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, parseISO, eachDayOfInterval, isWeekend, isBefore, isAfter, differenceInDays, startOfDay } from 'date-fns';
 import { useFuncionariosQuadroConferido } from '@/hooks/useFuncionarios';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Lock, Unlock, Calendar, AlertTriangle, Filter, BarChart3, Users, Wind, Palette, Layers, Search, Info, Eye, KeyRound, Bell, CheckCircle } from 'lucide-react';
+import { Plus, Lock, Unlock, Calendar, AlertTriangle, Filter, BarChart3, Users, Wind, Palette, Layers, Search, Info, Eye, KeyRound, Bell } from 'lucide-react';
 import { useLiberacoesFaltas } from '@/hooks/useLiberacoesFaltas';
 import { LiberarDatasDialog } from '@/components/faltas/LiberarDatasDialog';
 import {
@@ -67,6 +67,21 @@ function isSetorDoQuadro(setor: { nome?: string; conta_no_quadro?: boolean } | n
 // Número máximo de dias para edição direta (4 dias incluindo hoje)
 const DIAS_EDICAO_DIRETA = 4;
 
+function normalizarSituacao(nome?: string | null) {
+  return (nome || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase();
+}
+
+function isSituacaoDesligamento(nome?: string | null) {
+  const situacao = normalizarSituacao(nome);
+  return situacao.includes('DEMISS')
+    || situacao.includes('DESLIG')
+    || situacao.includes('PEDIDO')
+    || situacao.includes('TERMINO');
+}
+
 export default function ControleFaltas() {
   const navigate = useNavigate();
   const { usuarioAtual } = useUsuario();
@@ -97,7 +112,7 @@ export default function ControleFaltas() {
   const { data: liberacoes = [] } = useLiberacoesFaltas();
   const [liberarDatasOpen, setLiberarDatasOpen] = useState(false);
   const [alertasTempOpen, setAlertasTempOpen] = useState(false);
-  const [confirmandoTempId, setConfirmandoTempId] = useState<string | null>(null);
+  const [, setConfirmandoTempId] = useState<string | null>(null);
   
   // Quadro planejado/decoração para cálculo de saldo
   const { data: quadroPlanejadoSopro = [] } = useQuadroPlanejado('SOPRO');
@@ -670,8 +685,7 @@ export default function ControleFaltas() {
     }
     
     // Só considera data de demissão para situações de desligamento
-    const situacaoNome = (func.situacao?.nome || '').toUpperCase();
-    const isDesligado = situacaoNome.includes('DEMISS') || situacaoNome.includes('PEDIDO DEMISSAO') || situacaoNome.includes('PED. DEMISSAO');
+    const isDesligado = isSituacaoDesligamento(func.situacao?.nome);
     const dataDemissaoEfetiva = isDesligado ? (func.data_demissao || format(new Date(), 'yyyy-MM-dd')) : null;
     if (dataDemissaoEfetiva) {
       const demissao = parseISO(dataDemissaoEfetiva);
@@ -712,8 +726,7 @@ export default function ControleFaltas() {
 
   // Helper: verifica se funcionário está desligado
   const isFuncionarioDesligado = (func: Funcionario): boolean => {
-    const situacaoNome = (func.situacao?.nome || '').toUpperCase();
-    return situacaoNome.includes('DEMISS') || situacaoNome.includes('PEDIDO DEMISSAO') || situacaoNome.includes('PED. DEMISSAO');
+    return isSituacaoDesligamento(func.situacao?.nome);
   };
 
   const getDataDemissaoParaBloqueio = (func: Funcionario): string | null => {
@@ -1261,7 +1274,7 @@ export default function ControleFaltas() {
               Alertas TEMP com 3+ faltas
             </DialogTitle>
             <DialogDescription>
-              Funcionários TEMP com 3 ou mais faltas no período selecionado. Confirme para enviar notificação ao RH e ao LUCIANO.
+              Funcionários TEMP com 3 ou mais faltas no período selecionado.
             </DialogDescription>
           </DialogHeader>
 
@@ -1287,15 +1300,6 @@ export default function ControleFaltas() {
                           {setor}{funcionario.turma ? ` • Turma ${funcionario.turma}` : ''}
                         </p>
                       </div>
-                      <Button
-                        size="sm"
-                        onClick={() => confirmarSumidoTemp(alerta)}
-                        disabled={confirmandoTempId === funcionario.id}
-                        className="gap-1.5"
-                      >
-                        <CheckCircle className="h-3.5 w-3.5" />
-                        Confirmar sumido
-                      </Button>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
                       {alerta.dias.map(dia => (
