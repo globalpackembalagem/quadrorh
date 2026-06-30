@@ -1325,6 +1325,9 @@ export type Database = {
       }
       notificacoes: {
         Row: {
+          cancelada: boolean
+          cancelada_em: string | null
+          cancelada_por: string | null
           created_at: string
           id: string
           lida: boolean
@@ -1335,6 +1338,9 @@ export type Database = {
           user_role_id: string
         }
         Insert: {
+          cancelada?: boolean
+          cancelada_em?: string | null
+          cancelada_por?: string | null
           created_at?: string
           id?: string
           lida?: boolean
@@ -1345,6 +1351,9 @@ export type Database = {
           user_role_id: string
         }
         Update: {
+          cancelada?: boolean
+          cancelada_em?: string | null
+          cancelada_por?: string | null
           created_at?: string
           id?: string
           lida?: boolean

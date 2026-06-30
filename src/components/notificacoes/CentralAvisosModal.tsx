@@ -238,6 +238,7 @@ export function CentralAvisosModal() {
       .select('id, titulo, mensagem, tipo, referencia_id, created_at, lida')
       .eq('user_role_id', userRole.id)
       .eq('lida', false)
+      .eq('cancelada', false)
       .order('created_at', { ascending: false })
       .limit(20);
 

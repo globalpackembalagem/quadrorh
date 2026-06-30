@@ -84,6 +84,7 @@ const TIPO_LABELS: Record<string, string> = {
   cobertura_treinamento: 'COB. FÉRIAS / TREINAMENTO',
   turma_pendente: 'TURMA PENDENTE',
   preencher_faltas: 'PREENCHER FALTAS',
+  cobranca_faltas: 'COBRANCA FALTAS',
 };
 
 const TIPOS_RECEBIMENTO = [
@@ -286,6 +287,30 @@ export default function Notificacoes() {
       queryClient.invalidateQueries({ queryKey: ['user_roles'] });
     },
     onError: () => toast.error('ERRO AO SALVAR RECEBIMENTO'),
+  });
+
+  const cancelarNotificacaoMutation = useMutation({
+    mutationFn: async (evento: EventoSistema) => {
+      const referenciaId = evento.id;
+      const { error } = await supabase
+        .from('notificacoes')
+        .update({
+          cancelada: true,
+          cancelada_em: new Date().toISOString(),
+          cancelada_por: userRole?.nome || 'ADMIN',
+        })
+        .eq('referencia_id', referenciaId)
+        .eq('lida', false);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notificacoes-destinatarios'] });
+      toast.success('Notificacao cancelada para quem ainda nao viu.');
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || 'Erro ao cancelar notificacao.');
+    },
   });
 
   const toggleRecebimentoUsuario = async (userId: string, tipo: string) => {
@@ -1167,18 +1192,52 @@ export default function Notificacoes() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-1 text-xs h-7"
-                              onClick={() => {
-                                setReenviarEvento(evento);
-                                setGestoresSelecionados(new Set());
-                              }}
-                            >
-                              <RotateCcw className="h-3 w-3" />
-                              REENVIAR
-                            </Button>
+                            <div className="flex flex-col gap-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-1 text-xs h-7"
+                                onClick={() => {
+                                  setReenviarEvento(evento);
+                                  setGestoresSelecionados(new Set());
+                                }}
+                              >
+                                <RotateCcw className="h-3 w-3" />
+                                REENVIAR
+                              </Button>
+                              {faltamVer.length > 0 && (
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      className="gap-1 text-xs h-7"
+                                      disabled={cancelarNotificacaoMutation.isPending}
+                                    >
+                                      <XCircle className="h-3 w-3" />
+                                      CANCELAR
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Cancelar notificacao?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Quem ainda nao viu nao recebera mais esta notificacao. Quem ja viu permanece no historico.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Voltar</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => cancelarNotificacaoMutation.mutate(evento)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        Cancelar para pendentes
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       );
