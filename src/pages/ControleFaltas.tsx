@@ -11,6 +11,7 @@ import { ptBR } from 'date-fns/locale';
 import { Plus, Lock, Unlock, Calendar, AlertTriangle, Filter, BarChart3, Users, Wind, Palette, Layers, Search, Info, Eye, KeyRound, Bell } from 'lucide-react';
 import { useLiberacoesFaltas } from '@/hooks/useLiberacoesFaltas';
 import { LiberarDatasDialog } from '@/components/faltas/LiberarDatasDialog';
+import { CobrarFaltasDialog } from '@/components/faltas/CobrarFaltasDialog';
 import {
   usePeriodosFaltas,
   useRegistrosFaltas,
@@ -112,6 +113,7 @@ export default function ControleFaltas() {
   const isRealParceria = isRHMode && userRole?.nome?.toUpperCase() === 'REAL PARCERIA';
   const { data: liberacoes = [] } = useLiberacoesFaltas();
   const [liberarDatasOpen, setLiberarDatasOpen] = useState(false);
+  const [cobrarFaltasOpen, setCobrarFaltasOpen] = useState(false);
   const [alertasTempOpen, setAlertasTempOpen] = useState(false);
   const [, setConfirmandoTempId] = useState<string | null>(null);
   
@@ -1294,7 +1296,15 @@ export default function ControleFaltas() {
                   <><Unlock className="mr-1 h-3 w-3" /> REABRIR PERÍODO</>
                 )}
               </Button>
-              <Button
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => setCobrarFaltasOpen(true)}
+              >
+                <Bell className="mr-1 h-3 w-3" />
+                COBRAR FALTAS
+              </Button>
+              <Button 
                 variant="outline"
                 size="sm"
                 onClick={() => setLiberarDatasOpen(true)}
@@ -2144,12 +2154,19 @@ export default function ControleFaltas() {
 
       {/* Dialog de Liberação de Datas (Admin) */}
       {isAdmin && (
-        <LiberarDatasDialog
-          open={liberarDatasOpen}
-          onOpenChange={setLiberarDatasOpen}
-          setores={setores}
-          periodo={periodo}
-        />
+        <>
+          <LiberarDatasDialog
+            open={liberarDatasOpen}
+            onOpenChange={setLiberarDatasOpen}
+            setores={setores}
+            periodo={periodo}
+          />
+          <CobrarFaltasDialog
+            open={cobrarFaltasOpen}
+            onOpenChange={setCobrarFaltasOpen}
+            enviadoPor={userRole?.nome || usuarioAtual?.nome || 'ADMIN'}
+          />
+        </>
       )}
     </div>
   );
