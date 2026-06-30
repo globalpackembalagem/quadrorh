@@ -353,6 +353,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
         const percentHomens = metricas.total > 0 ? Math.round((metricas.homens / metricas.total) * 100) : 0;
         const percentMulheres = metricas.total > 0 ? Math.round((metricas.mulheres / metricas.total) * 100) : 0;
         const diferenca = totalAjustado - metricas.quadroNecessario;
+        const sumidosInfo = sumidosPorTurma[turma];
         
         return (
           <div 
@@ -433,6 +434,32 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                 </>
               )}
             </div>
+
+            {sumidosInfo && sumidosInfo.total > 0 && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="mt-2 flex w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-[#E53935]/30 bg-[#FDECEC] px-2 py-2 text-[11px] font-semibold text-[#E53935] transition-colors hover:bg-[#F9DCDC] sm:px-3 sm:text-sm">
+                    <div className="flex items-center gap-2">
+                      <UserX className="h-4 w-4 shrink-0" />
+                      <span>SUMIDOS</span>
+                    </div>
+                    <span className="text-base font-bold sm:text-lg">{sumidosInfo.total}</span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 p-3" align="start">
+                  <div className="space-y-1">
+                    <h4 className="font-semibold text-sm mb-2 text-[#E53935]">SUMIDOS - {TURMAS_LABELS[turma]}</h4>
+                    <div className="max-h-48 overflow-y-auto space-y-1.5">
+                      {sumidosInfo.nomes.map((nome, i) => (
+                        <div key={i} className="text-xs p-2 rounded-md bg-[#FDECEC] border border-[#E53935]/20">
+                          <div className="font-semibold">{nome}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
 
             {/* Previsão de Admissão - sempre visível */}
             {treinamentoCardItems.length > 0 ? (
@@ -515,33 +542,6 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                 </div>
                 <span className="text-base sm:text-lg font-bold">0</span>
               </div>
-            )}
-
-            {/* Indicador de Sumidos - apenas para LUCIANO */}
-            {mostrarSumidos && sumidosPorTurma[turma] && sumidosPorTurma[turma].total > 0 && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="flex items-center justify-between gap-1.5 px-3 py-2 mt-1 mb-2 rounded-lg border border-destructive/30 bg-destructive/5 text-sm font-semibold text-destructive hover:bg-destructive/15 transition-colors cursor-pointer w-full">
-                    <div className="flex items-center gap-2">
-                      <UserX className="h-4 w-4 shrink-0" />
-                      <span>SUMIDOS</span>
-                    </div>
-                    <span className="text-lg font-bold">{sumidosPorTurma[turma].total}</span>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-3" align="start">
-                  <div className="space-y-1">
-                    <h4 className="font-semibold text-sm mb-2 text-destructive">SUMIDOS - {TURMAS_LABELS[turma]}</h4>
-                    <div className="max-h-48 overflow-y-auto space-y-1.5">
-                      {sumidosPorTurma[turma].nomes.map((nome, i) => (
-                        <div key={i} className="text-xs p-2 rounded-md bg-destructive/5 border border-destructive/20">
-                          <div className="font-semibold">{nome}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
             )}
 
             {/* Indicador de Cob. Férias - apenas para LUCIANO */}

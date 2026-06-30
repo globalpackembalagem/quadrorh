@@ -85,7 +85,7 @@ export function useDashboardData() {
       const sumidos = todosSopro.filter(f => {
         const situacaoNome = f.situacao?.nome?.toUpperCase() || '';
         const grupoSetor = f.setor?.grupo?.toUpperCase() || '';
-        return situacaoNome === 'SUMIDO' && grupoSetor === grupoEsperado;
+        return situacaoNome.includes('SUMIDO') && grupoSetor === grupoEsperado;
       });
       result[turma] = { total: sumidos.length, nomes: sumidos.map(f => f.nome_completo) };
     });
@@ -97,7 +97,7 @@ export function useDashboardData() {
     ['DIA-T1', 'DIA-T2', 'NOITE-T1', 'NOITE-T2'].forEach(turmaKey => {
       const sumidos = todosDecoracao.filter(f => {
         const situacaoNome = f.situacao?.nome?.toUpperCase() || '';
-        if (situacaoNome !== 'SUMIDO') return false;
+        if (!situacaoNome.includes('SUMIDO')) return false;
         const turmaFunc = f.turma?.toUpperCase();
         const setorNome = f.setor?.nome?.toUpperCase() || '';
         const isDia = setorNome.includes('DIA');
