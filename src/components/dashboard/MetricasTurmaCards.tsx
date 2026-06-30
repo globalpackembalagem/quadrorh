@@ -412,7 +412,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
             {/* Indicador de Sobra/Desfalque */}
             <div className={cn(
               "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs sm:text-sm font-semibold",
-              diferenca > 0 && "bg-success/10 text-success",
+              diferenca > 0 && "bg-success text-success-foreground",
               diferenca < 0 && "bg-destructive/10 text-destructive",
               diferenca === 0 && "bg-muted text-muted-foreground"
             )}>

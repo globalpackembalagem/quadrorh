@@ -65,7 +65,7 @@
     --chart-2: 152 55% 33%;
     --chart-3: 38 85% 48%;
     --chart-4: 0 72% 51%;
-    --chart-5: 270 50% 50%;
+    --chart-5: 221 83% 60%;
   }
 
   /* TEMA 2 — DARK TECH */
@@ -171,7 +171,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 215 30% 15%;
 
-    --primary: 207 48% 47%;
+    --primary: 221 83% 53%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 51 100% 88%;
@@ -186,30 +186,30 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 143 100% 28%;
+    --success: 221 83% 53%;
     --success-foreground: 0 0% 100%;
 
     --warning: 51 100% 48%;
     --warning-foreground: 215 30% 15%;
 
-    --info: 207 48% 47%;
+    --info: 221 83% 53%;
     --info-foreground: 0 0% 100%;
 
     --border: 205 28% 84%;
     --input: 205 28% 84%;
-    --ring: 207 48% 47%;
+    --ring: 221 83% 53%;
 
-    --sidebar-background: 207 50% 37%;
+    --sidebar-background: 221 70% 42%;
     --sidebar-foreground: 205 55% 96%;
     --sidebar-primary: 51 100% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 207 40% 45%;
+    --sidebar-accent: 221 66% 48%;
     --sidebar-accent-foreground: 205 55% 96%;
-    --sidebar-border: 207 35% 48%;
+    --sidebar-border: 221 58% 54%;
     --sidebar-ring: 51 100% 53%;
 
-    --chart-1: 207 48% 47%;
-    --chart-2: 143 100% 28%;
+    --chart-1: 221 83% 53%;
+    --chart-2: 143 68% 36%;
     --chart-3: 51 100% 48%;
     --chart-4: 0 72% 51%;
     --chart-5: 270 50% 50%;

@@ -23,7 +23,7 @@ export const THEME_OPTIONS: ThemeOption[] = [
   {
     id: 'global-blue',
     label: 'SELEÇÃO BRASILEIRA',
-    colors: { background: '#F2F7FB', sidebar: '#2F5F8F', card: '#FFFFFF', text: '#102A43', primary: '#3E7CB1' },
+    colors: { background: '#F2F7FB', sidebar: '#2563EB', card: '#FFFFFF', text: '#102A43', primary: '#2563EB' },
   },
 ];
 
