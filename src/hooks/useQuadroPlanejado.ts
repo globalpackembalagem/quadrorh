@@ -35,6 +35,18 @@ export function useUpdateQuadroPlanejado() {
       
       if (fetchError) throw fetchError;
 
+      const { data: travaAtiva, error: travaError } = await (supabase as any)
+        .from('quadro_travas')
+        .select('id')
+        .eq('area', anterior.grupo)
+        .eq('ativo', true)
+        .maybeSingle();
+
+      if (travaError) throw travaError;
+      if (travaAtiva) {
+        throw new Error(`QUADRO ${anterior.grupo} TRAVADO`);
+      }
+
       // Atualizar o registro
       const { data: updated, error } = await supabase
         .from('quadro_planejado')
@@ -48,7 +60,6 @@ export function useUpdateQuadroPlanejado() {
       // Registrar histórico para cada campo alterado
       const camposAlterados = Object.keys(data).filter(
         key => key !== 'id' && key !== 'updated_at' && key !== 'created_at' && 
-        key !== 'reserva_faltas_industria' && key !== 'reserva_faltas_gp' &&
         (anterior as Record<string, unknown>)[key] !== (data as Record<string, unknown>)[key]
       );
 
@@ -75,8 +86,8 @@ export function useUpdateQuadroPlanejado() {
       queryClient.invalidateQueries({ queryKey: ['historico_quadro'] });
       toast.success('Quadro atualizado com sucesso!');
     },
-    onError: () => {
-      toast.error('Erro ao atualizar quadro');
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar quadro');
     },
   });
 }

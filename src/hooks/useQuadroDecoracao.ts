@@ -34,6 +34,18 @@ export function useUpdateQuadroDecoracao() {
       
       if (fetchError) throw fetchError;
 
+      const { data: travaAtiva, error: travaError } = await (supabase as any)
+        .from('quadro_travas')
+        .select('id')
+        .eq('area', 'DECORACAO')
+        .eq('ativo', true)
+        .maybeSingle();
+
+      if (travaError) throw travaError;
+      if (travaAtiva) {
+        throw new Error('QUADRO DECORACAO TRAVADO');
+      }
+
       // Atualizar o registro
       const { data: updated, error } = await supabase
         .from('quadro_decoracao')
@@ -47,7 +59,6 @@ export function useUpdateQuadroDecoracao() {
       // Registrar histórico para cada campo alterado
       const camposAlterados = Object.keys(data).filter(
         key => key !== 'id' && key !== 'updated_at' && key !== 'created_at' && 
-        key !== 'reserva_faltas' &&
         anterior[key as keyof typeof anterior] !== data[key as keyof typeof data]
       );
 
@@ -74,8 +85,8 @@ export function useUpdateQuadroDecoracao() {
       queryClient.invalidateQueries({ queryKey: ['historico_quadro'] });
       toast.success('Quadro atualizado com sucesso!');
     },
-    onError: () => {
-      toast.error('Erro ao atualizar quadro');
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar quadro');
     },
   });
 }
