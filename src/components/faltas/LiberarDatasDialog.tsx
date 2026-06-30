@@ -90,7 +90,12 @@ export function LiberarDatasDialog({ open, onOpenChange, setores, periodo }: Lib
       setSelectedDatas(new Set());
     } catch (error) {
       console.error('Erro ao liberar datas:', error);
-      const message = error instanceof Error ? error.message : 'Erro ao liberar datas';
+      const erroSupabase = error as { message?: string; details?: string; code?: string };
+      const message = [
+        erroSupabase?.message,
+        erroSupabase?.details,
+        erroSupabase?.code ? `Código: ${erroSupabase.code}` : null,
+      ].filter(Boolean).join(' | ') || 'Erro ao liberar datas';
       toast.error(message);
     }
   };
