@@ -352,8 +352,10 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
         const totalAjustado = mostrarSumidos ? metricas.total - sumidosQtd - cobFeriasQtd - treinamentoQtd : metricas.total;
         const percentHomens = metricas.total > 0 ? Math.round((metricas.homens / metricas.total) * 100) : 0;
         const percentMulheres = metricas.total > 0 ? Math.round((metricas.mulheres / metricas.total) * 100) : 0;
-        const diferenca = totalAjustado - metricas.quadroNecessario;
         const sumidosInfo = sumidosPorTurma[turma] || { total: 0, nomes: [] };
+        const totalDisponivel = totalAjustado - sumidosInfo.total;
+        const diferenca = totalDisponivel - metricas.quadroNecessario;
+        const desfalqueOperacional = Math.abs(Math.min(diferenca, 0));
         
         return (
           <div 
@@ -411,29 +413,49 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
 
             
             {/* Indicador de Sobra/Desfalque */}
-            <div className={cn(
-              "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold sm:text-sm",
-              diferenca > 0 && "bg-[#0057D9] text-white",
-              diferenca < 0 && "bg-[#FDECEC] text-[#E53935]",
-              diferenca === 0 && "bg-[#EAF8EF] text-[#1FA750]"
-            )}>
-              {diferenca > 0 ? (
-                <>
-                  <TrendingUp className="h-4 w-4" />
-                  <span>+{diferenca} SOBRA</span>
-                </>
-              ) : diferenca < 0 ? (
-                <>
-                  <TrendingDown className="h-4 w-4" />
-                  <span>{diferenca} DESFALQUE</span>
-                </>
-              ) : (
-                <>
-                  <Minus className="h-4 w-4" />
-                  <span>QUADRO OK</span>
-                </>
-              )}
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className={cn(
+                  "flex w-full items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-left text-xs font-semibold transition-colors sm:text-sm",
+                  diferenca > 0 && "bg-[#0057D9] text-white hover:bg-[#0048B5]",
+                  diferenca < 0 && "bg-[#FDECEC] text-[#E53935] hover:bg-[#F9DCDC]",
+                  diferenca === 0 && "bg-[#EAF8EF] text-[#1FA750] hover:bg-[#DDF4E6]"
+                )}>
+                  {diferenca > 0 ? (
+                    <>
+                      <TrendingUp className="h-4 w-4" />
+                      <span>+{diferenca} SOBRA</span>
+                    </>
+                  ) : diferenca < 0 ? (
+                    <>
+                      <TrendingDown className="h-4 w-4" />
+                      <span>{diferenca} DESFALQUE</span>
+                    </>
+                  ) : (
+                    <>
+                      <Minus className="h-4 w-4" />
+                      <span>QUADRO OK</span>
+                    </>
+                  )}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-72 p-3" align="start">
+                <div className="space-y-1.5 text-sm">
+                  <h4 className="mb-2 font-semibold">Cálculo do quadro - {TURMAS_LABELS[turma]}</h4>
+                  <div className="flex justify-between"><span>Quadro necessário</span><strong>{metricas.quadroNecessario}</strong></div>
+                  <div className="flex justify-between"><span>Quadro cadastrado</span><strong>{totalAjustado}</strong></div>
+                  <div className="flex justify-between"><span>Sumidos</span><strong>{sumidosInfo.total}</strong></div>
+                  <div className="flex justify-between"><span>Disponíveis</span><strong>{totalDisponivel}</strong></div>
+                  <div className="mt-2 rounded-md bg-muted p-2 font-semibold">
+                    {diferenca < 0
+                      ? `Desfalque: ${metricas.quadroNecessario} - ${totalDisponivel} = ${desfalqueOperacional}`
+                      : diferenca > 0
+                        ? `Sobra: ${totalDisponivel} - ${metricas.quadroNecessario} = ${diferenca}`
+                        : 'Quadro completo'}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
 
             {sumidosInfo.total > 0 ? (
               <Popover>
