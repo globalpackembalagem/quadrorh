@@ -216,6 +216,47 @@
   }
 
   /* TEMA 5 — PREMIUM BLACK */
+  .selecao-brasileira {
+    --background: 76 58% 95%;
+    --foreground: 213 61% 16%;
+    --card: 0 0% 100%;
+    --card-foreground: 213 61% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 61% 16%;
+    --primary: 143 100% 31%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 52 100% 86%;
+    --secondary-foreground: 213 61% 16%;
+    --muted: 76 35% 90%;
+    --muted-foreground: 213 24% 38%;
+    --accent: 52 100% 50%;
+    --accent-foreground: 213 61% 16%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 143 100% 31%;
+    --success-foreground: 0 0% 100%;
+    --warning: 52 100% 46%;
+    --warning-foreground: 213 61% 16%;
+    --info: 218 100% 36%;
+    --info-foreground: 0 0% 100%;
+    --border: 76 28% 82%;
+    --input: 76 28% 82%;
+    --ring: 143 100% 31%;
+    --sidebar-background: 143 86% 20%;
+    --sidebar-foreground: 52 100% 92%;
+    --sidebar-primary: 52 100% 50%;
+    --sidebar-primary-foreground: 143 86% 17%;
+    --sidebar-accent: 143 68% 26%;
+    --sidebar-accent-foreground: 52 100% 92%;
+    --sidebar-border: 143 58% 30%;
+    --sidebar-ring: 52 100% 50%;
+    --chart-1: 143 100% 31%;
+    --chart-2: 52 100% 46%;
+    --chart-3: 218 100% 36%;
+    --chart-4: 196 76% 45%;
+    --chart-5: 0 0% 100%;
+  }
+
   .dark.premium-black {
     --background: 0 0% 4%;
     --foreground: 0 0% 100%;
