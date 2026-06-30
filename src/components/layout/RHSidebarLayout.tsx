@@ -142,7 +142,7 @@ function getNavigationForUser(
     ?.normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toUpperCase();
-  const podeVerHistoricoQuadro = false;
+  const podeVerHistoricoQuadro = isAdmin || !perms || perms.pode_visualizar_funcionarios || perms.pode_editar_funcionarios;
 
   // REAL PARCERIA: acesso pontual, sempre em modo visualização
   if (userName?.toUpperCase() === 'REAL PARCERIA') {

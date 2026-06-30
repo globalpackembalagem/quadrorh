@@ -88,6 +88,7 @@ const FakeQuadro = lazyRetry(() => import("./pages/admin/FakeQuadro"));
 const ArmariosFemininos = lazyRetry(() => import("./pages/ArmariosFemininos"));
 const ManualArmarios = lazyRetry(() => import("./pages/ManualArmarios"));
 const ArmariosFemininoCadastro = lazyRetry(() => import("./pages/ArmariosFemininoCadastro"));
+const HistoricoQuadro = lazyRetry(() => import("./pages/HistoricoQuadro"));
 
 
 export const queryClient = new QueryClient({
@@ -179,7 +180,7 @@ function LayoutRouter() {
             <Route path="/home" element={<Home />} />
             <Route path="/" element={<Navigate to="/home" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/historico-quadro" element={<HistoricoQuadroInativo />} />
+            <Route path="/historico-quadro" element={<HistoricoQuadro />} />
             <Route path="/experiencia-geral" element={<RotaProtegida requireFaltas><ExperienciaGeral /></RotaProtegida>} />
             
             <Route path="/funcionarios" element={<RotaProtegida requireFuncionarios><Funcionarios /></RotaProtegida>} />
