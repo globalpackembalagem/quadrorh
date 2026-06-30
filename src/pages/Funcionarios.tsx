@@ -387,6 +387,7 @@ export default function Funcionarios() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importarTurmasOpen, setImportarTurmasOpen] = useState(false);
   const [turmaFilter, setTurmaFilter] = useFilterPersistence<string>('func_turma', 'TODOS');
+  const [situacaoFilter, setSituacaoFilter] = useFilterPersistence<string>('func_situacao', 'TODAS');
   const [grupoFilter, setGrupoFilter] = useFilterPersistence<'TODOS' | 'SOPRO' | 'DECORACAO' | 'AJUSTAR_SITUACAO'>('func_grupo', 'TODOS');
   const [editingFuncionario, setEditingFuncionario] = useState<Funcionario | null>(null);
 
@@ -511,6 +512,9 @@ export default function Funcionarios() {
         result = result.filter(f => f.turma === turmaFilter);
       }
     }
+    if (situacaoFilter !== 'TODAS') {
+      result = result.filter(f => f.situacao_id === situacaoFilter);
+    }
     if (debouncedSearch) {
       const s = debouncedSearch.toLowerCase();
       result = result.filter(f =>
@@ -519,7 +523,7 @@ export default function Funcionarios() {
       );
     }
     return result;
-  }, [funcionariosDoGrupo, debouncedSearch, turmaFilter]);
+  }, [funcionariosDoGrupo, debouncedSearch, turmaFilter, situacaoFilter]);
 
   // Agrupado por turma para a view do gestor
   const funcionariosPorTurma = useMemo(() => {
@@ -1111,6 +1115,20 @@ export default function Funcionarios() {
                 <X className="h-3 w-3" />
               </Button>
             )}
+          </div>
+
+          <div className="max-w-md">
+            <Select value={situacaoFilter} onValueChange={setSituacaoFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Situacao" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TODAS">Todas as situacoes</SelectItem>
+                {todasSituacoes.map(s => (
+                  <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Filtro por grupo (SOPRO / DECORAÇÃO) + Turma */}
