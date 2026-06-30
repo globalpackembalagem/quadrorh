@@ -52,6 +52,19 @@ const matchGrupoFiltro = (setorNome: string, filtros: string[]) => {
   return filtros.includes(grupo);
 };
 
+const isDecoracaoModDiaNoite = (setorNome: string | undefined | null): boolean => {
+  const nome = (setorNome || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return nome.includes('DECORACAO') &&
+    nome.includes('MOD') &&
+    (nome.includes('DIA') || nome.includes('NOITE'));
+};
+
 /** Detectar local padrão baseado no setor */
 const detectarLocalPadrao = (setorNome: string | undefined | null): string => {
   if (!setorNome) return 'SOPRO';
@@ -420,6 +433,7 @@ export default function ArmariosFemininos() {
     const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     return funcionariasAtivas
       .filter(f => f.armario_numero === null)
+      .filter(f => !isDecoracaoModDiaNoite((f.setor as any)?.nome || ''))
       .filter(f => !isGestor || gestorSetoresIds.includes(f.setor_id))
       .filter(f => matchGrupoFiltro((f.setor as any)?.nome || '', filtrosSemArmario))
       .filter(f => {
@@ -437,6 +451,7 @@ export default function ArmariosFemininos() {
     const q = normalize(buscaCadastro);
     return funcionariasAtivas
       .filter(f => !comArmarioIds.has(f.id))
+      .filter(f => !isDecoracaoModDiaNoite((f.setor as any)?.nome || ''))
       .filter(f => !isGestor || gestorSetoresIds.includes(f.setor_id))
       .filter(f => q === '' ||
         normalize(f.nome_completo).includes(q) ||
@@ -838,9 +853,10 @@ export default function ArmariosFemininos() {
 
   // Stats
   const stats = useMemo(() => {
-    const totalFunc = funcionariasAtivas.filter(f => !isGestor || gestorSetoresIds.includes(f.setor_id)).length;
-    const comArmario = funcionariasAtivas.filter(f => (!isGestor || gestorSetoresIds.includes(f.setor_id)) && f.armario_numero && f.armario_numero > 0).length;
-    const naoTem = funcionariasAtivas.filter(f => (!isGestor || gestorSetoresIds.includes(f.setor_id)) && f.armario_numero !== null && f.armario_numero !== undefined && f.armario_numero < 0).length;
+    const funcionariasContagem = funcionariasAtivas.filter(f => !isDecoracaoModDiaNoite((f.setor as any)?.nome || ''));
+    const totalFunc = funcionariasContagem.filter(f => !isGestor || gestorSetoresIds.includes(f.setor_id)).length;
+    const comArmario = funcionariasContagem.filter(f => (!isGestor || gestorSetoresIds.includes(f.setor_id)) && f.armario_numero && f.armario_numero > 0).length;
+    const naoTem = funcionariasContagem.filter(f => (!isGestor || gestorSetoresIds.includes(f.setor_id)) && f.armario_numero !== null && f.armario_numero !== undefined && f.armario_numero < 0).length;
     return { total: totalFunc + prestadoresComArmario.length, comArmario: comArmario + prestadoresComArmario.length, semArmario: totalFunc - comArmario - naoTem, naoTem, prestadores: prestadoresComArmario.length };
   }, [funcionariasAtivas, prestadoresComArmario, isGestor, gestorSetoresIds]);
 
