@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-export type Theme = 'claro' | 'global-blue' | 'selecao-brasileira';
+export type Theme = 'claro' | 'global-blue';
 
 export interface ThemeOption {
   id: Theme;
@@ -22,13 +22,8 @@ export const THEME_OPTIONS: ThemeOption[] = [
   },
   {
     id: 'global-blue',
-    label: 'AZUL ATUAL',
-    colors: { background: '#EBF0F7', sidebar: '#1E2D4D', card: '#F4F7FB', text: '#1B2840', primary: '#2059C8' },
-  },
-  {
-    id: 'selecao-brasileira',
     label: 'SELEÇÃO BRASILEIRA',
-    colors: { background: '#F4F9E9', sidebar: '#075E2B', card: '#FFFFFF', text: '#102A43', primary: '#009C3B' },
+    colors: { background: '#F2F7FB', sidebar: '#2F5F8F', card: '#FFFFFF', text: '#102A43', primary: '#3E7CB1' },
   },
 ];
 
@@ -39,7 +34,7 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType>({ theme: 'claro', setTheme: () => {} });
 
-const ALL_THEMES: Theme[] = ['claro', 'global-blue', 'selecao-brasileira'];
+const ALL_THEMES: Theme[] = ['claro', 'global-blue'];
 const THEME_STORAGE_KEY = 'app-theme-v2';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -54,9 +49,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     
     if (theme === 'global-blue') {
       root.classList.add('global-blue');
-    }
-    if (theme === 'selecao-brasileira') {
-      root.classList.add('selecao-brasileira');
     }
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
