@@ -36,6 +36,49 @@ function normalizarTextoHistorico(valor: unknown): string {
   return String(valor).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
 }
 
+function situacaoRetornaAutomaticoParaAtivo(nome?: string | null): boolean {
+  const normalizado = normalizarTextoHistorico(nome);
+  return normalizado === 'FERIAS'
+    || normalizado.includes('TREINAMENTO')
+    || normalizado.includes('COBERTURA')
+    || normalizado.includes('COB FERIAS')
+    || normalizado.includes('COB. FERIAS');
+}
+
+async function retornarSituacoesVencidasParaAtivo(funcionarios: Funcionario[]) {
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+
+  const vencidos = funcionarios.filter((funcionario) => {
+    if (!funcionario.cobertura_data_fim) return false;
+    if (!situacaoRetornaAutomaticoParaAtivo(funcionario.situacao?.nome)) return false;
+
+    const fim = new Date(`${funcionario.cobertura_data_fim}T00:00:00`);
+    return !Number.isNaN(fim.getTime()) && fim < hoje;
+  });
+
+  if (vencidos.length === 0) return;
+
+  const { data: situacaoAtivo, error: situacaoError } = await supabase
+    .from('situacoes')
+    .select('id')
+    .eq('nome', 'ATIVO')
+    .single();
+
+  if (situacaoError || !situacaoAtivo?.id) return;
+
+  await supabase
+    .from('funcionarios')
+    .update({
+      situacao_id: situacaoAtivo.id,
+      cobertura_funcionario_id: null,
+      cobertura_data_inicio: null,
+      cobertura_data_fim: null,
+      treinamento_setor_id: null,
+    })
+    .in('id', vencidos.map(f => f.id));
+}
+
 function areaDoFuncionario(funcionario: any): 'SOPRO' | 'DECORACAO' | null {
   const texto = normalizarTextoHistorico(`${funcionario?.setor?.nome || ''} ${funcionario?.setor?.grupo || ''}`);
   if (texto.includes('DECORACAO')) return 'DECORACAO';
@@ -201,6 +244,7 @@ export function useFuncionariosNoQuadro() {
         }
       }
       
+      await retornarSituacoesVencidasParaAtivo(allData);
       return allData;
     },
   });
