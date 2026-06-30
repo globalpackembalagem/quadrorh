@@ -159,6 +159,14 @@ export default function CoberturasTreinamentos() {
       toast.error('Selecione o funcionário e a situação.');
       return;
     }
+    if (!novoFormData.cobertura_data_inicio || !novoFormData.cobertura_data_fim) {
+      toast.error('Informe data de inicio e data de termino.');
+      return;
+    }
+    if (novoFormData.cobertura_data_inicio > novoFormData.cobertura_data_fim) {
+      toast.error('Data de inicio nao pode ser maior que data de termino.');
+      return;
+    }
     try {
       const { data: funcionarioAntes } = await supabase
         .from('funcionarios')
@@ -205,6 +213,15 @@ export default function CoberturasTreinamentos() {
 
   const handleSave = async () => {
     if (!editingFunc) return;
+
+    if (!formData.cobertura_data_inicio || !formData.cobertura_data_fim) {
+      toast.error('Informe data de inicio e data de termino.');
+      return;
+    }
+    if (formData.cobertura_data_inicio > formData.cobertura_data_fim) {
+      toast.error('Data de inicio nao pode ser maior que data de termino.');
+      return;
+    }
 
     try {
       await updateFuncionario.mutateAsync({

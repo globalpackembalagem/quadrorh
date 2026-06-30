@@ -21,6 +21,10 @@ interface FuncionarioBase {
   situacao?: {
     nome?: string | null;
   } | null;
+  setor?: {
+    nome?: string | null;
+    conta_no_quadro?: boolean | null;
+  } | null;
   situacao_conta_no_quadro?: boolean;
 }
 
@@ -272,6 +276,7 @@ export function DashboardFaltasDiario({
   };
 
   const contaNoQuadroNaData = (func: FuncionarioBase, dataStr: string): boolean => {
+    if (func.setor?.conta_no_quadro === false) return false;
     if (func.situacao_conta_no_quadro !== false) return true;
     if (situacaoTemporariaUsaPeriodo(func) && !isDentroPeriodoEspecial(func, dataStr)) return true;
     return false;
