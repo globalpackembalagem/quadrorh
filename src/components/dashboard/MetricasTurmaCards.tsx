@@ -353,7 +353,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
         const percentHomens = metricas.total > 0 ? Math.round((metricas.homens / metricas.total) * 100) : 0;
         const percentMulheres = metricas.total > 0 ? Math.round((metricas.mulheres / metricas.total) * 100) : 0;
         const diferenca = totalAjustado - metricas.quadroNecessario;
-        const sumidosInfo = sumidosPorTurma[turma];
+        const sumidosInfo = sumidosPorTurma[turma] || { total: 0, nomes: [] };
         
         return (
           <div 
@@ -435,7 +435,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
               )}
             </div>
 
-            {sumidosInfo && sumidosInfo.total > 0 && (
+            {sumidosInfo.total > 0 ? (
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="mt-2 flex w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-[#E53935]/30 bg-[#FDECEC] px-2 py-2 text-[11px] font-semibold text-[#E53935] transition-colors hover:bg-[#F9DCDC] sm:px-3 sm:text-sm">
@@ -459,6 +459,14 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                   </div>
                 </PopoverContent>
               </Popover>
+            ) : (
+              <div className="mt-2 flex w-full items-center justify-between gap-1.5 rounded-xl border border-[#E5E7EB] bg-[#F4F8FF] px-2 py-2 text-[11px] font-semibold text-[#6B7280] sm:px-3 sm:text-sm">
+                <div className="flex items-center gap-2">
+                  <UserX className="h-4 w-4 shrink-0" />
+                  <span>SUMIDOS</span>
+                </div>
+                <span className="text-base font-bold sm:text-lg">0</span>
+              </div>
             )}
 
             {/* Previsão de Admissão - sempre visível */}

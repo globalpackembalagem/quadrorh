@@ -629,12 +629,6 @@ export default function Funcionarios() {
       'PEDIDO DE DEMISSAO', 'TERMINO CONTRATO', 'TERMINO DE CONTRATO',
     ];
 
-    // Validação: SUMIDO exige data obrigatória
-    if (situacaoNome.toUpperCase().includes('SUMIDO') && !sumidoDesde) {
-      toast.error('Para situação SUMIDO, informe a data obrigatoriamente');
-      return;
-    }
-
     const cpfFormatado = cpf.trim() ? formatarCpf(cpf) : null;
     if (!situacoesSemCpfObrigatorio.includes(situacaoNormalizada) && !cpfFormatado) {
       toast.error('CPF E OBRIGATORIO PARA FUNCIONARIO ATUAL.');
