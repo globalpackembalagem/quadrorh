@@ -88,8 +88,10 @@ export function LiberarDatasDialog({ open, onOpenChange, setores, periodo }: Lib
       toast.success(`${selectedDatas.size} data(s) liberada(s) para ${selectedSetores.size} setor(es)! Expira em 24h.`);
       setSelectedSetores(new Set());
       setSelectedDatas(new Set());
-    } catch {
-      toast.error('Erro ao liberar datas');
+    } catch (error) {
+      console.error('Erro ao liberar datas:', error);
+      const message = error instanceof Error ? error.message : 'Erro ao liberar datas';
+      toast.error(message);
     }
   };
 
