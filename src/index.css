@@ -11,6 +11,17 @@
 /* Sistema de Controle de Quadro - Design System Profissional */
 
 @layer base {
+  .home-premium-dashboard {
+    position: relative;
+    isolation: isolate;
+    background:
+      radial-gradient(circle at 12% 18%, rgba(0, 87, 217, 0.03) 0 90px, transparent 91px),
+      radial-gradient(circle at 88% 8%, rgba(25, 118, 210, 0.03) 0 120px, transparent 121px),
+      linear-gradient(135deg, rgba(0, 87, 217, 0.03) 0 1px, transparent 1px),
+      #F5F8FC;
+    background-size: auto, auto, 42px 42px, auto;
+  }
+
   /* TEMA 1 — CLARO AZUL CORPORATIVO (PADRÃO) */
   :root {
     --background: 210 20% 96%;

@@ -357,10 +357,10 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
         return (
           <div 
             key={turma} 
-            className="rounded-xl border-2 border-border/50 bg-gradient-to-br from-card to-muted/20 p-4 sm:p-5 shadow-md hover:shadow-lg transition-all duration-200"
+            className="rounded-[20px] border border-[#E7EDF7] bg-white p-5 shadow-[0_10px_30px_rgba(0,0,0,.08)] transition-all duration-200 hover:-translate-y-[3px] hover:shadow-[0_16px_38px_rgba(0,87,217,.14)] sm:p-6"
           >
              <div className="flex items-center justify-between gap-3 mb-3">
-              <div className="min-w-0 truncate text-sm sm:text-base font-bold text-foreground">
+              <div className="min-w-0 truncate text-sm font-bold text-[#1F2937] sm:text-base">
                 {TURMAS_LABELS[turma]}
                 {trabalhaHoje !== null && (
                   <div className={cn(
@@ -392,18 +392,18 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                     <AlertTriangle className="h-4 w-4" />
                   </button>
                 )}
-                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
-                  <Users className="h-5 w-5 text-primary" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EAF3FF]">
+                  <Users className="h-5 w-5 text-[#0057D9]" />
                 </div>
               </div>
             </div>
             
             {/* Quadro Real e Necessário */}
             <div className="flex items-baseline gap-2 mb-2">
-              <div className="text-4xl font-bold text-foreground tabular-nums">
+              <div className="text-[42px] font-bold leading-none text-[#0057D9] tabular-nums">
                 {totalAjustado}
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-sm font-medium text-[#6B7280]">
                 / {metricas.quadroNecessario}
               </div>
             </div>
@@ -411,10 +411,10 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
             
             {/* Indicador de Sobra/Desfalque */}
             <div className={cn(
-              "flex items-center gap-1.5 px-2 py-1 rounded-md text-xs sm:text-sm font-semibold",
-              diferenca > 0 && "bg-success text-success-foreground",
-              diferenca < 0 && "bg-destructive/10 text-destructive",
-              diferenca === 0 && "bg-muted text-muted-foreground"
+              "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold sm:text-sm",
+              diferenca > 0 && "bg-[#0057D9] text-white",
+              diferenca < 0 && "bg-[#FDECEC] text-[#E53935]",
+              diferenca === 0 && "bg-[#EAF8EF] text-[#1FA750]"
             )}>
               {diferenca > 0 ? (
                 <>
@@ -438,7 +438,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
             {treinamentoCardItems.length > 0 ? (
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="flex items-center justify-between gap-1.5 px-2 sm:px-3 py-2 mt-2 rounded-lg border border-warning/30 bg-warning/5 text-[11px] sm:text-sm font-semibold text-warning hover:bg-warning/15 transition-colors cursor-pointer w-full">
+                  <button className="mt-2 flex w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-[#FFC107]/40 bg-[#FFF8E1] px-2 py-2 text-[11px] font-semibold text-[#FFC107] transition-colors hover:bg-[#FFF3C4] sm:px-3 sm:text-sm">
                     <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                       <GraduationCap className="h-4 w-4 shrink-0" />
                       <span className="truncate whitespace-nowrap">EM TREINAMENTO (2 DIAS)</span>
@@ -463,7 +463,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                 </PopoverContent>
               </Popover>
             ) : (
-              <div className="flex items-center justify-between gap-1.5 px-2 sm:px-3 py-2 mt-2 rounded-lg border border-warning/30 bg-warning/5 text-[11px] sm:text-sm font-semibold text-warning w-full">
+              <div className="mt-2 flex w-full items-center justify-between gap-1.5 rounded-xl border border-[#FFC107]/40 bg-[#FFF8E1] px-2 py-2 text-[11px] font-semibold text-[#FFC107] sm:px-3 sm:text-sm">
                 <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
                   <GraduationCap className="h-4 w-4 shrink-0" />
                   <span className="truncate whitespace-nowrap">EM TREINAMENTO (2 DIAS)</span>
@@ -475,7 +475,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
             {metricas.previsoes > 0 ? (
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="flex items-center justify-between gap-1.5 px-2 sm:px-3 py-2 mt-2 mb-3 rounded-lg border border-primary/30 bg-primary/5 text-[11px] sm:text-sm font-semibold text-primary hover:bg-primary/15 transition-colors cursor-pointer w-full">
+                  <button className="mb-3 mt-2 flex w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-[#1976D2]/30 bg-[#EAF3FF] px-2 py-2 text-[11px] font-semibold text-[#1976D2] transition-colors hover:bg-[#DCEBFF] sm:px-3 sm:text-sm">
                     <div className="flex items-center gap-2">
                       <UserPlus className="h-4 w-4 shrink-0" />
                       <span>PREVISÃO</span>
@@ -508,7 +508,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                 </PopoverContent>
               </Popover>
             ) : (
-              <div className="flex items-center justify-between gap-1.5 px-2 sm:px-3 py-2 mt-2 mb-3 rounded-lg border border-muted bg-muted/30 text-[11px] sm:text-sm font-semibold text-muted-foreground w-full">
+              <div className="mb-3 mt-2 flex w-full items-center justify-between gap-1.5 rounded-xl border border-[#E5E7EB] bg-[#F4F8FF] px-2 py-2 text-[11px] font-semibold text-[#6B7280] sm:px-3 sm:text-sm">
                 <div className="flex items-center gap-2">
                   <UserPlus className="h-4 w-4 shrink-0" />
                   <span>PREVISÃO</span>
@@ -599,25 +599,25 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
             )}
             
             <div className="space-y-2">
-              <div className="flex items-center justify-between p-2 rounded-lg bg-chart-1/10">
+              <div className="flex items-center justify-between rounded-xl bg-[#F4F8FF] p-2.5">
                 <div className="flex items-center gap-2">
-                  <UserRound className="h-4 w-4 text-chart-1" />
-                  <span className="text-sm font-medium text-foreground">HOMENS</span>
+                  <UserRound className="h-4 w-4 text-[#0057D9]" />
+                  <span className="text-sm font-medium text-[#1F2937]">HOMENS</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-chart-1">{metricas.homens}</span>
-                  <span className="text-xs text-muted-foreground">({percentHomens}%)</span>
+                  <span className="text-lg font-bold text-[#0057D9]">{metricas.homens}</span>
+                  <span className="text-xs text-[#6B7280]">({percentHomens}%)</span>
                 </div>
               </div>
               
-              <div className="flex items-center justify-between p-2 rounded-lg bg-chart-5/10">
+              <div className="flex items-center justify-between rounded-xl bg-[#FAF5FF] p-2.5">
                 <div className="flex items-center gap-2">
-                  <UserRoundCheck className="h-4 w-4 text-chart-5" />
-                  <span className="text-sm font-medium text-foreground">MULHERES</span>
+                  <UserRoundCheck className="h-4 w-4 text-[#7E57C2]" />
+                  <span className="text-sm font-medium text-[#1F2937]">MULHERES</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-chart-5">{metricas.mulheres}</span>
-                  <span className="text-xs text-muted-foreground">({percentMulheres}%)</span>
+                  <span className="text-lg font-bold text-[#7E57C2]">{metricas.mulheres}</span>
+                  <span className="text-xs text-[#6B7280]">({percentMulheres}%)</span>
                 </div>
               </div>
             </div>
