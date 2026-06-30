@@ -39,6 +39,7 @@ import {
   Shield,
   Heart,
   MessageCircle,
+  Activity,
 } from 'lucide-react';
 import { SessionTimer } from '@/components/layout/SessionTimer';
 import { ThemeSelectorButton } from '@/components/layout/ThemeSelectorButton';
@@ -119,6 +120,7 @@ const adminNavigation = [
   { name: 'TIPOS DESLIGAMENTO', href: '/admin/tipos-desligamento', icon: UserMinus },
   { name: 'PERÍODOS', href: '/admin/periodos', icon: Clock },
   { name: 'USUÁRIOS', href: '/admin/usuarios', icon: UserCog },
+  { name: 'ACESSOS USUÁRIOS', href: '/admin/acessos-usuarios', icon: Activity },
   { name: 'BACKUP', href: '/admin/backup', icon: Database },
   { name: 'REFERÊNCIA', href: '/admin/referencia', icon: Lightbulb },
   { name: 'MANUAL DO GESTOR', href: '/manual', icon: BookOpen },

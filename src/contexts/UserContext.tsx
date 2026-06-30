@@ -1,4 +1,5 @@
-import { createContext, useContext, ReactNode, useState, useCallback } from 'react';
+import { createContext, useContext, ReactNode, useState, useCallback, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface UsuarioLocal {
   id: string;
@@ -87,6 +88,7 @@ const VISUALIZACAO_USER: UsuarioLocal = {
 const SESSION_EXPIRY_KEY = 'usuario_sessao_expira';
 const SESSION_MAX_HOURS = 12; // Sessão expira após 12 horas
 const APP_VERSION = '2.7'; // Incrementar quando a estrutura do UsuarioLocal mudar
+const ACESSO_ATUAL_KEY = 'acesso_usuario_atual_id';
 
 // Valida que o objeto tem os campos mínimos obrigatórios
 function isValidUsuarioLocal(obj: any): obj is UsuarioLocal {
@@ -145,6 +147,43 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const usuarioAtual = usuarioLogado || VISUALIZACAO_USER;
   const isRHMode = usuarioLogado !== null;
 
+  const finalizarAcessoAtual = useCallback(async () => {
+    const acessoId = localStorage.getItem(ACESSO_ATUAL_KEY);
+    if (!acessoId) return;
+
+    localStorage.removeItem(ACESSO_ATUAL_KEY);
+    const agora = new Date().toISOString();
+    const { error } = await (supabase as any)
+      .from('acessos_usuarios')
+      .update({ logout_em: agora, ultima_atividade_em: agora })
+      .eq('id', acessoId)
+      .is('logout_em', null);
+
+    if (error) console.warn('[UserContext] Erro ao finalizar acesso:', error);
+  }, []);
+
+  const registrarNovoAcesso = useCallback(async (usuario: UsuarioLocal) => {
+    if (!usuario?.id || usuario.id === 'visualizacao') return;
+
+    await finalizarAcessoAtual();
+    const { data, error } = await (supabase as any)
+      .from('acessos_usuarios')
+      .insert({
+        user_role_id: usuario.id,
+        origem: 'web',
+        user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+      })
+      .select('id')
+      .single();
+
+    if (error) {
+      console.warn('[UserContext] Erro ao registrar acesso:', error);
+      return;
+    }
+
+    if (data?.id) localStorage.setItem(ACESSO_ATUAL_KEY, data.id);
+  }, [finalizarAcessoAtual]);
+
   const setUsuarioAtual = useCallback((usuario: UsuarioLocal | null) => {
     if (usuario) {
       const now = Date.now();
@@ -157,14 +196,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('login_timestamp', String(now));
       console.log('[UserContext] Login:', usuario.nome, '| timestamp:', now);
       setUsuarioLogado(usuario);
+      void registrarNovoAcesso(usuario);
     } else {
       setUsuarioLogado(null);
       localStorage.removeItem('usuario_logado');
       localStorage.removeItem(SESSION_EXPIRY_KEY);
       localStorage.removeItem('ultima_atividade_ts');
       localStorage.removeItem('login_timestamp');
+      void finalizarAcessoAtual();
     }
-  }, []);
+  }, [finalizarAcessoAtual, registrarNovoAcesso]);
 
   // Mantido para compatibilidade com código legado
   const entrarModoRH = useCallback((_senha: string): boolean => {
@@ -181,7 +222,33 @@ export function UserProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('ultima_atividade_ts');
     localStorage.removeItem('force_logout_checked_at');
     localStorage.removeItem('login_timestamp');
-  }, []);
+    void finalizarAcessoAtual();
+  }, [finalizarAcessoAtual]);
+
+  useEffect(() => {
+    if (!usuarioLogado?.id || usuarioLogado.id === 'visualizacao') return;
+
+    const atualizarAtividade = async () => {
+      const acessoId = localStorage.getItem(ACESSO_ATUAL_KEY);
+      if (!acessoId) return;
+
+      const { error } = await (supabase as any)
+        .from('acessos_usuarios')
+        .update({ ultima_atividade_em: new Date().toISOString() })
+        .eq('id', acessoId);
+
+      if (error) console.warn('[UserContext] Erro ao atualizar atividade:', error);
+    };
+
+    void atualizarAtividade();
+    const interval = window.setInterval(() => void atualizarAtividade(), 5 * 60 * 1000);
+    window.addEventListener('focus', atualizarAtividade);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener('focus', atualizarAtividade);
+    };
+  }, [usuarioLogado?.id]);
 
   // Verificar se pode acessar um setor específico
   const podeAcessarSetor = useCallback((setorId: string) => {

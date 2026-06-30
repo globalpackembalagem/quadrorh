@@ -80,6 +80,7 @@ const Simulacao = lazyRetry(() => import("./pages/admin/Simulacao"));
 const ManualGestor = lazyRetry(() => import("./pages/ManualGestor"));
 const ExperienciaGeral = lazyRetry(() => import("./pages/ExperienciaGeral"));
 const Auditoria = lazyRetry(() => import("./pages/admin/Auditoria"));
+const AcessosUsuarios = lazyRetry(() => import("./pages/admin/AcessosUsuarios"));
 const HistoricoAcesso = lazyRetry(() => import("./pages/admin/HistoricoAcesso"));
 const ReferenciaComponentes = lazyRetry(() => import("./pages/admin/ReferenciaComponentes"));
 const MockupGate = lazyRetry(() => import("./pages/MockupGate"));
@@ -216,6 +217,7 @@ function LayoutRouter() {
             <Route path="/admin/comparar" element={<RotaProtegida requireAdmin><CompararPlanilhas /></RotaProtegida>} />
             <Route path="/admin/simulacao" element={<RotaProtegida requireAdmin><Simulacao /></RotaProtegida>} />
             <Route path="/admin/auditoria" element={<RotaProtegida requireAdmin><Auditoria /></RotaProtegida>} />
+            <Route path="/admin/acessos-usuarios" element={<RotaProtegida requireAdmin><AcessosUsuarios /></RotaProtegida>} />
             <Route path="/admin/historico-acesso" element={<RotaProtegida requireAdmin><HistoricoAcesso /></RotaProtegida>} />
             <Route path="/admin/referencia" element={<RotaProtegida requireAdmin><ReferenciaComponentes /></RotaProtegida>} />
             <Route path="/admin/fake-quadro" element={<RotaProtegida allowVisualizacao><FakeQuadro /></RotaProtegida>} />
