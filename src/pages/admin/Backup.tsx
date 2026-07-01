@@ -323,7 +323,7 @@ export default function Backup() {
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">O sistema realiza backups automáticos diariamente:</p>
             <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-              <li>Backup diário às 02:00</li>
+              <li>Backup diário às 17:00</li>
               <li>Retenção de 30 dias</li>
               <li>Recuperação automática em caso de falha</li>
               <li>Dados sempre seguros na nuvem</li>
