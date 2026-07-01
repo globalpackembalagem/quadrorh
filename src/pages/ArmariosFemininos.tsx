@@ -183,11 +183,35 @@ export default function ArmariosFemininos() {
   const salvarConfigMutation = useMutation({
     mutationFn: async (values: Record<string, number>) => {
       for (const [local, total] of Object.entries(values)) {
+        const totalFinal = Math.max(0, Math.trunc(total || 0));
+
         const { error } = await supabase
           .from('armarios_config')
-          .update({ total })
+          .update({ total: totalFinal })
           .eq('local', local);
         if (error) throw error;
+
+        if (totalFinal > 0) {
+          const { data: existentes, error: existentesError } = await supabase
+            .from('armarios_femininos')
+            .select('numero')
+            .eq('local', local)
+            .gt('numero', 0)
+            .lte('numero', totalFinal);
+          if (existentesError) throw existentesError;
+
+          const numerosExistentes = new Set((existentes || []).map(a => Number(a.numero)));
+          const faltantes = Array.from({ length: totalFinal }, (_, index) => index + 1)
+            .filter(numero => !numerosExistentes.has(numero))
+            .map(numero => ({ numero, local }));
+
+          if (faltantes.length > 0) {
+            const { error: insertError } = await supabase
+              .from('armarios_femininos')
+              .insert(faltantes);
+            if (insertError) throw insertError;
+          }
+        }
       }
     },
     onSuccess: () => {
