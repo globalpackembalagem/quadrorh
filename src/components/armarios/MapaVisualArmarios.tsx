@@ -33,6 +33,8 @@ const LOCAIS_MAPA = [
   { value: 'CONTAINER', label: 'Container' },
 ];
 
+const normalizarLocal = (local: string | null | undefined) => (local || '').toUpperCase().trim();
+
 export default function MapaVisualArmarios({ armarios, totalArmarios, onEditar, localFixo, onBloquear, onQuebrar, canEdit }: MapaVisualArmariosProps) {
   const [busca, setBusca] = useState('');
   const [selecionado, setSelecionado] = useState<ArmarioData | null>(null);
@@ -56,7 +58,7 @@ export default function MapaVisualArmarios({ armarios, totalArmarios, onEditar, 
 
   // Filtrar armários pelo local selecionado
   const armariosFiltrados = useMemo(() => {
-    return armarios.filter(a => a.local === localSelecionado);
+    return armarios.filter(a => normalizarLocal(a.local) === normalizarLocal(localSelecionado));
   }, [armarios, localSelecionado]);
 
   const armarioMap = useMemo(() => {
@@ -67,7 +69,7 @@ export default function MapaVisualArmarios({ armarios, totalArmarios, onEditar, 
 
   // Total por local do banco de dados
   const maxNumero = useMemo(() => {
-    const config = configLocais.find((c: any) => c.local === localSelecionado);
+    const config = configLocais.find((c: any) => normalizarLocal(c.local) === normalizarLocal(localSelecionado));
     if (config) return (config as any).total;
     const defaults: Record<string, number> = { SOPRO: 400, DECORACAO: 100, CONTAINER: 50 };
     return defaults[localSelecionado] || 100;

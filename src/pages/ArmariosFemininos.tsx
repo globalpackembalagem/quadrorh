@@ -184,18 +184,30 @@ export default function ArmariosFemininos() {
     mutationFn: async (values: Record<string, number>) => {
       for (const [local, total] of Object.entries(values)) {
         const totalFinal = Math.max(0, Math.trunc(total || 0));
+        const localFinal = local.toUpperCase().trim();
 
-        const { error } = await supabase
+        const { data: configExistente, error: configBuscaError } = await supabase
           .from('armarios_config')
-          .update({ total: totalFinal })
-          .eq('local', local);
+          .select('id')
+          .ilike('local', localFinal)
+          .maybeSingle();
+        if (configBuscaError) throw configBuscaError;
+
+        const { error } = configExistente
+          ? await supabase
+            .from('armarios_config')
+            .update({ total: totalFinal, local: localFinal })
+            .eq('id', configExistente.id)
+          : await supabase
+            .from('armarios_config')
+            .insert({ local: localFinal, total: totalFinal });
         if (error) throw error;
 
         if (totalFinal > 0) {
           const { data: existentes, error: existentesError } = await supabase
             .from('armarios_femininos')
             .select('numero')
-            .eq('local', local)
+            .ilike('local', localFinal)
             .gt('numero', 0)
             .lte('numero', totalFinal);
           if (existentesError) throw existentesError;
@@ -203,7 +215,7 @@ export default function ArmariosFemininos() {
           const numerosExistentes = new Set((existentes || []).map(a => Number(a.numero)));
           const faltantes = Array.from({ length: totalFinal }, (_, index) => index + 1)
             .filter(numero => !numerosExistentes.has(numero))
-            .map(numero => ({ numero, local }));
+            .map(numero => ({ numero, local: localFinal }));
 
           if (faltantes.length > 0) {
             const { error: insertError } = await supabase
@@ -216,6 +228,8 @@ export default function ArmariosFemininos() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['armarios-config'] });
+      queryClient.invalidateQueries({ queryKey: ['armarios-mapa-visual'] });
+      queryClient.invalidateQueries({ queryKey: ['armarios-funcionarias-todas'] });
       toast.success('Configuração de armários salva!');
       setConfigDialog(false);
     },
