@@ -80,6 +80,10 @@ const localLabel = (local: string) => {
 // Usuários com acesso total a todos os setores nos armários
 const USUARIOS_ACESSO_TOTAL_ARMARIOS = ['KARINA', 'SONIA', 'GILMARA', 'ELIANE'];
 
+const localKey = (local: string | null | undefined) => (local || '').toUpperCase().trim();
+const armarioKey = (local: string | null | undefined, numero: number | null | undefined) => `${localKey(local)}-${numero}`;
+const mesmoLocal = (localA: string | null | undefined, localB: string | null | undefined) => localKey(localA) === localKey(localB);
+
 export default function ArmariosFemininos() {
   const { isAdmin, isRHMode } = useAuth();
   const { usuarioAtual } = useUsuario();
@@ -297,7 +301,7 @@ export default function ArmariosFemininos() {
         .from('armarios_femininos')
         .select('id, funcionario_id, nome_prestador')
         .eq('numero', numero)
-        .eq('local', local)
+        .ilike('local', localKey(local))
         .maybeSingle();
 
       if (quebrado) {
@@ -500,7 +504,7 @@ export default function ArmariosFemininos() {
   // Salvar número de armário - validação por LOCAL
   const salvarMutation = useMutation({
     mutationFn: async ({ funcionarioId, numero, setorId, local }: { funcionarioId: string; numero: number | null; setorId?: string; local?: string }) => {
-      const localFinal = local || 'SOPRO';
+      const localFinal = localKey(local || 'SOPRO');
 
       // Remove vínculo anterior
       await supabase
@@ -519,7 +523,7 @@ export default function ArmariosFemininos() {
         const { data: minData } = await supabase
           .from('armarios_femininos')
           .select('numero')
-          .eq('local', localFinal)
+          .ilike('local', localFinal)
           .lt('numero', 0)
           .order('numero', { ascending: true })
           .limit(1)
@@ -536,7 +540,7 @@ export default function ArmariosFemininos() {
           .from('armarios_femininos')
           .select('id, funcionario_id')
           .eq('numero', numero)
-          .eq('local', localFinal)
+          .ilike('local', localFinal)
           .maybeSingle();
 
         if (existente && existente.funcionario_id && existente.funcionario_id !== funcionarioId) {
@@ -585,7 +589,7 @@ export default function ArmariosFemininos() {
         .from('armarios_femininos')
         .select('id, funcionario_id, nome_prestador')
         .eq('numero', numero)
-        .eq('local', local)
+        .ilike('local', localKey(local))
         .maybeSingle();
 
       if (existente && existente.id !== id) {
@@ -640,7 +644,7 @@ export default function ArmariosFemininos() {
         .from('armarios_femininos')
         .select('id, funcionario_id, nome_prestador')
         .eq('numero', numero)
-        .eq('local', local)
+        .ilike('local', localKey(local))
         .maybeSingle();
 
       if (bloquear) {
@@ -717,15 +721,15 @@ export default function ArmariosFemininos() {
     const ocupados = new Set(
       armariosParaMapa
         .filter(a => a.numero > 0 && (a.funcionario_id || a.nome_completo || a.bloqueado || a.quebrado))
-        .map(a => `${a.local}-${a.numero}`)
+        .map(a => armarioKey(a.local, a.numero))
     );
     const result: { numero: number; local: string }[] = [];
     const locaisFiltro = filtroLocal !== 'todos' ? [filtroLocal] : LOCAIS.map(l => l.value);
     locaisFiltro.forEach(local => {
-      const config = configLocais.find((c: any) => c.local === local);
+      const config = configLocais.find((c: any) => mesmoLocal(c.local, local));
       const total = config ? (config as any).total : 0;
       for (let i = 1; i <= total; i++) {
-        if (!ocupados.has(`${local}-${i}`)) {
+        if (!ocupados.has(armarioKey(local, i))) {
           result.push({ numero: i, local });
         }
       }
@@ -770,19 +774,19 @@ export default function ArmariosFemininos() {
         if (!q) {
           // Sem busca: somente com armário positivo (comportamento padrão)
           if (f.armario_numero === null || f.armario_numero <= 0) return false;
-          if (filtroLocal !== 'todos' && f.armario_local !== filtroLocal) return false;
+          if (filtroLocal !== 'todos' && !mesmoLocal(f.armario_local, filtroLocal)) return false;
           return matchGrupoFiltro((f.setor as any)?.nome || '', filtrosAtivos);
         }
         
         if (buscaEhNumero) {
           // Busca por número: só mostra quem tem esse armário
           if (!f.armario_numero || f.armario_numero <= 0) return false;
-          if (filtroLocal !== 'todos' && f.armario_local !== filtroLocal) return false;
+          if (filtroLocal !== 'todos' && !mesmoLocal(f.armario_local, filtroLocal)) return false;
           return f.armario_numero.toString().includes(q);
         }
         
         // Busca por nome/matrícula/setor: todas as femininas independente de armário/situação
-        if (filtroLocal !== 'todos' && f.armario_local && f.armario_local !== filtroLocal) return false;
+        if (filtroLocal !== 'todos' && f.armario_local && !mesmoLocal(f.armario_local, filtroLocal)) return false;
         const setorNome = (f.setor as any)?.nome || '';
         return normalize(f.nome_completo).includes(q) ||
           normalize(f.matricula || '').includes(q) ||
@@ -805,7 +809,7 @@ export default function ArmariosFemininos() {
 
     const prestList = prestadoresComArmario
       .filter(p => {
-        if (filtroLocal !== 'todos' && p.local !== filtroLocal) return false;
+        if (filtroLocal !== 'todos' && !mesmoLocal(p.local, filtroLocal)) return false;
         if (q) {
           return normalize(p.nome_prestador || '').includes(q) ||
             normalize(p.matricula || '').includes(q) ||
@@ -831,7 +835,7 @@ export default function ArmariosFemininos() {
 
     const bloqList = armariosBloqueados
       .filter(b => {
-        if (filtroLocal !== 'todos' && b.local !== filtroLocal) return false;
+        if (filtroLocal !== 'todos' && !mesmoLocal(b.local, filtroLocal)) return false;
         if (q) {
           return b.numero.toString().includes(q);
         }
@@ -859,14 +863,14 @@ export default function ArmariosFemininos() {
       const ocupados = new Set(
         armariosParaMapa
           .filter(a => a.numero > 0 && (a.funcionario_id || a.nome_completo || a.bloqueado || a.quebrado))
-          .map(a => `${a.local}-${a.numero}`)
+          .map(a => armarioKey(a.local, a.numero))
       );
       const locaisFiltro = filtroLocal !== 'todos' ? [filtroLocal] : LOCAIS.map(l => l.value);
       locaisFiltro.forEach(local => {
-        const config = configLocais.find((c: any) => c.local === local);
+        const config = configLocais.find((c: any) => mesmoLocal(c.local, local));
         const total = config ? (config as any).total : 0;
         for (let i = 1; i <= total; i++) {
-          if (i.toString().includes(q) && !ocupados.has(`${local}-${i}`)) {
+          if (i.toString().includes(q) && !ocupados.has(armarioKey(local, i))) {
             vazioList.push({
               key: `vazio-${local}-${i}`,
               id: `vazio-${local}-${i}`,
@@ -907,15 +911,15 @@ export default function ArmariosFemininos() {
     const ocupadosSet = new Set(
       armariosParaMapa
         .filter(a => a.numero > 0 && (a.funcionario_id || a.nome_completo || a.bloqueado || a.quebrado))
-        .map(a => `${a.local}-${a.numero}`)
+        .map(a => armarioKey(a.local, a.numero))
     );
 
     locaisFiltro.forEach(local => {
-      const config = configLocais.find((c: any) => c.local === local);
+      const config = configLocais.find((c: any) => mesmoLocal(c.local, local));
       const total = config ? (config as any).total : 0;
       totalArmarios += total;
       for (let i = 1; i <= total; i++) {
-        if (ocupadosSet.has(`${local}-${i}`)) ocupados++;
+        if (ocupadosSet.has(armarioKey(local, i))) ocupados++;
       }
     });
 
@@ -937,7 +941,7 @@ export default function ArmariosFemininos() {
     // Funcionárias com armário
     funcionariasAtivas.forEach(f => {
       if (f.armario_numero && f.armario_numero > 0 && f.armario_local) {
-        armarioMap.set(`${f.armario_local}-${f.armario_numero}`, {
+        armarioMap.set(armarioKey(f.armario_local, f.armario_numero), {
           nome: f.nome_completo,
           matricula: f.matricula || '',
           setor: (f.setor as any)?.nome || '',
@@ -949,7 +953,7 @@ export default function ArmariosFemininos() {
 
     // Prestadores
     prestadoresComArmario.forEach(p => {
-      armarioMap.set(`${p.local}-${p.numero}`, {
+      armarioMap.set(armarioKey(p.local, p.numero), {
         nome: p.nome_prestador || '',
         matricula: p.matricula || '',
         setor: p.setor_prestador || '',
@@ -960,7 +964,7 @@ export default function ArmariosFemininos() {
 
     // Bloqueados e quebrados do mapa
     armariosParaMapa.forEach(a => {
-      const key = `${a.local}-${a.numero}`;
+      const key = armarioKey(a.local, a.numero);
       if (a.quebrado && !armarioMap.has(key)) {
         armarioMap.set(key, { nome: '', matricula: '', setor: '', tipo: '', status: 'Quebrado' });
       } else if (a.bloqueado && !armarioMap.has(key)) {
@@ -973,10 +977,10 @@ export default function ArmariosFemininos() {
     const locaisExport = filtroLocal !== 'todos' ? [filtroLocal] : LOCAIS.map(l => l.value);
     
     locaisExport.forEach(local => {
-      const config = configLocais.find((c: any) => c.local === local);
+      const config = configLocais.find((c: any) => mesmoLocal(c.local, local));
       const total = config ? (config as any).total : 100;
       for (let i = 1; i <= total; i++) {
-        const key = `${local}-${i}`;
+        const key = armarioKey(local, i);
         const info = armarioMap.get(key);
         data.push({
           'Nº Armário': i,
@@ -1040,7 +1044,7 @@ export default function ArmariosFemininos() {
   const renderFeedbackOcupacao = (num: string, localVal: string, funcionarioIdAtual?: string) => {
     const numero = num ? parseInt(num) : null;
     if (!numero || numero < 1 || numero > 999) return null;
-    const ocupante = armariosParaMapa.find(a => a.numero === numero && a.local === localVal);
+    const ocupante = armariosParaMapa.find(a => a.numero === numero && mesmoLocal(a.local, localVal));
     if (ocupante?.funcionario_id && funcionarioIdAtual && ocupante.funcionario_id === funcionarioIdAtual) {
       return (
         <div className="text-xs p-2 rounded bg-primary/10 border border-primary/30 text-primary">
@@ -1099,7 +1103,7 @@ export default function ArmariosFemininos() {
             <Button variant="outline" size="sm" onClick={() => {
               const vals: Record<string, number> = {};
               LOCAIS.forEach(l => {
-                const config = configLocais.find((c: any) => c.local === l.value);
+                const config = configLocais.find((c: any) => mesmoLocal(c.local, l.value));
                 vals[l.value] = config ? (config as any).total : 100;
               });
               setConfigValues(vals);
@@ -1286,7 +1290,7 @@ export default function ArmariosFemininos() {
                         </TableCell>
                         <TableCell className="text-xs">
                           {item.local ? (
-                            <Badge variant={item.local === 'CONTAINER' ? 'outline' : 'secondary'} className="text-xs">
+                            <Badge variant={mesmoLocal(item.local, 'CONTAINER') ? 'outline' : 'secondary'} className="text-xs">
                               {localLabel(item.local)}
                             </Badge>
                           ) : '—'}
@@ -1674,7 +1678,7 @@ export default function ArmariosFemininos() {
                 // Check if it's a prestador (no funcionario_id but has nome_completo from prestador)
                 if (!func && armario.nome_completo && canEdit) {
                   // Find prestador record
-                  const prest = prestadoresComArmario.find(p => p.numero === armario.numero && p.local === armario.local);
+                  const prest = prestadoresComArmario.find(p => p.numero === armario.numero && mesmoLocal(p.local, armario.local));
                   if (prest) {
                     setEditandoPrestador(prest);
                     setPrestadorNome(prest.nome_prestador || '');
@@ -1710,7 +1714,7 @@ export default function ArmariosFemininos() {
                 .from('armarios_femininos')
                 .select('id, funcionario_id, nome_prestador')
                 .eq('numero', numero)
-                .eq('local', local)
+                .ilike('local', localKey(local))
                 .maybeSingle();
 
               if (quebrar) {
