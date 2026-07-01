@@ -190,44 +190,11 @@ export default function ArmariosFemininos() {
         const totalFinal = Math.max(0, Math.trunc(total || 0));
         const localFinal = local.toUpperCase().trim();
 
-        const { data: configExistente, error: configBuscaError } = await supabase
-          .from('armarios_config')
-          .select('id')
-          .ilike('local', localFinal)
-          .maybeSingle();
-        if (configBuscaError) throw configBuscaError;
-
-        const { error } = configExistente
-          ? await supabase
-            .from('armarios_config')
-            .update({ total: totalFinal, local: localFinal })
-            .eq('id', configExistente.id)
-          : await supabase
-            .from('armarios_config')
-            .insert({ local: localFinal, total: totalFinal });
+        const { error } = await supabase.rpc('sincronizar_armarios_femininos' as any, {
+          p_local: localFinal,
+          p_total: totalFinal,
+        });
         if (error) throw error;
-
-        if (totalFinal > 0) {
-          const { data: existentes, error: existentesError } = await supabase
-            .from('armarios_femininos')
-            .select('numero')
-            .ilike('local', localFinal)
-            .gt('numero', 0)
-            .lte('numero', totalFinal);
-          if (existentesError) throw existentesError;
-
-          const numerosExistentes = new Set((existentes || []).map(a => Number(a.numero)));
-          const faltantes = Array.from({ length: totalFinal }, (_, index) => index + 1)
-            .filter(numero => !numerosExistentes.has(numero))
-            .map(numero => ({ numero, local: localFinal }));
-
-          if (faltantes.length > 0) {
-            const { error: insertError } = await supabase
-              .from('armarios_femininos')
-              .insert(faltantes);
-            if (insertError) throw insertError;
-          }
-        }
       }
     },
     onSuccess: () => {
