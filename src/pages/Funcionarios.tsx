@@ -388,6 +388,8 @@ export default function Funcionarios() {
   const [importarTurmasOpen, setImportarTurmasOpen] = useState(false);
   const [turmaFilter, setTurmaFilter] = useFilterPersistence<string>('func_turma', 'TODOS');
   const [situacaoFilter, setSituacaoFilter] = useFilterPersistence<string>('func_situacao', 'TODAS');
+  const [admissaoInicioFilter, setAdmissaoInicioFilter] = useFilterPersistence<string>('func_admissao_inicio', '');
+  const [admissaoFimFilter, setAdmissaoFimFilter] = useFilterPersistence<string>('func_admissao_fim', '');
   const [grupoFilter, setGrupoFilter] = useFilterPersistence<'TODOS' | 'SOPRO' | 'DECORACAO' | 'AJUSTAR_SITUACAO'>('func_grupo', 'TODOS');
   const [editingFuncionario, setEditingFuncionario] = useState<Funcionario | null>(null);
 
@@ -515,6 +517,12 @@ export default function Funcionarios() {
     if (situacaoFilter !== 'TODAS') {
       result = result.filter(f => f.situacao_id === situacaoFilter);
     }
+    if (admissaoInicioFilter) {
+      result = result.filter(f => !!f.data_admissao && f.data_admissao >= admissaoInicioFilter);
+    }
+    if (admissaoFimFilter) {
+      result = result.filter(f => !!f.data_admissao && f.data_admissao <= admissaoFimFilter);
+    }
     if (debouncedSearch) {
       const s = debouncedSearch.toLowerCase();
       result = result.filter(f =>
@@ -523,7 +531,7 @@ export default function Funcionarios() {
       );
     }
     return result;
-  }, [funcionariosDoGrupo, debouncedSearch, turmaFilter, situacaoFilter]);
+  }, [funcionariosDoGrupo, debouncedSearch, turmaFilter, situacaoFilter, admissaoInicioFilter, admissaoFimFilter]);
 
   // Agrupado por turma para a view do gestor
   const funcionariosPorTurma = useMemo(() => {
@@ -1132,6 +1140,21 @@ export default function Funcionarios() {
           </div>
 
           {/* Filtro por grupo (SOPRO / DECORAÇÃO) + Turma */}
+          <div className="grid max-w-md grid-cols-1 gap-2 md:grid-cols-2">
+            <Input
+              type="date"
+              value={admissaoInicioFilter}
+              onChange={e => setAdmissaoInicioFilter(e.target.value)}
+              title="Admissao de"
+            />
+            <Input
+              type="date"
+              value={admissaoFimFilter}
+              onChange={e => setAdmissaoFimFilter(e.target.value)}
+              title="Admissao ate"
+            />
+          </div>
+
           {isAdmin && (
             <div className="rounded-lg border bg-muted/20 p-3 space-y-3">
               {/* Linha 1: Grupos */}
