@@ -48,6 +48,7 @@ const TIPO_BADGE_LABELS: Record<string, string> = {
   evento_sistema_modal: 'AVISO RH',
   evento_sistema_sino: 'AVISO RH', // legado - todos agora são modal
   transferencia_pendente: 'TRANSFERÊNCIA EM ANÁLISE',
+  troca_turno_autorizacao: 'AUTORIZAÇÃO DE TROCA',
   transferencia_realizada: 'TRANSFERÊNCIA REALIZADA',
   divergencia_nova: 'DIVERGÊNCIA',
   divergencia_retorno: 'DIVERGÊNCIA',
@@ -73,6 +74,7 @@ const TIPO_CONFIG: Record<string, { icon: typeof Bell; color: string; bgColor: s
   evento_sistema_modal: { icon: Bell, color: 'text-primary', bgColor: 'bg-primary/5', borderColor: 'border-primary/20', badgeClass: 'bg-primary text-primary-foreground' },
   evento_sistema_sino: { icon: Bell, color: 'text-primary', bgColor: 'bg-primary/5', borderColor: 'border-primary/20', badgeClass: 'bg-primary text-primary-foreground' },
   transferencia_pendente: { icon: ArrowRightLeft, color: 'text-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-950/30', borderColor: 'border-blue-200 dark:border-blue-800', badgeClass: 'bg-blue-600 text-white' },
+  troca_turno_autorizacao: { icon: ArrowRightLeft, color: 'text-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-950/30', borderColor: 'border-blue-200 dark:border-blue-800', badgeClass: 'bg-blue-600 text-white' },
   transferencia_realizada: { icon: CheckCircle2, color: 'text-green-600', bgColor: 'bg-green-50 dark:bg-green-950/30', borderColor: 'border-green-200 dark:border-green-800', badgeClass: 'bg-green-600 text-white' },
   divergencia_nova: { icon: AlertTriangle, color: 'text-orange-600', bgColor: 'bg-orange-50 dark:bg-orange-950/30', borderColor: 'border-orange-200 dark:border-orange-800', badgeClass: 'bg-orange-600 text-white' },
   divergencia_retorno: { icon: RefreshCw, color: 'text-amber-600', bgColor: 'bg-amber-50 dark:bg-amber-950/30', borderColor: 'border-amber-200 dark:border-amber-800', badgeClass: 'bg-amber-600 text-white' },
@@ -802,11 +804,80 @@ export function CentralAvisosModal() {
     }
   }, [userRole?.id, userRole?.nome, marcarCiente]);
 
+  const handleAutorizacaoTroca = useCallback(async (aviso: AvisoNotificacao, autorizado: boolean) => {
+    if (!aviso.referencia_id || !userRole?.id) return;
+
+    const motivo = autorizado ? '' : window.prompt('Informe o motivo para NAO AUTORIZAR a troca:')?.trim();
+    if (!autorizado && !motivo) {
+      toast.error('Motivo obrigatorio para nao autorizar.');
+      return;
+    }
+
+    try {
+      const { data: troca, error: trocaError } = await supabase
+        .from('trocas_turno')
+        .select('id, funcionario:funcionarios!funcionario_id(nome_completo), setor_origem:setores!setor_origem_id(nome), setor_destino:setores!setor_destino_id(nome), turma_origem, turma_destino')
+        .eq('id', aviso.referencia_id)
+        .single();
+
+      if (trocaError || !troca) throw trocaError;
+
+      const updateData: Record<string, any> = {
+        gestor_destino_aprovado: autorizado,
+        gestor_destino_nome: userRole.nome,
+        gestor_destino_aprovado_em: new Date().toISOString(),
+      };
+
+      if (!autorizado) {
+        updateData.status = 'cancelado';
+        updateData.motivo_recusa = motivo;
+        updateData.recusado_por = userRole.nome;
+      }
+
+      const { error: updateError } = await supabase
+        .from('trocas_turno')
+        .update(updateData)
+        .eq('id', aviso.referencia_id);
+
+      if (updateError) throw updateError;
+
+      if (!autorizado) {
+        const nomesDestino = ['LUCIANO', 'SONIA', 'MAURICIO', 'PAULO'];
+        const { data: destinatarios } = await supabase
+          .from('user_roles')
+          .select('id, nome')
+          .eq('ativo', true);
+
+        const funcionarioNome = (troca.funcionario as any)?.nome_completo || 'Funcionario';
+        const origem = (troca.setor_origem as any)?.nome || '-';
+        const destino = (troca.setor_destino as any)?.nome || '-';
+        const selecionados = (destinatarios || []).filter((d: any) =>
+          nomesDestino.some(nome => (d.nome || '').toUpperCase().includes(nome))
+        );
+
+        if (selecionados.length > 0) {
+          await supabase.from('notificacoes').insert(selecionados.map((dest: any) => ({
+            user_role_id: dest.id,
+            tipo: 'troca_turno_resposta',
+            titulo: 'TROCA NAO AUTORIZADA',
+            mensagem: `${userRole.nome} NAO autorizou a troca:\n\n${funcionarioNome.toUpperCase()}\n${origem} -> ${destino}\nMotivo: ${motivo}`,
+            referencia_id: aviso.referencia_id,
+          })));
+        }
+      }
+
+      await marcarCiente(aviso.id);
+      toast.success(autorizado ? 'Troca autorizada.' : 'Troca nao autorizada e gestores notificados.');
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao responder troca.');
+    }
+  }, [userRole?.id, userRole?.nome, marcarCiente]);
+
   // Tipos que exigem confirmação do gestor — NÃO podem ser fechados sem responder
   // RH/Admin NUNCA é bloqueado — pode fechar tudo com CIENTE
   const TIPOS_EXIGEM_CONFIRMACAO = isRHUser 
     ? [] 
-    : ['turma_pendente_consulta'];
+    : ['turma_pendente_consulta', 'troca_turno_autorizacao'];
 
   const handleFecharTodos = useCallback(async () => {
     const avisosSnapshot = [...avisos];
@@ -954,7 +1025,7 @@ export function CentralAvisosModal() {
             const config = getTipoConfig(aviso.tipo, aviso);
             const Icon = config.icon;
             const isCiente = cienteIds.has(aviso.id);
-            const tipoAcao = ['turma_pendente_consulta', 'alerta_temp_sumido'].includes(aviso.tipo) ? aviso.tipo : 'ciente';
+            const tipoAcao = ['turma_pendente_consulta', 'alerta_temp_sumido', 'troca_turno_autorizacao'].includes(aviso.tipo) ? aviso.tipo : 'ciente';
 
             return (
               <div
@@ -981,6 +1052,7 @@ export function CentralAvisosModal() {
                           config.badgeClass,
                           'ring-2 ring-offset-1 ring-offset-card',
                           aviso.tipo === 'transferencia_pendente' && 'ring-blue-400 animate-pulse',
+                          aviso.tipo === 'troca_turno_autorizacao' && 'ring-blue-400 animate-pulse',
                           aviso.tipo === 'transferencia_realizada' && 'ring-green-400',
                           aviso.tipo === 'demissao_lancada' && 'ring-red-400',
                           aviso.tipo === 'pedido_demissao_lancado' && 'ring-red-400',
@@ -990,7 +1062,7 @@ export function CentralAvisosModal() {
                           aviso.tipo === 'admissao_confirmacao' && 'ring-blue-400 animate-pulse',
                           aviso.tipo === 'previsao_confirmacao' && 'ring-purple-400 animate-pulse',
                           tipoAcao === 'turma_pendente_consulta' && 'ring-amber-400 animate-pulse',
-                          !['transferencia_pendente','transferencia_realizada','demissao_lancada','pedido_demissao_lancado','experiencia_consulta','cobertura_treinamento_consulta','divergencia_nova','admissao_confirmacao','previsao_confirmacao','turma_pendente_consulta','alerta_temp_sumido'].includes(aviso.tipo) && 'ring-border',
+                          !['transferencia_pendente','troca_turno_autorizacao','transferencia_realizada','demissao_lancada','pedido_demissao_lancado','experiencia_consulta','cobertura_treinamento_consulta','divergencia_nova','admissao_confirmacao','previsao_confirmacao','turma_pendente_consulta','alerta_temp_sumido'].includes(aviso.tipo) && 'ring-border',
                         )}>
                           {TIPO_BADGE_LABELS[aviso.tipo] || 'AVISO'}
                         </span>
@@ -1027,6 +1099,28 @@ export function CentralAvisosModal() {
                         >
                           <RefreshCw className="h-3.5 w-3.5" />
                           RESPONDER
+                        </Button>
+                      </>
+                    ) : tipoAcao === 'troca_turno_autorizacao' && !isRHUser ? (
+                      <>
+                        <Button
+                          size="sm"
+                          className="gap-1.5 text-xs h-8 bg-green-600 hover:bg-green-700 text-white"
+                          onClick={() => handleAutorizacaoTroca(aviso, true)}
+                          disabled={isCiente}
+                        >
+                          <ThumbsUp className="h-3.5 w-3.5" />
+                          AUTORIZO
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="gap-1.5 text-xs h-8"
+                          onClick={() => handleAutorizacaoTroca(aviso, false)}
+                          disabled={isCiente}
+                        >
+                          <ThumbsDown className="h-3.5 w-3.5" />
+                          NAO AUTORIZO
                         </Button>
                       </>
                     ) : isRHUser ? (

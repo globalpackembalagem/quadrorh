@@ -153,6 +153,43 @@ export function useCriarTrocaTurno() {
           setor_destino_id: variables.setor_destino_id,
         },
       });
+
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('id, setor_id, recebe_notificacoes')
+        .eq('ativo', true)
+        .eq('perfil', 'gestor_setor');
+
+      const { data: rolesSetores } = await supabase
+        .from('user_roles_setores')
+        .select('user_role_id, setor_id')
+        .eq('setor_id', variables.setor_destino_id);
+
+      const destinatarios = new Set<string>();
+      const rolesHabilitadas = new Set<string>();
+      (roles || []).forEach((role: any) => {
+        if (role.recebe_notificacoes === false) return;
+        rolesHabilitadas.add(role.id);
+        if (role.setor_id === variables.setor_destino_id) destinatarios.add(role.id);
+      });
+      (rolesSetores || []).forEach((rel: any) => {
+        if (rolesHabilitadas.has(rel.user_role_id)) destinatarios.add(rel.user_role_id);
+      });
+
+      const tipoLabel = variables.tipo === 'transferencia' ? 'TRANSFERENCIA' : 'TROCA DE TURNO';
+      const observacao = variables.observacoes ? `\nMotivo/observacao RH: ${variables.observacoes}` : '';
+      const notificacoes = Array.from(destinatarios).map(userRoleId => ({
+        user_role_id: userRoleId,
+        tipo: 'troca_turno_autorizacao',
+        titulo: `${tipoLabel} - AUTORIZAR DESTINO`,
+        mensagem: `${funcionario?.nome_completo?.toUpperCase() || 'FUNCIONARIO'}\nOrigem: ${setorOrigem?.nome || '-'}${variables.turma_origem ? ` / ${variables.turma_origem}` : ''}\nDestino: ${setorDestino?.nome || '-'}${variables.turma_destino ? ` / ${variables.turma_destino}` : ''}${observacao}`,
+        referencia_id: data.id,
+      }));
+
+      if (notificacoes.length > 0) {
+        const { error: notifError } = await supabase.from('notificacoes').insert(notificacoes);
+        if (notifError) console.error('Erro ao notificar gestor destino da troca:', notifError);
+      }
     },
     onError: () => {
       toast.error('Erro ao criar movimentação');
