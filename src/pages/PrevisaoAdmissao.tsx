@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { useFuncionarios, useUpdateFuncionario, useDeleteFuncionario } from '@/hooks/useFuncionarios';
 import { useSetorFilter } from '@/hooks/useSetorFilter';
 import { criarEventoSistema } from '@/hooks/useEventosSistema';
+import { supabase } from '@/integrations/supabase/client';
 import { useCreateTreinamento } from '@/hooks/useTreinamentosPrevisao';
 import { useSituacoesAtivas } from '@/hooks/useSituacoes';
 import { useSetoresAtivos } from '@/hooks/useSetores';
