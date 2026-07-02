@@ -652,19 +652,34 @@ export default function ArmariosFemininos() {
   });
   // Liberar armário (remover funcionário)
   const liberarArmarioMutation = useMutation({
-    mutationFn: async (armarioId: string) => {
-      const { error } = await supabase
-        .from('armarios_femininos')
-        .update({ funcionario_id: null })
-        .eq('id', armarioId);
-      if (error) throw error;
+    mutationFn: async ({ armarioId, funcionarioId }: { armarioId?: string | null; funcionarioId?: string | null }) => {
+      const updateLivre = {
+        funcionario_id: null,
+        observacoes: 'Liberado manualmente',
+      };
+
+      if (funcionarioId) {
+        const { error } = await supabase
+          .from('armarios_femininos')
+          .update(updateLivre)
+          .eq('funcionario_id', funcionarioId);
+        if (error) throw error;
+      }
+
+      if (armarioId) {
+        const { error } = await supabase
+          .from('armarios_femininos')
+          .update(updateLivre)
+          .eq('id', armarioId);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['armarios-mapa-visual'] });
       queryClient.invalidateQueries({ queryKey: ['armarios-funcionarias-todas'] });
       toast.success('Armário liberado com sucesso!');
     },
-    onError: () => toast.error('Erro ao liberar armário'),
+    onError: (err: any) => toast.error(err.message || 'Erro ao liberar armário'),
   });
 
 
@@ -1341,7 +1356,7 @@ export default function ArmariosFemininos() {
                                   onClick={() => {
                                     const f = item.raw;
                                     if (f.armario_id) {
-                                      liberarArmarioMutation.mutate(f.armario_id);
+                                      liberarArmarioMutation.mutate({ armarioId: f.armario_id, funcionarioId: f.id });
                                     }
                                   }}
                                 >
@@ -1586,7 +1601,7 @@ export default function ArmariosFemininos() {
                                 className="text-xs h-7 px-2"
                                 onClick={() => {
                                   if (f.armario_id) {
-                                    liberarArmarioMutation.mutate(f.armario_id);
+                                    liberarArmarioMutation.mutate({ armarioId: f.armario_id, funcionarioId: f.id });
                                   } else {
                                     salvarMutation.mutate({ funcionarioId: f.id, numero: null });
                                   }
@@ -1799,6 +1814,10 @@ export default function ArmariosFemininos() {
                 const setorSelecionado = todosSetores.find(s => s.nome === editandoSetor);
                 const setorOriginal = (editando.setor as any)?.nome;
                 const setorMudou = editandoSetor && editandoSetor !== setorOriginal;
+                if (num === null && editando.armario_id) {
+                  liberarArmarioMutation.mutate({ armarioId: editando.armario_id, funcionarioId: editando.id });
+                  return;
+                }
                 salvarMutation.mutate({
                   funcionarioId: editando.id,
                   numero: num,
