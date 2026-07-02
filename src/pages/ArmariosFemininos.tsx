@@ -673,10 +673,25 @@ export default function ArmariosFemininos() {
           .eq('id', armarioId);
         if (error) throw error;
       }
+
+      if (funcionarioId) {
+        const { data: aindaVinculado, error: verificarError } = await supabase
+          .from('armarios_femininos')
+          .select('id, numero, local')
+          .eq('funcionario_id', funcionarioId);
+        if (verificarError) throw verificarError;
+        if (aindaVinculado && aindaVinculado.length > 0) {
+          throw new Error('Armário não foi liberado no banco. Verifique permissões ou vínculo duplicado.');
+        }
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['armarios-mapa-visual'] });
-      queryClient.invalidateQueries({ queryKey: ['armarios-funcionarias-todas'] });
+    onSuccess: async () => {
+      await queryClient.refetchQueries({ queryKey: ['armarios-mapa-visual'] });
+      await queryClient.refetchQueries({ queryKey: ['armarios-funcionarias-todas'] });
+      setEditando(null);
+      setNumeroArmario('');
+      setLocalArmario('SOPRO');
+      setEditandoSetor('');
       toast.success('Armário liberado com sucesso!');
     },
     onError: (err: any) => toast.error(err.message || 'Erro ao liberar armário'),
@@ -1814,7 +1829,7 @@ export default function ArmariosFemininos() {
                 const setorSelecionado = todosSetores.find(s => s.nome === editandoSetor);
                 const setorOriginal = (editando.setor as any)?.nome;
                 const setorMudou = editandoSetor && editandoSetor !== setorOriginal;
-                if (num === null && editando.armario_id) {
+                if (num === null) {
                   liberarArmarioMutation.mutate({ armarioId: editando.armario_id, funcionarioId: editando.id });
                   return;
                 }

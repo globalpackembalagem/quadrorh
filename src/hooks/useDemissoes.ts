@@ -15,7 +15,7 @@ const invalidarBaseFuncionarios = (queryClient: ReturnType<typeof useQueryClient
 
 function nomesSituacaoPorTipoDesligamento(tipoDesligamento?: string | null) {
   const tipo = normalizarTextoSistema(tipoDesligamento) || '';
-  if (tipo.includes('TERMINO') || tipo.includes('CONTRATO')) return ['TERMINO CONTRATO'];
+  if (tipo.includes('TERMINO') || tipo.includes('CONTRATO')) return ['TERMINO CONTRATO', 'TERMINO DE CONTRATO'];
   if (tipo.includes('PED')) return ['PEDIDO DEMISSAO', 'PED. DEMISSAO'];
   return ['DEMISSAO'];
 }
@@ -253,8 +253,8 @@ export function useCreateDemissao() {
         toast.success('Demissão registrada! Funcionário marcado como desligado.');
       }
     },
-    onError: () => {
-      toast.error('Erro ao registrar demissão');
+    onError: (err: any) => {
+      toast.error(err?.message || 'Erro ao registrar demissão');
     },
   });
 }
