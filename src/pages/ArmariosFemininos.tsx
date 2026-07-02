@@ -1585,12 +1585,13 @@ export default function ArmariosFemininos() {
                                 size="sm"
                                 className="text-xs h-7 px-2"
                                 onClick={() => {
-                                  salvarMutation.mutate({
-                                    funcionarioId: f.id,
-                                    numero: null,
-                                  });
+                                  if (f.armario_id) {
+                                    liberarArmarioMutation.mutate(f.armario_id);
+                                  } else {
+                                    salvarMutation.mutate({ funcionarioId: f.id, numero: null });
+                                  }
                                 }}
-                                disabled={salvarMutation.isPending}
+                                disabled={salvarMutation.isPending || liberarArmarioMutation.isPending}
                               >
                                 Liberar
                               </Button>
