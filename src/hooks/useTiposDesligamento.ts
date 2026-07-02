@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { normalizarTextoSistema } from '@/lib/normalizacao';
 
 export interface TipoDesligamento {
   id: string;
@@ -25,6 +26,15 @@ export interface TipoDesligamentoInsert {
   ativo?: boolean;
   ordem?: number;
   template_texto?: string;
+}
+
+function normalizarTipoDesligamentoPayload<T extends Partial<TipoDesligamentoInsert | TipoDesligamento>>(input: T): T {
+  return {
+    ...input,
+    ...(input.nome !== undefined ? { nome: normalizarTextoSistema(input.nome) || '' } : {}),
+    ...(input.descricao !== undefined ? { descricao: normalizarTextoSistema(input.descricao) || null } : {}),
+    ...(input.template_texto !== undefined ? { template_texto: normalizarTextoSistema(input.template_texto) || null } : {}),
+  } as T;
 }
 
 export function useTiposDesligamento() {
@@ -60,9 +70,10 @@ export function useCreateTipoDesligamento() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: TipoDesligamentoInsert) => {
+      const payload = normalizarTipoDesligamentoPayload(input);
       const { data, error } = await supabase
         .from('tipos_desligamento')
-        .insert(input)
+        .insert(payload)
         .select()
         .single();
       if (error) throw error;
@@ -80,9 +91,10 @@ export function useUpdateTipoDesligamento() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...data }: Partial<TipoDesligamento> & { id: string }) => {
+      const payload = normalizarTipoDesligamentoPayload(data);
       const { error } = await supabase
         .from('tipos_desligamento')
-        .update(data)
+        .update(payload)
         .eq('id', id);
       if (error) throw error;
     },
