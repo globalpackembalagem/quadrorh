@@ -474,10 +474,11 @@ export default function ArmariosFemininos() {
       const localFinal = localKey(local || 'SOPRO');
 
       // Remove vínculo anterior
-      await supabase
+      const { error: removerAnteriorError } = await supabase
         .from('armarios_femininos')
         .update({ funcionario_id: null })
         .eq('funcionario_id', funcionarioId);
+      if (removerAnteriorError) throw removerAnteriorError;
 
       if (numero === 0) {
         // "NÃO UTILIZA" - primeiro remove qualquer registro anterior do funcionário
@@ -1606,12 +1607,21 @@ export default function ArmariosFemininos() {
                               className="text-xs h-7 px-2"
                               onClick={async () => {
                                 if (!confirm(`Excluir ${f.nome_completo} do sistema?`)) return;
+                                const { error: armarioError } = await supabase
+                                  .from('armarios_femininos')
+                                  .update({ funcionario_id: null })
+                                  .eq('funcionario_id', f.id);
+                                if (armarioError) {
+                                  toast.error('Erro ao liberar armário: ' + armarioError.message);
+                                  return;
+                                }
                                 const { error } = await supabase.from('funcionarios').delete().eq('id', f.id);
                                 if (error) {
                                   toast.error('Erro ao excluir: ' + error.message);
                                 } else {
                                   toast.success(`${f.nome_completo} excluída`);
-                                  queryClient.invalidateQueries({ queryKey: ['armarios-funcionarias'] });
+                                  queryClient.invalidateQueries({ queryKey: ['armarios-funcionarias-todas'] });
+                                  queryClient.invalidateQueries({ queryKey: ['armarios-mapa-visual'] });
                                 }
                               }}
                             >

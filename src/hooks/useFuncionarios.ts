@@ -144,6 +144,12 @@ export function useDeleteFuncionario() {
   
   return useMutation({
     mutationFn: async (id: string) => {
+      const { error: armarioError } = await supabase
+        .from('armarios_femininos')
+        .update({ funcionario_id: null })
+        .eq('funcionario_id', id);
+      if (armarioError) throw armarioError;
+
       const { error } = await supabase
         .from('funcionarios')
         .delete()
