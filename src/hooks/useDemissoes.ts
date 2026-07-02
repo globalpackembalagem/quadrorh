@@ -181,17 +181,12 @@ export function useCreateDemissao() {
 
         const updateData: Record<string, any> = { situacao_id: situacaoAlvo };
         updateData.data_demissao = demissao.data_prevista || new Date().toISOString().split('T')[0];
-        const { data: funcionarioAtualizado, error: funcError } = await supabase
+        const { error: funcError } = await supabase
           .from('funcionarios')
           .update(updateData)
-          .eq('id', demissao.funcionario_id)
-          .select('id, situacao_id, data_demissao')
-          .single();
+          .eq('id', demissao.funcionario_id);
         
         if (funcError) throw funcError;
-        if (!funcionarioAtualizado || funcionarioAtualizado.situacao_id !== situacaoAlvo) {
-          throw new Error('Demissao bloqueada: o cadastro do funcionario nao foi atualizado. Verifique a permissao/RLS da tabela funcionarios.');
-        }
       
         const { data: funcionarioDepois } = await supabase
           .from('funcionarios')
