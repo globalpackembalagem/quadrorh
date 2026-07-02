@@ -211,7 +211,7 @@ function TemporariosTab({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="relative max-w-md flex-1">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -1072,22 +1072,22 @@ export default function Funcionarios() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="rounded-lg border bg-card p-4 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h1 className="page-title">FUNCIONÁRIOS</h1>
             <p className="page-description">
               {podeEditarFuncionarios ? 'CLIQUE EM UM FUNCIONÁRIO PARA EDITAR' : 'VISUALIZE E PESQUISE OS FUNCIONÁRIOS'}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm" onClick={openNew} className="gap-2" disabled={!podeEditarFuncionarios}>
+          <div className="flex flex-wrap items-center justify-start gap-2 lg:justify-end">
+            <Button onClick={openNew} className="h-10 gap-2" disabled={!podeEditarFuncionarios}>
               <Plus className="h-4 w-4" />
               NOVO FUNCIONÁRIO
             </Button>
             {podeEditarFuncionarios && <TrocaUnificadaDialog funcionarios={funcionarios} />}
             {isAdmin && (
-              <Button size="sm" variant="outline" onClick={() => setImportarTurmasOpen(true)}>
+              <Button className="h-10" variant="outline" onClick={() => setImportarTurmasOpen(true)}>
                 <Upload className="h-4 w-4 mr-1" />
                 TURMAS
               </Button>
@@ -1099,8 +1099,8 @@ export default function Funcionarios() {
         </div>
       </div>
 
-      <Tabs defaultValue="lista">
-        <TabsList className="h-auto flex-wrap">
+      <Tabs defaultValue="lista" className="space-y-4">
+        <TabsList className="h-auto flex-wrap rounded-lg bg-muted p-1">
           <TabsTrigger value="lista">LISTA</TabsTrigger>
           <TabsTrigger value="temporarios" className="gap-1">
             <Clock className="h-3 w-3" />
@@ -1108,55 +1108,49 @@ export default function Funcionarios() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="lista" className="mt-4 space-y-4">
-          {/* Busca */}
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome ou matrícula..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="pl-9 pr-8"
-            />
-            {search && (
-              <Button variant="ghost" size="sm" onClick={() => setSearch('')} className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0">
-                <X className="h-3 w-3" />
-              </Button>
-            )}
+        <TabsContent value="lista" className="space-y-4">
+          <div className="rounded-lg border bg-card p-4 shadow-sm">
+            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              Filtros
+            </div>
+            <div className="grid gap-3 lg:grid-cols-[minmax(280px,1.5fr)_minmax(220px,1fr)_160px_160px]">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome ou matricula..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="h-10 pl-9 pr-8"
+                />
+                {search && (
+                  <Button variant="ghost" size="sm" onClick={() => setSearch('')} className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0">
+                    <X className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
+
+              <Select value={situacaoFilter} onValueChange={setSituacaoFilter}>
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Situacao" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TODAS">Todas as situacoes</SelectItem>
+                  {todasSituacoes.map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Input type="date" value={admissaoInicioFilter} onChange={e => setAdmissaoInicioFilter(e.target.value)} title="Admissao de" className="h-10" />
+              <Input type="date" value={admissaoFimFilter} onChange={e => setAdmissaoFimFilter(e.target.value)} title="Admissao ate" className="h-10" />
+            </div>
           </div>
 
-          <div className="max-w-md">
-            <Select value={situacaoFilter} onValueChange={setSituacaoFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Situacao" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="TODAS">Todas as situacoes</SelectItem>
-                {todasSituacoes.map(s => (
-                  <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Filtro por grupo (SOPRO / DECORAÇÃO) + Turma */}
-          <div className="grid max-w-md grid-cols-1 gap-2 md:grid-cols-2">
-            <Input
-              type="date"
-              value={admissaoInicioFilter}
-              onChange={e => setAdmissaoInicioFilter(e.target.value)}
-              title="Admissao de"
-            />
-            <Input
-              type="date"
-              value={admissaoFimFilter}
-              onChange={e => setAdmissaoFimFilter(e.target.value)}
-              title="Admissao ate"
-            />
-          </div>
+          {/* Filtro por grupo (SOPRO / DECORACAO) + Turma */}
 
           {isAdmin && (
-            <div className="rounded-lg border bg-muted/20 p-3 space-y-3">
+            <div className="rounded-lg border bg-card p-4 shadow-sm space-y-3">
               {/* Linha 1: Grupos */}
               <div className="flex items-center gap-3">
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest w-14 shrink-0">GRUPO</span>
@@ -1223,7 +1217,7 @@ export default function Funcionarios() {
 
           {/* Filtro por turma (não-admin) */}
           {!isAdmin && turmaOptions.length > 2 && (
-            <div className="rounded-lg border bg-muted/20 p-3">
+            <div className="rounded-lg border bg-card p-4 shadow-sm">
               <div className="flex items-start gap-3">
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest w-14 shrink-0 pt-0.5">TURMA</span>
                 <div className="flex flex-wrap gap-1.5">
@@ -1252,7 +1246,7 @@ export default function Funcionarios() {
           )}
 
           {/* Tabela */}
-          <div className="rounded-lg border bg-card">
+          <div className="overflow-hidden rounded-lg border bg-card shadow-sm">
             <div className="overflow-x-auto">
               <table className="data-table text-xs">
                 <thead>
@@ -1320,8 +1314,9 @@ export default function Funcionarios() {
             </div>
           </div>
 
-          <div className="text-sm text-muted-foreground">
-            Total: {filteredFuncionarios.length} funcionário(s)
+          <div className="flex items-center justify-between rounded-lg border bg-card px-4 py-3 text-sm text-muted-foreground shadow-sm">
+            <span>Resultado da consulta</span>
+            <span className="font-semibold text-foreground">{filteredFuncionarios.length} funcionario(s)</span>
           </div>
         </TabsContent>
 
