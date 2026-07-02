@@ -80,6 +80,7 @@ interface NavItem {
 // Navegação base - será filtrada por permissões
 const allRHNavigation: NavItem[] = [
   { name: 'QUADRO DE FUNCIONÁRIOS', href: '/', icon: LayoutDashboard },
+  { name: 'HISTORICO DO QUADRO', href: '/historico-quadro', icon: History },
   
   { name: 'FUNCIONÁRIOS', href: '/funcionarios', icon: Users },
   { name: 'PREVISÃO ADMISSÃO', href: '/previsao-admissao', icon: UserPlus },
