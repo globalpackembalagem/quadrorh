@@ -15,6 +15,9 @@ const invalidarBaseFuncionarios = (queryClient: ReturnType<typeof useQueryClient
 
 function nomesSituacaoPorTipoDesligamento(tipoDesligamento?: string | null) {
   const tipo = normalizarTextoSistema(tipoDesligamento) || '';
+  if (tipo.includes('DISPENSA') && tipo.includes('JUSTA')) return ['DISPENSA S/ JUSTA CAUSA', 'DISPENSA SEM JUSTA CAUSA'];
+  if (tipo.includes('JUSTA CAUSA')) return ['DEM. JUSTA CAUSA', 'DEMISSAO JUSTA CAUSA', 'JUSTA CAUSA'];
+  if (tipo.includes('ANT') && tipo.includes('TERMINO')) return ['ANT. TERMINO', 'ANT TERMINO', 'ANTECIPACAO TERMINO', 'ANTECIPACAO DE TERMINO'];
   if (tipo.includes('TERMINO') || tipo.includes('CONTRATO')) {
     return ['TERMINO CONTRATO', 'TERMINO DE CONTRATO', 'TERMINO EXPERIENCIA', 'TERMINO DE EXPERIENCIA', 'CONTRATO ENCERRADO'];
   }
