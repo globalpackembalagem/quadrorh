@@ -15,7 +15,9 @@ const invalidarBaseFuncionarios = (queryClient: ReturnType<typeof useQueryClient
 
 function nomesSituacaoPorTipoDesligamento(tipoDesligamento?: string | null) {
   const tipo = normalizarTextoSistema(tipoDesligamento) || '';
-  if (tipo.includes('TERMINO') || tipo.includes('CONTRATO')) return ['TERMINO CONTRATO', 'TERMINO DE CONTRATO'];
+  if (tipo.includes('TERMINO') || tipo.includes('CONTRATO')) {
+    return ['TERMINO CONTRATO', 'TERMINO DE CONTRATO', 'TERMINO EXPERIENCIA', 'TERMINO DE EXPERIENCIA', 'CONTRATO ENCERRADO'];
+  }
   if (tipo.includes('PED')) return ['PEDIDO DEMISSAO', 'PED. DEMISSAO'];
   return ['DEMISSAO'];
 }
@@ -181,12 +183,16 @@ export function useCreateDemissao() {
 
         const updateData: Record<string, any> = { situacao_id: situacaoAlvo };
         updateData.data_demissao = demissao.data_prevista || new Date().toISOString().split('T')[0];
-        const { error: funcError } = await supabase
+        const { data: funcionariosAtualizados, error: funcError } = await supabase
           .from('funcionarios')
           .update(updateData)
-          .eq('id', demissao.funcionario_id);
+          .eq('id', demissao.funcionario_id)
+          .select('id, situacao_id, data_demissao');
         
         if (funcError) throw funcError;
+        if (!funcionariosAtualizados?.some((funcionario) => funcionario.situacao_id === situacaoAlvo)) {
+          throw new Error('Cadastro do funcionario nao foi atualizado. Verifique permissao do banco ou situacao cadastrada.');
+        }
       
         const { data: funcionarioDepois } = await supabase
           .from('funcionarios')
