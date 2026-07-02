@@ -223,7 +223,7 @@ export function NovaDemissaoForm({ onSuccess }: NovaDemissaoFormProps) {
       // Verificar se funcionário já está na situação correta
       if (funcionarioSelecionado) {
         const situacaoAtualNome = normalizarTextoSistema(funcionarioSelecionado.situacao?.nome) || '';
-        const jaEstaNaSituacao = ['DEMISSAO', 'PED. DEMISSAO', 'PEDIDO DEMISSAO', 'TERMINO CONTRATO'].includes(situacaoAtualNome);
+        const jaEstaNaSituacao = ['DEMISSAO', 'PED. DEMISSAO', 'PEDIDO DEMISSAO', 'TERMINO CONTRATO', 'TERMINO DE CONTRATO'].includes(situacaoAtualNome);
         await criarDemissao(data, jaEstaNaSituacao);
       } else {
         await criarDemissao(data, false);

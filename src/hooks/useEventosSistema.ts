@@ -545,6 +545,7 @@ export async function criarEventoENotificar(params: {
     });
   } catch (e) {
     console.error('Erro ao criar evento na central:', e);
+    throw e;
   }
 }
 
