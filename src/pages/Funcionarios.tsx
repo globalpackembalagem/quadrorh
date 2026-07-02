@@ -12,7 +12,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRegistrarHistoricoFuncionario, formatarDadosFuncionario } from '@/hooks/useHistoricoFuncionarios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -68,7 +67,7 @@ function isoDateToExcelSerial(isoDate?: string | null) {
 type OrdenacaoTemporarios = 'nome' | 'admissao';
 
 const LIDERES_SOLICITAM_DESLIGAMENTO_TEMP = ['ALEX', 'AMILTON', 'LEILA', 'SILVIA'];
-const DESTINATARIOS_SOLICITACAO_TEMP = ['LUCIANO', 'SONIA', 'MAURICIO', 'MAURICO', 'PAULO', 'REAL PARCERIA'];
+const DESTINATARIOS_SOLICITACAO_TEMP = ['SONIA', 'MAURICIO', 'PAULO'];
 
 function normalizarNomeUsuario(nome?: string | null) {
   return normalizarTextoSistema(nome || '').trim();
@@ -87,7 +86,6 @@ function TemporariosTab({
   const [ordenacao, setOrdenacao] = useState<OrdenacaoTemporarios>('nome');
   const [funcionarioSolicitado, setFuncionarioSolicitado] = useState<Funcionario | null>(null);
   const [motivoSolicitacao, setMotivoSolicitacao] = useState('');
-  const [observacaoSolicitacao, setObservacaoSolicitacao] = useState('');
   const [enviandoSolicitacao, setEnviandoSolicitacao] = useState(false);
 
   const podeSolicitarDesligamentoTemp = isRHMode
@@ -134,7 +132,7 @@ function TemporariosTab({
       const nomeFunc = funcionarioSolicitado.nome_completo;
       const setorNome = funcionarioSolicitado.setor?.nome || 'SEM SETOR';
       const mensagem = [
-        `Lider ${userRole?.nome || 'GESTOR'} informou interesse em desligar o temporario:`,
+        `Lider ${userRole?.nome || 'GESTOR'} solicitou programacao de desligamento de temporario:`,
         '',
         `Funcionario: ${nomeFunc}`,
         `Matricula: ${funcionarioSolicitado.matricula || '-'}`,
@@ -143,15 +141,14 @@ function TemporariosTab({
         `Admissao: ${funcionarioSolicitado.data_admissao ? isoDateToExcelSerial(funcionarioSolicitado.data_admissao) : '-'}`,
         '',
         `Motivo: ${motivoSolicitacao.trim()}`,
-        observacaoSolicitacao.trim() ? `Observacao: ${observacaoSolicitacao.trim()}` : '',
         '',
-        'Atencao: esta solicitacao NAO desligou o funcionario automaticamente.',
+        'Assim que houver substituicao, o RH deve informar a data para desligamento.',
       ].filter(Boolean).join('\n');
 
       const { data: evento, error: eventoError } = await supabase
         .from('eventos_sistema')
         .insert({
-          tipo: 'pedido_demissao',
+          tipo: 'solicitacao_desligamento_temp',
           descricao: `Solicitacao de desligamento de temporario: ${nomeFunc}`,
           funcionario_id: funcionarioSolicitado.id,
           funcionario_nome: nomeFunc,
@@ -163,7 +160,6 @@ function TemporariosTab({
             origem: 'aba_temporarios_funcionarios',
             solicitante: userRole?.nome || null,
             motivo: motivoSolicitacao.trim(),
-            observacao: observacaoSolicitacao.trim() || null,
             nao_desligar_automaticamente: true,
           },
         })
@@ -199,10 +195,9 @@ function TemporariosTab({
 
       if (notificacoesError) throw notificacoesError;
 
-      toast.success('Solicitacao enviada. O funcionario nao foi desligado.');
+      toast.success('Solicitacao registrada. Assim que houver substituicao, o RH informara a data para desligamento.');
       setFuncionarioSolicitado(null);
       setMotivoSolicitacao('');
-      setObservacaoSolicitacao('');
     } catch (error: any) {
       toast.error(`Erro ao enviar solicitacao: ${error?.message || 'erro desconhecido'}`);
     } finally {
@@ -245,12 +240,13 @@ function TemporariosTab({
               <th className="w-[100px]">Admissão</th>
               <th className="w-[100px]">Data 90 Dias</th>
               <th className="w-[100px]">Data 180 Dias</th>
+              {podeSolicitarDesligamentoTemp && <th className="w-[170px]">Acao</th>}
             </tr>
           </thead>
           <tbody>
             {filtrados.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-8 text-muted-foreground">
+                <td colSpan={podeSolicitarDesligamentoTemp ? 8 : 7} className="text-center py-8 text-muted-foreground">
                   <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
                   <p>Nenhum temporário encontrado</p>
                 </td>
@@ -297,6 +293,21 @@ function TemporariosTab({
                         </Badge>
                       ) : '-'}
                     </td>
+                    {podeSolicitarDesligamentoTemp && (
+                      <td>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setFuncionarioSolicitado(func);
+                          }}
+                        >
+                          Programar desligamento
+                        </Button>
+                      </td>
+                    )}
                   </tr>
                 );
               })
@@ -312,7 +323,6 @@ function TemporariosTab({
         if (!open) {
           setFuncionarioSolicitado(null);
           setMotivoSolicitacao('');
-          setObservacaoSolicitacao('');
         }
       }}>
         <DialogContent className="max-w-lg">
@@ -330,12 +340,8 @@ function TemporariosTab({
               <Label>Motivo</Label>
               <Input value={motivoSolicitacao} onChange={e => setMotivoSolicitacao(e.target.value)} placeholder="Informe o motivo principal" />
             </div>
-            <div className="space-y-2">
-              <Label>Observacao</Label>
-              <Textarea value={observacaoSolicitacao} onChange={e => setObservacaoSolicitacao(e.target.value)} placeholder="Detalhe a solicitacao, se necessario" rows={4} />
-            </div>
             <p className="text-xs text-muted-foreground">
-              Essa acao apenas envia notificacao. O funcionario nao sera desligado automaticamente.
+              Ao salvar, Paulo, Mauricio e Sonia receberao a solicitacao. O funcionario nao sera desligado automaticamente.
             </p>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setFuncionarioSolicitado(null)} disabled={enviandoSolicitacao}>Cancelar</Button>
