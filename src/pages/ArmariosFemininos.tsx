@@ -1006,7 +1006,7 @@ export default function ArmariosFemininos() {
     toast.success(`${funcionariasSemArmarioLista.length} funcionária(s) exportada(s)`);
   }, [funcionariasSemArmarioLista]);
 
-  const canEdit = isAdmin || isRHMode;
+  const canEdit = isAdmin || usuarioAtual.pode_editar_armarios || temAcessoTotalArmarios;
 
   // Feedback de ocupação no formulário
   const renderFeedbackOcupacao = (num: string, localVal: string, funcionarioIdAtual?: string) => {

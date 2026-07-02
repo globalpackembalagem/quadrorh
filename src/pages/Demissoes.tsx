@@ -532,7 +532,7 @@ export default function Demissoes() {
             size="sm" 
             className="gap-2 text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/20" 
             onClick={() => setConfirmImportOpen(true)}
-            disabled={importarDemissoes.isPending || !isAdmin}
+            disabled={importarDemissoes.isPending || !canEditDemissoes}
           >
             <RefreshCw className={cn("h-4 w-4", importarDemissoes.isPending && "animate-spin")} />
             IMPORTAR DESLIGADOS DO MES
