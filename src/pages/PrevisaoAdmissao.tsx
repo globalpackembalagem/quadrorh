@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { UserPlus, Check, Search, Pencil, Trash2, Download, FileCheck, FileX, Clock, CheckCircle2, XCircle, History as HistoryIcon } from 'lucide-react';
@@ -79,6 +80,7 @@ function formatIsoDateBR(isoDate?: string | null) {
 }
 
 export default function PrevisaoAdmissao() {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroSetores, setFiltroSetores] = useState<string[]>([]);
   const [filtroGrupo, setFiltroGrupo] = useState<string | null>(null);
