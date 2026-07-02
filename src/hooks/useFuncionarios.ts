@@ -45,6 +45,50 @@ function situacaoRetornaAutomaticoParaAtivo(nome?: string | null): boolean {
     || normalizado.includes('COB. FERIAS');
 }
 
+function contaNoQuadro(funcionario: any): boolean {
+  const situacao = normalizarTextoHistorico(funcionario?.situacao?.nome);
+  if (!situacao) return false;
+
+  return ![
+    'PREVISAO',
+    'DEMISSAO',
+    'PEDIDO DEMISSAO',
+    'PEDIDO DE DEMISSAO',
+    'PED. DEMISSAO',
+    'TERMINO CONTRATO',
+    'TERMINO DE CONTRATO',
+    'DEM. JUSTA CAUSA',
+    'DISPENSA S/ JUSTA CAUSA',
+    'ANT. TERMINO',
+  ].includes(situacao);
+}
+
+function tipoMovimentacaoQuadro(camposAlterados: string[], funcionarioAntes: any, funcionarioDepois: any): string {
+  const situacaoDepois = normalizarTextoHistorico(funcionarioDepois?.situacao?.nome);
+
+  if (camposAlterados.includes('SITUACAO')) {
+    if (['DEMISSAO', 'PEDIDO DEMISSAO', 'PEDIDO DE DEMISSAO', 'PED. DEMISSAO', 'TERMINO CONTRATO', 'TERMINO DE CONTRATO', 'DEM. JUSTA CAUSA', 'DISPENSA S/ JUSTA CAUSA', 'ANT. TERMINO'].includes(situacaoDepois)) {
+      return 'Demissao';
+    }
+    if (situacaoDepois === 'ATIVO' && !contaNoQuadro(funcionarioAntes)) {
+      return 'Admissao';
+    }
+    if (situacaoDepois.includes('AUXILIO') || situacaoDepois.includes('DOENCA')) {
+      return 'Auxilio-doenca';
+    }
+  }
+
+  if (camposAlterados.includes('SETOR') || camposAlterados.includes('TURMA')) {
+    return 'Transferencia / Troca de turno';
+  }
+
+  if (camposAlterados.some((campo) => campo.startsWith('TREINAMENTO'))) {
+    return 'Treinamento';
+  }
+
+  return 'Correcao';
+}
+
 async function retornarSituacoesVencidasParaAtivo(funcionarios: Funcionario[]) {
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
@@ -137,6 +181,39 @@ export async function registrarHistoricoQuadroSeTravado(funcionarioAntes: any, f
   await (supabase as any)
     .from('quadro_historico')
     .insert(registros);
+
+  const camposAlterados = registros.map((registro: { campo_alterado: string }) => registro.campo_alterado);
+  const estavaNoQuadro = contaNoQuadro(funcionarioAntes);
+  const ficaNoQuadro = contaNoQuadro(funcionarioDepois);
+  const impacto = Number(ficaNoQuadro) - Number(estavaNoQuadro);
+  const observacao = registros
+    .map((registro: { campo_alterado: string; valor_anterior: string; valor_novo: string }) =>
+      `${registro.campo_alterado}: ${registro.valor_anterior || '-'} -> ${registro.valor_novo || '-'}`
+    )
+    .join('; ');
+
+  await (supabase as any)
+    .from('historico_movimentacao_quadro')
+    .insert({
+      funcionario_id: funcionarioDepois.id,
+      funcionario_nome: funcionarioDepois.nome_completo,
+      matricula: funcionarioDepois.matricula,
+      tipo_movimentacao: tipoMovimentacaoQuadro(camposAlterados, funcionarioAntes, funcionarioDepois),
+      setor_origem_id: funcionarioAntes.setor_id || funcionarioAntes.setor?.id || null,
+      setor_origem_nome: funcionarioAntes.setor?.nome || null,
+      setor_destino_id: funcionarioDepois.setor_id || funcionarioDepois.setor?.id || null,
+      setor_destino_nome: funcionarioDepois.setor?.nome || null,
+      turma_origem: funcionarioAntes.turma || null,
+      turma_destino: funcionarioDepois.turma || null,
+      data_movimentacao: funcionarioDepois.data_demissao || new Date().toISOString().slice(0, 10),
+      impacto,
+      quantidade_antes: null,
+      quantidade_depois: null,
+      usuario_nome: usuarioNome,
+      observacao,
+      referencia_tabela: origem,
+      referencia_id: funcionarioDepois.id,
+    });
 }
 
 export function useDeleteFuncionario() {
