@@ -70,7 +70,16 @@ const isPedidoDemissao = (tipo?: string | null) => (normalizarTextoSistema(tipo)
 
 const getTipoEventoSaida = (tipo?: string | null) => isPedidoDemissao(tipo) ? 'pedido_demissao' : 'demissao';
 
-const getTipoLabelSaida = (tipo?: string | null) => (tipo || 'Demiss√£o').toUpperCase();
+const getTipoLabelSaida = (tipo?: string | null) => (tipo || 'Demiss„o').toUpperCase();
+
+
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String((error as { message?: unknown }).message || fallback);
+  }
+  return error instanceof Error ? error.message : fallback;
+};
 
 export function NovaDemissaoForm({ onSuccess }: NovaDemissaoFormProps) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -187,19 +196,22 @@ export function NovaDemissaoForm({ onSuccess }: NovaDemissaoFormProps) {
 
       onSuccess();
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Erro ao salvar demiss√£o.';
-      toast.error(message);
+      toast.error(getErrorMessage(error, 'Erro ao salvar demiss„o.'));
     }
   };
 
   const onSubmit = async (data: FormData) => {
     try {
       // Verificar duplicata antes de criar ‚Äî BLOQUEIA se j√° existe
-      const { data: existente } = await supabase
+      const { data: existentes, error: existenteError } = await supabase
         .from('demissoes')
         .select('id, realizado, tipo_desligamento')
         .eq('funcionario_id', data.funcionario_id)
-        .maybeSingle();
+        .limit(1);
+
+      if (existenteError) throw existenteError;
+
+      const existente = existentes?.[0];
 
       if (existente) {
         const statusLabel = existente.realizado ? 'realizada' : 'agendada';
@@ -217,8 +229,7 @@ export function NovaDemissaoForm({ onSuccess }: NovaDemissaoFormProps) {
         await criarDemissao(data, false);
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Erro ao salvar demiss√£o.';
-      toast.error(message);
+      toast.error(getErrorMessage(error, 'Erro ao salvar demiss„o.'));
     }
   };
 
@@ -634,4 +645,6 @@ export function NovaDemissaoForm({ onSuccess }: NovaDemissaoFormProps) {
     </Form>
   );
 }
+
+
 

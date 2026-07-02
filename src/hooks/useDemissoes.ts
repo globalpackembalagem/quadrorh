@@ -167,12 +167,10 @@ export function useCreateDemissao() {
           : situacaoDemissaoId;
       const situacaoAlvo = situacaoAlvoManual || await buscarSituacaoDesligamento(demissao.tipo_desligamento);
 
-      if (!situacaoAlvo && !skipSituacaoUpdate) {
-        throw new Error('Situacao de desligamento nao encontrada.');
-      }
+      const deveAtualizarSituacao = !!situacaoAlvo && !skipSituacaoUpdate;
 
       // Atualizar situação do funcionário para o tipo correspondente
-      if (situacaoAlvo && !skipSituacaoUpdate) {
+      if (deveAtualizarSituacao) {
         const { data: funcionarioAntes } = await supabase
           .from('funcionarios')
           .select('*, setor:setores!setor_id(*), situacao:situacoes!situacao_id(*)')
