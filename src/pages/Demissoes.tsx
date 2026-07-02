@@ -119,7 +119,8 @@ export default function Demissoes() {
   
   const { data: todasDemissoes = [], isLoading } = useDemissoes();
   const { data: situacoes = [] } = useSituacoesAtivas();
-  const { canEditDemissoes, isAdmin, userRole } = useAuth();
+  const { canEditDemissoes, isAdmin, isRHMode, userRole } = useAuth();
+  const canManageDemissoes = isAdmin || isRHMode || canEditDemissoes;
   const { filtrarPorSetorCustom } = useSetorFilter();
   const demissoes = useMemo(() => filtrarPorSetorCustom(todasDemissoes, d => d.funcionario?.setor?.id || null), [todasDemissoes, filtrarPorSetorCustom]);
   const realizarDemissao = useRealizarDemissao();
@@ -532,7 +533,7 @@ export default function Demissoes() {
             size="sm" 
             className="gap-2 text-blue-600 hover:text-blue-700 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/20" 
             onClick={() => setConfirmImportOpen(true)}
-            disabled={importarDemissoes.isPending || !canEditDemissoes}
+            disabled={importarDemissoes.isPending || !canManageDemissoes}
           >
             <RefreshCw className={cn("h-4 w-4", importarDemissoes.isPending && "animate-spin")} />
             IMPORTAR DESLIGADOS DO MES
@@ -555,7 +556,7 @@ export default function Demissoes() {
           
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="gap-2 bg-red-600 text-white hover:bg-red-700" disabled={!canEditDemissoes}>
+              <Button size="sm" className="gap-2 bg-red-600 text-white hover:bg-red-700" disabled={!canManageDemissoes}>
                 <Plus className="h-4 w-4" />
                 NOVA DEMISSÃO
               </Button>
@@ -928,7 +929,7 @@ export default function Demissoes() {
                   variant="default"
                   size="sm"
                   className="h-8 text-xs justify-start"
-                  disabled={!canEditDemissoes}
+                  disabled={!canManageDemissoes}
                   onClick={() => { setConfirmRealizarDemissao(acoesDemissao.demissao); setAcoesDemissao(null); }}
                 >
                   <Check className="h-3 w-3 mr-2" />
@@ -939,7 +940,7 @@ export default function Demissoes() {
                 variant="outline"
                 size="sm"
                 className="h-8 text-xs justify-start"
-                disabled={!canEditDemissoes}
+                disabled={!canManageDemissoes}
                 onClick={() => { setEditingDemissao(acoesDemissao.demissao); setAcoesDemissao(null); }}
               >
                 <Pencil className="h-3 w-3 mr-2" />
@@ -949,7 +950,7 @@ export default function Demissoes() {
                 variant="outline"
                 size="sm"
                 className="h-8 text-xs justify-start text-destructive"
-                disabled={!canEditDemissoes}
+                disabled={!canManageDemissoes}
                 onClick={() => { setConfirmExcluirDemissao(acoesDemissao.demissao); setAcoesDemissao(null); }}
               >
                 <Trash2 className="h-3 w-3 mr-2" />
@@ -959,7 +960,7 @@ export default function Demissoes() {
                 variant="ghost"
                 size="sm"
                 className="h-8 text-xs justify-start"
-                disabled={!canEditDemissoes}
+                disabled={!canManageDemissoes}
                 onClick={() => { handleNotificar(acoesDemissao.demissao); setAcoesDemissao(null); }}
               >
                 <Bell className="h-3 w-3 mr-2" />
