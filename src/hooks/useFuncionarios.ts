@@ -78,8 +78,12 @@ function tipoMovimentacaoQuadro(camposAlterados: string[], funcionarioAntes: any
     }
   }
 
-  if (camposAlterados.includes('SETOR') || camposAlterados.includes('TURMA')) {
-    return 'Transferencia / Troca de turno';
+  if (camposAlterados.includes('SETOR')) {
+    return 'TROCA DE SETOR';
+  }
+
+  if (camposAlterados.includes('TURMA')) {
+    return 'TROCA DE TURMA';
   }
 
   if (camposAlterados.some((campo) => campo.startsWith('TREINAMENTO'))) {
@@ -87,6 +91,13 @@ function tipoMovimentacaoQuadro(camposAlterados: string[], funcionarioAntes: any
   }
 
   return 'Correcao';
+}
+
+function alteraQuadroVisual(camposAlterados: string[], funcionarioAntes: any, funcionarioDepois: any): boolean {
+  if (camposAlterados.includes('SETOR') || camposAlterados.includes('TURMA')) return true;
+  if (!camposAlterados.includes('SITUACAO')) return false;
+
+  return contaNoQuadro(funcionarioAntes) !== contaNoQuadro(funcionarioDepois);
 }
 
 async function retornarSituacoesVencidasParaAtivo(funcionarios: Funcionario[]) {
@@ -183,6 +194,8 @@ export async function registrarHistoricoQuadroSeTravado(funcionarioAntes: any, f
     .insert(registros);
 
   const camposAlterados = registros.map((registro: { campo_alterado: string }) => registro.campo_alterado);
+  if (!alteraQuadroVisual(camposAlterados, funcionarioAntes, funcionarioDepois)) return;
+
   const estavaNoQuadro = contaNoQuadro(funcionarioAntes);
   const ficaNoQuadro = contaNoQuadro(funcionarioDepois);
   const impacto = Number(ficaNoQuadro) - Number(estavaNoQuadro);
@@ -192,20 +205,38 @@ export async function registrarHistoricoQuadroSeTravado(funcionarioAntes: any, f
     )
     .join('; ');
 
+  const tipoMovimentacao = tipoMovimentacaoQuadro(camposAlterados, funcionarioAntes, funcionarioDepois);
+  const dataMovimentacao = funcionarioDepois.data_demissao || new Date().toISOString().slice(0, 10);
+
+  const { data: existente } = await (supabase as any)
+    .from('historico_movimentacao_quadro')
+    .select('id, usuario_nome')
+    .eq('funcionario_id', funcionarioDepois.id)
+    .eq('tipo_movimentacao', tipoMovimentacao)
+    .eq('data_movimentacao', dataMovimentacao)
+    .eq('turma_origem', funcionarioAntes.turma || null)
+    .eq('turma_destino', funcionarioDepois.turma || null)
+    .eq('setor_origem_nome', funcionarioAntes.setor?.nome || null)
+    .eq('setor_destino_nome', funcionarioDepois.setor?.nome || null)
+    .limit(1);
+
+  if (existente?.length && existente[0].usuario_nome !== 'SISTEMA') return;
+
   await (supabase as any)
     .from('historico_movimentacao_quadro')
-    .insert({
+    .upsert({
+      id: existente?.[0]?.id,
       funcionario_id: funcionarioDepois.id,
       funcionario_nome: funcionarioDepois.nome_completo,
       matricula: funcionarioDepois.matricula,
-      tipo_movimentacao: tipoMovimentacaoQuadro(camposAlterados, funcionarioAntes, funcionarioDepois),
+      tipo_movimentacao: tipoMovimentacao,
       setor_origem_id: funcionarioAntes.setor_id || funcionarioAntes.setor?.id || null,
       setor_origem_nome: funcionarioAntes.setor?.nome || null,
       setor_destino_id: funcionarioDepois.setor_id || funcionarioDepois.setor?.id || null,
       setor_destino_nome: funcionarioDepois.setor?.nome || null,
       turma_origem: funcionarioAntes.turma || null,
       turma_destino: funcionarioDepois.turma || null,
-      data_movimentacao: funcionarioDepois.data_demissao || new Date().toISOString().slice(0, 10),
+      data_movimentacao: dataMovimentacao,
       impacto,
       quantidade_antes: null,
       quantidade_depois: null,

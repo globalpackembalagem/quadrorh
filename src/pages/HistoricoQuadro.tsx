@@ -80,12 +80,11 @@ export default function HistoricoQuadro() {
       'Turma origem': item.turma_origem || '',
       'Setor destino': item.setor_destino_nome || '',
       'Turma destino': item.turma_destino || '',
-      Impacto: item.impacto,
-      'Quantidade antes': item.quantidade_antes ?? '',
-      'Quantidade depois': item.quantidade_depois ?? '',
-      Usuario: item.usuario_nome,
-      Observacao: item.observacao || '',
-    }));
+	      Impacto: item.impacto,
+	      'Quantidade antes': item.quantidade_antes ?? '',
+	      'Quantidade depois': item.quantidade_depois ?? '',
+	      Usuario: item.usuario_nome,
+	    }));
 
     const worksheet = XLSX.utils.json_to_sheet(dados);
     const workbook = XLSX.utils.book_new();
@@ -194,11 +193,10 @@ export default function HistoricoQuadro() {
                 <TableHead>Tipo</TableHead>
                 <TableHead>Origem</TableHead>
                 <TableHead>Destino</TableHead>
-                <TableHead>Impacto</TableHead>
-                <TableHead>Antes/Depois</TableHead>
-                <TableHead>Usuario</TableHead>
-                <TableHead>Observacao</TableHead>
-              </TableRow>
+	                <TableHead>Impacto</TableHead>
+	                <TableHead>Antes/Depois</TableHead>
+	                <TableHead>Usuario</TableHead>
+	              </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
@@ -224,11 +222,10 @@ export default function HistoricoQuadro() {
                       <Badge variant={item.impacto < 0 ? 'destructive' : item.impacto > 0 ? 'default' : 'outline'}>
                         {item.impacto > 0 ? `+${item.impacto}` : item.impacto}
                       </Badge>
-                    </TableCell>
-                    <TableCell>{item.quantidade_antes ?? '-'} / {item.quantidade_depois ?? '-'}</TableCell>
-                    <TableCell>{item.usuario_nome}</TableCell>
-                    <TableCell className="max-w-[260px] truncate">{item.observacao || '-'}</TableCell>
-                  </TableRow>
+	                    </TableCell>
+	                    <TableCell>{item.quantidade_antes ?? '-'} / {item.quantidade_depois ?? '-'}</TableCell>
+	                    <TableCell>{item.usuario_nome}</TableCell>
+	                  </TableRow>
                 ))
               )}
             </TableBody>
