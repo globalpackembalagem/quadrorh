@@ -51,6 +51,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { getTurmasPermitidasPorSetor } from '@/lib/turmas';
 
 
 const statusLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
@@ -129,6 +130,7 @@ export default function TrocaTurno() {
     const setor = setores.find(s => s.id === setorId);
     return setor?.grupo?.toUpperCase() || '';
   };
+  const getTurmasDestino = (setorId: string) => getTurmasPermitidasPorSetor(setores.find(s => s.id === setorId));
 
   const matchGrupoETurno = (setorId: string, turma: string | null) => {
     const grupo = getGrupoFromSetor(setorId);
@@ -709,7 +711,7 @@ export default function TrocaTurno() {
 
             <div className="space-y-2">
               <Label>Setor Destino</Label>
-              <Select value={setorDestinoId} onValueChange={setSetorDestinoId}>
+	              <Select value={setorDestinoId} onValueChange={(v) => { setSetorDestinoId(v); setTurmaDestino(''); }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o setor de destino" />
                 </SelectTrigger>
@@ -730,8 +732,9 @@ export default function TrocaTurno() {
                   <SelectValue placeholder="Selecione a turma" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="T1">T1</SelectItem>
-                  <SelectItem value="T2">T2</SelectItem>
+	                  {getTurmasDestino(setorDestinoId).map((opcao) => (
+	                    <SelectItem key={opcao} value={opcao}>{opcao}</SelectItem>
+	                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -786,7 +789,7 @@ export default function TrocaTurno() {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Setor Destino</Label>
-              <Select value={editSetorDestinoId} onValueChange={setEditSetorDestinoId}>
+	              <Select value={editSetorDestinoId} onValueChange={(v) => { setEditSetorDestinoId(v); setEditTurmaDestino(''); }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o setor" />
                 </SelectTrigger>
@@ -807,8 +810,9 @@ export default function TrocaTurno() {
                   <SelectValue placeholder="Selecione a turma" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="T1">T1</SelectItem>
-                  <SelectItem value="T2">T2</SelectItem>
+	                  {getTurmasDestino(editSetorDestinoId).map((opcao) => (
+	                    <SelectItem key={opcao} value={opcao}>{opcao}</SelectItem>
+	                  ))}
                 </SelectContent>
               </Select>
             </div>
