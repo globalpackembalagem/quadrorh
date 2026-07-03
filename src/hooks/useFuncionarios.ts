@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 import { criarEventoENotificar } from '@/hooks/useEventosSistema';
 import { normalizarFuncionarioPayload } from '@/lib/normalizacao';
 import { useAuth } from '@/hooks/useAuth';
-import { getTipoSetorTurma } from '@/lib/turmas';
 
 export const invalidarFuncionarios = (queryClient: QueryClient) => {
   queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
@@ -95,16 +94,14 @@ function tipoMovimentacaoQuadro(camposAlterados: string[], funcionarioAntes: any
 }
 
 function alteraQuadroVisual(camposAlterados: string[], funcionarioAntes: any, funcionarioDepois: any): boolean {
-  if (camposAlterados.includes('SETOR')) return true;
-  if (camposAlterados.includes('TURMA')) {
-    const mesmoSetor = normalizarTextoHistorico(funcionarioAntes?.setor?.nome)
-      === normalizarTextoHistorico(funcionarioDepois?.setor?.nome);
-    const tipoSetor = getTipoSetorTurma(funcionarioDepois?.setor || funcionarioAntes?.setor);
-    return !(mesmoSetor && tipoSetor === 'SOPRO');
-  }
-  if (!camposAlterados.includes('SITUACAO')) return false;
+  const antesConta = contaNoQuadro(funcionarioAntes);
+  const depoisConta = contaNoQuadro(funcionarioDepois);
+  const setorAntes = normalizarTextoHistorico(funcionarioAntes?.setor?.nome);
+  const setorDepois = normalizarTextoHistorico(funcionarioDepois?.setor?.nome);
 
-  return contaNoQuadro(funcionarioAntes) !== contaNoQuadro(funcionarioDepois);
+  if (antesConta !== depoisConta) return true;
+  if (antesConta && depoisConta && camposAlterados.includes('SETOR') && setorAntes !== setorDepois) return true;
+  return false;
 }
 
 async function retornarSituacoesVencidasParaAtivo(funcionarios: Funcionario[]) {
