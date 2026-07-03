@@ -232,7 +232,7 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
       const dataAdmissao = parseData(dataAdmStr || '');
       
       const turmaNormalizada = turma?.toString().trim() || undefined;
-      const validacaoTurma = validarTurmaPorSetor(setor, turmaNormalizada);
+      const validacaoTurma = validarTurmaPorSetor(setor, turmaNormalizada, 'PREVISAO');
       if (!validacaoTurma.valida) {
         errosCriticos.push(validacaoTurma.mensagem || 'TURMA INVALIDA');
       }

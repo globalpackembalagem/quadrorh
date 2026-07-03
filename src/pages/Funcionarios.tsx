@@ -613,8 +613,9 @@ export default function Funcionarios() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const situacaoAtualNome = situacoesAtivas.find(s => s.id === situacaoId)?.nome || editingFuncionario?.situacao?.nome || null;
     const setorSelecionado = setoresAtivos.find(s => s.id === setorId) || editingFuncionario?.setor || null;
-    const validacaoTurma = validarTurmaPorSetor(setorSelecionado, turma);
+    const validacaoTurma = validarTurmaPorSetor(setorSelecionado, turma, situacaoAtualNome);
     if (!validacaoTurma.valida) {
       toast.error(validacaoTurma.mensagem || 'TURMA INVALIDA');
       return;

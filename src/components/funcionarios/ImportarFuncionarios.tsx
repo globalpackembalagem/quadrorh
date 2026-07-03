@@ -289,7 +289,7 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
     }
     
     const turmaNormalizada = colunas[9]?.toString().trim() || undefined;
-    const validacaoTurma = validarTurmaPorSetor(setor, turmaNormalizada);
+    const validacaoTurma = validarTurmaPorSetor(setor, turmaNormalizada, situacao?.nome);
     if (!validacaoTurma.valida) {
       errosCriticos.push(validacaoTurma.mensagem || 'TURMA INVALIDA');
     }

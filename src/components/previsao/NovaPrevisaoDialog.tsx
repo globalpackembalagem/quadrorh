@@ -85,7 +85,7 @@ export function NovaPrevisaoDialog() {
     }
 
     const setorSelecionado = setores.find(s => s.id === formData.setor_id) || null;
-    const validacaoTurma = validarTurmaPorSetor(setorSelecionado, formData.turma);
+    const validacaoTurma = validarTurmaPorSetor(setorSelecionado, formData.turma, 'PREVISAO');
     if (!validacaoTurma.valida) {
       toast.error(validacaoTurma.mensagem || 'TURMA INVALIDA');
       return;
