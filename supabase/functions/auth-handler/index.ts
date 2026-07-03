@@ -110,6 +110,38 @@ async function verifyAdminById(supabase: any, adminId: string): Promise<boolean>
   return true;
 }
 
+async function getUserCredentialPassword(supabase: any, userId: string): Promise<string> {
+  const { data: credential, error } = await supabase
+    .from("user_credentials")
+    .select("senha")
+    .eq("user_role_id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return credential?.senha || "";
+}
+
+async function saveUserCredentialPassword(supabase: any, userId: string, hashedPassword: string): Promise<void> {
+  const { data: existing, error: findError } = await supabase
+    .from("user_credentials")
+    .select("user_role_id")
+    .eq("user_role_id", userId)
+    .maybeSingle();
+
+  if (findError) throw findError;
+
+  const result = existing
+    ? await supabase
+        .from("user_credentials")
+        .update({ senha: hashedPassword })
+        .eq("user_role_id", userId)
+    : await supabase
+        .from("user_credentials")
+        .insert({ user_role_id: userId, senha: hashedPassword });
+
+  if (result.error) throw result.error;
+}
+
 // Registrar tentativa de acesso
 async function logAccessAttempt(supabase: any, nome: string, userId: string | null, sucesso: boolean, ip: string) {
   try {
@@ -160,7 +192,7 @@ serve(async (req) => {
         const { data: users, error } = await supabase
           .from("user_roles")
           .select(`
-            id, nome, senha, setor_id, acesso_admin,
+            id, nome, setor_id, acesso_admin,
             pode_visualizar_funcionarios, pode_editar_funcionarios,
             pode_visualizar_previsao, pode_editar_previsao,
             pode_visualizar_coberturas, pode_editar_coberturas,
@@ -185,7 +217,7 @@ serve(async (req) => {
         }
 
         const user = users[0];
-        const storedPassword = user.senha || "";
+        const storedPassword = await getUserCredentialPassword(supabase, user.id);
 
         const { valid: isValid, needsMigration } = await verifyPassword(senha, storedPassword);
 
@@ -198,10 +230,7 @@ serve(async (req) => {
         if (needsMigration) {
           try {
             const bcryptHash = await hashPasswordBcrypt(senha);
-            await supabase
-              .from("user_roles")
-              .update({ senha: bcryptHash })
-              .eq("id", user.id);
+            await saveUserCredentialPassword(supabase, user.id, bcryptHash);
             console.log(`[Security] Password migrated to bcrypt for user ${user.nome}`);
           } catch (e) {
             console.error("Bcrypt migration error:", e);
@@ -210,8 +239,7 @@ serve(async (req) => {
 
         await logAccessAttempt(supabase, user.nome, user.id, true, clientIP);
 
-        const { senha: _, ...userData } = user;
-        return jsonResponse({ success: true, user: userData });
+        return jsonResponse({ success: true, user });
       }
 
       case "change_password": {
@@ -226,7 +254,7 @@ serve(async (req) => {
 
         const { data: user, error } = await supabase
           .from("user_roles")
-          .select("senha")
+          .select("id")
           .eq("id", user_id)
           .single();
 
@@ -234,7 +262,7 @@ serve(async (req) => {
           return jsonResponse({ error: "UsuÃƒÆ’Ã‚Â¡rio nÃƒÆ’Ã‚Â£o encontrado" }, 404);
         }
 
-        const storedPassword = user.senha || "";
+        const storedPassword = await getUserCredentialPassword(supabase, user_id);
         const { valid: isValid } = await verifyPassword(senha_atual, storedPassword);
 
         if (!isValid) {
@@ -243,12 +271,7 @@ serve(async (req) => {
 
         // Sempre salvar como bcrypt
         const hashed = await hashPasswordBcrypt(nova_senha);
-        const { error: updateError } = await supabase
-          .from("user_roles")
-          .update({ senha: hashed })
-          .eq("id", user_id);
-
-        if (updateError) throw updateError;
+        await saveUserCredentialPassword(supabase, user_id, hashed);
         return jsonResponse({ success: true });
       }
 
@@ -273,12 +296,7 @@ serve(async (req) => {
         }
 
         const hashed = await hashPasswordBcrypt(nova_senha);
-        const { error } = await supabase
-          .from("user_roles")
-          .update({ senha: hashed })
-          .eq("id", user_id);
-
-        if (error) throw error;
+        await saveUserCredentialPassword(supabase, user_id, hashed);
         return jsonResponse({ success: true });
       }
 
@@ -294,29 +312,29 @@ serve(async (req) => {
           return jsonResponse({ error: "Acesso negado. Apenas administradores podem executar esta aÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o." }, 403);
         }
 
-        const { data: users, error } = await supabase
-          .from("user_roles")
-          .select("id, senha, nome");
+        const { data: credentials, error } = await supabase
+          .from("user_credentials")
+          .select("user_role_id, senha, user_roles(nome)");
 
         if (error) throw error;
 
         let count = 0;
-        for (const user of users || []) {
-          const pwd = user.senha || "";
+        for (const credential of credentials || []) {
+          const user = { id: credential.user_role_id, nome: credential.user_roles?.nome };
+          const pwd = credential.senha || "";
           // Apenas migrar para bcrypt senhas que nÃƒÆ’Ã‚Â£o sÃƒÆ’Ã‚Â£o bcrypt
           if (!pwd.startsWith("$2") && pwd !== "temp_placeholder" && pwd !== "") {
             try {
-              const hashed = await hashPasswordBcrypt(pwd.length === 64 ? pwd : pwd);
               // Para SHA-256 hashes, nÃƒÆ’Ã‚Â£o podemos re-hash (perdemos a senha original)
               // Apenas marcamos para reset ou mantemos como estÃƒÆ’Ã‚Â¡
               if (pwd.length !== 64) {
                 // Plain text ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â pode converter
                 const bcryptHash = await hashPasswordBcrypt(pwd);
-                await supabase.from("user_roles").update({ senha: bcryptHash }).eq("id", user.id);
+                await saveUserCredentialPassword(supabase, user.id, bcryptHash);
                 count++;
               }
             } catch (e) {
-              console.error(`Error hashing password for ${user.nome}:`, e);
+              console.error(`Error hashing password for ${user.nome || user.id}:`, e);
             }
           }
         }
