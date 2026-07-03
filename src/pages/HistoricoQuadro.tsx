@@ -14,6 +14,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { loadXLSX } from '@/lib/xlsx';
 
+function montarLocalMovimentacao(setor?: string | null, turma?: string | null) {
+  if (setor && turma) return `${setor} / ${turma}`;
+  if (setor) return setor;
+  if (turma) return `TURMA ${turma}`;
+  return 'NAO INFORMADO';
+}
+
 export default function HistoricoQuadro() {
   const { usuarioAtual, isAdmin } = useUsuario();
   const { data: setores = [] } = useSetoresAtivos();
@@ -73,13 +80,11 @@ export default function HistoricoQuadro() {
     const XLSX = await loadXLSX();
     const dados = registrosVisiveis.map((item) => ({
       Data: format(parseISO(item.data_movimentacao), 'dd/MM/yyyy'),
-      Funcionario: item.funcionario_nome,
-      Matricula: item.matricula || '',
-      Tipo: item.tipo_movimentacao,
-      'Setor origem': item.setor_origem_nome || '',
-      'Turma origem': item.turma_origem || '',
-      'Setor destino': item.setor_destino_nome || '',
-      'Turma destino': item.turma_destino || '',
+	      Funcionario: item.funcionario_nome,
+	      Matricula: item.matricula || '',
+	      Tipo: item.tipo_movimentacao,
+	      Origem: montarLocalMovimentacao(item.setor_origem_nome, item.turma_origem),
+	      Destino: montarLocalMovimentacao(item.setor_destino_nome, item.turma_destino),
 	      Impacto: item.impacto,
 	      'Quantidade antes': item.quantidade_antes ?? '',
 	      'Quantidade depois': item.quantidade_depois ?? '',
@@ -216,8 +221,8 @@ export default function HistoricoQuadro() {
                       <div className="text-xs text-muted-foreground">{item.matricula || '-'}</div>
                     </TableCell>
                     <TableCell>{item.tipo_movimentacao}</TableCell>
-                    <TableCell>{item.setor_origem_nome || '-'}{item.turma_origem ? ` / ${item.turma_origem}` : ''}</TableCell>
-                    <TableCell>{item.setor_destino_nome || '-'}{item.turma_destino ? ` / ${item.turma_destino}` : ''}</TableCell>
+	                    <TableCell>{montarLocalMovimentacao(item.setor_origem_nome, item.turma_origem)}</TableCell>
+	                    <TableCell>{montarLocalMovimentacao(item.setor_destino_nome, item.turma_destino)}</TableCell>
                     <TableCell>
                       <Badge variant={item.impacto < 0 ? 'destructive' : item.impacto > 0 ? 'default' : 'outline'}>
                         {item.impacto > 0 ? `+${item.impacto}` : item.impacto}
