@@ -40,23 +40,9 @@ export default function GateAcesso() {
 
       setUsuarioAtual(montarUsuarioLocal(data.user));
       navigate('/home');
-    } catch {
-      const { data: usuarios, error: loginDiretoError } = await supabase
-        .from('user_roles')
-        .select('*, user_roles_setores(setor_id)')
-        .ilike('nome', nomeLimpo)
-        .eq('senha', senha)
-        .eq('ativo', true)
-        .limit(1);
-
-      if (loginDiretoError || !usuarios?.length) {
-        setErro('Nome ou senha inválidos');
-        setCarregando(false);
-        return;
-      }
-
-      setUsuarioAtual(montarUsuarioLocal(usuarios[0]));
-      navigate('/home');
+    } catch (error) {
+      console.error('Erro no login:', error);
+      setErro('Nome ou senha invalidos');
     }
     setCarregando(false);
   };

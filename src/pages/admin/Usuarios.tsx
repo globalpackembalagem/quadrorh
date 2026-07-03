@@ -80,6 +80,20 @@ interface UserRole {
   tipos_notificacao?: string[] | null;
 }
 
+const USER_ROLE_SELECT = `
+  id, user_id, nome, email, setor_id, ativo, created_at, tempo_inatividade,
+  pode_visualizar_funcionarios, pode_editar_funcionarios,
+  pode_visualizar_previsao, pode_editar_previsao,
+  pode_visualizar_coberturas, pode_editar_coberturas,
+  pode_visualizar_faltas, pode_editar_faltas,
+  pode_visualizar_demissoes, pode_editar_demissoes,
+  pode_visualizar_homologacoes, pode_editar_homologacoes,
+  pode_visualizar_divergencias, pode_criar_divergencias,
+  pode_visualizar_troca_turno, pode_editar_troca_turno,
+  pode_visualizar_armarios, pode_editar_armarios,
+  pode_exportar_excel, acesso_admin, recebe_notificacoes, tipos_notificacao
+`;
+
 const DEFAULT_PERMISSOES: Permissoes = {
   pode_visualizar_funcionarios: true,
   pode_editar_funcionarios: false,
@@ -141,7 +155,7 @@ export default function Usuarios() {
     try {
       const { data, error } = await supabase
         .from('user_roles')
-        .select('*, user_roles_setores(setor_id)')
+        .select(`${USER_ROLE_SELECT}, user_roles_setores(setor_id)`)
         .eq('id', userId)
         .single();
       if (error) throw error;
@@ -180,7 +194,7 @@ export default function Usuarios() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_roles')
-        .select(`*, setor:setores(nome), user_roles_setores(setor_id, setor:setores(nome))`)
+        .select(`${USER_ROLE_SELECT}, setor:setores(nome), user_roles_setores(setor_id, setor:setores(nome))`)
         .order('nome');
       if (error) throw error;
       return data as UserRole[];
@@ -214,13 +228,12 @@ export default function Usuarios() {
           user_id: crypto.randomUUID(),
           nome,
           email: email || null,
-          senha: 'temp_placeholder',
           setor_id: setoresIds[0] || null,
           tempo_inatividade: tempoInatividade,
           tipos_notificacao: tiposNotificacao,
           ...permissoesRestritas,
         } as any)
-        .select()
+        .select('id')
         .single();
 
       if (roleError) throw roleError;
@@ -287,7 +300,7 @@ export default function Usuarios() {
       if (id === usuarioAtual.id) {
         const { data: usuarioAtualizado } = await supabase
           .from('user_roles')
-          .select('*, user_roles_setores(setor_id)')
+          .select(`${USER_ROLE_SELECT}, user_roles_setores(setor_id)`)
           .eq('id', id)
           .single();
         if (usuarioAtualizado) setUsuarioAtual(montarUsuarioLocal(usuarioAtualizado));
