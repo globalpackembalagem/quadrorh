@@ -53,11 +53,18 @@ export default function FakeQuadro() {
       const updates = ids.map((id) => {
         const payload: any = { fake_quadro_ativo: ativo };
         if (config) payload.fake_quadro_config = config as any;
-        return supabase.from('user_roles').update(payload).eq('id', id);
+        return supabase.functions.invoke('auth-handler', {
+          body: {
+            action: 'admin_update_user_extra',
+            admin_id: userRole?.id,
+            user_id: id,
+            campos: payload,
+          },
+        });
       });
 
       const results = await Promise.all(updates);
-      const error = results.find((result) => result.error)?.error;
+      const error = results.find((result) => result.error || result.data?.error);
       if (error) throw error;
     },
     onSuccess: () => {

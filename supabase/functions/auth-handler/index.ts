@@ -300,6 +300,129 @@ serve(async (req) => {
         return jsonResponse({ success: true });
       }
 
+      case "admin_create_user": {
+        const { admin_id, nome, email, setoresIds = [], permissoes = {}, tiposNotificacao = [] } = params;
+
+        if (!admin_id) return jsonResponse({ error: "Admin obrigatorio" }, 403);
+        const isAdmin = await verifyAdminById(supabase, admin_id);
+        if (!isAdmin) return jsonResponse({ error: "Acesso negado" }, 403);
+        if (!nome) return jsonResponse({ error: "Nome obrigatorio" }, 400);
+
+        const { data: roleData, error: roleError } = await supabase
+          .from("user_roles")
+          .insert({
+            user_id: crypto.randomUUID(),
+            nome,
+            email: email || null,
+            setor_id: setoresIds[0] || null,
+            tempo_inatividade: params.tempoInatividade ?? params.tempo_inatividade ?? 4,
+            tipos_notificacao: tiposNotificacao,
+            ...permissoes,
+          })
+          .select()
+          .single();
+
+        if (roleError) throw roleError;
+
+        if (setoresIds.length > 0) {
+          const { error: setoresError } = await supabase
+            .from("user_roles_setores")
+            .insert(setoresIds.map((setorId: string) => ({ user_role_id: roleData.id, setor_id: setorId })));
+          if (setoresError) throw setoresError;
+        }
+
+        return jsonResponse({ success: true, user: roleData });
+      }
+
+      case "admin_update_user": {
+        const { admin_id, user_id, nome, email, setoresIds, permissoes = {}, ativo, tempoInatividade, tiposNotificacao } = params;
+
+        if (!admin_id) return jsonResponse({ error: "Admin obrigatorio" }, 403);
+        const isAdmin = await verifyAdminById(supabase, admin_id);
+        if (!isAdmin) return jsonResponse({ error: "Acesso negado" }, 403);
+        if (!user_id) return jsonResponse({ error: "Usuario obrigatorio" }, 400);
+
+        const updateData: Record<string, unknown> = { ...permissoes };
+        if (nome !== undefined) updateData.nome = nome;
+        if (email !== undefined) updateData.email = email || null;
+        if (ativo !== undefined) updateData.ativo = ativo;
+        if (tempoInatividade !== undefined) updateData.tempo_inatividade = tempoInatividade;
+        if (tiposNotificacao !== undefined) updateData.tipos_notificacao = tiposNotificacao;
+        if (Array.isArray(setoresIds)) updateData.setor_id = setoresIds[0] || null;
+
+        const { data: userData, error: updateError } = await supabase
+          .from("user_roles")
+          .update(updateData)
+          .eq("id", user_id)
+          .select()
+          .single();
+
+        if (updateError) throw updateError;
+
+        if (Array.isArray(setoresIds)) {
+          const { error: deleteSetoresError } = await supabase
+            .from("user_roles_setores")
+            .delete()
+            .eq("user_role_id", user_id);
+          if (deleteSetoresError) throw deleteSetoresError;
+
+          if (setoresIds.length > 0) {
+            const { error: insertSetoresError } = await supabase
+              .from("user_roles_setores")
+              .insert(setoresIds.map((setorId: string) => ({ user_role_id: user_id, setor_id: setorId })));
+            if (insertSetoresError) throw insertSetoresError;
+          }
+        }
+
+        return jsonResponse({ success: true, user: userData });
+      }
+
+      case "admin_delete_user": {
+        const { admin_id, user_id } = params;
+
+        if (!admin_id) return jsonResponse({ error: "Admin obrigatorio" }, 403);
+        const isAdmin = await verifyAdminById(supabase, admin_id);
+        if (!isAdmin) return jsonResponse({ error: "Acesso negado" }, 403);
+        if (!user_id) return jsonResponse({ error: "Usuario obrigatorio" }, 400);
+
+        await supabase.from("user_roles_setores").delete().eq("user_role_id", user_id);
+        const { error } = await supabase.from("user_roles").delete().eq("id", user_id);
+        if (error) throw error;
+
+        return jsonResponse({ success: true });
+      }
+
+      case "admin_update_user_extra": {
+        const { admin_id, user_id, campos = {} } = params;
+        const allowed = ["fake_quadro_ativo", "fake_quadro_config", "tipos_notificacao", "recebe_notificacoes"];
+
+        if (!admin_id) return jsonResponse({ error: "Admin obrigatorio" }, 403);
+        const isAdmin = await verifyAdminById(supabase, admin_id);
+        if (!isAdmin) return jsonResponse({ error: "Acesso negado" }, 403);
+        if (!user_id) return jsonResponse({ error: "Usuario obrigatorio" }, 400);
+
+        const updateData: Record<string, unknown> = {};
+        for (const key of allowed) {
+          if (Object.prototype.hasOwnProperty.call(campos, key)) {
+            updateData[key] = campos[key];
+          }
+        }
+
+        if (Object.keys(updateData).length === 0) {
+          return jsonResponse({ error: "Nenhum campo permitido informado" }, 400);
+        }
+
+        const { data: userData, error } = await supabase
+          .from("user_roles")
+          .update(updateData)
+          .eq("id", user_id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return jsonResponse({ success: true, user: userData });
+      }
+
       case "hash_all_passwords": {
         const { admin_id } = params;
         

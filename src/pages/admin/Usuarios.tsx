@@ -222,21 +222,20 @@ export default function Usuarios() {
       const { pode_visualizar_integracoes, pode_editar_integracoes, ...permissoesRestritas } = permissoes;
       
       // Inserir usuário com senha temporária (será substituída pelo hash)
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: crypto.randomUUID(),
+      const { data: createResult, error: createError } = await supabase.functions.invoke('auth-handler', {
+        body: {
+          action: 'admin_create_user',
+          admin_id: usuarioAtual.id,
           nome,
-          email: email || null,
-          setor_id: setoresIds[0] || null,
-          tempo_inatividade: tempoInatividade,
-          tipos_notificacao: tiposNotificacao,
-          ...permissoesRestritas,
-        } as any)
-        .select('id')
-        .single();
-
-      if (roleError) throw roleError;
+          email,
+          setoresIds,
+          permissoes: permissoesRestritas,
+          tiposNotificacao,
+          tempoInatividade,
+        },
+      });
+      if (createError || createResult?.error) throw createError || new Error(createResult.error);
+      const roleData = createResult.user;
 
       // Hashear a senha real via Edge Function
       const senhaReal = senha || '123456';
@@ -247,12 +246,6 @@ export default function Usuarios() {
         console.error('Erro ao hashear senha:', hashError || hashResult?.error);
       }
 
-      if (setoresIds.length > 0) {
-        const { error: setoresError } = await supabase
-          .from('user_roles_setores')
-          .insert(setoresIds.map(setorId => ({ user_role_id: roleData.id, setor_id: setorId })));
-        if (setoresError) throw setoresError;
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_roles'] });
@@ -269,16 +262,22 @@ export default function Usuarios() {
       setoresIds: string[]; permissoes: Permissoes; ativo: boolean; tempoInatividade: number; tiposNotificacao: string[];
     }) => {
       const { pode_visualizar_integracoes, pode_editar_integracoes, ...permissoesRestritas } = permissoes;
-      const updateData: Record<string, unknown> = {
-        nome, email: email || null, setor_id: setoresIds[0] || null,
-        ativo, tempo_inatividade: tempoInatividade, tipos_notificacao: tiposNotificacao, ...permissoesRestritas,
-      };
-      // NÃO salvar senha diretamente no update
+      const { data: updateResult, error: updateError } = await supabase.functions.invoke('auth-handler', {
+        body: {
+          action: 'admin_update_user',
+          admin_id: usuarioAtual.id,
+          user_id: id,
+          nome,
+          email,
+          setoresIds,
+          permissoes: permissoesRestritas,
+          ativo,
+          tempoInatividade,
+          tiposNotificacao,
+        },
+      });
+      if (updateError || updateResult?.error) throw updateError || new Error(updateResult.error);
 
-      const { error } = await supabase.from('user_roles').update(updateData).eq('id', id);
-      if (error) throw error;
-
-      // Se senha foi informada, hashear via Edge Function
       if (senha && senha.trim() !== '') {
         const { data: hashResult, error: hashError } = await supabase.functions.invoke('auth-handler', {
           body: { action: 'admin_reset_password', user_id: id, nova_senha: senha, admin_id: usuarioAtual.id },
@@ -286,15 +285,6 @@ export default function Usuarios() {
         if (hashError || hashResult?.error) {
           toast.error('Erro ao atualizar senha: ' + (hashResult?.error || 'erro desconhecido'));
         }
-      }
-
-      await supabase.from('user_roles_setores').delete().eq('user_role_id', id);
-
-      if (setoresIds.length > 0) {
-        const { error: insertError } = await supabase
-          .from('user_roles_setores')
-          .insert(setoresIds.map(setorId => ({ user_role_id: id, setor_id: setorId })));
-        if (insertError) throw insertError;
       }
 
       if (id === usuarioAtual.id) {
@@ -317,9 +307,10 @@ export default function Usuarios() {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from('user_roles_setores').delete().eq('user_role_id', id);
-      const { error } = await supabase.from('user_roles').delete().eq('id', id);
-      if (error) throw error;
+      const { data, error } = await supabase.functions.invoke('auth-handler', {
+        body: { action: 'admin_delete_user', admin_id: usuarioAtual.id, user_id: id },
+      });
+      if (error || data?.error) throw error || new Error(data.error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_roles'] });

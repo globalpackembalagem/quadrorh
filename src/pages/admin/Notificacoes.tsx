@@ -276,11 +276,15 @@ export default function Notificacoes() {
 
   const salvarRecebimentoMutation = useMutation({
     mutationFn: async ({ userId, tipos }: { userId: string; tipos: string[] }) => {
-      const { error } = await supabase
-        .from('user_roles')
-        .update({ tipos_notificacao: tipos, recebe_notificacoes: tipos.length > 0 })
-        .eq('id', userId);
-      if (error) throw error;
+      const { data, error } = await supabase.functions.invoke('auth-handler', {
+        body: {
+          action: 'admin_update_user_extra',
+          admin_id: userRole?.id,
+          user_id: userId,
+          campos: { tipos_notificacao: tipos, recebe_notificacoes: tipos.length > 0 },
+        },
+      });
+      if (error || data?.error) throw error || new Error(data.error);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['usuarios-ativos-reenvio'] });
