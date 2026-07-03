@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { loadXLSX } from '@/lib/xlsx';
+import { getTipoSetorTurma } from '@/lib/turmas';
 
 function montarLocalMovimentacao(setor?: string | null, turma?: string | null) {
   if (setor && turma) return `${setor} / ${turma}`;
@@ -30,10 +31,15 @@ export default function HistoricoQuadro() {
   const [dataFim, setDataFim] = useState('');
   const [busca, setBusca] = useState('');
 
+  const setoresDoQuadro = useMemo(
+    () => setores.filter((setor) => getTipoSetorTurma(setor)),
+    [setores]
+  );
+
   const setoresPermitidos = useMemo(() => {
-    if (isAdmin || usuarioAtual.setoresIds.length === 0) return setores;
-    return setores.filter((setor) => usuarioAtual.setoresIds.includes(setor.id));
-  }, [isAdmin, setores, usuarioAtual.setoresIds]);
+    if (isAdmin || usuarioAtual.setoresIds.length === 0) return setoresDoQuadro;
+    return setoresDoQuadro.filter((setor) => usuarioAtual.setoresIds.includes(setor.id));
+  }, [isAdmin, setoresDoQuadro, usuarioAtual.setoresIds]);
 
   const setorFiltro = setorId === 'todos' && !isAdmin && usuarioAtual.setoresIds.length === 1
     ? usuarioAtual.setoresIds[0]
