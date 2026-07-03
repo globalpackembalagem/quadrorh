@@ -40,9 +40,7 @@ export default function Dashboard() {
   const exportarExcelPorTurma = async () => {
     const XLSX = await loadXLSX();
     const grupo = data.grupoSelecionado;
-    const situacoesExcluidas = ['DEMISSAO', 'PED. DEMISSAO', 'PEDIDO DEMISSAO', 'TERMINO CONTRATO'];
-    const funcionarios = (grupo === 'SOPRO' ? data.funcionariosSopro : data.funcionariosDecoracao)
-      .filter(f => !situacoesExcluidas.includes(normalizarTextoSistema(f.situacao?.nome) || ''));
+    const funcionarios = grupo === 'SOPRO' ? data.funcionariosSopro : data.funcionariosDecoracao;
 
     if (funcionarios.length === 0) {
       toast.error('Nenhum funcionário para exportar');
@@ -198,8 +196,7 @@ export default function Dashboard() {
     aplicarPadraoExcel(wsTodos);
     XLSX.utils.book_append_sheet(wb, wsTodos, 'FUNCIONARIOS_COMPLETO');
 
-    const situacoesExcluidasExport = ['DEMISSAO', 'PED. DEMISSAO', 'PEDIDO DEMISSAO', 'TERMINO CONTRATO'];
-    const funcSoproData = data.funcionariosSopro.filter(f => !situacoesExcluidasExport.includes(normalizarTextoSistema(f.situacao?.nome) || '')).map(f => ({
+    const funcSoproData = data.funcionariosSopro.map(f => ({
       'Matrícula': f.matricula || '',
       'Nome': f.nome_completo,
       'Setor': f.setor?.nome || '',
@@ -212,7 +209,7 @@ export default function Dashboard() {
     aplicarPadraoExcel(wsFuncSopro);
     XLSX.utils.book_append_sheet(wb, wsFuncSopro, 'Funcionários SOPRO');
 
-    const funcDecoData = data.funcionariosDecoracao.filter(f => !situacoesExcluidasExport.includes(normalizarTextoSistema(f.situacao?.nome) || '')).map(f => ({
+    const funcDecoData = data.funcionariosDecoracao.map(f => ({
       'Matrícula': f.matricula || '',
       'Nome': f.nome_completo,
       'Setor': f.setor?.nome || '',
