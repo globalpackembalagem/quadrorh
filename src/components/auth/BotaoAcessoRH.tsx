@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Lock, LogOut, User, Loader2, Key, Home } from 'lucide-react';
+import { Eye, EyeOff, Lock, LogOut, User, Loader2, Key, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,6 +24,7 @@ export function BotaoAcessoRH() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [nome, setNome] = useState('');
   const [senha, setSenha] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [erro, setErro] = useState('');
   const [alterarSenhaOpen, setAlterarSenhaOpen] = useState(false);
@@ -180,15 +181,28 @@ export function BotaoAcessoRH() {
                 <Lock className="h-4 w-4" />
                 Senha
               </Label>
-              <Input
-                id="senha-login"
-                type="password"
-                placeholder="Digite sua senha"
-                value={senha}
-                onChange={(e) => { setSenha(e.target.value); setErro(''); }}
-                onKeyDown={handleKeyDown}
-                autoComplete="off"
-              />
+              <div className="relative">
+                <Input
+                  id="senha-login"
+                  type={mostrarSenha ? 'text' : 'password'}
+                  placeholder="Digite sua senha"
+                  value={senha}
+                  onChange={(e) => { setSenha(e.target.value); setErro(''); }}
+                  onKeyDown={handleKeyDown}
+                  className="pr-11"
+                  autoComplete="off"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setMostrarSenha((v) => !v)}
+                  className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2"
+                  aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                >
+                  {mostrarSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
 
             {erro && (

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Lock, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Lock, Loader2 } from 'lucide-react';
 import logoGlobalpack from '@/assets/logo-globalpack-new.png';
 import { supabase } from '@/integrations/supabase/client';
 import { useUsuario } from '@/contexts/UserContext';
@@ -11,6 +11,7 @@ import { montarUsuarioLocal } from '@/lib/montarUsuarioLocal';
 export default function GateAcesso() {
   const [nome, setNome] = useState('');
   const [senha, setSenha] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
   const { setUsuarioAtual } = useUsuario();
@@ -102,15 +103,27 @@ export default function GateAcesso() {
                 <Lock className="h-4 w-4" />
                 Senha
               </div>
-              <Input
-                type="password"
-                placeholder="Digite sua senha"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                className="h-12 text-base"
-                autoComplete="off"
-              />
+              <div className="relative">
+                <Input
+                  type={mostrarSenha ? 'text' : 'password'}
+                  placeholder="Digite sua senha"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                  className="h-12 pr-11 text-base"
+                  autoComplete="off"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setMostrarSenha((v) => !v)}
+                  className="absolute right-1 top-1/2 h-9 w-9 -translate-y-1/2"
+                  aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                >
+                  {mostrarSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
 
             {erro && (

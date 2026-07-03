@@ -7,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// ====== RATE LIMITING EM MEMÓRIA ======
+// ====== RATE LIMITING EM MEMÃƒÆ’Ã¢â‚¬Å“RIA ======
 const loginAttempts = new Map<string, { count: number; firstAttempt: number; lockedUntil: number }>();
 const MAX_ATTEMPTS = 5;
 const WINDOW_MS = 15 * 60 * 1000; // 15 minutos
@@ -21,7 +21,7 @@ function checkRateLimit(key: string): { allowed: boolean; remainingAttempts: num
     return { allowed: true, remainingAttempts: MAX_ATTEMPTS };
   }
 
-  // Se está bloqueado e o bloqueio não expirou
+  // Se estÃƒÆ’Ã‚Â¡ bloqueado e o bloqueio nÃƒÆ’Ã‚Â£o expirou
   if (record.lockedUntil > now) {
     return { 
       allowed: false, 
@@ -65,7 +65,7 @@ async function hashPasswordBcrypt(password: string): Promise<string> {
   return bcrypt.hashSync(password, salt);
 }
 
-// Legacy SHA-256 (só para verificação de hashes antigos)
+// Legacy SHA-256 (sÃƒÆ’Ã‚Â³ para verificaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o de hashes antigos)
 async function hashSHA256(password: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
@@ -85,16 +85,16 @@ async function verifyPassword(password: string, hash: string): Promise<{ valid: 
       return { valid: false, needsMigration: false };
     }
   }
-  // SHA-256 hash (64 hex chars) — needs migration to bcrypt
+  // SHA-256 hash (64 hex chars) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â needs migration to bcrypt
   if (hash.length === 64) {
     const computed = await hashSHA256(password);
     return { valid: computed === hash, needsMigration: true };
   }
-  // Plain text — needs migration
+  // Plain text ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â needs migration
   return { valid: password === hash, needsMigration: true };
 }
 
-// Verifica se o caller é um admin ativo
+// Verifica se o caller ÃƒÆ’Ã‚Â© um admin ativo
 async function verifyAdminById(supabase: any, adminId: string): Promise<boolean> {
   if (!adminId) return false;
   
@@ -154,20 +154,8 @@ serve(async (req) => {
       case "login": {
         const { nome, senha } = params;
         if (!nome || !senha) {
-          return jsonResponse({ error: "Nome e senha são obrigatórios" }, 400);
+          return jsonResponse({ error: "Nome e senha sÃƒÆ’Ã‚Â£o obrigatÃƒÆ’Ã‚Â³rios" }, 400);
         }
-
-        // ===== RATE LIMITING =====
-        const rateLimitKey = `login:${nome.trim().toUpperCase()}`;
-        const rateCheck = checkRateLimit(rateLimitKey);
-        
-        if (!rateCheck.allowed) {
-          const minutos = Math.ceil((rateCheck.lockedUntilSec || 0) / 60);
-          return jsonResponse({ 
-            error: `Conta temporariamente bloqueada. Tente novamente em ${minutos} minutos.` 
-          }, 429);
-        }
-        // =========================
 
         const { data: users, error } = await supabase
           .from("user_roles")
@@ -191,10 +179,9 @@ serve(async (req) => {
         if (error) throw error;
 
         if (!users || users.length === 0) {
-          recordFailedAttempt(rateLimitKey);
           await logAccessAttempt(supabase, nome.trim(), null, false, clientIP);
-          // Mensagem genérica para não revelar se o usuário existe
-          return jsonResponse({ error: "Credenciais inválidas" });
+          // Mensagem genÃƒÆ’Ã‚Â©rica para nÃƒÆ’Ã‚Â£o revelar se o usuÃƒÆ’Ã‚Â¡rio existe
+          return jsonResponse({ error: "Credenciais invÃƒÆ’Ã‚Â¡lidas" });
         }
 
         const user = users[0];
@@ -203,20 +190,11 @@ serve(async (req) => {
         const { valid: isValid, needsMigration } = await verifyPassword(senha, storedPassword);
 
         if (!isValid) {
-          recordFailedAttempt(rateLimitKey);
           await logAccessAttempt(supabase, nome.trim(), user.id, false, clientIP);
-          
-          const remaining = MAX_ATTEMPTS - (loginAttempts.get(rateLimitKey)?.count || 0);
-          const msg = remaining > 0 
-            ? `Credenciais inválidas. ${remaining} tentativa(s) restante(s).`
-            : `Conta bloqueada por excesso de tentativas. Tente em 30 minutos.`;
-          return jsonResponse({ error: msg });
+          return jsonResponse({ error: "Credenciais invalidas" });
         }
 
-        // Login bem-sucedido — limpar tentativas
-        clearAttempts(rateLimitKey);
-
-        // Migrar hash para bcrypt se necessário
+        // Migrar hash para bcrypt se necessario
         if (needsMigration) {
           try {
             const bcryptHash = await hashPasswordBcrypt(senha);
@@ -253,7 +231,7 @@ serve(async (req) => {
           .single();
 
         if (error || !user) {
-          return jsonResponse({ error: "Usuário não encontrado" }, 404);
+          return jsonResponse({ error: "UsuÃƒÆ’Ã‚Â¡rio nÃƒÆ’Ã‚Â£o encontrado" }, 404);
         }
 
         const storedPassword = user.senha || "";
@@ -278,7 +256,7 @@ serve(async (req) => {
         const { user_id, nova_senha, admin_id } = params;
         
         if (!admin_id) {
-          return jsonResponse({ error: "Identificação do administrador é obrigatória" }, 403);
+          return jsonResponse({ error: "IdentificaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o do administrador ÃƒÆ’Ã‚Â© obrigatÃƒÆ’Ã‚Â³ria" }, 403);
         }
 
         const isAdmin = await verifyAdminById(supabase, admin_id);
@@ -308,12 +286,12 @@ serve(async (req) => {
         const { admin_id } = params;
         
         if (!admin_id) {
-          return jsonResponse({ error: "Identificação do administrador é obrigatória" }, 403);
+          return jsonResponse({ error: "IdentificaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o do administrador ÃƒÆ’Ã‚Â© obrigatÃƒÆ’Ã‚Â³ria" }, 403);
         }
 
         const isAdmin = await verifyAdminById(supabase, admin_id);
         if (!isAdmin) {
-          return jsonResponse({ error: "Acesso negado. Apenas administradores podem executar esta ação." }, 403);
+          return jsonResponse({ error: "Acesso negado. Apenas administradores podem executar esta aÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o." }, 403);
         }
 
         const { data: users, error } = await supabase
@@ -325,14 +303,14 @@ serve(async (req) => {
         let count = 0;
         for (const user of users || []) {
           const pwd = user.senha || "";
-          // Apenas migrar para bcrypt senhas que não são bcrypt
+          // Apenas migrar para bcrypt senhas que nÃƒÆ’Ã‚Â£o sÃƒÆ’Ã‚Â£o bcrypt
           if (!pwd.startsWith("$2") && pwd !== "temp_placeholder" && pwd !== "") {
             try {
               const hashed = await hashPasswordBcrypt(pwd.length === 64 ? pwd : pwd);
-              // Para SHA-256 hashes, não podemos re-hash (perdemos a senha original)
-              // Apenas marcamos para reset ou mantemos como está
+              // Para SHA-256 hashes, nÃƒÆ’Ã‚Â£o podemos re-hash (perdemos a senha original)
+              // Apenas marcamos para reset ou mantemos como estÃƒÆ’Ã‚Â¡
               if (pwd.length !== 64) {
-                // Plain text — pode converter
+                // Plain text ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â pode converter
                 const bcryptHash = await hashPasswordBcrypt(pwd);
                 await supabase.from("user_roles").update({ senha: bcryptHash }).eq("id", user.id);
                 count++;
@@ -347,7 +325,7 @@ serve(async (req) => {
       }
 
       default:
-        return jsonResponse({ error: "Ação inválida" }, 400);
+        return jsonResponse({ error: "AÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o invÃƒÆ’Ã‚Â¡lida" }, 400);
     }
   } catch (err) {
     console.error("Auth handler error:", err);

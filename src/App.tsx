@@ -8,7 +8,7 @@ import { TopNavLayout } from "@/components/layout/TopNavLayout";
 import { RHSidebarLayout } from "@/components/layout/RHSidebarLayout";
 import { UserProvider, useUsuario } from "@/contexts/UserContext";
 import { montarUsuarioLocal } from "@/lib/montarUsuarioLocal";
-import { Construction, Wrench } from 'lucide-react';
+import { Construction, Eye, EyeOff, Wrench } from 'lucide-react';
 import logoGlobalpack from '@/assets/logo-globalpack-new.png';
 import { supabase } from "@/integrations/supabase/client";
 
@@ -245,6 +245,7 @@ function TelaManutencaoComLogin() {
   const { setUsuarioAtual } = useUsuario();
   const [nome, setNome] = useState('');
   const [senha, setSenha] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
 
@@ -300,14 +301,24 @@ function TelaManutencaoComLogin() {
                 className="w-full px-4 py-3 rounded-lg bg-slate-700 text-white border border-slate-600 focus:border-amber-400 focus:outline-none text-sm"
                 autoFocus
               />
-              <input
-                type="password"
-                placeholder="Senha"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                className="w-full px-4 py-3 rounded-lg bg-slate-700 text-white border border-slate-600 focus:border-amber-400 focus:outline-none text-sm"
-              />
+              <div className="relative">
+                <input
+                  type={mostrarSenha ? 'text' : 'password'}
+                  placeholder="Senha"
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                  className="w-full px-4 py-3 pr-11 rounded-lg bg-slate-700 text-white border border-slate-600 focus:border-amber-400 focus:outline-none text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setMostrarSenha((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-white"
+                  aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                >
+                  {mostrarSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {erro && <p className="text-red-400 text-sm">{erro}</p>}
               <button
                 onClick={handleLogin}
