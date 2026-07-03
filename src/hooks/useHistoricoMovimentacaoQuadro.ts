@@ -3,15 +3,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { useUsuario } from '@/contexts/UserContext';
 
 export const TIPOS_MOVIMENTACAO_QUADRO = [
-  'Admissao',
-  'Demissao',
-  'Transferencia / Troca de turno',
-  'Auxilio-doenca',
-  'Treinamento',
-  'Ferias',
-  'Retorno',
-  'Correcao',
-  'Outros',
+  'ADMISSAO',
+  'DEMISSAO',
+  'TROCA DE SETOR',
+  'TROCA DE TURMA',
+  'AUXILIO DOENCA',
+  'TREINAMENTO',
+  'FERIAS',
+  'RETORNO',
+  'CORRECAO',
+  'OUTROS',
 ] as const;
 
 export type TipoMovimentacaoQuadro = typeof TIPOS_MOVIMENTACAO_QUADRO[number];

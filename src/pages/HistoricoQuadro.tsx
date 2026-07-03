@@ -64,7 +64,6 @@ export default function HistoricoQuadro() {
         item.tipo_movimentacao,
         item.setor_origem_nome,
         item.setor_destino_nome,
-        item.observacao,
       ].some((valor) => valor?.toLowerCase().includes(termo));
     });
   }, [busca, historico, isAdmin, setoresPermitidos, usuarioAtual.setoresIds.length]);

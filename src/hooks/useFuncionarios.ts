@@ -68,13 +68,13 @@ function tipoMovimentacaoQuadro(camposAlterados: string[], funcionarioAntes: any
 
   if (camposAlterados.includes('SITUACAO')) {
     if (['DEMISSAO', 'PEDIDO DEMISSAO', 'PEDIDO DE DEMISSAO', 'PED. DEMISSAO', 'TERMINO CONTRATO', 'TERMINO DE CONTRATO', 'DEM. JUSTA CAUSA', 'DISPENSA S/ JUSTA CAUSA', 'ANT. TERMINO'].includes(situacaoDepois)) {
-      return 'Demissao';
+      return 'DEMISSAO';
     }
     if (situacaoDepois === 'ATIVO' && !contaNoQuadro(funcionarioAntes)) {
-      return 'Admissao';
+      return 'ADMISSAO';
     }
     if (situacaoDepois.includes('AUXILIO') || situacaoDepois.includes('DOENCA')) {
-      return 'Auxilio-doenca';
+      return 'AUXILIO DOENCA';
     }
   }
 
@@ -87,10 +87,10 @@ function tipoMovimentacaoQuadro(camposAlterados: string[], funcionarioAntes: any
   }
 
   if (camposAlterados.some((campo) => campo.startsWith('TREINAMENTO'))) {
-    return 'Treinamento';
+    return 'TREINAMENTO';
   }
 
-  return 'Correcao';
+  return 'CORRECAO';
 }
 
 function alteraQuadroVisual(camposAlterados: string[], funcionarioAntes: any, funcionarioDepois: any): boolean {
@@ -208,17 +208,22 @@ export async function registrarHistoricoQuadroSeTravado(funcionarioAntes: any, f
   const tipoMovimentacao = tipoMovimentacaoQuadro(camposAlterados, funcionarioAntes, funcionarioDepois);
   const dataMovimentacao = funcionarioDepois.data_demissao || new Date().toISOString().slice(0, 10);
 
-  const { data: existente } = await (supabase as any)
+  const { data: candidatos } = await (supabase as any)
     .from('historico_movimentacao_quadro')
-    .select('id, usuario_nome')
+    .select('id, usuario_nome, turma_origem, turma_destino, setor_origem_nome, setor_destino_nome')
     .eq('funcionario_id', funcionarioDepois.id)
     .eq('tipo_movimentacao', tipoMovimentacao)
     .eq('data_movimentacao', dataMovimentacao)
-    .eq('turma_origem', funcionarioAntes.turma || null)
-    .eq('turma_destino', funcionarioDepois.turma || null)
-    .eq('setor_origem_nome', funcionarioAntes.setor?.nome || null)
-    .eq('setor_destino_nome', funcionarioDepois.setor?.nome || null)
-    .limit(1);
+    .limit(20);
+
+  const igual = (a?: string | null, b?: string | null) =>
+    normalizarTextoHistorico(a) === normalizarTextoHistorico(b);
+  const existente = candidatos?.filter((item: any) =>
+    igual(item.turma_origem, funcionarioAntes.turma)
+    && igual(item.turma_destino, funcionarioDepois.turma)
+    && igual(item.setor_origem_nome, funcionarioAntes.setor?.nome)
+    && igual(item.setor_destino_nome, funcionarioDepois.setor?.nome)
+  );
 
   if (existente?.length && existente[0].usuario_nome !== 'SISTEMA') return;
 
