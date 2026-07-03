@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { loadXLSX } from '@/lib/xlsx';
 import { normalizarTextoSistema } from '@/lib/normalizacao';
+import { validarTurmaPorSetor } from '@/lib/turmas';
 
 interface ImportarFuncionariosProps {
   setores: Setor[];
@@ -287,6 +288,12 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
       avisos.push(`Data demissão "${dataDemissaoRaw}" ignorada`);
     }
     
+    const turmaNormalizada = colunas[9]?.toString().trim() || undefined;
+    const validacaoTurma = validarTurmaPorSetor(setor, turmaNormalizada);
+    if (!validacaoTurma.valida) {
+      errosCriticos.push(validacaoTurma.mensagem || 'TURMA INVALIDA');
+    }
+
     return {
       linha: numeroLinha,
       nome_completo,
@@ -300,7 +307,7 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
       matricula: colunas[6]?.toString().trim() || undefined,
       data_admissao: dataAdmissao,
       cargo: colunas[8]?.toString().trim() || undefined,
-      turma: colunas[9]?.toString().trim() || undefined,
+      turma: validacaoTurma.turma || undefined,
       data_demissao: dataDemissao,
       observacoes: colunas[11]?.toString().trim() || undefined,
       avisos,

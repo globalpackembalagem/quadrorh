@@ -10,6 +10,7 @@ import { useSetores, useSetoresAtivos } from '@/hooks/useSetores';
 import { useSituacoes, useSituacoesAtivas } from '@/hooks/useSituacoes';
 import { useAuth } from '@/hooks/useAuth';
 import { useRegistrarHistoricoFuncionario, formatarDadosFuncionario } from '@/hooks/useHistoricoFuncionarios';
+import { getTurmasPermitidasPorSetor, validarTurmaPorSetor } from '@/lib/turmas';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -437,7 +438,7 @@ export default function Funcionarios() {
   }, [funcionarios]);
 
   // Turmas de cada grupo
-  const TURMAS_SOPRO = ['1A', '1B', '2A', '2B', 'X', 'XX'];
+  const TURMAS_SOPRO = ['1A', '1B', '2A', '2B'];
   const TURMAS_DECORACAO = ['T1', 'T2'];
 
   // Funcionários pré-filtrados pelo grupo selecionado
@@ -612,10 +613,17 @@ export default function Funcionarios() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const setorSelecionado = setoresAtivos.find(s => s.id === setorId) || editingFuncionario?.setor || null;
+    const validacaoTurma = validarTurmaPorSetor(setorSelecionado, turma);
+    if (!validacaoTurma.valida) {
+      toast.error(validacaoTurma.mensagem || 'TURMA INVALIDA');
+      return;
+    }
+
     // Gestor: apenas atualizar turma
     if (!isAdmin && editingFuncionario) {
       const turmaAnterior = editingFuncionario.turma;
-      const novaTurma = turma || null;
+      const novaTurma = validacaoTurma.turma;
       await updateFuncionario.mutateAsync({
         id: editingFuncionario.id,
         turma: novaTurma,
@@ -665,7 +673,7 @@ export default function Funcionarios() {
       data_admissao: dataAdmissao || null,
       cargo: cargo || null,
       setor_id: setorId,
-      turma: turma || null,
+      turma: validacaoTurma.turma,
       situacao_id: situacaoId,
       sexo,
       data_demissao: dataDemissao || null,
@@ -1059,10 +1067,20 @@ export default function Funcionarios() {
                 <p><strong>SETOR:</strong> {editingFuncionario?.setor?.nome}</p>
                 <p><strong>SITUAÇÃO:</strong> {editingFuncionario?.situacao?.nome}</p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="turma">TURMA</Label>
-                <Input id="turma" value={turma} onChange={e => setTurma(e.target.value.toUpperCase())} placeholder="Ex: 1A, 2B, T1, T2" />
-              </div>
+	              <div className="space-y-2">
+	                <Label htmlFor="turma">TURMA</Label>
+	                <Select value={turma || 'sem_turma'} onValueChange={(v) => setTurma(v === 'sem_turma' ? '' : v)}>
+	                  <SelectTrigger>
+	                    <SelectValue placeholder="Selecione a turma" />
+	                  </SelectTrigger>
+	                  <SelectContent>
+	                    <SelectItem value="sem_turma">SEM TURMA</SelectItem>
+	                    {getTurmasPermitidasPorSetor(editingFuncionario?.setor).map((opcao) => (
+	                      <SelectItem key={opcao} value={opcao}>{opcao}</SelectItem>
+	                    ))}
+	                  </SelectContent>
+	                </Select>
+	              </div>
               <div className="flex justify-end gap-3 pt-2">
                 <Button type="button" variant="outline" onClick={() => { setDialogOpen(false); resetForm(); }}>CANCELAR</Button>
                 <Button type="submit" disabled={updateFuncionario.isPending}>SALVAR TURMA</Button>
@@ -1400,10 +1418,20 @@ export default function Funcionarios() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Turma</Label>
-                <Input value={turma} onChange={e => setTurma(e.target.value.toUpperCase())} placeholder="Ex: 1A, 2B, T1, T2" />
-              </div>
+	              <div className="space-y-2">
+	                <Label>Turma</Label>
+	                <Select value={turma || 'sem_turma'} onValueChange={(v) => setTurma(v === 'sem_turma' ? '' : v)}>
+	                  <SelectTrigger>
+	                    <SelectValue placeholder="Selecione a turma" />
+	                  </SelectTrigger>
+	                  <SelectContent>
+	                    <SelectItem value="sem_turma">SEM TURMA</SelectItem>
+	                    {getTurmasPermitidasPorSetor(setoresAtivos.find(s => s.id === setorId)).map((opcao) => (
+	                      <SelectItem key={opcao} value={opcao}>{opcao}</SelectItem>
+	                    ))}
+	                  </SelectContent>
+	                </Select>
+	              </div>
             </div>
 
             {/* Situação e Sexo */}

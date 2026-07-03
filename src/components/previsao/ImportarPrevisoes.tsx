@@ -18,6 +18,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { loadXLSX } from '@/lib/xlsx';
+import { validarTurmaPorSetor } from '@/lib/turmas';
 
 interface ImportarPrevisoesProps {
   setores: Setor[];
@@ -230,6 +231,12 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
       // Data de admissão
       const dataAdmissao = parseData(dataAdmStr || '');
       
+      const turmaNormalizada = turma?.toString().trim() || undefined;
+      const validacaoTurma = validarTurmaPorSetor(setor, turmaNormalizada);
+      if (!validacaoTurma.valida) {
+        errosCriticos.push(validacaoTurma.mensagem || 'TURMA INVALIDA');
+      }
+
       return {
         linha: index + 1,
         nome_completo: nomeCompleto || '',
@@ -241,7 +248,7 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
         matricula: matricula?.toString().trim() || undefined,
         data_admissao: dataAdmissao,
         cargo: cargo?.toString().trim() || undefined,
-        turma: turma?.toString().trim() || undefined,
+        turma: validacaoTurma.turma || undefined,
         observacoes: obs?.toString().trim() || undefined,
         avisos,
         errosCriticos,

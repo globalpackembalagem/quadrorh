@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { getTurmasPermitidasPorSetor, validarTurmaPorSetor } from '@/lib/turmas';
 
 const initialForm = {
   nome_completo: '',
@@ -83,6 +84,13 @@ export function NovaPrevisaoDialog() {
       return;
     }
 
+    const setorSelecionado = setores.find(s => s.id === formData.setor_id) || null;
+    const validacaoTurma = validarTurmaPorSetor(setorSelecionado, formData.turma);
+    if (!validacaoTurma.valida) {
+      toast.error(validacaoTurma.mensagem || 'TURMA INVALIDA');
+      return;
+    }
+
     setSaving(true);
     try {
       const { data: inserted, error } = await supabase.from('funcionarios').insert({
@@ -92,7 +100,7 @@ export function NovaPrevisaoDialog() {
         situacao_id: situacaoPrevisao.id,
         empresa: formData.empresa,
         matricula: formData.matricula || null,
-        turma: formData.turma || null,
+        turma: validacaoTurma.turma,
         cargo: formData.cargo || null,
         cpf: formatarCpf(formData.cpf) || null,
         data_admissao: formData.data_admissao ? format(formData.data_admissao, 'yyyy-MM-dd') : null,
@@ -166,7 +174,7 @@ export function NovaPrevisaoDialog() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Setor *</Label>
-              <Select value={formData.setor_id} onValueChange={(v) => setFormData({ ...formData, setor_id: v })}>
+              <Select value={formData.setor_id} onValueChange={(v) => setFormData({ ...formData, setor_id: v, turma: '' })}>
                 <SelectTrigger><SelectValue placeholder="Selecione o setor" /></SelectTrigger>
                 <SelectContent>
                   {setores.map((setor) => (
@@ -177,11 +185,13 @@ export function NovaPrevisaoDialog() {
             </div>
             <div className="space-y-2">
               <Label>Turma</Label>
-              <Select value={formData.turma} onValueChange={(v) => setFormData({ ...formData, turma: v })}>
+              <Select value={formData.turma || 'sem_turma'} onValueChange={(v) => setFormData({ ...formData, turma: v === 'sem_turma' ? '' : v })}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="T1">T1</SelectItem>
-                  <SelectItem value="T2">T2</SelectItem>
+                  <SelectItem value="sem_turma">SEM TURMA</SelectItem>
+                  {getTurmasPermitidasPorSetor(setores.find(s => s.id === formData.setor_id)).map((opcao) => (
+                    <SelectItem key={opcao} value={opcao}>{opcao}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
