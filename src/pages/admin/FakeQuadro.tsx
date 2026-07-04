@@ -56,7 +56,7 @@ export default function FakeQuadro() {
         return supabase.functions.invoke('auth-handler', {
           body: {
             action: 'admin_update_user_extra',
-            admin_id: userRole?.id,
+            session_token: userRole?.session_token,
             user_id: id,
             campos: payload,
           },

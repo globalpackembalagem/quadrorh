@@ -41,7 +41,7 @@ export function BotaoAcessoRH() {
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const montarUsuarioLocal = (user: any): UsuarioLocal => {
+  const montarUsuarioLocal = (user: any, sessionToken?: string): UsuarioLocal => {
     const setoresIds: string[] = [];
     if (user.setor_id) setoresIds.push(user.setor_id);
     (user.user_roles_setores || []).forEach((s: { setor_id: string }) => {
@@ -75,6 +75,7 @@ export function BotaoAcessoRH() {
       pode_editar_integracoes: user.pode_editar_integracao ?? user.pode_editar_integracoes ?? false,
       recebe_notificacoes: user.recebe_notificacoes ?? true,
       tempo_inatividade: user.tempo_inatividade ?? 4,
+      session_token: sessionToken ?? user.session_token,
     };
   };
 
@@ -93,7 +94,7 @@ export function BotaoAcessoRH() {
       if (error) throw error;
       if (data.error) { setErro(data.error); setIsLoading(false); return; }
 
-      const usuarioLocal = montarUsuarioLocal(data.user);
+      const usuarioLocal = montarUsuarioLocal(data.user, data.session_token);
       setUsuarioAtual(usuarioLocal);
       await registrarAcesso(data.user.id, data.user.nome);
       toast.success(`Bem-vindo, ${data.user.nome}!`);

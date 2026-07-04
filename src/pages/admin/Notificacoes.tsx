@@ -279,7 +279,7 @@ export default function Notificacoes() {
       const { data, error } = await supabase.functions.invoke('auth-handler', {
         body: {
           action: 'admin_update_user_extra',
-          admin_id: userRole?.id,
+          session_token: userRole?.session_token,
           user_id: userId,
           campos: { tipos_notificacao: tipos, recebe_notificacoes: tipos.length > 0 },
         },

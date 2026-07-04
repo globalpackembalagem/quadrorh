@@ -31,6 +31,7 @@ export interface UsuarioLocal {
   tempo_inatividade: number;
   fake_quadro_ativo?: boolean;
   fake_quadro_config?: any;
+  session_token?: string;
 }
 
 interface UserContextType {
@@ -87,7 +88,7 @@ const VISUALIZACAO_USER: UsuarioLocal = {
 
 const SESSION_EXPIRY_KEY = 'usuario_sessao_expira';
 const SESSION_MAX_HOURS = 12; // Sessão expira após 12 horas
-const APP_VERSION = '2.7'; // Incrementar quando a estrutura do UsuarioLocal mudar
+const APP_VERSION = '2.8'; // Incrementar quando a estrutura do UsuarioLocal mudar
 const ACESSO_ATUAL_KEY = 'acesso_usuario_atual_id';
 
 // Valida que o objeto tem os campos mínimos obrigatórios
@@ -216,6 +217,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const sairModoRH = useCallback(() => {
     console.log('[UserContext] sairModoRH chamado - limpando sessão');
+    const sessionToken = usuarioLogado?.session_token;
+    if (sessionToken) {
+      void supabase.functions.invoke('auth-handler', {
+        body: { action: 'logout', session_token: sessionToken },
+      });
+    }
     setUsuarioLogado(null);
     localStorage.removeItem('usuario_logado');
     localStorage.removeItem(SESSION_EXPIRY_KEY);
@@ -223,7 +230,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('force_logout_checked_at');
     localStorage.removeItem('login_timestamp');
     void finalizarAcessoAtual();
-  }, [finalizarAcessoAtual]);
+  }, [finalizarAcessoAtual, usuarioLogado?.session_token]);
 
   useEffect(() => {
     if (!usuarioLogado?.id || usuarioLogado.id === 'visualizacao') return;

@@ -110,6 +110,20 @@ async function verifyAdminById(supabase: any, adminId: string): Promise<boolean>
   return true;
 }
 
+async function verifyAdminBySession(supabase: any, sessionToken: string): Promise<boolean> {
+  if (!sessionToken) return false;
+
+  const { data: sessao, error } = await supabase
+    .from("sessoes_login")
+    .select("user_role_id, logout_em, user_roles(id, acesso_admin, ativo)")
+    .eq("token", sessionToken)
+    .is("logout_em", null)
+    .single();
+
+  if (error || !sessao?.user_roles) return false;
+  return sessao.user_roles.ativo === true && sessao.user_roles.acesso_admin === true;
+}
+
 async function getUserCredentialPassword(supabase: any, userId: string): Promise<string> {
   const { data: credential, error } = await supabase
     .from("user_credentials")
@@ -239,7 +253,14 @@ serve(async (req) => {
 
         await logAccessAttempt(supabase, user.nome, user.id, true, clientIP);
 
-        return jsonResponse({ success: true, user });
+        const { data: sessao, error: sessaoError } = await supabase
+          .from("sessoes_login")
+          .insert({ user_role_id: user.id })
+          .select("token")
+          .single();
+        if (sessaoError) throw sessaoError;
+
+        return jsonResponse({ success: true, user, session_token: sessao.token });
       }
 
       case "change_password": {
@@ -275,14 +296,28 @@ serve(async (req) => {
         return jsonResponse({ success: true });
       }
 
+      case "logout": {
+        const { session_token } = params;
+        if (!session_token) return jsonResponse({ success: true });
+
+        const { error } = await supabase
+          .from("sessoes_login")
+          .update({ logout_em: new Date().toISOString() })
+          .eq("token", session_token)
+          .is("logout_em", null);
+
+        if (error) throw error;
+        return jsonResponse({ success: true });
+      }
+
       case "admin_reset_password": {
-        const { user_id, nova_senha, admin_id } = params;
+        const { user_id, nova_senha, session_token } = params;
         
-        if (!admin_id) {
+        if (!session_token) {
           return jsonResponse({ error: "IdentificaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o do administrador ÃƒÆ’Ã‚Â© obrigatÃƒÆ’Ã‚Â³ria" }, 403);
         }
 
-        const isAdmin = await verifyAdminById(supabase, admin_id);
+        const isAdmin = await verifyAdminBySession(supabase, session_token);
         if (!isAdmin) {
           return jsonResponse({ error: "Acesso negado. Apenas administradores podem redefinir senhas." }, 403);
         }
@@ -301,10 +336,10 @@ serve(async (req) => {
       }
 
       case "admin_create_user": {
-        const { admin_id, nome, email, setoresIds = [], permissoes = {}, tiposNotificacao = [] } = params;
+        const { session_token, nome, email, setoresIds = [], permissoes = {}, tiposNotificacao = [] } = params;
 
-        if (!admin_id) return jsonResponse({ error: "Admin obrigatorio" }, 403);
-        const isAdmin = await verifyAdminById(supabase, admin_id);
+        if (!session_token) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
+        const isAdmin = await verifyAdminBySession(supabase, session_token);
         if (!isAdmin) return jsonResponse({ error: "Acesso negado" }, 403);
         if (!nome) return jsonResponse({ error: "Nome obrigatorio" }, 400);
 
@@ -335,10 +370,10 @@ serve(async (req) => {
       }
 
       case "admin_update_user": {
-        const { admin_id, user_id, nome, email, setoresIds, permissoes = {}, ativo, tempoInatividade, tiposNotificacao } = params;
+        const { session_token, user_id, nome, email, setoresIds, permissoes = {}, ativo, tempoInatividade, tiposNotificacao } = params;
 
-        if (!admin_id) return jsonResponse({ error: "Admin obrigatorio" }, 403);
-        const isAdmin = await verifyAdminById(supabase, admin_id);
+        if (!session_token) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
+        const isAdmin = await verifyAdminBySession(supabase, session_token);
         if (!isAdmin) return jsonResponse({ error: "Acesso negado" }, 403);
         if (!user_id) return jsonResponse({ error: "Usuario obrigatorio" }, 400);
 
@@ -378,10 +413,10 @@ serve(async (req) => {
       }
 
       case "admin_delete_user": {
-        const { admin_id, user_id } = params;
+        const { session_token, user_id } = params;
 
-        if (!admin_id) return jsonResponse({ error: "Admin obrigatorio" }, 403);
-        const isAdmin = await verifyAdminById(supabase, admin_id);
+        if (!session_token) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
+        const isAdmin = await verifyAdminBySession(supabase, session_token);
         if (!isAdmin) return jsonResponse({ error: "Acesso negado" }, 403);
         if (!user_id) return jsonResponse({ error: "Usuario obrigatorio" }, 400);
 
@@ -393,11 +428,11 @@ serve(async (req) => {
       }
 
       case "admin_update_user_extra": {
-        const { admin_id, user_id, campos = {} } = params;
+        const { session_token, user_id, campos = {} } = params;
         const allowed = ["fake_quadro_ativo", "fake_quadro_config", "tipos_notificacao", "recebe_notificacoes"];
 
-        if (!admin_id) return jsonResponse({ error: "Admin obrigatorio" }, 403);
-        const isAdmin = await verifyAdminById(supabase, admin_id);
+        if (!session_token) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
+        const isAdmin = await verifyAdminBySession(supabase, session_token);
         if (!isAdmin) return jsonResponse({ error: "Acesso negado" }, 403);
         if (!user_id) return jsonResponse({ error: "Usuario obrigatorio" }, 400);
 
@@ -424,13 +459,13 @@ serve(async (req) => {
       }
 
       case "hash_all_passwords": {
-        const { admin_id } = params;
+        const { session_token } = params;
         
-        if (!admin_id) {
+        if (!session_token) {
           return jsonResponse({ error: "IdentificaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o do administrador ÃƒÆ’Ã‚Â© obrigatÃƒÆ’Ã‚Â³ria" }, 403);
         }
 
-        const isAdmin = await verifyAdminById(supabase, admin_id);
+        const isAdmin = await verifyAdminBySession(supabase, session_token);
         if (!isAdmin) {
           return jsonResponse({ error: "Acesso negado. Apenas administradores podem executar esta aÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o." }, 403);
         }

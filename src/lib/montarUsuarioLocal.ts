@@ -1,6 +1,6 @@
 import type { UsuarioLocal } from '@/contexts/UserContext';
 
-export function montarUsuarioLocal(user: any): UsuarioLocal {
+export function montarUsuarioLocal(user: any, sessionToken?: string): UsuarioLocal {
   const setoresIds: string[] = [];
   if (user.setor_id) setoresIds.push(user.setor_id);
   (user.user_roles_setores || []).forEach((s: { setor_id: string }) => {
@@ -36,5 +36,6 @@ export function montarUsuarioLocal(user: any): UsuarioLocal {
     tempo_inatividade: user.tempo_inatividade ?? 4,
     fake_quadro_ativo: user.fake_quadro_ativo ?? false,
     fake_quadro_config: user.fake_quadro_config ?? {},
+    session_token: sessionToken ?? user.session_token,
   };
 }

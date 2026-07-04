@@ -225,7 +225,7 @@ export default function Usuarios() {
       const { data: createResult, error: createError } = await supabase.functions.invoke('auth-handler', {
         body: {
           action: 'admin_create_user',
-          admin_id: usuarioAtual.id,
+          session_token: usuarioAtual.session_token,
           nome,
           email,
           setoresIds,
@@ -240,7 +240,7 @@ export default function Usuarios() {
       // Hashear a senha real via Edge Function
       const senhaReal = senha || '123456';
       const { data: hashResult, error: hashError } = await supabase.functions.invoke('auth-handler', {
-        body: { action: 'admin_reset_password', user_id: roleData.id, nova_senha: senhaReal, admin_id: usuarioAtual.id },
+        body: { action: 'admin_reset_password', user_id: roleData.id, nova_senha: senhaReal, session_token: usuarioAtual.session_token },
       });
       if (hashError || hashResult?.error) {
         console.error('Erro ao hashear senha:', hashError || hashResult?.error);
@@ -265,7 +265,7 @@ export default function Usuarios() {
       const { data: updateResult, error: updateError } = await supabase.functions.invoke('auth-handler', {
         body: {
           action: 'admin_update_user',
-          admin_id: usuarioAtual.id,
+          session_token: usuarioAtual.session_token,
           user_id: id,
           nome,
           email,
@@ -280,7 +280,7 @@ export default function Usuarios() {
 
       if (senha && senha.trim() !== '') {
         const { data: hashResult, error: hashError } = await supabase.functions.invoke('auth-handler', {
-          body: { action: 'admin_reset_password', user_id: id, nova_senha: senha, admin_id: usuarioAtual.id },
+          body: { action: 'admin_reset_password', user_id: id, nova_senha: senha, session_token: usuarioAtual.session_token },
         });
         if (hashError || hashResult?.error) {
           toast.error('Erro ao atualizar senha: ' + (hashResult?.error || 'erro desconhecido'));
@@ -293,7 +293,7 @@ export default function Usuarios() {
           .select(`${USER_ROLE_SELECT}, user_roles_setores(setor_id)`)
           .eq('id', id)
           .single();
-        if (usuarioAtualizado) setUsuarioAtual(montarUsuarioLocal(usuarioAtualizado));
+        if (usuarioAtualizado) setUsuarioAtual(montarUsuarioLocal(usuarioAtualizado, usuarioAtual.session_token));
       }
     },
     onSuccess: () => {
@@ -308,7 +308,7 @@ export default function Usuarios() {
   const deleteUserMutation = useMutation({
     mutationFn: async (id: string) => {
       const { data, error } = await supabase.functions.invoke('auth-handler', {
-        body: { action: 'admin_delete_user', admin_id: usuarioAtual.id, user_id: id },
+        body: { action: 'admin_delete_user', session_token: usuarioAtual.session_token, user_id: id },
       });
       if (error || data?.error) throw error || new Error(data.error);
     },

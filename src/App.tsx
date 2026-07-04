@@ -262,7 +262,7 @@ function TelaManutencaoComLogin() {
       if (error) throw error;
       if (data.error) { setErro(data.error); setCarregando(false); return; }
       
-      setUsuarioAtual(montarUsuarioLocal(data.user));
+      setUsuarioAtual(montarUsuarioLocal(data.user, data.session_token));
     } catch (err) {
       setErro('Erro ao conectar');
     }

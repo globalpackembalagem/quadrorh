@@ -38,7 +38,7 @@ export default function GateAcesso() {
         return;
       }
 
-      setUsuarioAtual(montarUsuarioLocal(data.user));
+      setUsuarioAtual(montarUsuarioLocal(data.user, data.session_token));
       navigate('/home');
     } catch (error) {
       console.error('Erro no login:', error);
