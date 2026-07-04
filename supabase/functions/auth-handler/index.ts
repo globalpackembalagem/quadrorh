@@ -115,13 +115,12 @@ async function verifyAdminBySession(supabase: any, sessionToken: string): Promis
 
   const { data: sessao, error } = await supabase
     .from("sessoes_login")
-    .select("user_role_id, logout_em, user_roles(id, acesso_admin, ativo)")
+    .select("user_role_id")
     .eq("token", sessionToken)
-    .is("logout_em", null)
     .single();
 
-  if (error || !sessao?.user_roles) return false;
-  return sessao.user_roles.ativo === true && sessao.user_roles.acesso_admin === true;
+  if (error || !sessao?.user_role_id) return false;
+  return await verifyAdminById(supabase, sessao.user_role_id);
 }
 
 async function verifyAdminCompat(supabase: any, sessionToken?: string, adminId?: string): Promise<boolean> {
@@ -308,9 +307,8 @@ serve(async (req) => {
 
         const { error } = await supabase
           .from("sessoes_login")
-          .update({ logout_em: new Date().toISOString() })
-          .eq("token", session_token)
-          .is("logout_em", null);
+          .delete()
+          .eq("token", session_token);
 
         if (error) throw error;
         return jsonResponse({ success: true });
