@@ -20,6 +20,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { loadXLSX } from '@/lib/xlsx';
 import { normalizarTextoSistema } from '@/lib/normalizacao';
 import { validarTurmaPorSetor } from '@/lib/turmas';
+import { funcionariosApi } from '@/lib/funcionariosApi';
 
 interface ImportarFuncionariosProps {
   setores: Setor[];
@@ -496,9 +497,7 @@ export function ImportarFuncionarios({ setores, situacoes }: ImportarFuncionario
       
       for (let i = 0; i < registros.length; i += BATCH_SIZE) {
         const lote = registros.slice(i, i + BATCH_SIZE);
-        const { error } = await supabase
-          .from('funcionarios')
-          .insert(lote);
+        const { error } = await funcionariosApi.insert(lote);
         
         if (error) throw error;
         importados += lote.length;

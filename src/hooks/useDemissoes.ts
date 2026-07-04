@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { criarEventoENotificar } from '@/hooks/useEventosSistema';
 import { registrarHistoricoQuadroSeTravado } from '@/hooks/useFuncionarios';
 import { normalizarTextoSistema } from '@/lib/normalizacao';
+import { funcionariosApi } from '@/lib/funcionariosApi';
 
 const invalidarBaseFuncionarios = (queryClient: ReturnType<typeof useQueryClient>) => {
   queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
@@ -186,11 +187,10 @@ export function useCreateDemissao() {
 
         const updateData: Record<string, any> = { situacao_id: situacaoAlvo };
         updateData.data_demissao = demissao.data_prevista || new Date().toISOString().split('T')[0];
-        const { data: funcionariosAtualizados, error: funcError } = await supabase
-          .from('funcionarios')
-          .update(updateData)
-          .eq('id', demissao.funcionario_id)
-          .select('id, situacao_id, data_demissao');
+        const { data: funcionariosAtualizados, error: funcError } = await funcionariosApi.update(
+          updateData,
+          { eq: { id: demissao.funcionario_id }, select: 'id, situacao_id, data_demissao' }
+        );
         
         if (funcError) throw funcError;
         if (!funcionariosAtualizados?.some((funcionario) => funcionario.situacao_id === situacaoAlvo)) {
@@ -300,10 +300,7 @@ export function useUpdateDemissao() {
           }
         }
 
-        const { error: funcError } = await supabase
-          .from('funcionarios')
-          .update(updateFuncionario)
-          .eq('id', data.funcionario_id);
+        const { error: funcError } = await funcionariosApi.update(updateFuncionario, { eq: { id: data.funcionario_id } });
         if (funcError) throw funcError;
 
         const { data: funcionarioDepois } = await supabase
@@ -392,13 +389,10 @@ export function useRealizarDemissao() {
           .eq('id', funcionarioId)
           .single();
 
-        const { error: funcError } = await supabase
-          .from('funcionarios')
-          .update({ 
+        const { error: funcError } = await funcionariosApi.update({ 
             situacao_id: situacaoAlvo,
             data_demissao: demissaoData?.data_prevista || new Date().toISOString().split('T')[0]
-          })
-          .eq('id', funcionarioId);
+          }, { eq: { id: funcionarioId } });
         
         if (funcError) throw funcError;
 

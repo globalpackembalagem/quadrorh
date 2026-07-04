@@ -17,6 +17,7 @@ import MapaVisualArmarios from '@/components/armarios/MapaVisualArmarios';
 import { useAuth } from '@/hooks/useAuth';
 import { useUsuario } from '@/contexts/UserContext';
 import { loadXLSX } from '@/lib/xlsx';
+import { funcionariosApi } from '@/lib/funcionariosApi';
 
 const LOCAIS = [
   { value: 'SOPRO', label: 'Sopro' },
@@ -529,10 +530,7 @@ export default function ArmariosFemininos() {
       }
 
       if (setorId) {
-        await supabase
-          .from('funcionarios')
-          .update({ setor_id: setorId })
-          .eq('id', funcionarioId);
+        await funcionariosApi.update({ setor_id: setorId }, { eq: { id: funcionarioId } });
       }
     },
     onSuccess: () => {
@@ -1646,7 +1644,7 @@ export default function ArmariosFemininos() {
                                   toast.error('Erro ao liberar armário: ' + armarioError.message);
                                   return;
                                 }
-                                const { error } = await supabase.from('funcionarios').delete().eq('id', f.id);
+                                const { error } = await funcionariosApi.delete({ eq: { id: f.id } });
                                 if (error) {
                                   toast.error('Erro ao excluir: ' + error.message);
                                 } else {

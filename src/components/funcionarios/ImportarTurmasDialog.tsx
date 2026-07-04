@@ -19,6 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { useUsuario } from '@/contexts/UserContext';
 import { loadXLSX } from '@/lib/xlsx';
+import { funcionariosApi } from '@/lib/funcionariosApi';
 
 interface ImportarTurmasDialogProps {
   open: boolean;
@@ -240,10 +241,7 @@ export function ImportarTurmasDialog({ open, onOpenChange, onSuccess }: Importar
       let erros = 0;
 
       for (const linha of linhasValidas) {
-        const { error } = await supabase
-          .from('funcionarios')
-          .update({ turma: linha.turma })
-          .eq('id', linha.funcId!);
+        const { error } = await funcionariosApi.update({ turma: linha.turma }, { eq: { id: linha.funcId! } });
 
         if (error) { erros++; } else { atualizados++; }
       }

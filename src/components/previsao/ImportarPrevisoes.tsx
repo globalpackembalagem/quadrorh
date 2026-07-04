@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Setor, Situacao, SexoTipo, EmpresaTipo } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
+import { funcionariosApi } from '@/lib/funcionariosApi';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { loadXLSX } from '@/lib/xlsx';
@@ -374,9 +375,7 @@ export function ImportarPrevisoes({ setores, situacaoPrevisao }: ImportarPreviso
       
       for (let i = 0; i < registros.length; i += BATCH_SIZE) {
         const lote = registros.slice(i, i + BATCH_SIZE);
-        const { error } = await supabase
-          .from('funcionarios')
-          .insert(lote);
+        const { error } = await funcionariosApi.insert(lote);
         
         if (error) throw error;
         importados += lote.length;

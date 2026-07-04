@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { TurmaPendenteActions } from './TurmaPendenteActions';
+import { funcionariosApi } from '@/lib/funcionariosApi';
 
 interface AvisoNotificacao {
   id: string;
@@ -496,10 +497,7 @@ export function CentralAvisosModal() {
         }
 
         // Atualizar funcionário para ATIVO
-        await supabase
-          .from('funcionarios')
-          .update({ situacao_id: sitAtivo.id })
-          .eq('id', evento.funcionario_id);
+        await funcionariosApi.update({ situacao_id: sitAtivo.id }, { eq: { id: evento.funcionario_id } });
 
         toast.success(`${funcionarioNome} marcado como ATIVO!`);
       } else {
@@ -736,14 +734,11 @@ export function CentralAvisosModal() {
           .single();
 
         if (sitAtivo) {
-          await supabase
-            .from('funcionarios')
-            .update({ 
+          await funcionariosApi.update({ 
               situacao_id: sitAtivo.id,
               cobertura_funcionario_id: null,
               treinamento_setor_id: null,
-            })
-            .eq('id', evento.funcionario_id);
+            }, { eq: { id: evento.funcionario_id } });
           toast.success(`${funcionarioNome} — retornou ao setor, situação alterada para ATIVO!`);
         }
       } else if (resposta === 'nao_esta') {

@@ -26,6 +26,7 @@ import { useRegistrarHistoricoFalta } from '@/hooks/useHistoricoFaltas';
 import { useCreateDivergenciaPonto } from '@/hooks/useDivergenciasPonto';
 import { useAuth } from '@/hooks/useAuth';
 import { useUsuario } from '@/contexts/UserContext';
+import { funcionariosApi } from '@/lib/funcionariosApi';
 import { useSetores } from '@/hooks/useSetores';
 import { useQuadroPlanejado } from '@/hooks/useQuadroPlanejado';
 import { useQuadroDecoracao } from '@/hooks/useQuadroDecoracao';
@@ -892,10 +893,7 @@ export default function ControleFaltas() {
       // Verificar alerta de faltas consecutivas SUMIDO (7 Sopro, 5 Decoração)
       if (isSumidoSelecionado) {
         // Salvar sumido_desde no cadastro do funcionário
-        await supabase
-          .from('funcionarios')
-          .update({ sumido_desde: sumidoDesde })
-          .eq('id', funcionarioSelecionado.id);
+        await funcionariosApi.update({ sumido_desde: sumidoDesde }, { eq: { id: funcionarioSelecionado.id } });
         
         await verificarENotificarSumido(funcionarioSelecionado.id, funcionarioSelecionado.nome_completo, dataStr, funcionarioSelecionado);
       }
@@ -978,13 +976,10 @@ export default function ControleFaltas() {
             checkDate.setDate(checkDate.getDate() - 1);
           }
 
-          await supabase
-            .from('funcionarios')
-            .update({ 
+          await funcionariosApi.update({ 
               situacao_id: SUMIDO_SITUACAO_ID,
               sumido_desde: dataMaisAntiga,
-            })
-            .eq('id', funcId);
+            }, { eq: { id: funcId } });
         }
 
         // 2. Criar divergência automática (se não existir pendente)

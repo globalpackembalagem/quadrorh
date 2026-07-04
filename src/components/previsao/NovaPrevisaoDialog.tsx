@@ -5,6 +5,7 @@ import { CalendarIcon, Plus } from 'lucide-react';
 import { useSetoresAtivos } from '@/hooks/useSetores';
 import { useSituacoesAtivas } from '@/hooks/useSituacoes';
 import { supabase } from '@/integrations/supabase/client';
+import { funcionariosApi } from '@/lib/funcionariosApi';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -93,7 +94,7 @@ export function NovaPrevisaoDialog() {
 
     setSaving(true);
     try {
-      const { data: inserted, error } = await supabase.from('funcionarios').insert({
+      const { data: inserted, error } = await funcionariosApi.insert({
         nome_completo: formData.nome_completo.trim(),
         sexo: formData.sexo,
         setor_id: formData.setor_id,
@@ -104,7 +105,7 @@ export function NovaPrevisaoDialog() {
         cargo: formData.cargo || null,
         cpf: formatarCpf(formData.cpf) || null,
         data_admissao: formData.data_admissao ? format(formData.data_admissao, 'yyyy-MM-dd') : null,
-      }).select('id').single();
+      }, { select: 'id', single: true });
 
       if (error) throw error;
 

@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSituacoes } from '@/hooks/useSituacoes';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { funcionariosApi } from '@/lib/funcionariosApi';
 
 interface OpcaoZerar {
   id: string;
@@ -169,7 +170,7 @@ export function ZerarBaseDialog() {
       const deletarFuncionariosEmLotes = async (ids: string[]) => {
         for (let i = 0; i < ids.length; i += TAMANHO_LOTE) {
           const lote = ids.slice(i, i + TAMANHO_LOTE);
-          const { error } = await supabase.from('funcionarios').delete().in('id', lote);
+          const { error } = await funcionariosApi.delete({ in: { id: lote } });
           if (error) throw error;
         }
       };

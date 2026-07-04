@@ -5,6 +5,7 @@ import { CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { funcionariosApi } from '@/lib/funcionariosApi';
 
 interface TurmaPendenteActionsProps {
   aviso: {
@@ -84,10 +85,7 @@ export function TurmaPendenteActions({ aviso, isCiente, userRoleName, onDone }: 
       }
 
       // Atualizar turma do funcionário
-      const { error } = await supabase
-        .from('funcionarios')
-        .update({ turma })
-        .eq('id', evento.funcionario_id);
+      const { error } = await funcionariosApi.update({ turma }, { eq: { id: evento.funcionario_id } });
 
       if (error) throw error;
 

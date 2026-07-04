@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Funcionario, Setor, Situacao, SexoTipo, EmpresaTipo } from '@/types/database';
 import { supabase } from '@/integrations/supabase/client';
+import { funcionariosApi } from '@/lib/funcionariosApi';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -304,9 +305,7 @@ export function PrevisaoAdmissaoSection({
         observacoes: d.observacoes || null,
       }));
       
-      const { error } = await supabase
-        .from('funcionarios')
-        .insert(registros);
+      const { error } = await funcionariosApi.insert(registros);
       
       if (error) throw error;
       
@@ -326,10 +325,7 @@ export function PrevisaoAdmissaoSection({
   const excluirPrevisao = async (id: string) => {
     setDeletingId(id);
     try {
-      const { error } = await supabase
-        .from('funcionarios')
-        .delete()
-        .eq('id', id);
+      const { error } = await funcionariosApi.delete({ eq: { id } });
       
       if (error) throw error;
       

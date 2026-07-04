@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { criarEventoENotificar } from '@/hooks/useEventosSistema';
 import { normalizarFuncionarioPayload } from '@/lib/normalizacao';
 import { useAuth } from '@/hooks/useAuth';
+import { funcionariosApi } from '@/lib/funcionariosApi';
 
 export const invalidarFuncionarios = (queryClient: QueryClient) => {
   queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
@@ -126,16 +127,13 @@ async function retornarSituacoesVencidasParaAtivo(funcionarios: Funcionario[]) {
 
   if (situacaoError || !situacaoAtivo?.id) return;
 
-  await supabase
-    .from('funcionarios')
-    .update({
+  await funcionariosApi.update({
       situacao_id: situacaoAtivo.id,
       cobertura_funcionario_id: null,
       cobertura_data_inicio: null,
       cobertura_data_fim: null,
       treinamento_setor_id: null,
-    })
-    .in('id', vencidos.map(f => f.id));
+    }, { in: { id: vencidos.map(f => f.id) } });
 }
 
 function areaDoFuncionario(funcionario: any): 'SOPRO' | 'DECORACAO' | null {
@@ -267,10 +265,7 @@ export function useDeleteFuncionario() {
         .eq('funcionario_id', id);
       if (armarioError) throw armarioError;
 
-      const { error } = await supabase
-        .from('funcionarios')
-        .delete()
-        .eq('id', id);
+      const { error } = await funcionariosApi.delete({ eq: { id } });
       
       if (error) throw error;
     },
@@ -460,11 +455,7 @@ export function useCreateFuncionario() {
   return useMutation({
     mutationFn: async (funcionario: CreateFuncionarioInput) => {
       const funcionarioNormalizado = normalizarFuncionarioPayload(funcionario);
-      const { data, error } = await supabase
-        .from('funcionarios')
-        .insert(funcionarioNormalizado)
-        .select()
-        .single();
+      const { data, error } = await funcionariosApi.insert(funcionarioNormalizado, { single: true });
       
       if (error) throw error;
       return data;
@@ -540,16 +531,15 @@ export function useUpdateFuncionario() {
         .eq('id', id)
         .single();
 
-      const { data, error } = await supabase
-        .from('funcionarios')
-        .update(updateData)
-        .eq('id', id)
-        .select(`
+      const { data, error } = await funcionariosApi.update(updateData, {
+        eq: { id },
+        select: `
           *,
           setor:setores!setor_id(*),
           situacao:situacoes(*)
-        `)
-        .single();
+        `,
+        single: true,
+      });
       
       if (error) throw error;
 

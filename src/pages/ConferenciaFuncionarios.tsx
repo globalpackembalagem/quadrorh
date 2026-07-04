@@ -9,6 +9,7 @@ import { useSituacoes } from '@/hooks/useSituacoes';
 import { Funcionario } from '@/types/database';
 import { useAuth } from '@/hooks/useAuth';
 import { normalizarTextoSistema } from '@/lib/normalizacao';
+import { funcionariosApi } from '@/lib/funcionariosApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -187,10 +188,7 @@ export default function ConferenciaFuncionarios() {
 
   const excluirFuncionario = useMutation({
     mutationFn: async (funcionarioId: string) => {
-      const { error: deleteError } = await supabase
-        .from('funcionarios')
-        .delete()
-        .eq('id', funcionarioId);
+      const { error: deleteError } = await funcionariosApi.delete({ eq: { id: funcionarioId } });
 
       if (deleteError) throw deleteError;
     },
@@ -214,15 +212,12 @@ export default function ConferenciaFuncionarios() {
   };
 
   const salvarCamposFuncionario = async (funcionarioId: string) => {
-    const { error: updateError } = await supabase
-      .from('funcionarios')
-      .update({
+    const { error: updateError } = await funcionariosApi.update({
         setor_id: setorEdit,
         turma: normalizarTextoSistema(turmaEdit === 'SEM TURMA' ? null : turmaEdit),
         situacao_id: situacaoEdit,
         data_admissao: admissaoEdit || null,
-      })
-      .eq('id', funcionarioId);
+      }, { eq: { id: funcionarioId } });
 
     if (updateError) throw updateError;
   };

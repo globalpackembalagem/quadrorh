@@ -8,6 +8,7 @@ import { useSetoresAtivos } from '@/hooks/useSetores';
 import { useAuth } from '@/hooks/useAuth';
 import { useUsuario } from '@/contexts/UserContext';
 import { supabase } from '@/integrations/supabase/client';
+import { funcionariosApi } from '@/lib/funcionariosApi';
 import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -170,12 +171,12 @@ export default function CoberturasTreinamentos() {
         .eq('id', novoFormData.funcionario_id)
         .single();
 
-      const { error } = await supabase.from('funcionarios').update({
+      const { error } = await funcionariosApi.update({
         situacao_id: novoFormData.situacao_id,
         observacoes: novoFormData.observacoes || null,
         cobertura_data_inicio: novoFormData.cobertura_data_inicio || null,
         cobertura_data_fim: novoFormData.cobertura_data_fim || null,
-      }).eq('id', novoFormData.funcionario_id);
+      }, { eq: { id: novoFormData.funcionario_id } });
       if (error) throw error;
 
       const { data: funcionarioDepois } = await supabase
@@ -231,10 +232,10 @@ export default function CoberturasTreinamentos() {
         .eq('id', editingFunc.id)
         .single();
 
-      const { error } = await supabase.from('funcionarios').update({
+      const { error } = await funcionariosApi.update({
         cobertura_data_inicio: formData.cobertura_data_inicio || null,
         cobertura_data_fim: formData.cobertura_data_fim || null,
-      }).eq('id', editingFunc.id);
+      }, { eq: { id: editingFunc.id } });
       if (error) throw error;
 
       const { data: funcionarioDepoisDatas } = await supabase

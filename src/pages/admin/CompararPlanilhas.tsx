@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { loadXLSX } from '@/lib/xlsx';
+import { funcionariosApi } from '@/lib/funcionariosApi';
 
 interface RegistroPlanilha {
   linha: number;
@@ -363,14 +364,10 @@ export default function CompararPlanilhas() {
       for (const [chave, { matricula, nome, updates }] of updatesByChave) {
         if (Object.keys(updates).length === 0) continue;
 
-        let query = supabase.from('funcionarios').update(updates);
-        if (matricula) {
-          query = query.eq('matricula', matricula);
-        } else {
-          query = query.ilike('nome_completo', nome);
-        }
-
-        const { error } = await query;
+        const filters = matricula
+          ? { eq: { matricula } }
+          : { ilike: { nome_completo: nome } };
+        const { error } = await funcionariosApi.update(updates, filters);
         if (error) {
           console.error(`Erro ao atualizar ${nome}:`, error);
           erros++;

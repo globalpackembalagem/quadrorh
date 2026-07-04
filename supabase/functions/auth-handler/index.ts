@@ -129,6 +129,55 @@ async function verifyAdminCompat(supabase: any, sessionToken?: string, adminId?:
   return false;
 }
 
+async function verifyFuncionariosWriterBySession(supabase: any, sessionToken: string): Promise<boolean> {
+  if (!sessionToken) return false;
+
+  const { data: sessao, error: sessaoError } = await supabase
+    .from("sessoes_login")
+    .select("user_role_id")
+    .eq("token", sessionToken)
+    .single();
+
+  if (sessaoError || !sessao?.user_role_id) return false;
+
+  const { data: user, error: userError } = await supabase
+    .from("user_roles")
+    .select("id, ativo, acesso_admin, pode_editar_funcionarios")
+    .eq("id", sessao.user_role_id)
+    .eq("ativo", true)
+    .single();
+
+  if (userError || !user) return false;
+  return user.acesso_admin === true || user.pode_editar_funcionarios === true;
+}
+
+function applyFuncionariosFilters(query: any, filters: any) {
+  const eqFilters = filters?.eq || {};
+  for (const [column, value] of Object.entries(eqFilters)) {
+    query = query.eq(column, value);
+  }
+
+  const inFilters = filters?.in || {};
+  for (const [column, value] of Object.entries(inFilters)) {
+    query = query.in(column, value as any[]);
+  }
+
+  const ilikeFilters = filters?.ilike || {};
+  for (const [column, value] of Object.entries(ilikeFilters)) {
+    query = query.ilike(column, value);
+  }
+
+  return query;
+}
+
+function hasFuncionariosFilters(filters: any) {
+  return Boolean(
+    Object.keys(filters?.eq || {}).length ||
+    Object.keys(filters?.in || {}).length ||
+    Object.keys(filters?.ilike || {}).length
+  );
+}
+
 async function getUserCredentialPassword(supabase: any, userId: string): Promise<string> {
   const { data: credential, error } = await supabase
     .from("user_credentials")
@@ -312,6 +361,37 @@ serve(async (req) => {
 
         if (error) throw error;
         return jsonResponse({ success: true });
+      }
+
+      case "funcionarios_write": {
+        const { session_token, operation, payload, filters = {} } = params;
+        const allowedOperations = ["insert", "update", "upsert", "delete"];
+
+        if (!session_token) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
+        if (!allowedOperations.includes(operation)) return jsonResponse({ error: "Operacao invalida" }, 400);
+
+        const canWrite = await verifyFuncionariosWriterBySession(supabase, session_token);
+        if (!canWrite) return jsonResponse({ error: "Acesso negado" }, 403);
+
+        let query = supabase.from("funcionarios");
+        if (operation === "insert") query = query.insert(payload);
+        if (operation === "update") query = applyFuncionariosFilters(query.update(payload), filters);
+        if (operation === "upsert") query = query.upsert(payload);
+        if (operation === "delete") {
+          if (!hasFuncionariosFilters(filters)) {
+            return jsonResponse({ error: "Delete exige filtro" }, 400);
+          }
+          query = applyFuncionariosFilters(query.delete(), filters);
+        }
+
+        if (operation !== "delete") {
+          query = query.select(filters?.select || "*");
+          if (filters?.single) query = query.single();
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        return jsonResponse({ success: true, data });
       }
 
       case "admin_reset_password": {

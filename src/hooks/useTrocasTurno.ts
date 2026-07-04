@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { criarEventoENotificar, inserirEventoSemDuplicata } from '@/hooks/useEventosSistema';
 import { registrarHistoricoQuadroSeTravado } from '@/hooks/useFuncionarios';
+import { funcionariosApi } from '@/lib/funcionariosApi';
 
 const invalidarBaseFuncionarios = (queryClient: ReturnType<typeof useQueryClient>) => {
   queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
@@ -349,10 +350,7 @@ export function useEfetivarTrocaTurno() {
         updateFunc.turma = null;
       }
 
-      const { error: fErr } = await supabase
-        .from('funcionarios')
-        .update(updateFunc)
-        .eq('id', params.funcionario_id);
+      const { error: fErr } = await funcionariosApi.update(updateFunc, { eq: { id: params.funcionario_id } });
 
       if (fErr) throw fErr;
 
