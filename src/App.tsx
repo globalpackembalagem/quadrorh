@@ -89,6 +89,7 @@ const ArmariosFemininos = lazyRetry(() => import("./pages/ArmariosFemininos"));
 const ManualArmarios = lazyRetry(() => import("./pages/ManualArmarios"));
 const ArmariosFemininoCadastro = lazyRetry(() => import("./pages/ArmariosFemininoCadastro"));
 const HistoricoQuadro = lazyRetry(() => import("./pages/HistoricoQuadro"));
+const CapturaFotos = lazyRetry(() => import("./pages/CapturaFotos"));
 
 
 export const queryClient = new QueryClient({
@@ -137,6 +138,17 @@ function LayoutRouter() {
   useInactivityLogout();
   useLoginNotification();
   useForceLogout();
+
+  // Rota de Gate (/) - sem sidebar
+  if (location.pathname === '/captura-fotos') {
+    return (
+      <SafePage>
+        <Routes>
+          <Route path="/captura-fotos" element={<CapturaFotos />} />
+        </Routes>
+      </SafePage>
+    );
+  }
 
   // Rota de Gate (/) - sem sidebar
   if (location.pathname === '/') {
