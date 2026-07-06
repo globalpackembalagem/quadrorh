@@ -901,7 +901,10 @@ export default function ControleFaltas() {
       toast.success('REGISTRO SALVO COM SUCESSO!');
       setModalOpen(false);
     } catch (error) {
-      toast.error('ERRO AO SALVAR REGISTRO');
+      console.error('[FALTAS] Erro ao salvar/remover falta:', error);
+      const err = error as { message?: string; code?: string };
+      const code = err?.code ? ` | code: ${err.code}` : '';
+      toast.error(`ERRO AO SALVAR REGISTRO: ${err?.message || 'Erro desconhecido'}${code}`);
     }
   };
 

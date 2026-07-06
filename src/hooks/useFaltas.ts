@@ -4,6 +4,13 @@ import { PeriodoPonto, RegistroPonto, PontoTipo, PeriodoStatus } from '@/types/d
 import { toast } from 'sonner';
 import { addMonths, format, parseISO } from 'date-fns';
 
+function getErrorDetails(error: unknown) {
+  const err = error as { message?: string; code?: string };
+  const message = err?.message || 'Erro desconhecido';
+  const code = err?.code ? ` | code: ${err.code}` : '';
+  return `${message}${code}`;
+}
+
 export function usePeriodosFaltas() {
   return useQuery({
     queryKey: ['periodos_faltas'],
@@ -183,10 +190,11 @@ export function useCreateRegistroFalta() {
       queryClient.invalidateQueries({ queryKey: ['registros_faltas'] });
     },
     onError: (error: Error) => {
+      console.error('[FALTAS] Erro ao salvar registro:', error);
       if (error.message.includes('duplicate')) {
         toast.error('Já existe um registro para esta data');
       } else {
-        toast.error('Erro ao salvar registro');
+        toast.error(`Erro ao salvar registro: ${getErrorDetails(error)}`);
       }
     },
   });
@@ -210,8 +218,9 @@ export function useUpdateRegistroFalta() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['registros_faltas'] });
     },
-    onError: () => {
-      toast.error('Erro ao atualizar registro');
+    onError: (error: Error) => {
+      console.error('[FALTAS] Erro ao atualizar registro:', error);
+      toast.error(`Erro ao atualizar registro: ${getErrorDetails(error)}`);
     },
   });
 }
@@ -231,8 +240,9 @@ export function useDeleteRegistroFalta() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['registros_faltas'] });
     },
-    onError: () => {
-      toast.error('Erro ao remover registro');
+    onError: (error: Error) => {
+      console.error('[FALTAS] Erro ao remover registro:', error);
+      toast.error(`Erro ao remover registro: ${getErrorDetails(error)}`);
     },
   });
 }
