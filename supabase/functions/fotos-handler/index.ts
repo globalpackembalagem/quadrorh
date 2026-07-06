@@ -125,7 +125,23 @@ serve(async (req) => {
         .limit(20);
       if (error) throw error;
 
-      return jsonResponse(req, { success: true, data });
+      const setorIds = [...new Set((data || []).map((f: any) => f.setor_id).filter(Boolean))];
+      let setoresPorId: Record<string, string> = {};
+      if (setorIds.length) {
+        const { data: setores, error: setoresError } = await supabase
+          .from("setores")
+          .select("id,nome")
+          .in("id", setorIds);
+        if (setoresError) throw setoresError;
+        setoresPorId = Object.fromEntries((setores || []).map((setor: any) => [setor.id, setor.nome]));
+      }
+
+      const dataComSetor = (data || []).map((funcionario: any) => ({
+        ...funcionario,
+        setor_nome: funcionario.setor_id ? setoresPorId[funcionario.setor_id] || null : null,
+      }));
+
+      return jsonResponse(req, { success: true, data: dataComSetor });
     }
 
     if (action === "atualizar_funcionario_foto") {

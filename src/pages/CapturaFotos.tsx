@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Camera, CheckCircle2, Search, XCircle } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Camera, CheckCircle2, RefreshCw, Search, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,10 +16,18 @@ type FuncionarioFoto = {
   telefone_whatsapp: string | null;
   usa_fretado: boolean | null;
   linha_fretado: string | null;
-  setor?: { nome: string | null } | null;
+  setor_nome: string | null;
 };
 
 const linhasFretado = ["VARZEA A", "VARZEA B", "CAMPINAS", "LOUVEIRA"];
+
+function formatTelefone(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
 
 async function resizeImageToDataUrl(file: File, maxSize = 1200, quality = 0.82) {
   return new Promise<string>((resolve, reject) => {
@@ -61,6 +69,7 @@ export default function CapturaFotos() {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const podeSalvar = useMemo(() => Boolean(selecionado && (imagemBase64 || telefone || usaFretado !== Boolean(selecionado.usa_fretado) || linhaFretado)), [imagemBase64, linhaFretado, selecionado, telefone, usaFretado]);
 
@@ -88,8 +97,31 @@ export default function CapturaFotos() {
     }
   };
 
-  const buscar = async () => {
-    if (!termo.trim()) return;
+  useEffect(() => {
+    if (!codigo || termo.trim().length < 3) {
+      setResultados([]);
+      return;
+    }
+
+    const timer = window.setTimeout(async () => {
+      setErro("");
+      setSucesso("");
+      setCarregando(true);
+      try {
+        const data = await chamarFotosHandler({ action: "buscar_funcionario", termo: termo.trim() });
+        setResultados(data.data || []);
+      } catch (e) {
+        setErro(e instanceof Error ? e.message : "Erro ao buscar funcionario");
+      } finally {
+        setCarregando(false);
+      }
+    }, 400);
+
+    return () => window.clearTimeout(timer);
+  }, [codigo, termo]);
+
+  const buscarAgora = async () => {
+    if (termo.trim().length < 3) return;
     setErro("");
     setSucesso("");
     setCarregando(true);
@@ -105,7 +137,7 @@ export default function CapturaFotos() {
 
   const selecionar = (funcionario: FuncionarioFoto) => {
     setSelecionado(funcionario);
-    setTelefone(funcionario.telefone_whatsapp || "");
+    setTelefone(formatTelefone(funcionario.telefone_whatsapp || ""));
     setUsaFretado(Boolean(funcionario.usa_fretado));
     setLinhaFretado(funcionario.linha_fretado || "");
     setImagemBase64("");
@@ -130,7 +162,7 @@ export default function CapturaFotos() {
         action: "atualizar_funcionario_foto",
         funcionario_id: selecionado.id,
         imagem_base64: imagemBase64 || undefined,
-        telefone_whatsapp: telefone,
+        telefone_whatsapp: telefone.replace(/\D/g, ""),
         usa_fretado: usaFretado,
         linha_fretado: usaFretado ? linhaFretado : null,
       });
@@ -179,9 +211,12 @@ export default function CapturaFotos() {
 
         <Card>
           <CardContent className="flex flex-col gap-3 pt-6 md:flex-row">
-            <Input value={termo} onChange={(e) => setTermo(e.target.value)} placeholder="Buscar por nome ou matricula" onKeyDown={(e) => e.key === "Enter" && buscar()} />
-            <Button onClick={buscar} disabled={carregando || !termo.trim()} className="md:w-36">
-              <Search className="mr-2 h-4 w-4" /> Buscar
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+              <Input className="pl-9" value={termo} onChange={(e) => setTermo(e.target.value)} placeholder="Buscar por nome ou matricula" onKeyDown={(e) => e.key === "Enter" && buscarAgora()} />
+            </div>
+            <Button onClick={buscarAgora} disabled={carregando || termo.trim().length < 3} variant="outline" className="md:w-36">
+              {carregando ? "Buscando" : "Atualizar"}
             </Button>
           </CardContent>
         </Card>
@@ -195,13 +230,14 @@ export default function CapturaFotos() {
               <CardTitle>Resultados</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {resultados.length === 0 && <p className="text-sm text-slate-500">Nenhum resultado carregado.</p>}
+              {termo.trim().length < 3 && <p className="text-sm text-slate-500">Digite pelo menos 3 caracteres.</p>}
+              {termo.trim().length >= 3 && resultados.length === 0 && <p className="text-sm text-slate-500">{carregando ? "Buscando..." : "Nenhum resultado encontrado."}</p>}
               {resultados.map((funcionario) => (
                 <button key={funcionario.id} type="button" onClick={() => selecionar(funcionario)} className="w-full rounded-md border bg-white p-3 text-left hover:border-blue-500">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="font-semibold text-slate-950">{funcionario.nome_completo}</p>
-                      <p className="text-xs text-slate-600">{funcionario.matricula || "-"} | {funcionario.setor?.nome || "SETOR NAO INFORMADO"}</p>
+                      <p className="text-xs text-slate-600">{funcionario.matricula || "-"} | {funcionario.setor_nome || "SETOR NAO INFORMADO"}</p>
                     </div>
                     <Badge variant={funcionario.tem_foto ? "default" : "outline"}>{funcionario.tem_foto ? "COM FOTO" : "SEM FOTO"}</Badge>
                   </div>
@@ -224,33 +260,49 @@ export default function CapturaFotos() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label>Telefone / WhatsApp</Label>
+                    <Input type="tel" inputMode="numeric" value={telefone} onChange={(e) => setTelefone(formatTelefone(e.target.value))} placeholder="(00) 00000-0000" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Fretado</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {linhasFretado.map((linha) => (
+                        <Button
+                          key={linha}
+                          type="button"
+                          variant={usaFretado && linhaFretado === linha ? "default" : "outline"}
+                          onClick={() => {
+                            setUsaFretado(true);
+                            setLinhaFretado(linha);
+                          }}
+                        >
+                          {linha}
+                        </Button>
+                      ))}
+                      <Button
+                        type="button"
+                        variant={!usaFretado ? "default" : "outline"}
+                        className="col-span-2"
+                        onClick={() => {
+                          setUsaFretado(false);
+                          setLinhaFretado("");
+                        }}
+                      >
+                        NAO USA FRETADO
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label>Foto</Label>
-                    <Input type="file" accept="image/*" capture="environment" onChange={(e) => handleFoto(e.target.files?.[0])} />
+                    <input ref={fileInputRef} className="hidden" type="file" accept="image/*" capture="environment" onChange={(e) => handleFoto(e.target.files?.[0])} />
+                    <Button type="button" variant="secondary" className="h-12 w-full text-base" onClick={() => fileInputRef.current?.click()}>
+                      {preview ? <RefreshCw className="mr-2 h-5 w-5" /> : <Camera className="mr-2 h-5 w-5" />}
+                      {preview ? "Tirar novamente" : "Tirar foto"}
+                    </Button>
                     {preview && <img src={preview} alt="Preview" className="max-h-64 w-full rounded-md object-cover" />}
                   </div>
-
-                  <div className="space-y-2">
-                    <Label>Telefone / WhatsApp</Label>
-                    <Input value={telefone} onChange={(e) => setTelefone(e.target.value)} placeholder="(00) 00000-0000" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Usa fretado?</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button type="button" variant={usaFretado ? "default" : "outline"} onClick={() => setUsaFretado(true)}>Sim</Button>
-                      <Button type="button" variant={!usaFretado ? "default" : "outline"} onClick={() => { setUsaFretado(false); setLinhaFretado(""); }}>Nao</Button>
-                    </div>
-                  </div>
-
-                  {usaFretado && (
-                    <div className="space-y-2">
-                      <Label>Linha do fretado</Label>
-                      <select className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" value={linhaFretado} onChange={(e) => setLinhaFretado(e.target.value)}>
-                        <option value="">Selecione</option>
-                        {linhasFretado.map((linha) => <option key={linha} value={linha}>{linha}</option>)}
-                      </select>
-                    </div>
-                  )}
 
                   <Button onClick={salvar} disabled={carregando || !podeSalvar || (usaFretado && !linhaFretado)} className="w-full">
                     <Camera className="mr-2 h-4 w-4" /> Salvar
