@@ -806,13 +806,7 @@ export default function ControleFaltas() {
     setSumidoDesde('');
     setMotivoDivergencia('');
     
-    // Verifica se está dentro do prazo ou se é admin
-    if (isAdmin || dentroDosPrazos(data, func.setor_id)) {
-      setModalOpen(true);
-    } else {
-      // Abre modal de divergência
-      setModalDivergenciaOpen(true);
-    }
+    setModalOpen(true);
   };
 
   const salvarRegistro = async () => {
