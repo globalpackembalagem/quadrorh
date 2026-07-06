@@ -111,7 +111,7 @@ async function verifyAdminById(supabase: any, adminId: string): Promise<boolean>
 }
 
 async function verifyAdminBySession(supabase: any, sessionToken: string): Promise<boolean> {
-  if (!sessionToken) return false;
+  if (!sessionToken) return null;
 
   const { data: sessao, error } = await supabase
     .from("sessoes_login")
@@ -129,7 +129,7 @@ async function verifyAdminCompat(supabase: any, sessionToken?: string, adminId?:
   return false;
 }
 
-async function verifyFuncionariosWriterBySession(supabase: any, sessionToken: string): Promise<boolean> {
+async function getFuncionariosWriterBySession(supabase: any, sessionToken: string): Promise<any | null> {
   if (!sessionToken) return false;
 
   const { data: sessao, error: sessaoError } = await supabase
@@ -138,17 +138,31 @@ async function verifyFuncionariosWriterBySession(supabase: any, sessionToken: st
     .eq("token", sessionToken)
     .single();
 
-  if (sessaoError || !sessao?.user_role_id) return false;
+  if (sessaoError || !sessao?.user_role_id) return null;
 
   const { data: user, error: userError } = await supabase
     .from("user_roles")
-    .select("id, ativo, acesso_admin, pode_editar_funcionarios")
+    .select("id, ativo, acesso_admin, pode_editar_funcionarios, pode_editar_faltas")
     .eq("id", sessao.user_role_id)
     .eq("ativo", true)
     .single();
 
-  if (userError || !user) return false;
-  return user.acesso_admin === true || user.pode_editar_funcionarios === true;
+  if (userError || !user) return null;
+  return user;
+}
+
+async function verifyFuncionariosWriterBySession(supabase: any, sessionToken: string): Promise<boolean> {
+  const user = await getFuncionariosWriterBySession(supabase, sessionToken);
+  return user?.acesso_admin === true || user?.pode_editar_funcionarios === true;
+}
+
+function isFaltasSumidoUpdate(payload: any, operation: string) {
+  if (operation !== "update" || !payload || Array.isArray(payload)) return false;
+  const allowed = new Set(["sumido_desde", "situacao_id"]);
+  const keys = Object.keys(payload);
+  const sumidoSituacaoId = "e7fcde8e-b701-43c5-a738-efae70ba53fd";
+  if (payload.situacao_id !== undefined && payload.situacao_id !== sumidoSituacaoId) return false;
+  return keys.length > 0 && keys.every((key) => allowed.has(key));
 }
 
 function applyFuncionariosFilters(query: any, filters: any) {
@@ -370,8 +384,10 @@ serve(async (req) => {
         if (!session_token) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
         if (!allowedOperations.includes(operation)) return jsonResponse({ error: "Operacao invalida" }, 400);
 
-        const canWrite = await verifyFuncionariosWriterBySession(supabase, session_token);
-        if (!canWrite) return jsonResponse({ error: "Acesso negado" }, 403);
+        const writer = await getFuncionariosWriterBySession(supabase, session_token);
+        const canWrite = writer?.acesso_admin === true || writer?.pode_editar_funcionarios === true;
+        const canFaltasSumido = writer?.pode_editar_faltas === true && hasFuncionariosFilters(filters) && isFaltasSumidoUpdate(payload, operation);
+        if (!canWrite && !canFaltasSumido) return jsonResponse({ error: "Acesso negado" }, 403);
 
         let query = supabase.from("funcionarios");
         if (operation === "insert") query = query.insert(payload);
