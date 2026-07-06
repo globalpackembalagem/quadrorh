@@ -75,6 +75,7 @@ interface NavItem {
   viewOnly?: boolean;
   disabled?: boolean;
   restricted?: boolean;
+  external?: boolean;
 }
 
 // Navegação base - será filtrada por permissões
@@ -113,6 +114,7 @@ const allRHNavigation: NavItem[] = [
 // Itens exclusivos admin no menu principal (fora de Configuração)
 const adminMainItems: NavItem[] = [
   { name: 'NOTIFICAÇÕES', href: '/admin/notificacoes', icon: Megaphone },
+  { name: 'CAPTURA DE FOTOS', href: '/captura-fotos', icon: ExternalLink, external: true },
 ];
 
 const adminNavigation = [
@@ -543,6 +545,8 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
                 <Link
                   key={item.name}
                   to={item.href}
+                  target={item.external ? "_blank" : undefined}
+                  rel={item.external ? "noopener noreferrer" : undefined}
                   onClick={closeFn}
                   className={cn(
                     'flex items-center gap-3.5 rounded-xl px-4 py-3 text-[13px] font-semibold transition-all duration-200',
