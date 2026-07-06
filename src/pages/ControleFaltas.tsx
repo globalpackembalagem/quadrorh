@@ -2028,6 +2028,11 @@ export default function ControleFaltas() {
                   <Label htmlFor="suspensao" className="flex-1 cursor-pointer font-medium">SUSPENSÃO</Label>
                   <div className="h-7 w-7 rounded bg-orange-500 flex items-center justify-center text-white font-bold text-[10px]">SS</div>
                 </div>
+                <div className="flex items-center space-x-3 p-2 rounded-lg border hover:bg-muted/50 cursor-pointer">
+                  <RadioGroupItem value="SUMIDO" id="sumido" />
+                  <Label htmlFor="sumido" className="flex-1 cursor-pointer font-medium">SUMIDO</Label>
+                  <div className="h-7 w-7 rounded bg-destructive/70 flex items-center justify-center text-destructive-foreground font-bold text-[10px]">SM</div>
+                </div>
                 {tipoSelecionado === 'SUMIDO' && (
                   <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 space-y-2">
                     <Label className="text-sm font-medium text-destructive">DESDE QUANDO ESTÁ SUMIDO? *</Label>
