@@ -118,7 +118,7 @@ serve(async (req) => {
       const safeTerm = termo.replace(/[%_,]/g, "");
       const { data, error } = await supabase
         .from("funcionarios")
-        .select("id,nome_completo,matricula,setor_id,tem_foto,telefone_whatsapp,usa_fretado,linha_fretado,setor:setores(nome)")
+        .select("id,nome_completo,matricula,setor_id,tem_foto,telefone_whatsapp,usa_fretado,linha_fretado")
         .in("situacao_id", situacoesIds)
         .or(`nome_completo.ilike.%${safeTerm}%,matricula.eq.${termo}`)
         .order("nome_completo")
