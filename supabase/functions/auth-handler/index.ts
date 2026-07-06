@@ -381,7 +381,13 @@ serve(async (req) => {
           if (!hasFuncionariosFilters(filters)) {
             return jsonResponse({ error: "Delete exige filtro" }, 400);
           }
-          query = applyFuncionariosFilters(query.delete(), filters);
+          const deleteQuery = applyFuncionariosFilters(query.delete({ count: "exact" }), filters);
+          const { count, error } = await deleteQuery;
+          if (error) throw error;
+          if (!count || count < 1) {
+            return jsonResponse({ error: "Nenhum funcionario encontrado para excluir" }, 404);
+          }
+          return jsonResponse({ success: true, count });
         }
 
         if (operation !== "delete") {
