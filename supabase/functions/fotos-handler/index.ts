@@ -109,7 +109,7 @@ serve(async (req) => {
       const { data: situacoesAtivas, error: sitError } = await supabase
         .from("situacoes")
         .select("id")
-        .eq("ativo", true)
+        .eq("ativa", true)
         .ilike("nome", "ATIVO");
       if (sitError) throw sitError;
       const situacoesIds = (situacoesAtivas || []).map((s: any) => s.id);
