@@ -460,6 +460,26 @@ serve(async (req) => {
         return jsonResponse({ success: true });
       }
 
+      case "verify_password": {
+        const { user_id, senha } = params;
+        if (!user_id || !senha) return jsonResponse({ error: "Dados incompletos" }, 400);
+
+        const { data: user, error } = await supabase
+          .from("user_roles")
+          .select("id, ativo")
+          .eq("id", user_id)
+          .eq("ativo", true)
+          .single();
+
+        if (error || !user) return jsonResponse({ error: "Usuario nao encontrado" }, 404);
+
+        const storedPassword = await getUserCredentialPassword(supabase, user_id);
+        const { valid: isValid } = await verifyPassword(senha, storedPassword);
+        if (!isValid) return jsonResponse({ error: "Senha incorreta" }, 403);
+
+        return jsonResponse({ success: true });
+      }
+
       case "admin_create_user": {
         const { session_token, admin_id, nome, email, setoresIds = [], permissoes = {}, tiposNotificacao = [] } = params;
 
@@ -656,6 +676,41 @@ serve(async (req) => {
           total: idsBaixados.length,
           erros,
         });
+      }
+
+      case "admin_update_solicitacao_temporario": {
+        const { session_token, admin_id, solicitacao_id, campos = {} } = params;
+        const allowed = ["motivo", "status", "observacao_admin", "acao"];
+
+        if (!session_token && !admin_id) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
+        const isAdmin = await verifyAdminCompat(supabase, session_token, admin_id);
+        if (!isAdmin) return jsonResponse({ error: "Acesso negado" }, 403);
+        if (!solicitacao_id) return jsonResponse({ error: "Solicitacao obrigatoria" }, 400);
+
+        const updateData: Record<string, unknown> = {};
+        for (const key of allowed) {
+          if (Object.prototype.hasOwnProperty.call(campos, key)) updateData[key] = campos[key];
+        }
+        updateData.editado_em = new Date().toISOString();
+
+        const { data: sessao } = session_token
+          ? await supabase.from("sessoes_login").select("user_role_id").eq("token", session_token).maybeSingle()
+          : { data: null };
+        const editorId = sessao?.user_role_id || admin_id || null;
+        if (editorId) {
+          const { data: editor } = await supabase.from("user_roles").select("id, nome").eq("id", editorId).maybeSingle();
+          updateData.editado_por_id = editor?.id || editorId;
+          updateData.editado_por_nome = editor?.nome || "ADMIN";
+        }
+
+        const { data, error } = await supabase
+          .from("solicitacoes_temporarios")
+          .update(updateData)
+          .eq("id", solicitacao_id)
+          .select()
+          .single();
+        if (error) throw error;
+        return jsonResponse({ success: true, data });
       }
 
       case "hash_all_passwords": {
