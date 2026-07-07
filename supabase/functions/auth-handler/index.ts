@@ -564,6 +564,22 @@ serve(async (req) => {
         return jsonResponse({ success: true, user: userData });
       }
 
+      case "admin_foto_download_url": {
+        const { session_token, admin_id, path } = params;
+
+        if (!session_token && !admin_id) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
+        const isAdmin = await verifyAdminCompat(supabase, session_token, admin_id);
+        if (!isAdmin) return jsonResponse({ error: "Acesso negado" }, 403);
+        if (!path || typeof path !== "string") return jsonResponse({ error: "Caminho da foto obrigatorio" }, 400);
+
+        const { data, error } = await supabase.storage
+          .from("fotos-funcionarios")
+          .createSignedUrl(path, 60);
+
+        if (error) throw error;
+        return jsonResponse({ success: true, url: data?.signedUrl });
+      }
+
       case "hash_all_passwords": {
         const { session_token, admin_id } = params;
         

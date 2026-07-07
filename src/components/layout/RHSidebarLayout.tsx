@@ -40,6 +40,7 @@ import {
   Heart,
   MessageCircle,
   Activity,
+  ImageDown,
 } from 'lucide-react';
 import { SessionTimer } from '@/components/layout/SessionTimer';
 import { ThemeSelectorButton } from '@/components/layout/ThemeSelectorButton';
@@ -115,6 +116,7 @@ const allRHNavigation: NavItem[] = [
 const adminMainItems: NavItem[] = [
   { name: 'NOTIFICAÇÕES', href: '/admin/notificacoes', icon: Megaphone },
   { name: 'CAPTURA DE FOTOS', href: '/captura-fotos', icon: ExternalLink, external: true },
+  { name: 'CONTROLE DE FOTOS', href: '/admin/controle-fotos', icon: ImageDown },
 ];
 
 const adminNavigation = [
