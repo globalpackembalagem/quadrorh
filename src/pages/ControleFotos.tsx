@@ -67,6 +67,7 @@ export default function ControleFotos() {
   const [statusFoto, setStatusFoto] = useState<"TODOS" | "COM" | "SEM">("SEM");
   const [statusDownload, setStatusDownload] = useState<"TODOS" | "NAO_BAIXADAS" | "BAIXADAS">("TODOS");
   const [setoresSelecionados, setSetoresSelecionados] = useState<string[]>([]);
+  const [mostrarResumoSetores, setMostrarResumoSetores] = useState(false);
   const [editando, setEditando] = useState<FuncionarioFotoControle | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [baixandoTodos, setBaixandoTodos] = useState(false);
@@ -280,34 +281,41 @@ export default function ControleFotos() {
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <CardTitle className="text-base">FALTAM FOTOS POR SETOR</CardTitle>
-            {setoresSelecionados.length > 0 && (
-              <Button variant="outline" size="sm" onClick={() => setSetoresSelecionados([])}>
-                Limpar setores ({setoresSelecionados.length})
+            <div className="flex flex-wrap gap-2">
+              {setoresSelecionados.length > 0 && (
+                <Button variant="outline" size="sm" onClick={() => setSetoresSelecionados([])}>
+                  Limpar setores ({setoresSelecionados.length})
+                </Button>
+              )}
+              <Button variant="outline" size="sm" onClick={() => setMostrarResumoSetores((valor) => !valor)}>
+                {mostrarResumoSetores ? "Ocultar setores" : `Ver setores (${resumoSetores.length})`}
               </Button>
-            )}
+            </div>
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-            {resumoSetores.map((item) => {
-              const selecionado = setoresSelecionados.includes(item.setor);
-              return (
-                <button
-                  key={item.setor}
-                  type="button"
-                  onClick={() => alternarSetor(item.setor)}
-                  className={`rounded-md border p-3 text-left transition hover:border-primary hover:bg-primary/5 ${
-                    selecionado ? "border-primary bg-primary/10 ring-1 ring-primary" : "bg-background"
-                  }`}
-                >
-                  <div className="truncate text-xs font-semibold text-muted-foreground">{item.setor}</div>
-                  <div className="mt-2 text-2xl font-bold text-red-600">{item.semFoto}</div>
-                  <div className="text-xs text-muted-foreground">{item.total} ativos | {item.comFoto} com foto</div>
-                </button>
-              );
-            })}
-          </div>
-        </CardContent>
+        {mostrarResumoSetores && (
+          <CardContent>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+              {resumoSetores.map((item) => {
+                const selecionado = setoresSelecionados.includes(item.setor);
+                return (
+                  <button
+                    key={item.setor}
+                    type="button"
+                    onClick={() => alternarSetor(item.setor)}
+                    className={`rounded-md border p-3 text-left transition hover:border-primary hover:bg-primary/5 ${
+                      selecionado ? "border-primary bg-primary/10 ring-1 ring-primary" : "bg-background"
+                    }`}
+                  >
+                    <div className="truncate text-xs font-semibold text-muted-foreground">{item.setor}</div>
+                    <div className="mt-2 text-2xl font-bold text-red-600">{item.semFoto}</div>
+                    <div className="text-xs text-muted-foreground">{item.total} ativos | {item.comFoto} com foto</div>
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        )}
       </Card>
 
       <Card>
