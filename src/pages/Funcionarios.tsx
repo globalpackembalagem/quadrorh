@@ -68,7 +68,7 @@ function isoDateToExcelSerial(isoDate?: string | null) {
 type OrdenacaoTemporarios = 'nome' | 'admissao';
 
 const LIDERES_SOLICITAM_DESLIGAMENTO_TEMP = ['ALEX', 'AMILTON', 'LEILA', 'SILVIA'];
-const DESTINATARIOS_SOLICITACAO_TEMP = ['PAULO'];
+const DESTINATARIOS_SOLICITACAO_TEMP = ['PAULO', 'LUCIANO'];
 type AcaoTemporario = 'DESLIGAMENTO' | 'EFETIVACAO';
 
 function normalizarNomeUsuario(nome?: string | null) {
