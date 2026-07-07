@@ -66,7 +66,7 @@ export default function ControleFotos() {
   const [busca, setBusca] = useState("");
   const [statusFoto, setStatusFoto] = useState<"TODOS" | "COM" | "SEM">("SEM");
   const [statusDownload, setStatusDownload] = useState<"TODOS" | "NAO_BAIXADAS" | "BAIXADAS">("TODOS");
-  const [setorFiltro, setSetorFiltro] = useState("TODOS");
+  const [setoresSelecionados, setSetoresSelecionados] = useState<string[]>([]);
   const [editando, setEditando] = useState<FuncionarioFotoControle | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [baixandoTodos, setBaixandoTodos] = useState(false);
@@ -91,6 +91,21 @@ export default function ControleFotos() {
     return funcionarios.filter(contaParaControleFotos);
   }, [funcionarios]);
 
+  const resumoSetores = useMemo(() => {
+    return setores.map((setor) => {
+      const lista = funcionariosControle.filter((func) => func.setor?.nome === setor);
+      const semFoto = lista.filter((func) => func.tem_foto !== true).length;
+      const comFoto = lista.length - semFoto;
+      return { setor, total: lista.length, semFoto, comFoto };
+    }).filter((item) => item.semFoto > 0).sort((a, b) => b.semFoto - a.semFoto || a.setor.localeCompare(b.setor));
+  }, [funcionariosControle, setores]);
+
+  const alternarSetor = (setor: string) => {
+    setSetoresSelecionados((atuais) => (
+      atuais.includes(setor) ? atuais.filter((item) => item !== setor) : [...atuais, setor]
+    ));
+  };
+
   const filtrados = useMemo(() => {
     const termo = normalizar(busca.trim());
     return funcionariosControle.filter((func) => {
@@ -99,12 +114,12 @@ export default function ControleFotos() {
       if (statusFoto === "SEM" && temFoto) return false;
       if (statusDownload === "NAO_BAIXADAS" && func.foto_baixada_em) return false;
       if (statusDownload === "BAIXADAS" && !func.foto_baixada_em) return false;
-      if (setorFiltro !== "TODOS" && func.setor?.nome !== setorFiltro) return false;
+      if (setoresSelecionados.length > 0 && !setoresSelecionados.includes(func.setor?.nome || "")) return false;
       if (!termo) return true;
       const alvo = normalizar(`${func.nome_completo} ${func.matricula || ""} ${func.setor?.nome || ""}`);
       return alvo.includes(termo);
     });
-  }, [busca, funcionariosControle, setorFiltro, statusDownload, statusFoto]);
+  }, [busca, funcionariosControle, setoresSelecionados, statusDownload, statusFoto]);
 
   const totais = useMemo(() => {
     const com = funcionariosControle.filter((f) => f.tem_foto === true).length;
@@ -263,9 +278,43 @@ export default function ControleFotos() {
 
       <Card>
         <CardHeader className="pb-3">
+          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <CardTitle className="text-base">FALTAM FOTOS POR SETOR</CardTitle>
+            {setoresSelecionados.length > 0 && (
+              <Button variant="outline" size="sm" onClick={() => setSetoresSelecionados([])}>
+                Limpar setores ({setoresSelecionados.length})
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+            {resumoSetores.map((item) => {
+              const selecionado = setoresSelecionados.includes(item.setor);
+              return (
+                <button
+                  key={item.setor}
+                  type="button"
+                  onClick={() => alternarSetor(item.setor)}
+                  className={`rounded-md border p-3 text-left transition hover:border-primary hover:bg-primary/5 ${
+                    selecionado ? "border-primary bg-primary/10 ring-1 ring-primary" : "bg-background"
+                  }`}
+                >
+                  <div className="truncate text-xs font-semibold text-muted-foreground">{item.setor}</div>
+                  <div className="mt-2 text-2xl font-bold text-red-600">{item.semFoto}</div>
+                  <div className="text-xs text-muted-foreground">{item.total} ativos | {item.comFoto} com foto</div>
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
           <CardTitle className="text-base">FILTROS</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-[1fr_180px_190px_260px]">
+        <CardContent className="grid gap-3 md:grid-cols-[1fr_180px_190px]">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, matricula ou setor" className="pl-9" />
@@ -279,10 +328,6 @@ export default function ControleFotos() {
             <option value="TODOS">TODOS DOWNLOADS</option>
             <option value="NAO_BAIXADAS">NAO BAIXADAS</option>
             <option value="BAIXADAS">BAIXADAS</option>
-          </select>
-          <select value={setorFiltro} onChange={(e) => setSetorFiltro(e.target.value)} className="h-10 rounded-md border bg-background px-3 text-sm">
-            <option value="TODOS">TODOS OS SETORES</option>
-            {setores.map((setor) => <option key={setor} value={setor}>{setor}</option>)}
           </select>
         </CardContent>
       </Card>
