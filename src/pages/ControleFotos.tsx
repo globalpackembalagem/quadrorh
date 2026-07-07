@@ -42,6 +42,11 @@ function normalizar(valor: string) {
   return valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
 }
 
+function contaParaControleFotos(func: FuncionarioFotoControle) {
+  const situacao = normalizar(func.situacao?.nome || "");
+  return !["PEDIDO DE DEMISSAO", "PED. DEMISSAO", "DEMISSAO", "TERMINO DE CONTRATO"].includes(situacao);
+}
+
 function getSessionToken() {
   try {
     const usuario = JSON.parse(localStorage.getItem("usuario_logado") || "null");
@@ -79,12 +84,16 @@ export default function ControleFotos() {
   });
 
   const setores = useMemo(() => {
-    return Array.from(new Set(funcionarios.map((f) => f.setor?.nome).filter(Boolean) as string[])).sort();
+    return Array.from(new Set(funcionarios.filter(contaParaControleFotos).map((f) => f.setor?.nome).filter(Boolean) as string[])).sort();
+  }, [funcionarios]);
+
+  const funcionariosControle = useMemo(() => {
+    return funcionarios.filter(contaParaControleFotos);
   }, [funcionarios]);
 
   const filtrados = useMemo(() => {
     const termo = normalizar(busca.trim());
-    return funcionarios.filter((func) => {
+    return funcionariosControle.filter((func) => {
       const temFoto = func.tem_foto === true;
       if (statusFoto === "COM" && !temFoto) return false;
       if (statusFoto === "SEM" && temFoto) return false;
@@ -95,12 +104,12 @@ export default function ControleFotos() {
       const alvo = normalizar(`${func.nome_completo} ${func.matricula || ""} ${func.setor?.nome || ""}`);
       return alvo.includes(termo);
     });
-  }, [busca, funcionarios, setorFiltro, statusDownload, statusFoto]);
+  }, [busca, funcionariosControle, setorFiltro, statusDownload, statusFoto]);
 
   const totais = useMemo(() => {
-    const com = funcionarios.filter((f) => f.tem_foto === true).length;
-    return { total: funcionarios.length, com, sem: funcionarios.length - com };
-  }, [funcionarios]);
+    const com = funcionariosControle.filter((f) => f.tem_foto === true).length;
+    return { total: funcionariosControle.length, com, sem: funcionariosControle.length - com };
+  }, [funcionariosControle]);
 
   const salvarEdicao = async () => {
     if (!editando) return;
@@ -247,7 +256,7 @@ export default function ControleFotos() {
       </div>
 
       <div className="grid gap-3 md:grid-cols-3">
-        <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">TOTAL</div><div className="text-2xl font-bold">{totais.total}</div></CardContent></Card>
+        <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">TOTAL ATIVOS</div><div className="text-2xl font-bold">{totais.total}</div></CardContent></Card>
         <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">COM FOTO</div><div className="text-2xl font-bold text-emerald-600">{totais.com}</div></CardContent></Card>
         <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">SEM FOTO</div><div className="text-2xl font-bold text-red-600">{totais.sem}</div></CardContent></Card>
       </div>
