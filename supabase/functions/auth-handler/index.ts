@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import bcrypt from "https://esm.sh/bcryptjs@2.4.3";
+import JSZip from "https://esm.sh/jszip@3.10.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,6 +58,24 @@ function recordFailedAttempt(key: string): void {
 
 function clearAttempts(key: string): void {
   loginAttempts.delete(key);
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+function safeFileName(value: string): string {
+  return (value || "foto.jpg")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\\/:*?"<>|]+/g, "_")
+    .replace(/\s+/g, "_")
+    .toUpperCase();
 }
 
 // ====== HASHING SEGURO COM BCRYPT ======
@@ -578,6 +597,65 @@ serve(async (req) => {
 
         if (error) throw error;
         return jsonResponse({ success: true, url: data?.signedUrl });
+      }
+
+      case "admin_fotos_zip": {
+        const { session_token, admin_id, fotos = [] } = params;
+
+        if (!session_token && !admin_id) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
+        const isAdmin = await verifyAdminCompat(supabase, session_token, admin_id);
+        if (!isAdmin) return jsonResponse({ error: "Acesso negado" }, 403);
+        if (!Array.isArray(fotos) || fotos.length === 0) return jsonResponse({ error: "Nenhuma foto informada" }, 400);
+        if (fotos.length > 300) return jsonResponse({ error: "Limite de 300 fotos por ZIP" }, 400);
+
+        const zip = new JSZip();
+        const idsBaixados: string[] = [];
+        const erros: string[] = [];
+
+        for (const foto of fotos) {
+          const id = String(foto?.id || "");
+          const path = String(foto?.path || "");
+          if (!id || !path) continue;
+
+          const { data, error } = await supabase.storage
+            .from("fotos-funcionarios")
+            .download(path);
+
+          if (error || !data) {
+            erros.push(path);
+            continue;
+          }
+
+          const arrayBuffer = await data.arrayBuffer();
+          const nomeBase = safeFileName(String(foto?.nome || foto?.arquivo || `${id}.jpg`));
+          const nomeArquivo = nomeBase.toLowerCase().endsWith(".jpg") || nomeBase.toLowerCase().endsWith(".jpeg") || nomeBase.toLowerCase().endsWith(".png")
+            ? nomeBase
+            : `${nomeBase}.jpg`;
+
+          zip.file(nomeArquivo, arrayBuffer);
+          idsBaixados.push(id);
+        }
+
+        if (idsBaixados.length === 0) {
+          return jsonResponse({ error: "Nenhuma foto foi encontrada no Storage", erros }, 404);
+        }
+
+        const agora = new Date().toISOString();
+        const { error: updateError } = await supabase
+          .from("funcionarios")
+          .update({ foto_baixada_em: agora })
+          .in("id", idsBaixados);
+        if (updateError) throw updateError;
+
+        const zipBytes = await zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });
+        return jsonResponse({
+          success: true,
+          filename: `fotos_funcionarios_${agora.slice(0, 10)}.zip`,
+          content_type: "application/zip",
+          base64: bytesToBase64(zipBytes),
+          total: idsBaixados.length,
+          erros,
+        });
       }
 
       case "hash_all_passwords": {

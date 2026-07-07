@@ -30,6 +30,7 @@ type FuncionarioFotoControle = {
   foto_arquivo_nome: string | null;
   foto_storage_path: string | null;
   foto_verificada_em: string | null;
+  foto_baixada_em: string | null;
   telefone_whatsapp: string | null;
   usa_fretado: boolean | null;
   linha_fretado: string | null;
@@ -59,6 +60,7 @@ export default function ControleFotos() {
   const queryClient = useQueryClient();
   const [busca, setBusca] = useState("");
   const [statusFoto, setStatusFoto] = useState<"TODOS" | "COM" | "SEM">("SEM");
+  const [statusDownload, setStatusDownload] = useState<"TODOS" | "NAO_BAIXADAS" | "BAIXADAS">("TODOS");
   const [setorFiltro, setSetorFiltro] = useState("TODOS");
   const [editando, setEditando] = useState<FuncionarioFotoControle | null>(null);
   const [salvando, setSalvando] = useState(false);
@@ -69,7 +71,7 @@ export default function ControleFotos() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("funcionarios")
-        .select("id,matricula,nome_completo,setor_id,cargo,tem_foto,foto_arquivo_nome,foto_storage_path,foto_verificada_em,telefone_whatsapp,usa_fretado,linha_fretado,setor:setores!setor_id(nome),situacao:situacoes!situacao_id(nome)")
+        .select("id,matricula,nome_completo,setor_id,cargo,tem_foto,foto_arquivo_nome,foto_storage_path,foto_verificada_em,foto_baixada_em,telefone_whatsapp,usa_fretado,linha_fretado,setor:setores!setor_id(nome),situacao:situacoes!situacao_id(nome)")
         .order("nome_completo");
       if (error) throw error;
       return (data || []) as FuncionarioFotoControle[];
@@ -86,12 +88,14 @@ export default function ControleFotos() {
       const temFoto = func.tem_foto === true;
       if (statusFoto === "COM" && !temFoto) return false;
       if (statusFoto === "SEM" && temFoto) return false;
+      if (statusDownload === "NAO_BAIXADAS" && func.foto_baixada_em) return false;
+      if (statusDownload === "BAIXADAS" && !func.foto_baixada_em) return false;
       if (setorFiltro !== "TODOS" && func.setor?.nome !== setorFiltro) return false;
       if (!termo) return true;
       const alvo = normalizar(`${func.nome_completo} ${func.matricula || ""} ${func.setor?.nome || ""}`);
       return alvo.includes(termo);
     });
-  }, [busca, funcionarios, setorFiltro, statusFoto]);
+  }, [busca, funcionarios, setorFiltro, statusDownload, statusFoto]);
 
   const totais = useMemo(() => {
     const com = funcionarios.filter((f) => f.tem_foto === true).length;
@@ -151,6 +155,21 @@ export default function ControleFotos() {
     }
   };
 
+  function baixarBase64(base64: string, filename: string, contentType: string) {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const blob = new Blob([new Uint8Array(byteNumbers)], { type: contentType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   const baixarFotosFiltradas = async () => {
     const comCaminho = filtrados.filter((f) => f.foto_storage_path);
     if (comCaminho.length === 0) {
@@ -159,10 +178,26 @@ export default function ControleFotos() {
     }
     setBaixandoTodos(true);
     try {
-      for (const func of comCaminho) {
-        await baixarFoto(func);
-        await new Promise((resolve) => setTimeout(resolve, 250));
+      const sessionToken = getSessionToken();
+      if (!sessionToken) throw new Error("Sessao expirada. Entre novamente.");
+      const fotos = comCaminho.map((func) => ({
+        id: func.id,
+        path: func.foto_storage_path,
+        nome: func.foto_arquivo_nome || `${func.nome_completo}_${func.matricula || "TEMP"}.jpg`,
+      }));
+      const { data, error } = await supabase.functions.invoke("auth-handler", {
+        body: { action: "admin_fotos_zip", session_token: sessionToken, fotos },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      baixarBase64(data.base64, data.filename || "fotos_funcionarios.zip", data.content_type || "application/zip");
+      toast.success(`ZIP gerado com ${data.total || 0} foto(s).`);
+      queryClient.invalidateQueries({ queryKey: ["controle-fotos-funcionarios"] });
+      if (Array.isArray(data.erros) && data.erros.length > 0) {
+        toast.warning(`${data.erros.length} foto(s) nao foram encontradas no Storage.`);
       }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao gerar ZIP.");
     } finally {
       setBaixandoTodos(false);
     }
@@ -180,6 +215,7 @@ export default function ControleFotos() {
       "ARQUIVO FOTO": func.foto_arquivo_nome || "",
       "CAMINHO FOTO": func.foto_storage_path || "",
       "VERIFICADA EM": formatData(func.foto_verificada_em),
+      "BAIXADA EM": formatData(func.foto_baixada_em),
       TELEFONE: func.telefone_whatsapp || "",
       FRETADO: func.usa_fretado ? "SIM" : "NAO",
       "LINHA FRETADO": func.linha_fretado || "",
@@ -205,7 +241,7 @@ export default function ControleFotos() {
             <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel
           </Button>
           <Button onClick={baixarFotosFiltradas} disabled={baixandoTodos}>
-            <ImageDown className="mr-2 h-4 w-4" /> Baixar fotos filtradas
+            <ImageDown className="mr-2 h-4 w-4" /> Gerar ZIP das filtradas
           </Button>
         </div>
       </div>
@@ -220,7 +256,7 @@ export default function ControleFotos() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base">FILTROS</CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-[1fr_180px_260px]">
+        <CardContent className="grid gap-3 md:grid-cols-[1fr_180px_190px_260px]">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, matricula ou setor" className="pl-9" />
@@ -229,6 +265,11 @@ export default function ControleFotos() {
             <option value="TODOS">TODOS</option>
             <option value="SEM">SEM FOTO</option>
             <option value="COM">COM FOTO</option>
+          </select>
+          <select value={statusDownload} onChange={(e) => setStatusDownload(e.target.value as any)} className="h-10 rounded-md border bg-background px-3 text-sm">
+            <option value="TODOS">TODOS DOWNLOADS</option>
+            <option value="NAO_BAIXADAS">NAO BAIXADAS</option>
+            <option value="BAIXADAS">BAIXADAS</option>
           </select>
           <select value={setorFiltro} onChange={(e) => setSetorFiltro(e.target.value)} className="h-10 rounded-md border bg-background px-3 text-sm">
             <option value="TODOS">TODOS OS SETORES</option>
@@ -250,6 +291,7 @@ export default function ControleFotos() {
                   <th className="px-3 py-3 text-left">FOTO</th>
                   <th className="px-3 py-3 text-left">ARQUIVO</th>
                   <th className="px-3 py-3 text-left">VERIFICADA</th>
+                  <th className="px-3 py-3 text-left">BAIXADA</th>
                   <th className="px-3 py-3 text-right">ACOES</th>
                 </tr>
               </thead>
@@ -265,6 +307,7 @@ export default function ControleFotos() {
                     </td>
                     <td className="max-w-[180px] truncate px-3 py-3">{func.foto_arquivo_nome || "-"}</td>
                     <td className="px-3 py-3">{formatData(func.foto_verificada_em)}</td>
+                    <td className="px-3 py-3">{formatData(func.foto_baixada_em)}</td>
                     <td className="px-3 py-3">
                       <div className="flex justify-end gap-2">
                         <Button size="sm" variant="outline" onClick={() => setEditando({ ...func })}>
@@ -278,7 +321,7 @@ export default function ControleFotos() {
                   </tr>
                 ))}
                 {!isLoading && filtrados.length === 0 && (
-                  <tr><td colSpan={8} className="px-3 py-10 text-center text-muted-foreground">Nenhum funcionario encontrado.</td></tr>
+                  <tr><td colSpan={9} className="px-3 py-10 text-center text-muted-foreground">Nenhum funcionario encontrado.</td></tr>
                 )}
               </tbody>
             </table>
