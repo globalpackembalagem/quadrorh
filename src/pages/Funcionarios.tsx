@@ -67,7 +67,7 @@ function isoDateToExcelSerial(isoDate?: string | null) {
 // ─── Componente de Temporários ──────────────────────────────────────────────────
 type OrdenacaoTemporarios = 'nome' | 'admissao';
 
-const LIDERES_SOLICITAM_DESLIGAMENTO_TEMP = ['ALEX', 'AMILTON', 'LEILA', 'SILVIA'];
+const LIDERES_SOLICITAM_DESLIGAMENTO_TEMP = ['ALEX', 'AMILTON', 'LEILA', 'SILVIA', 'LUCIANO'];
 const DESTINATARIOS_SOLICITACAO_TEMP = ['PAULO', 'LUCIANO'];
 type AcaoTemporario = 'DESLIGAMENTO' | 'EFETIVACAO';
 
@@ -249,8 +249,7 @@ function TemporariosTab({
           <thead>
             <tr>
               <th className="w-[80px]">Matrícula</th>
-              <th>Nome</th>
-              <th className="w-[130px]">Setor</th>
+              <th>Nome / Setor</th>
               <th className="w-[80px]">Turma</th>
               <th className="w-[100px]">Admissão</th>
               <th className="w-[100px]">Data 90 Dias</th>
@@ -261,7 +260,7 @@ function TemporariosTab({
           <tbody>
             {filtrados.length === 0 ? (
               <tr>
-                <td colSpan={podeSolicitarDesligamentoTemp ? 8 : 7} className="text-center py-8 text-muted-foreground">
+	                <td colSpan={podeSolicitarDesligamentoTemp ? 7 : 6} className="text-center py-8 text-muted-foreground">
                   <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
                   <p>Nenhum temporário encontrado</p>
                 </td>
@@ -284,8 +283,10 @@ function TemporariosTab({
                     }}
                   >
                     <td className="text-muted-foreground">{func.matricula || '-'}</td>
-                    <td className="font-medium">{func.nome_completo}</td>
-                    <td className="text-xs text-muted-foreground">{func.setor?.nome || '-'}</td>
+                    <td>
+                      <div className="font-medium">{func.nome_completo}</div>
+                      <div className="text-[11px] text-muted-foreground">{func.setor?.nome || '-'}</div>
+                    </td>
                     <td>{func.turma || '-'}</td>
                     <td>{dataAdm ? format(dataAdm, 'dd/MM/yyyy') : '-'}</td>
                     <td>
