@@ -547,9 +547,6 @@ function TemporariosTab({
                 placeholder="Confirme com sua senha"
               />
             </div>
-            <p className="text-xs text-muted-foreground">
-              Ao salvar, Paulo e Luciano receberao a solicitacao. O cadastro do funcionario nao sera alterado automaticamente.
-            </p>
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setFuncionarioSolicitado(null)} disabled={enviandoSolicitacao}>Cancelar</Button>
               <Button onClick={enviarSolicitacaoTemporario} disabled={enviandoSolicitacao}>
