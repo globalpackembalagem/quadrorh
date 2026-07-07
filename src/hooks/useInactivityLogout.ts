@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useUsuario } from '@/contexts/UserContext';
 import { toast } from 'sonner';
+import { getTempoInatividadeMinutos } from '@/lib/inatividade';
 
 const LAST_ACTIVITY_KEY = 'ultima_atividade_ts';
 const LOGIN_TIMESTAMP_KEY = 'login_timestamp';
@@ -16,7 +17,7 @@ export function useInactivityLogout() {
   // Manter nome atualizado sem causar re-renders do effect
   nomeRef.current = userRole?.nome;
 
-  const tempoMinutos = usuarioAtual.tempo_inatividade ?? 4;
+  const tempoMinutos = getTempoInatividadeMinutos(usuarioAtual.nome || userRole?.nome);
   const timeoutMs = tempoMinutos * 60 * 1000;
 
   const doLogout = useCallback(() => {

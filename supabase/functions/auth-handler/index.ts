@@ -456,7 +456,7 @@ serve(async (req) => {
             nome,
             email: email || null,
             setor_id: setoresIds[0] || null,
-            tempo_inatividade: params.tempoInatividade ?? params.tempo_inatividade ?? 4,
+            tempo_inatividade: params.tempoInatividade ?? params.tempo_inatividade ?? 5,
             tipos_notificacao: tiposNotificacao,
             ...permissoes,
           })

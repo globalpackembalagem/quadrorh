@@ -83,7 +83,7 @@ const VISUALIZACAO_USER: UsuarioLocal = {
   pode_visualizar_integracoes: false,
   pode_editar_integracoes: false,
   recebe_notificacoes: false,
-  tempo_inatividade: 4,
+  tempo_inatividade: 5,
 };
 
 const SESSION_EXPIRY_KEY = 'usuario_sessao_expira';

@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUsuario } from '@/contexts/UserContext';
 import { Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getTempoInatividadeMinutos } from '@/lib/inatividade';
 
 export function SessionTimer() {
   const { isRHMode } = useAuth();
@@ -10,7 +11,7 @@ export function SessionTimer() {
   const [remaining, setRemaining] = useState<number | null>(null);
   const lastActivityRef = useRef(Date.now());
 
-  const tempoMinutos = usuarioAtual.tempo_inatividade ?? 4;
+  const tempoMinutos = getTempoInatividadeMinutos(usuarioAtual.nome);
 
   // Atualizar último timestamp de atividade
   const updateActivity = useCallback(() => {

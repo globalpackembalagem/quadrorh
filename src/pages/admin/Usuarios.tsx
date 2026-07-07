@@ -186,7 +186,7 @@ export default function Usuarios() {
   const [permissoes, setPermissoes] = useState<Permissoes>(DEFAULT_PERMISSOES);
   const [tiposNotificacao, setTiposNotificacao] = useState<string[]>(TIPOS_NOTIFICACAO.map(t => t.value));
   const [ativo, setAtivo] = useState(true);
-  const [tempoInatividade, setTempoInatividade] = useState(4);
+  const [tempoInatividade, setTempoInatividade] = useState(5);
   const [tipoAcesso, setTipoAcesso] = useState<'admin' | 'rh' | 'gestor' | 'visualizacao'>('visualizacao');
 
   const { data: usuarios = [], isLoading } = useQuery({
@@ -323,7 +323,7 @@ export default function Usuarios() {
     setNome(''); setEmail(''); setSenha(''); setMostrarSenha(false);
     setSetoresIds([]); setPermissoes(DEFAULT_PERMISSOES);
     setTiposNotificacao(TIPOS_NOTIFICACAO.map(t => t.value));
-    setAtivo(true); setTempoInatividade(4); setEditingUser(null);
+    setAtivo(true); setTempoInatividade(5); setEditingUser(null);
     setTipoAcesso('visualizacao');
   };
 
@@ -418,7 +418,7 @@ export default function Usuarios() {
       acesso_admin: user.acesso_admin,
       recebe_notificacoes: user.recebe_notificacoes ?? true,
     });
-    setTempoInatividade(user.tempo_inatividade ?? 4);
+    setTempoInatividade(user.tempo_inatividade ?? 5);
     setTiposNotificacao(user.tipos_notificacao?.length ? user.tipos_notificacao : TIPOS_NOTIFICACAO.map(t => t.value));
     setTipoAcesso(detectTipoAcesso(user));
     setDialogOpen(true);

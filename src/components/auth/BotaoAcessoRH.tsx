@@ -74,7 +74,7 @@ export function BotaoAcessoRH() {
       pode_visualizar_integracoes: user.pode_visualizar_integracao ?? user.pode_visualizar_integracoes ?? true,
       pode_editar_integracoes: user.pode_editar_integracao ?? user.pode_editar_integracoes ?? false,
       recebe_notificacoes: user.recebe_notificacoes ?? true,
-      tempo_inatividade: user.tempo_inatividade ?? 4,
+      tempo_inatividade: user.tempo_inatividade ?? 5,
       session_token: sessionToken ?? user.session_token,
     };
   };
