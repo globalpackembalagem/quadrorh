@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { AlertTriangle, CheckCircle2, Clock, Download, Hourglass, RotateCcw } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, Download, Hourglass, RotateCcw, Trash2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -222,6 +222,22 @@ export default function FaltasAlertas() {
     onError: () => toast.error('Erro ao atualizar status.'),
   });
 
+  const excluirAlerta = useMutation({
+    mutationFn: async (controleId: string) => {
+      const { error } = await supabase
+        .from('divergencias_quadro')
+        .delete()
+        .eq('id', controleId)
+        .eq('tipo_divergencia', TIPO_DIVERGENCIA);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['faltas-3-mais-controles'] });
+      toast.success('Alerta excluido.');
+    },
+    onError: () => toast.error('Erro ao excluir alerta.'),
+  });
+
   if (!podeVer) {
     return <div className="rounded-lg border bg-muted/30 p-6 text-center text-sm text-muted-foreground">Sem acesso aos alertas de faltas.</div>;
   }
@@ -281,7 +297,7 @@ export default function FaltasAlertas() {
                           size="sm"
                           variant={aguardando ? 'secondary' : 'outline'}
                           onClick={() => salvarStatus.mutate({ funcionarioId: funcionario.id, acao: 'aguardando', total: alerta.total, dias: alerta.dias })}
-                          disabled={salvarStatus.isPending}
+                          disabled={salvarStatus.isPending || excluirAlerta.isPending}
                           className="gap-1.5"
                         >
                           <Hourglass className="h-3.5 w-3.5" />
@@ -292,12 +308,24 @@ export default function FaltasAlertas() {
                         size="sm"
                         variant={resolvido ? 'outline' : 'default'}
                         onClick={() => salvarStatus.mutate({ funcionarioId: funcionario.id, acao: resolvido ? 'reabrir' : 'resolvido', total: alerta.total, dias: alerta.dias })}
-                        disabled={salvarStatus.isPending}
+                        disabled={salvarStatus.isPending || excluirAlerta.isPending}
                         className="gap-1.5"
                       >
                         {resolvido ? <RotateCcw className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
                         {resolvido ? 'Reabrir' : 'Marcar resolvido'}
                       </Button>
+                      {alerta.controle?.id && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => excluirAlerta.mutate(alerta.controle.id)}
+                          disabled={salvarStatus.isPending || excluirAlerta.isPending}
+                          className="gap-1.5"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Excluir alerta
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>
