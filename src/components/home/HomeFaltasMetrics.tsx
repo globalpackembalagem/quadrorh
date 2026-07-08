@@ -163,7 +163,7 @@ export function HomeFaltasMetrics() {
         d.reserva_faltas_gp + rrGP + d.reserva_ferias_gp + d.aumento_quadro;
     };
     const calcPlanDeco = (d: any) => {
-      const rr = Math.ceil(d.aux_maquina / 3);
+      const rr = d.reserva_refeicao || 0;
       return d.aux_maquina + rr + d.reserva_faltas +
         d.reserva_ferias + d.apoio_topografia + d.reserva_afastadas + d.reserva_covid;
     };

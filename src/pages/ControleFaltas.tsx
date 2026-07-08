@@ -583,7 +583,7 @@ export default function ControleFaltas() {
         dados.reserva_faltas_gp + rrGP + dados.reserva_ferias_gp + dados.aumento_quadro;
     };
     const calcPlanDeco = (dados: any): number => {
-      const rr = Math.ceil(dados.aux_maquina / 3);
+      const rr = dados.reserva_refeicao || 0;
       return dados.aux_maquina + rr + dados.reserva_faltas +
         dados.reserva_ferias + dados.apoio_topografia + dados.reserva_afastadas + dados.reserva_covid;
     };
@@ -637,7 +637,7 @@ export default function ControleFaltas() {
         d.reserva_faltas_gp + rrGP + d.reserva_ferias_gp + d.aumento_quadro;
     };
     const calcPlanDeco = (d: any) => {
-      const rr = Math.ceil(d.aux_maquina / 3);
+      const rr = d.reserva_refeicao || 0;
       return d.aux_maquina + rr + d.reserva_faltas +
         d.reserva_ferias + d.apoio_topografia + d.reserva_afastadas + d.reserva_covid;
     };

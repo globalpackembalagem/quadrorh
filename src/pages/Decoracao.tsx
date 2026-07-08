@@ -89,8 +89,7 @@ export default function Decoracao() {
     };
     
     quadroDecoracao.forEach(q => {
-      const reservaRefeicaoAuto = Math.ceil(q.aux_maquina / 3);
-      const totalNecessario = q.aux_maquina + reservaRefeicaoAuto + q.reserva_faltas + 
+      const totalNecessario = q.aux_maquina + (q.reserva_refeicao || 0) + q.reserva_faltas + 
         q.reserva_ferias + q.apoio_topografia + q.reserva_afastadas + q.reserva_covid;
       
       const funcTurma = funcionariosDecoracao.filter(f => {

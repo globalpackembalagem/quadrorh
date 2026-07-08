@@ -33,9 +33,8 @@ function calcularTotalPlanejadoSopro(dados: any): number {
 }
 
 function calcularTotalPlanejadoDecoracao(dados: any): number {
-  const reservaRefeicaoAuto = Math.ceil(dados.aux_maquina / 3);
   return (
-    dados.aux_maquina + reservaRefeicaoAuto + dados.reserva_faltas +
+    dados.aux_maquina + (dados.reserva_refeicao || 0) + dados.reserva_faltas +
     dados.reserva_ferias + dados.apoio_topografia + dados.reserva_afastadas + dados.reserva_covid
   );
 }

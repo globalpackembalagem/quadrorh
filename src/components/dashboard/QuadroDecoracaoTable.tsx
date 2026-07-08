@@ -2,7 +2,6 @@ import { useState, useMemo, useCallback } from 'react';
 import { QuadroDecoracao } from '@/types/database';
 import { useUpdateQuadroDecoracao } from '@/hooks/useQuadroDecoracao';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
 
 interface QuadroDecoracaoTableProps {
   dados: QuadroDecoracao[];
@@ -15,9 +14,9 @@ interface LinhaConfig {
 
 const linhasConfig: LinhaConfig[] = [
   { key: 'aux_maquina', label: 'Auxiliares em Maquina' },
-  { key: 'reserva_refeicao', label: 'Reserva Refeição' },
+  { key: 'reserva_refeicao', label: 'Reserva Refeicao' },
   { key: 'reserva_faltas', label: 'Reserva Faltas' },
-  { key: 'reserva_ferias', label: 'Reserva Férias' },
+  { key: 'reserva_ferias', label: 'Reserva Ferias' },
   { key: 'apoio_topografia', label: 'Apoio Topografia' },
   { key: 'reserva_afastadas', label: 'Reserva Afastadas' },
   { key: 'reserva_covid', label: 'Reserva Covid' },
@@ -31,10 +30,9 @@ const turmasLabels: Record<string, string> = {
 };
 
 function calcularTotal(dados: QuadroDecoracao): number {
-  const reservaRefeicaoAuto = Math.ceil(dados.aux_maquina / 3);
   return (
     dados.aux_maquina +
-    reservaRefeicaoAuto +
+    dados.reserva_refeicao +
     dados.reserva_faltas +
     dados.reserva_ferias +
     dados.apoio_topografia +
@@ -49,7 +47,7 @@ export function QuadroDecoracaoTable({ dados }: QuadroDecoracaoTableProps) {
   const [editValue, setEditValue] = useState<string>('');
 
   const turmasOrdenadas = ['DIA-T1', 'DIA-T2', 'NOITE-T1', 'NOITE-T2'];
-  
+
   const dadosPorTurma = useMemo(() => {
     const mapa: Record<string, QuadroDecoracao> = {};
     dados.forEach(d => {
@@ -65,8 +63,8 @@ export function QuadroDecoracaoTable({ dados }: QuadroDecoracaoTableProps) {
 
   const handleSaveEdit = useCallback(() => {
     if (!editingCell) return;
-    
-    const novoValor = parseInt(editValue) || 0;
+
+    const novoValor = parseInt(editValue, 10) || 0;
     updateMutation.mutate({
       id: editingCell.id,
       [editingCell.key]: novoValor,
@@ -84,7 +82,6 @@ export function QuadroDecoracaoTable({ dados }: QuadroDecoracaoTableProps) {
     }
   }, [handleSaveEdit]);
 
-  // Calcular totais por turma
   const totaisPorTurma = useMemo(() => {
     const result: Record<string, number> = {};
     turmasOrdenadas.forEach(turma => {
@@ -98,9 +95,8 @@ export function QuadroDecoracaoTable({ dados }: QuadroDecoracaoTableProps) {
 
   return (
     <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
-      {/* Header */}
       <div className="px-4 py-3 font-bold text-center uppercase tracking-wide bg-primary text-primary-foreground">
-        DECORAÇÃO
+        DECORACAO
       </div>
 
       <div className="overflow-x-auto">
@@ -119,32 +115,23 @@ export function QuadroDecoracaoTable({ dados }: QuadroDecoracaoTableProps) {
           </thead>
           <tbody>
             {linhasConfig.map((linha) => (
-              <tr 
-                key={linha.key} 
+              <tr
+                key={linha.key}
                 className="hover:bg-muted/30 transition-colors"
               >
                 <td className="py-2 px-3 border-b">
                   {linha.label}
-                  {linha.key === 'reserva_refeicao' && (
-                    <span className="text-xs text-muted-foreground ml-1">(auto: Aux÷3)</span>
-                  )}
                 </td>
                 {turmasOrdenadas.map(turma => {
                   const d = dadosPorTurma[turma];
                   if (!d) return <td key={turma} className="text-center py-2 px-3 border-b">-</td>;
-                  
-                   // Reserva Refeição é calculada automaticamente: aux_maquina / 3 (arredondado para cima)
-                   const isAutoCalc = linha.key === 'reserva_refeicao';
-                   const valor = isAutoCalc 
-                     ? Math.ceil(d.aux_maquina / 3)
-                    : d[linha.key] as number;
+
+                  const valor = d[linha.key] as number;
                   const isEditing = editingCell?.id === d.id && editingCell?.key === linha.key;
-                  
+
                   return (
-                    <td key={turma} className={cn("text-center py-2 px-3 border-b", isAutoCalc && "bg-muted/20")}>
-                      {isAutoCalc ? (
-                        <span className="tabular-nums font-medium text-muted-foreground">{valor}</span>
-                      ) : isEditing ? (
+                    <td key={turma} className="text-center py-2 px-3 border-b">
+                      {isEditing ? (
                         <Input
                           type="number"
                           value={editValue}
@@ -169,12 +156,9 @@ export function QuadroDecoracaoTable({ dados }: QuadroDecoracaoTableProps) {
             ))}
           </tbody>
           <tfoot>
-            {/* Linha vazia */}
             <tr className="h-2 bg-muted/20"></tr>
-            
-            {/* TOTAL QUADRO NECESSÁRIO */}
             <tr className="bg-primary font-bold text-primary-foreground">
-              <td className="py-3 px-3">TOTAL QUADRO NECESSÁRIO</td>
+              <td className="py-3 px-3">TOTAL QUADRO NECESSARIO</td>
               {turmasOrdenadas.map(turma => (
                 <td key={turma} className="text-center py-3 px-3 tabular-nums text-lg">
                   {totaisPorTurma[turma] || 0}
