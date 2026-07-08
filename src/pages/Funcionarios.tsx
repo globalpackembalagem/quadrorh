@@ -73,12 +73,14 @@ const DESTINATARIOS_SOLICITACAO_TEMP = ['PAULO', 'LUCIANO'];
 type AcaoTemporario = 'DESLIGAMENTO' | 'EFETIVACAO';
 type SolicitacaoTemporario = {
   id: string;
+  funcionario_id: string;
   funcionario_nome: string;
   matricula: string | null;
   setor_nome: string | null;
   turma: string | null;
   acao: AcaoTemporario;
   motivo: string | null;
+  solicitado_por_id: string | null;
   solicitado_por_nome: string;
   solicitado_em: string;
   status: string;
@@ -114,16 +116,20 @@ function TemporariosTab({
   const [acaoSolicitacao, setAcaoSolicitacao] = useState<AcaoTemporario>('DESLIGAMENTO');
   const [motivoSolicitacao, setMotivoSolicitacao] = useState('');
   const [senhaConfirmacao, setSenhaConfirmacao] = useState('');
+  const [pedindoSenha, setPedindoSenha] = useState(false);
   const [enviandoSolicitacao, setEnviandoSolicitacao] = useState(false);
   const [solicitacaoEditando, setSolicitacaoEditando] = useState<SolicitacaoTemporario | null>(null);
   const [editMotivo, setEditMotivo] = useState('');
   const [editStatus, setEditStatus] = useState('PENDENTE');
+  const [editAcao, setEditAcao] = useState<AcaoTemporario>('DESLIGAMENTO');
   const [editObservacao, setEditObservacao] = useState('');
   const [salvandoEdicao, setSalvandoEdicao] = useState(false);
 
   const podeSolicitarDesligamentoTemp = isRHMode
     && LIDERES_SOLICITAM_DESLIGAMENTO_TEMP.includes(normalizarNomeUsuario(userRole?.nome));
   const isLuciano = normalizarNomeUsuario(userRole?.nome) === 'LUCIANO';
+  const isLiderSolicitanteTemp = LIDERES_SOLICITAM_DESLIGAMENTO_TEMP.includes(normalizarNomeUsuario(userRole?.nome)) && !isLuciano;
+  const podeGerenciarSolicitacoesTemp = isRHMode && !isLiderSolicitanteTemp;
 
   const { data: solicitacoes = [] } = useQuery({
     queryKey: ['solicitacoes-temporarios'],
@@ -168,19 +174,34 @@ function TemporariosTab({
     });
   }, [temporarios, search, ordenacao]);
 
+  const solicitacoesPorFuncionario = useMemo(() => {
+    const mapa = new Map<string, SolicitacaoTemporario>();
+    solicitacoes.forEach((sol) => {
+      if (!mapa.has(sol.funcionario_id) && sol.status !== 'CANCELADA') {
+        mapa.set(sol.funcionario_id, sol);
+      }
+    });
+    return mapa;
+  }, [solicitacoes]);
+
   const abrirSolicitacao = (func: Funcionario, acao: AcaoTemporario) => {
     setFuncionarioSolicitado(func);
     setAcaoSolicitacao(acao);
     setMotivoSolicitacao('');
     setSenhaConfirmacao('');
+    setPedindoSenha(false);
   };
 
   const enviarSolicitacaoTemporario = async () => {
     if (!funcionarioSolicitado) return;
     const isDesligamento = acaoSolicitacao === 'DESLIGAMENTO';
 
-    if (isDesligamento && !motivoSolicitacao.trim()) {
-      toast.error('Informe o motivo da solicitacao.');
+    if (isDesligamento && motivoSolicitacao.trim().length < 15) {
+      toast.error('Informe o motivo com mais detalhes.');
+      return;
+    }
+    if (!pedindoSenha) {
+      setPedindoSenha(true);
       return;
     }
     if (!senhaConfirmacao) {
@@ -222,7 +243,7 @@ function TemporariosTab({
       if (solicitacaoError) throw solicitacaoError;
 
       const mensagem = [
-        `Lider ${userRole?.nome || 'GESTOR'} solicitou ${acaoTexto} de temporario:`,
+        `Solicitacao de ${acaoTexto} de temporario:`,
         '',
         `Funcionario: ${nomeFunc}`,
         `Matricula: ${funcionarioSolicitado.matricula || '-'}`,
@@ -235,7 +256,7 @@ function TemporariosTab({
         '',
         isDesligamento
           ? 'Assim que houver substituicao, o RH deve informar a data para desligamento.'
-          : 'Paulo e Luciano devem avaliar a efetivacao.',
+          : 'O RH deve avaliar a efetivacao.',
       ].filter(Boolean).join('\n');
 
       const { data: evento, error: eventoError } = await supabase
@@ -290,10 +311,11 @@ function TemporariosTab({
 
       if (notificacoesError) throw notificacoesError;
 
-      toast.success(isDesligamento ? 'Solicitacao registrada para Paulo e Luciano.' : 'Solicitacao de efetivacao enviada para Paulo e Luciano.');
+      toast.success(isDesligamento ? 'Solicitacao registrada para o RH.' : 'Solicitacao de efetivacao enviada para o RH.');
       setFuncionarioSolicitado(null);
       setMotivoSolicitacao('');
       setSenhaConfirmacao('');
+      setPedindoSenha(false);
       queryClient.invalidateQueries({ queryKey: ['solicitacoes-temporarios'] });
     } catch (error: any) {
       toast.error(`Erro ao enviar solicitacao: ${error?.message || 'erro desconhecido'}`);
@@ -306,6 +328,7 @@ function TemporariosTab({
     setSolicitacaoEditando(solicitacao);
     setEditMotivo(solicitacao.motivo || '');
     setEditStatus(solicitacao.status || 'PENDENTE');
+    setEditAcao(solicitacao.acao || 'DESLIGAMENTO');
     setEditObservacao(solicitacao.observacao_admin || '');
   };
 
@@ -320,6 +343,7 @@ function TemporariosTab({
           session_token: sessionToken,
           solicitacao_id: solicitacaoEditando.id,
           campos: {
+            acao: editAcao,
             motivo: editMotivo || null,
             status: editStatus,
             observacao_admin: editObservacao || null,
@@ -431,30 +455,32 @@ function TemporariosTab({
                     </td>
                     {podeSolicitarDesligamentoTemp && (
                       <td>
-	                        <div className="flex flex-nowrap gap-1.5">
-	                          <Button
-	                            size="sm"
-	                            variant="outline"
-	                            className="h-8 px-3"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              abrirSolicitacao(func, 'EFETIVACAO');
-                            }}
-                          >
-                            Efetivar
-                          </Button>
-	                          <Button
-	                            size="sm"
-	                            variant="outline"
-	                            className="h-8 px-3 border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              abrirSolicitacao(func, 'DESLIGAMENTO');
-                            }}
-                          >
-                            Desligar
-                          </Button>
-                        </div>
+                        {solicitacoesPorFuncionario.has(func.id) ? (
+                          <Badge variant="outline">SOLICITADO</Badge>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-left text-xs font-semibold text-primary hover:bg-primary/10"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                abrirSolicitacao(func, 'EFETIVACAO');
+                              }}
+                            >
+                              EFETIVAR
+                            </button>
+                            <button
+                              type="button"
+                              className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-left text-xs font-semibold text-destructive hover:bg-destructive/10"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                abrirSolicitacao(func, 'DESLIGAMENTO');
+                              }}
+                            >
+                              SUBSTITUIR
+                            </button>
+                          </div>
+                        )}
                       </td>
                     )}
                   </tr>
@@ -479,11 +505,11 @@ function TemporariosTab({
               <tr>
                 <th>Funcionario</th>
                 <th className="w-[120px]">Acao</th>
-                <th className="w-[180px]">Solicitado por</th>
+                {podeGerenciarSolicitacoesTemp && <th className="w-[180px]">Solicitado por</th>}
                 <th className="w-[140px]">Data/Hora</th>
                 <th>Motivo/Obs.</th>
                 <th className="w-[110px]">Status</th>
-                {isLuciano && <th className="w-[90px]">Editar</th>}
+                {podeGerenciarSolicitacoesTemp && <th className="w-[90px]">Editar</th>}
               </tr>
             </thead>
             <tbody>
@@ -495,14 +521,16 @@ function TemporariosTab({
                   </td>
                   <td>
                     <Badge variant={sol.acao === 'DESLIGAMENTO' ? 'destructive' : 'default'}>
-                      {sol.acao === 'DESLIGAMENTO' ? 'DESLIGAR' : 'EFETIVAR'}
+                      {sol.acao === 'DESLIGAMENTO' ? 'SUBSTITUIR' : 'EFETIVAR'}
                     </Badge>
                   </td>
-                  <td>{sol.solicitado_por_nome}</td>
+                  {podeGerenciarSolicitacoesTemp && <td>{sol.solicitado_por_nome}</td>}
                   <td>{format(new Date(sol.solicitado_em), 'dd/MM/yyyy HH:mm')}</td>
-                  <td className="max-w-[260px] truncate">{sol.motivo || sol.observacao_admin || '-'}</td>
+                  <td className="max-w-[260px] truncate">
+                    {(podeGerenciarSolicitacoesTemp || sol.solicitado_por_id === userRole?.id) ? (sol.motivo || sol.observacao_admin || '-') : '-'}
+                  </td>
                   <td>{sol.status}</td>
-                  {isLuciano && (
+                  {podeGerenciarSolicitacoesTemp && (
                     <td>
                       <Button size="sm" variant="outline" className="h-8" onClick={() => abrirEdicaoSolicitacao(sol)}>
                         Editar
@@ -521,6 +549,7 @@ function TemporariosTab({
           setFuncionarioSolicitado(null);
           setMotivoSolicitacao('');
           setSenhaConfirmacao('');
+          setPedindoSenha(false);
         }
       }}>
         <DialogContent className="max-w-lg">
@@ -536,21 +565,24 @@ function TemporariosTab({
             </div>
             <div className="space-y-2">
               <Label>{acaoSolicitacao === 'DESLIGAMENTO' ? 'Motivo *' : 'Observacao'}</Label>
-              <Input value={motivoSolicitacao} onChange={e => setMotivoSolicitacao(e.target.value)} placeholder={acaoSolicitacao === 'DESLIGAMENTO' ? 'Informe o motivo principal' : 'Opcional'} />
+              <Input value={motivoSolicitacao} onChange={e => setMotivoSolicitacao(e.target.value)} placeholder={acaoSolicitacao === 'DESLIGAMENTO' ? 'Informe o motivo da substituicao' : 'Opcional'} disabled={pedindoSenha} />
             </div>
-            <div className="space-y-2">
-              <Label>Senha de login *</Label>
-              <Input
-                type="password"
-                value={senhaConfirmacao}
-                onChange={e => setSenhaConfirmacao(e.target.value)}
-                placeholder="Confirme com sua senha"
-              />
-            </div>
+            {pedindoSenha && (
+              <div className="space-y-2">
+                <Label>Senha de login *</Label>
+                <Input
+                  type="password"
+                  value={senhaConfirmacao}
+                  onChange={e => setSenhaConfirmacao(e.target.value)}
+                  placeholder="Confirme com sua senha"
+                  autoFocus
+                />
+              </div>
+            )}
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setFuncionarioSolicitado(null)} disabled={enviandoSolicitacao}>Cancelar</Button>
               <Button onClick={enviarSolicitacaoTemporario} disabled={enviandoSolicitacao}>
-                {enviandoSolicitacao ? 'Enviando...' : 'Enviar solicitacao'}
+                {enviandoSolicitacao ? 'Enviando...' : pedindoSenha ? 'Confirmar e enviar' : 'Salvar motivo'}
               </Button>
             </div>
           </div>
@@ -565,9 +597,19 @@ function TemporariosTab({
           <div className="space-y-4">
             <div className="rounded-md border bg-muted/30 p-3 text-sm">
               <p className="font-semibold">{solicitacaoEditando?.funcionario_nome}</p>
-              <p className="text-muted-foreground">
-                {solicitacaoEditando?.acao === 'DESLIGAMENTO' ? 'DESLIGAR' : 'EFETIVAR'} | {solicitacaoEditando?.solicitado_por_nome}
-              </p>
+              <p className="text-muted-foreground">{solicitacaoEditando?.solicitado_por_nome}</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Acao</Label>
+              <Select value={editAcao} onValueChange={(value) => setEditAcao(value as AcaoTemporario)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="EFETIVACAO">EFETIVAR</SelectItem>
+                  <SelectItem value="DESLIGAMENTO">SUBSTITUIR</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>Status</Label>
@@ -577,6 +619,7 @@ function TemporariosTab({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="PENDENTE">PENDENTE</SelectItem>
+                  <SelectItem value="LIBERADA_PARA_EDICAO">LIBERADA PARA EDICAO</SelectItem>
                   <SelectItem value="CIENTE">CIENTE</SelectItem>
                   <SelectItem value="AJUSTADA">AJUSTADA</SelectItem>
                   <SelectItem value="CANCELADA">CANCELADA</SelectItem>
@@ -588,7 +631,7 @@ function TemporariosTab({
               <Input value={editMotivo} onChange={e => setEditMotivo(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Observacao Luciano</Label>
+              <Label>Observacao RH/Admin</Label>
               <Input value={editObservacao} onChange={e => setEditObservacao(e.target.value)} />
             </div>
             <div className="flex justify-end gap-2">
