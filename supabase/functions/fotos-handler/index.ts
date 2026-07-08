@@ -77,6 +77,34 @@ function checkUploadLimit(ip: string) {
   return true;
 }
 
+async function getSituacoesAtivasIds(supabase: any) {
+  const { data, error } = await supabase
+    .from("situacoes")
+    .select("id")
+    .eq("ativa", true)
+    .ilike("nome", "ATIVO");
+  if (error) throw error;
+  return (data || []).map((s: any) => s.id);
+}
+
+async function adicionarSetores(supabase: any, funcionarios: any[]) {
+  const setorIds = [...new Set((funcionarios || []).map((f: any) => f.setor_id).filter(Boolean))];
+  let setoresPorId: Record<string, string> = {};
+  if (setorIds.length) {
+    const { data: setores, error: setoresError } = await supabase
+      .from("setores")
+      .select("id,nome")
+      .in("id", setorIds);
+    if (setoresError) throw setoresError;
+    setoresPorId = Object.fromEntries((setores || []).map((setor: any) => [setor.id, setor.nome]));
+  }
+
+  return (funcionarios || []).map((funcionario: any) => ({
+    ...funcionario,
+    setor_nome: funcionario.setor_id ? setoresPorId[funcionario.setor_id] || null : null,
+  }));
+}
+
 function decodeBase64Image(input: string) {
   const clean = input.includes(",") ? input.split(",").pop() || "" : input;
   return Uint8Array.from(atob(clean), (char) => char.charCodeAt(0));
@@ -106,13 +134,7 @@ serve(async (req) => {
       const termo = String(params.termo || "").trim();
       if (termo.length < 3) return jsonResponse(req, { error: "Digite pelo menos 3 caracteres" }, 400);
 
-      const { data: situacoesAtivas, error: sitError } = await supabase
-        .from("situacoes")
-        .select("id")
-        .eq("ativa", true)
-        .ilike("nome", "ATIVO");
-      if (sitError) throw sitError;
-      const situacoesIds = (situacoesAtivas || []).map((s: any) => s.id);
+      const situacoesIds = await getSituacoesAtivasIds(supabase);
       if (!situacoesIds.length) return jsonResponse(req, { success: true, data: [] });
 
       const safeTerm = termo.replace(/[%_,]/g, "");
@@ -125,22 +147,25 @@ serve(async (req) => {
         .limit(20);
       if (error) throw error;
 
-      const setorIds = [...new Set((data || []).map((f: any) => f.setor_id).filter(Boolean))];
-      let setoresPorId: Record<string, string> = {};
-      if (setorIds.length) {
-        const { data: setores, error: setoresError } = await supabase
-          .from("setores")
-          .select("id,nome")
-          .in("id", setorIds);
-        if (setoresError) throw setoresError;
-        setoresPorId = Object.fromEntries((setores || []).map((setor: any) => [setor.id, setor.nome]));
-      }
+      const dataComSetor = await adicionarSetores(supabase, data || []);
 
-      const dataComSetor = (data || []).map((funcionario: any) => ({
-        ...funcionario,
-        setor_nome: funcionario.setor_id ? setoresPorId[funcionario.setor_id] || null : null,
-      }));
+      return jsonResponse(req, { success: true, data: dataComSetor });
+    }
 
+    if (action === "listar_sem_foto") {
+      const situacoesIds = await getSituacoesAtivasIds(supabase);
+      if (!situacoesIds.length) return jsonResponse(req, { success: true, data: [] });
+
+      const { data, error } = await supabase
+        .from("funcionarios")
+        .select("id,nome_completo,matricula,setor_id,tem_foto,telefone_whatsapp,usa_fretado,linha_fretado")
+        .in("situacao_id", situacoesIds)
+        .or("tem_foto.is.null,tem_foto.eq.false")
+        .order("nome_completo")
+        .limit(80);
+      if (error) throw error;
+
+      const dataComSetor = await adicionarSetores(supabase, data || []);
       return jsonResponse(req, { success: true, data: dataComSetor });
     }
 

@@ -61,6 +61,7 @@ export default function CapturaFotos() {
   const [codigo, setCodigo] = useState("");
   const [termo, setTermo] = useState("");
   const [resultados, setResultados] = useState<FuncionarioFoto[]>([]);
+  const [pendentesFoto, setPendentesFoto] = useState<FuncionarioFoto[]>([]);
   const [selecionado, setSelecionado] = useState<FuncionarioFoto | null>(null);
   const [telefone, setTelefone] = useState("");
   const [usaFretado, setUsaFretado] = useState(false);
@@ -121,6 +122,25 @@ export default function CapturaFotos() {
     return () => window.clearTimeout(timer);
   }, [codigo, termo]);
 
+  useEffect(() => {
+    if (!codigo || !entradaRapida) return;
+
+    const carregarPendentes = async () => {
+      setErro("");
+      setCarregando(true);
+      try {
+        const data = await chamarFotosHandler({ action: "listar_sem_foto" });
+        setPendentesFoto(data.data || []);
+      } catch (e) {
+        setErro(e instanceof Error ? e.message : "Erro ao carregar pendentes");
+      } finally {
+        setCarregando(false);
+      }
+    };
+
+    carregarPendentes();
+  }, [codigo, entradaRapida]);
+
   const buscarAgora = async () => {
     if (termo.trim().length < 3) return;
     setErro("");
@@ -171,6 +191,7 @@ export default function CapturaFotos() {
       setSelecionado(null);
       setTermo("");
       setResultados([]);
+      setPendentesFoto((atuais) => atuais.filter((funcionario) => funcionario.id !== selecionado.id));
       setImagemBase64("");
       setPreview("");
     } catch (e) {
@@ -239,9 +260,15 @@ export default function CapturaFotos() {
               <CardTitle>Resultados</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {termo.trim().length < 3 && <p className="text-sm text-slate-500">Digite pelo menos 3 caracteres.</p>}
+              {termo.trim().length < 3 && entradaRapida && pendentesFoto.length > 0 && (
+                <div className="mb-2 rounded-md bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">
+                  PENDENTES DE FOTO: {pendentesFoto.length}
+                </div>
+              )}
+              {termo.trim().length < 3 && !entradaRapida && <p className="text-sm text-slate-500">Digite pelo menos 3 caracteres.</p>}
+              {termo.trim().length < 3 && entradaRapida && pendentesFoto.length === 0 && <p className="text-sm text-slate-500">{carregando ? "Carregando pendentes..." : "Nenhum pendente de foto encontrado."}</p>}
               {termo.trim().length >= 3 && resultados.length === 0 && <p className="text-sm text-slate-500">{carregando ? "Buscando..." : "Nenhum resultado encontrado."}</p>}
-              {resultados.map((funcionario) => (
+              {(termo.trim().length >= 3 ? resultados : pendentesFoto).map((funcionario) => (
                 <button key={funcionario.id} type="button" onClick={() => selecionar(funcionario)} className="w-full rounded-md border bg-white p-3 text-left hover:border-blue-500">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -270,7 +297,7 @@ export default function CapturaFotos() {
 
                   <div className="space-y-2">
                     <Label>Telefone / WhatsApp</Label>
-                    <Input type="tel" inputMode="numeric" value={telefone} onChange={(e) => setTelefone(formatTelefone(e.target.value))} placeholder="(00) 00000-0000" />
+                    <Input type="tel" inputMode="numeric" autoComplete="tel" pattern="[0-9]*" value={telefone} onChange={(e) => setTelefone(formatTelefone(e.target.value))} placeholder="(00) 00000-0000" />
                   </div>
 
                   <div className="space-y-2">
