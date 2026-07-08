@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, FileSpreadsheet, ImageDown, Pencil, RefreshCw, Search } from "lucide-react";
+import { Download, FileSpreadsheet, ImageDown, Pencil, RefreshCw, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { funcionariosApi } from "@/lib/funcionariosApi";
@@ -22,6 +22,7 @@ type FuncionarioFotoControle = {
   id: string;
   matricula: string | null;
   nome_completo: string;
+  data_admissao: string | null;
   setor_id: string | null;
   cargo: string | null;
   situacao?: { nome: string | null } | null;
@@ -40,6 +41,12 @@ const linhasFretado = ["VARZEA A", "VARZEA B", "CAMPINAS", "LOUVEIRA"];
 
 function normalizar(valor: string) {
   return valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+}
+
+function formatDate(isoDate?: string | null) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate || "");
+  if (!match) return "-";
+  return `${match[3]}/${match[2]}/${match[1]}`;
 }
 
 function contaParaControleFotos(func: FuncionarioFotoControle) {
@@ -69,8 +76,18 @@ function formatData(valor?: string | null) {
   return new Date(valor).toLocaleString("pt-BR");
 }
 
+function getUsuarioLogado() {
+  try {
+    return JSON.parse(localStorage.getItem("usuario_logado") || "null");
+  } catch {
+    return null;
+  }
+}
+
 export default function ControleFotos() {
   const queryClient = useQueryClient();
+  const usuarioLogado = getUsuarioLogado();
+  const isAdmin = usuarioLogado?.acesso_admin === true;
   const [busca, setBusca] = useState("");
   const [statusFoto, setStatusFoto] = useState<"TODOS" | "COM" | "SEM">("SEM");
   const [statusDownload, setStatusDownload] = useState<"TODOS" | "NAO_BAIXADAS" | "BAIXADAS">("TODOS");
@@ -92,7 +109,7 @@ export default function ControleFotos() {
         const fim = inicio + tamanhoPagina - 1;
         const { data, error } = await supabase
           .from("funcionarios")
-          .select("id,matricula,nome_completo,setor_id,cargo,tem_foto,foto_arquivo_nome,foto_storage_path,foto_verificada_em,foto_baixada_em,telefone_whatsapp,usa_fretado,linha_fretado,setor:setores!setor_id(nome),situacao:situacoes!situacao_id(nome)")
+          .select("id,matricula,nome_completo,data_admissao,setor_id,cargo,tem_foto,foto_arquivo_nome,foto_storage_path,foto_verificada_em,foto_baixada_em,telefone_whatsapp,usa_fretado,linha_fretado,setor:setores!setor_id(nome),situacao:situacoes!situacao_id(nome)")
           .order("nome_completo")
           .range(inicio, fim);
 
@@ -172,6 +189,34 @@ export default function ControleFotos() {
       toast.error(error instanceof Error ? error.message : "Erro ao salvar.");
     } finally {
       setSalvando(false);
+    }
+  };
+
+  const limparDadosFoto = async (func: FuncionarioFotoControle) => {
+    if (!isAdmin) {
+      toast.error("Apenas admin pode limpar dados de foto.");
+      return;
+    }
+    const confirmar = window.confirm(`Limpar foto e dados de coleta de ${func.nome_completo}?`);
+    if (!confirmar) return;
+
+    try {
+      const payload = {
+        tem_foto: false,
+        foto_arquivo_nome: null,
+        foto_storage_path: null,
+        foto_verificada_em: null,
+        foto_baixada_em: null,
+        telefone_whatsapp: null,
+        usa_fretado: null,
+        linha_fretado: null,
+      };
+      const { error } = await funcionariosApi.update(payload, { eq: { id: func.id } });
+      if (error) throw error;
+      toast.success("Dados de foto limpos.");
+      queryClient.invalidateQueries({ queryKey: ["controle-fotos-funcionarios"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao limpar dados.");
     }
   };
 
@@ -255,9 +300,9 @@ export default function ControleFotos() {
   const exportarExcel = async () => {
     const XLSX = await loadXLSX();
     const rows = filtrados.map((func) => ({
-      ID: func.id,
       MATRICULA: func.matricula || "",
       NOME: func.nome_completo,
+      ADMISSAO: formatDate(func.data_admissao),
       SETOR: func.setor?.nome || "",
       SITUACAO: func.situacao?.nome || "",
       "TEM FOTO": func.tem_foto ? "SIM" : "NAO",
@@ -374,9 +419,9 @@ export default function ControleFotos() {
             <table className="w-full min-w-[980px] text-sm">
               <thead className="sticky top-0 z-10 border-b bg-muted text-xs text-muted-foreground">
                 <tr>
-                  <th className="px-3 py-3 text-left">ID</th>
                   <th className="px-3 py-3 text-left">MATRICULA</th>
                   <th className="px-3 py-3 text-left">NOME</th>
+                  <th className="px-3 py-3 text-left">ADMISSAO</th>
                   <th className="px-3 py-3 text-left">SETOR</th>
                   <th className="px-3 py-3 text-left">FOTO</th>
                   <th className="px-3 py-3 text-left">ARQUIVO</th>
@@ -388,9 +433,9 @@ export default function ControleFotos() {
               <tbody>
                 {filtrados.map((func) => (
                   <tr key={func.id} className="border-b hover:bg-muted/30">
-                    <td className="max-w-[180px] truncate px-3 py-3 font-mono text-xs">{func.id}</td>
                     <td className="px-3 py-3">{func.matricula || "TEMP"}</td>
                     <td className="px-3 py-3 font-medium">{func.nome_completo}</td>
+                    <td className="px-3 py-3">{formatDate(func.data_admissao)}</td>
                     <td className="px-3 py-3">{func.setor?.nome || "-"}</td>
                     <td className="px-3 py-3">
                       <Badge variant={func.tem_foto ? "default" : "destructive"}>{func.tem_foto ? "SIM" : "NAO"}</Badge>
@@ -406,6 +451,16 @@ export default function ControleFotos() {
                         <Button size="sm" variant="outline" onClick={() => baixarFoto(func)} disabled={!func.foto_storage_path}>
                           <Download className="h-4 w-4" />
                         </Button>
+                        {isAdmin && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                            onClick={() => limparDadosFoto(func)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>
