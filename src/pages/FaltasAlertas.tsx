@@ -40,7 +40,7 @@ function calcularSequenciaFaltas(registrosFuncionario: any[], dataMinima: string
   let maiorSequencia: string[] = [];
 
   ordenados.forEach(registro => {
-    if (registro.tipo === 'F' || registro.tipo === 'SS') {
+    if (registro.tipo === 'F') {
       if (!sequenciaAtual.includes(registro.data)) sequenciaAtual.push(registro.data);
       if (sequenciaAtual.length >= maiorSequencia.length) maiorSequencia = [...sequenciaAtual];
       return;
@@ -236,7 +236,7 @@ export default function FaltasAlertas() {
               ALERTAS DE FALTAS 3+
             </h1>
             <p className="text-sm text-muted-foreground">
-              Conta 3 faltas seguidas a partir de 01/06/2026, ignorando folgas/dias sem registro. Presenca, atestado, ferias ou day off quebram a sequencia.
+              Conta 3 faltas seguidas a partir de 01/06/2026, ignorando folgas/dias sem registro. Suspensao, presenca, atestado, ferias ou day off quebram a sequencia.
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={exportarExcel} disabled={alertas.length === 0} className="gap-1.5">
