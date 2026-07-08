@@ -83,12 +83,28 @@ export default function ControleFotos() {
   const { data: funcionarios = [], isLoading, refetch } = useQuery({
     queryKey: ["controle-fotos-funcionarios"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("funcionarios")
-        .select("id,matricula,nome_completo,setor_id,cargo,tem_foto,foto_arquivo_nome,foto_storage_path,foto_verificada_em,foto_baixada_em,telefone_whatsapp,usa_fretado,linha_fretado,setor:setores!setor_id(nome),situacao:situacoes!situacao_id(nome)")
-        .order("nome_completo");
-      if (error) throw error;
-      return (data || []) as FuncionarioFotoControle[];
+      const todos: FuncionarioFotoControle[] = [];
+      const tamanhoPagina = 1000;
+      let pagina = 0;
+
+      while (true) {
+        const inicio = pagina * tamanhoPagina;
+        const fim = inicio + tamanhoPagina - 1;
+        const { data, error } = await supabase
+          .from("funcionarios")
+          .select("id,matricula,nome_completo,setor_id,cargo,tem_foto,foto_arquivo_nome,foto_storage_path,foto_verificada_em,foto_baixada_em,telefone_whatsapp,usa_fretado,linha_fretado,setor:setores!setor_id(nome),situacao:situacoes!situacao_id(nome)")
+          .order("nome_completo")
+          .range(inicio, fim);
+
+        if (error) throw error;
+
+        const lote = (data || []) as FuncionarioFotoControle[];
+        todos.push(...lote);
+        if (lote.length < tamanhoPagina) break;
+        pagina += 1;
+      }
+
+      return todos;
     },
   });
 
