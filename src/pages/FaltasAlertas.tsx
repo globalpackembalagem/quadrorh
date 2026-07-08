@@ -31,6 +31,27 @@ function isTemporario(funcionario: any) {
 
 const RH_ALERTA_3_MAIS = ['ELIANE', 'KARINA', 'GILMARA'];
 
+function calcularSequenciaFaltas(registrosFuncionario: any[], dataMinima: string) {
+  const ordenados = registrosFuncionario
+    .filter(registro => registro.data >= dataMinima)
+    .sort((a, b) => a.data.localeCompare(b.data));
+
+  let sequenciaAtual: string[] = [];
+  let maiorSequencia: string[] = [];
+
+  ordenados.forEach(registro => {
+    if (registro.tipo === 'F' || registro.tipo === 'SS') {
+      if (!sequenciaAtual.includes(registro.data)) sequenciaAtual.push(registro.data);
+      if (sequenciaAtual.length >= maiorSequencia.length) maiorSequencia = [...sequenciaAtual];
+      return;
+    }
+
+    sequenciaAtual = [];
+  });
+
+  return maiorSequencia;
+}
+
 export default function FaltasAlertas() {
   const { isAdmin, isRHMode, canEditFaltas } = useAuth();
   const { usuarioAtual } = useUsuario();
@@ -77,22 +98,25 @@ export default function FaltasAlertas() {
         .map(func => [func.id, func])
     );
 
+    const registrosPorFuncionario = new Map<string, any[]>();
+    registros.forEach(registro => {
+      if (!funcionariosElegiveis.has(registro.funcionario_id)) return;
+      const atual = registrosPorFuncionario.get(registro.funcionario_id) || [];
+      atual.push(registro);
+      registrosPorFuncionario.set(registro.funcionario_id, atual);
+    });
+
     const faltasPorFuncionario = new Map<string, { funcionario: typeof funcionarios[number]; dias: string[] }>();
 
-    registros.forEach(registro => {
-      if (registro.tipo !== 'F' && registro.tipo !== 'SS') return;
-      const funcionario = funcionariosElegiveis.get(registro.funcionario_id);
-      if (!funcionario) return;
-
+    funcionariosElegiveis.forEach(funcionario => {
       const controle = controlesPorFuncionario.get(funcionario.id);
       const dataResolucao = controle?.resolvido && controle.resolvido_em ? controle.resolvido_em.slice(0, 10) : null;
       const dataMinima = dataResolucao && dataResolucao > DATA_INICIO_CONTAGEM ? dataResolucao : DATA_INICIO_CONTAGEM;
-      const passouCorte = dataResolucao ? registro.data > dataMinima : registro.data >= dataMinima;
-      if (!passouCorte) return;
+      const sequencia = calcularSequenciaFaltas(registrosPorFuncionario.get(funcionario.id) || [], dataResolucao ? dataMinima : DATA_INICIO_CONTAGEM);
 
-      const atual = faltasPorFuncionario.get(funcionario.id) || { funcionario, dias: [] };
-      if (!atual.dias.includes(registro.data)) atual.dias.push(registro.data);
-      faltasPorFuncionario.set(funcionario.id, atual);
+      if (sequencia.length >= 3) {
+        faltasPorFuncionario.set(funcionario.id, { funcionario, dias: sequencia });
+      }
     });
 
     return Array.from(faltasPorFuncionario.values())
@@ -212,7 +236,7 @@ export default function FaltasAlertas() {
               ALERTAS DE FALTAS 3+
             </h1>
             <p className="text-sm text-muted-foreground">
-              Conta faltas a partir de 01/06/2026. Quando um alerta e resolvido, a contagem zera e so volta com 3 novas faltas.
+              Conta 3 faltas seguidas a partir de 01/06/2026, ignorando folgas/dias sem registro. Presenca, atestado, ferias ou day off quebram a sequencia.
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={exportarExcel} disabled={alertas.length === 0} className="gap-1.5">
