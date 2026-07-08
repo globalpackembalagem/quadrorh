@@ -44,7 +44,15 @@ function normalizar(valor: string) {
 
 function contaParaControleFotos(func: FuncionarioFotoControle) {
   const situacao = normalizar(func.situacao?.nome || "");
-  return !["PEDIDO DE DEMISSAO", "PED. DEMISSAO", "DEMISSAO", "TERMINO DE CONTRATO"].includes(situacao);
+  const situacoesSemFoto = [
+    "PEDIDO DEMISSAO",
+    "PEDIDO DE DEMISSAO",
+    "PED. DEMISSAO",
+    "DEMISSAO",
+    "TERMINO CONTRATO",
+    "TERMINO DE CONTRATO",
+  ];
+  return !situacoesSemFoto.includes(situacao) && !situacao.includes("DESLIG");
 }
 
 function getSessionToken() {
