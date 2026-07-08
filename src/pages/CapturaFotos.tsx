@@ -297,7 +297,7 @@ export default function CapturaFotos() {
 
                   <div className="space-y-2">
                     <Label>Telefone / WhatsApp</Label>
-                    <Input type="tel" inputMode="numeric" autoComplete="tel" pattern="[0-9]*" value={telefone} onChange={(e) => setTelefone(formatTelefone(e.target.value))} placeholder="(00) 00000-0000" />
+                    <Input type="tel" inputMode="tel" autoComplete="tel" value={telefone} onChange={(e) => setTelefone(formatTelefone(e.target.value))} placeholder="(00) 00000-0000" />
                   </div>
 
                   <div className="space-y-2">
