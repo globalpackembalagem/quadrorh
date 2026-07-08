@@ -239,7 +239,7 @@ export default function CapturaFotos() {
           <p className="text-sm text-slate-600">Atualizacao rapida de foto, telefone e fretado.</p>
         </header>
 
-        <Card>
+        <Card className={selecionado ? "hidden lg:block" : ""}>
           <CardContent className="flex flex-col gap-3 pt-6 md:flex-row">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
@@ -255,7 +255,7 @@ export default function CapturaFotos() {
         {sucesso && <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{sucesso}</div>}
 
         <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
-          <Card>
+          <Card className={selecionado ? "hidden lg:block" : ""}>
             <CardHeader>
               <CardTitle>Resultados</CardTitle>
             </CardHeader>
@@ -287,15 +287,18 @@ export default function CapturaFotos() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className={!selecionado ? "hidden lg:block" : ""}>
             <CardHeader>
               <CardTitle>Cadastro</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {!selecionado && <p className="text-sm text-slate-500">Selecione um funcionario.</p>}
-              {selecionado && (
-                <>
-                  <div>
+	              {selecionado && (
+	                <>
+	                  <Button type="button" variant="outline" className="w-full lg:hidden" onClick={() => setSelecionado(null)}>
+	                    VOLTAR PARA LISTA
+	                  </Button>
+	                  <div>
                     <p className="font-semibold">{selecionado.nome_completo}</p>
                     <p className="text-xs text-slate-600">{selecionado.matricula || "-"}</p>
                   </div>
