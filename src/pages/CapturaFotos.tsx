@@ -56,6 +56,7 @@ async function resizeImageToDataUrl(file: File, maxSize = 1200, quality = 0.82) 
 }
 
 export default function CapturaFotos() {
+  const entradaRapida = new URLSearchParams(window.location.search).get("rhfoto") === "1";
   const [codigoInput, setCodigoInput] = useState("");
   const [codigo, setCodigo] = useState("");
   const [termo, setTermo] = useState("");
@@ -80,16 +81,16 @@ export default function CapturaFotos() {
     return data;
   };
 
-  const validarCodigo = async () => {
+  const validarCodigo = async (codigoAcesso = codigoInput) => {
     setErro("");
     setCarregando(true);
     try {
       const { data, error } = await supabase.functions.invoke("fotos-handler", {
-        body: { action: "buscar_funcionario", codigo: codigoInput, termo: "COD" },
+        body: { action: "buscar_funcionario", codigo: codigoAcesso, termo: "COD" },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setCodigo(codigoInput);
+      setCodigo(codigoAcesso);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Codigo invalido");
     } finally {
@@ -187,14 +188,22 @@ export default function CapturaFotos() {
             <CardTitle>CAPTURA DE FOTOS</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="codigo">Codigo de acesso</Label>
-              <Input id="codigo" type="password" value={codigoInput} onChange={(e) => setCodigoInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && validarCodigo()} />
-            </div>
+            {entradaRapida ? (
+              <Button className="h-14 w-full text-base font-semibold" onClick={() => validarCodigo("RHFOTO2026")} disabled={carregando}>
+                ENTRAR RHFOTO2026
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="codigo">Codigo de acesso</Label>
+                <Input id="codigo" type="password" value={codigoInput} onChange={(e) => setCodigoInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && validarCodigo()} />
+              </div>
+            )}
             {erro && <p className="text-sm text-red-600">{erro}</p>}
-            <Button className="w-full" onClick={validarCodigo} disabled={carregando || !codigoInput}>
-              Entrar
-            </Button>
+            {!entradaRapida && (
+              <Button className="w-full" onClick={() => validarCodigo()} disabled={carregando || !codigoInput}>
+                Entrar
+              </Button>
+            )}
           </CardContent>
         </Card>
       </main>
@@ -296,6 +305,9 @@ export default function CapturaFotos() {
 
                   <div className="space-y-2">
                     <Label>Foto</Label>
+                    <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-3 text-center text-sm font-medium text-slate-700">
+                      Enquadre do peito para cima, com o rosto centralizado.
+                    </div>
                     <input ref={fileInputRef} className="hidden" type="file" accept="image/*" capture="environment" onChange={(e) => handleFoto(e.target.files?.[0])} />
                     <Button type="button" variant="secondary" className="h-12 w-full text-base" onClick={() => fileInputRef.current?.click()}>
                       {preview ? <RefreshCw className="mr-2 h-5 w-5" /> : <Camera className="mr-2 h-5 w-5" />}
