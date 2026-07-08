@@ -338,18 +338,27 @@ export default function CapturaFotos() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Foto</Label>
-                    <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-3 text-center text-sm font-medium text-slate-700">
-                      Enquadre do peito para cima, com o rosto centralizado.
-                    </div>
-                    <input ref={fileInputRef} className="hidden" type="file" accept="image/*" capture="environment" onChange={(e) => handleFoto(e.target.files?.[0])} />
-                    <Button type="button" variant="secondary" className="h-12 w-full text-base" onClick={() => fileInputRef.current?.click()}>
-                      {preview ? <RefreshCw className="mr-2 h-5 w-5" /> : <Camera className="mr-2 h-5 w-5" />}
-                      {preview ? "Tirar novamente" : "Tirar foto"}
-                    </Button>
-                    {preview && <img src={preview} alt="Preview" className="max-h-64 w-full rounded-md object-cover" />}
-                  </div>
+	                  <div className="space-y-2">
+	                    <Label>Foto</Label>
+	                    <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-center">
+	                      <div className="mx-auto mb-3 flex h-40 w-32 flex-col items-center justify-end rounded-t-full border-2 border-blue-500/70 bg-white/70 p-3">
+	                        <div className="h-16 w-16 rounded-full border-2 border-blue-500/70 bg-blue-50" />
+	                        <div className="mt-2 h-14 w-24 rounded-t-full border-2 border-blue-500/70 bg-blue-50" />
+	                      </div>
+	                      <p className="text-sm font-semibold text-slate-800">ROSTO E PEITO</p>
+	                      <p className="text-xs text-slate-600">Centralize o rosto e pegue do peito para cima.</p>
+	                    </div>
+	                    <input ref={fileInputRef} className="hidden" type="file" accept="image/*" capture="environment" onChange={(e) => handleFoto(e.target.files?.[0])} />
+	                    <Button type="button" variant="secondary" className="h-12 w-full text-base" onClick={() => fileInputRef.current?.click()}>
+	                      {preview ? <RefreshCw className="mr-2 h-5 w-5" /> : <Camera className="mr-2 h-5 w-5" />}
+	                      {preview ? "Tirar novamente" : "Tirar foto"}
+	                    </Button>
+	                    {preview && (
+	                      <div className="rounded-md border-2 border-blue-500/70 p-2">
+	                        <img src={preview} alt="Preview" className="max-h-72 w-full rounded-md object-cover" />
+	                      </div>
+	                    )}
+	                  </div>
 
                   <Button onClick={salvar} disabled={carregando || !podeSalvar || (usaFretado && !linhaFretado)} className="w-full">
                     <Camera className="mr-2 h-4 w-4" /> Salvar
