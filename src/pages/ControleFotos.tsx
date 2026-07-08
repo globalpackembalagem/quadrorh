@@ -49,6 +49,19 @@ function formatDate(isoDate?: string | null) {
   return `${match[3]}/${match[2]}/${match[1]}`;
 }
 
+function toDateKey(valor?: string | null) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(valor || "");
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : "";
+}
+
+function nomeArquivoFoto(func: FuncionarioFotoControle) {
+  const nome = normalizar(func.nome_completo)
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  const matricula = normalizar(func.matricula || "TEMP").replace(/[^A-Z0-9]+/g, "");
+  return `${nome}_${matricula}.jpg`;
+}
+
 function contaParaControleFotos(func: FuncionarioFotoControle) {
   const situacao = normalizar(func.situacao?.nome || "");
   const situacoesSemFoto = [
@@ -91,6 +104,7 @@ export default function ControleFotos() {
   const [busca, setBusca] = useState("");
   const [statusFoto, setStatusFoto] = useState<"TODOS" | "COM" | "SEM">("SEM");
   const [statusDownload, setStatusDownload] = useState<"TODOS" | "NAO_BAIXADAS" | "BAIXADAS">("TODOS");
+  const [dataDownload, setDataDownload] = useState(new Date().toISOString().slice(0, 10));
   const [setoresSelecionados, setSetoresSelecionados] = useState<string[]>([]);
   const [mostrarResumoSetores, setMostrarResumoSetores] = useState(false);
   const [editando, setEditando] = useState<FuncionarioFotoControle | null>(null);
@@ -168,6 +182,20 @@ export default function ControleFotos() {
     return { total: funcionariosControle.length, com, sem: funcionariosControle.length - com };
   }, [funcionariosControle]);
 
+  const resumoDownloadData = useMemo(() => {
+    const fotosDaData = funcionariosControle.filter((f) =>
+      f.foto_storage_path && toDateKey(f.foto_verificada_em) === dataDownload
+    );
+    const baixadas = fotosDaData.filter((f) => f.foto_baixada_em).length;
+    const pendentes = fotosDaData.length - baixadas;
+    const ultimoDownload = fotosDaData
+      .map((f) => f.foto_baixada_em)
+      .filter(Boolean)
+      .sort()
+      .at(-1) || null;
+    return { total: fotosDaData.length, baixadas, pendentes, ultimoDownload };
+  }, [dataDownload, funcionariosControle]);
+
   const salvarEdicao = async () => {
     if (!editando) return;
     setSalvando(true);
@@ -241,7 +269,7 @@ export default function ControleFotos() {
       const url = await gerarUrlFoto(func.foto_storage_path);
       const link = document.createElement("a");
       link.href = url;
-      link.download = func.foto_arquivo_nome || `${func.nome_completo}.jpg`;
+      link.download = nomeArquivoFoto(func);
       link.target = "_blank";
       link.click();
     } catch (error) {
@@ -277,7 +305,7 @@ export default function ControleFotos() {
       const fotos = comCaminho.map((func) => ({
         id: func.id,
         path: func.foto_storage_path,
-        nome: func.foto_arquivo_nome || `${func.nome_completo}_${func.matricula || "TEMP"}.jpg`,
+        nome: nomeArquivoFoto(func),
       }));
       const { data, error } = await supabase.functions.invoke("auth-handler", {
         body: { action: "admin_fotos_zip", session_token: sessionToken, fotos },
@@ -292,6 +320,41 @@ export default function ControleFotos() {
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao gerar ZIP.");
+    } finally {
+      setBaixandoTodos(false);
+    }
+  };
+
+  const baixarFotosDaData = async () => {
+    const fotosDaData = funcionariosControle.filter((f) =>
+      f.foto_storage_path && toDateKey(f.foto_verificada_em) === dataDownload && !f.foto_baixada_em
+    );
+    if (fotosDaData.length === 0) {
+      toast.error("Nenhuma foto pendente para baixar nessa data.");
+      return;
+    }
+    setBaixandoTodos(true);
+    try {
+      const sessionToken = getSessionToken();
+      if (!sessionToken) throw new Error("Sessao expirada. Entre novamente.");
+      const fotos = fotosDaData.map((func) => ({
+        id: func.id,
+        path: func.foto_storage_path,
+        nome: nomeArquivoFoto(func),
+      }));
+      const { data, error } = await supabase.functions.invoke("auth-handler", {
+        body: { action: "admin_fotos_zip", session_token: sessionToken, fotos },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      baixarBase64(data.base64, `FOTOS_${dataDownload}.zip`, data.content_type || "application/zip");
+      toast.success(`ZIP da data gerado com ${data.total || 0} foto(s).`);
+      queryClient.invalidateQueries({ queryKey: ["controle-fotos-funcionarios"] });
+      if (Array.isArray(data.erros) && data.erros.length > 0) {
+        toast.warning(`${data.erros.length} foto(s) nao foram encontradas no Storage.`);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao gerar ZIP da data.");
     } finally {
       setBaixandoTodos(false);
     }
@@ -346,6 +409,34 @@ export default function ControleFotos() {
           <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">COM FOTO</div><div className="text-2xl font-bold text-emerald-600">{totais.com}</div></CardContent></Card>
           <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">SEM FOTO</div><div className="text-2xl font-bold text-red-600">{totais.sem}</div></CardContent></Card>
         </div>
+
+        <Card>
+          <CardContent className="grid gap-3 p-4 lg:grid-cols-[180px_1fr_1fr_1fr_1fr_auto] lg:items-end">
+            <div className="space-y-1">
+              <Label>Data da foto</Label>
+              <Input type="date" value={dataDownload} onChange={(e) => setDataDownload(e.target.value)} />
+            </div>
+            <div className="rounded-md border p-3">
+              <div className="text-xs text-muted-foreground">FOTOS DA DATA</div>
+              <div className="text-xl font-bold">{resumoDownloadData.total}</div>
+            </div>
+            <div className="rounded-md border p-3">
+              <div className="text-xs text-muted-foreground">BAIXADAS</div>
+              <div className="text-xl font-bold text-emerald-600">{resumoDownloadData.baixadas}</div>
+            </div>
+            <div className="rounded-md border p-3">
+              <div className="text-xs text-muted-foreground">PENDENTES</div>
+              <div className="text-xl font-bold text-red-600">{resumoDownloadData.pendentes}</div>
+            </div>
+            <div className="rounded-md border p-3">
+              <div className="text-xs text-muted-foreground">ULTIMO DOWNLOAD</div>
+              <div className="text-sm font-semibold">{formatData(resumoDownloadData.ultimoDownload)}</div>
+            </div>
+            <Button onClick={baixarFotosDaData} disabled={baixandoTodos || resumoDownloadData.pendentes === 0}>
+              <ImageDown className="mr-2 h-4 w-4" /> Baixar fotos da data
+            </Button>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader className="pb-3">
