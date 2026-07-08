@@ -898,10 +898,29 @@ export default function Funcionarios() {
     const situacaoSelecionada = situacoesAtivas.find(s => s.id === situacaoId);
     const situacaoNome = situacaoSelecionada?.nome || '';
     const situacaoNormalizada = normalizarTextoSistema(situacaoNome) || '';
+    const hojeISO = new Date().toLocaleDateString('en-CA');
+    const situacaoAtivo = situacoesAtivas.find(s => normalizarTextoSistema(s.nome) === 'ATIVO');
+    const situacaoProgramavel = (
+      situacaoNormalizada.includes('AUXILIO') ||
+      situacaoNormalizada.includes('DOENCA') ||
+      situacaoNormalizada.includes('TREINAMENTO') ||
+      situacaoNormalizada === 'FERIAS' ||
+      situacaoNormalizada.includes('FERIAS')
+    ) && !situacaoNormalizada.includes('COB');
+    const temInicioProgramado = situacaoProgramavel && !!coberturaDataInicio;
+    const deveManterAtivoAteInicio = temInicioProgramado && coberturaDataInicio > hojeISO;
+    const deveRetornarAtivo = temInicioProgramado && !!coberturaDataFim && coberturaDataFim <= hojeISO;
+    const situacaoIdEfetiva = (deveManterAtivoAteInicio || deveRetornarAtivo) && situacaoAtivo?.id ? situacaoAtivo.id : situacaoId;
+    const situacaoNomeEfetiva = situacoesAtivas.find(s => s.id === situacaoIdEfetiva)?.nome || situacaoNome;
     const situacoesSemCpfObrigatorio = [
       'DEMISSAO', 'PED. DEMISSAO', 'PEDIDO DEMISSAO',
       'PEDIDO DE DEMISSAO', 'TERMINO CONTRATO', 'TERMINO DE CONTRATO',
     ];
+
+    if ((deveManterAtivoAteInicio || deveRetornarAtivo) && !situacaoAtivo?.id) {
+      toast.error('SITUACAO ATIVO NAO ENCONTRADA.');
+      return;
+    }
 
     const cpfFormatado = cpf.trim() ? formatarCpf(cpf) : null;
     if (!situacoesSemCpfObrigatorio.includes(situacaoNormalizada) && !cpfFormatado) {
@@ -922,7 +941,7 @@ export default function Funcionarios() {
       cargo: cargo || null,
       setor_id: setorId,
       turma: validacaoTurma.turma,
-      situacao_id: situacaoId,
+      situacao_id: situacaoIdEfetiva,
       sexo,
       data_demissao: dataDemissao || null,
       observacoes: observacoes || null,
@@ -965,15 +984,31 @@ export default function Funcionarios() {
       }
     }
 
-    const { criar, tipo } = devecriarDivergencia(situacaoNome);
+    if (funcionarioId && temInicioProgramado) {
+      const { data: programacaoData, error: programacaoError } = await supabase.functions.invoke('auth-handler', {
+        body: {
+          action: 'programar_situacao_funcionario',
+          session_token: getSessionToken(),
+          funcionario_id: funcionarioId,
+          situacao_id: situacaoId,
+          data_inicio: coberturaDataInicio,
+          data_fim: coberturaDataFim || null,
+          observacao: observacoes || null,
+        },
+      });
+      if (programacaoError) throw programacaoError;
+      if (programacaoData?.error) throw new Error(programacaoData.error);
+    }
+
+    const { criar, tipo } = devecriarDivergencia(situacaoNomeEfetiva);
     if (criar && funcionarioId) {
       let obs = '';
-      if (situacaoNome.toUpperCase().includes('SUMIDO') && sumidoDesde) {
+      if (situacaoNomeEfetiva.toUpperCase().includes('SUMIDO') && sumidoDesde) {
         obs = `Funcionário sumido desde ${format(parseISO(sumidoDesde), 'dd/MM/yyyy')}`;
-      } else if (situacaoNome.toUpperCase().includes('TREINAMENTO') && treinamentoSetorId) {
+      } else if (situacaoNomeEfetiva.toUpperCase().includes('TREINAMENTO') && treinamentoSetorId) {
         const setorTreinamento = setoresAtivos.find(s => s.id === treinamentoSetorId);
         obs = `Em treinamento no setor: ${setorTreinamento?.nome || 'Não informado'}`;
-      } else if (situacaoNome.toUpperCase().includes('COB') && coberturaFuncionarioId) {
+      } else if (situacaoNomeEfetiva.toUpperCase().includes('COB') && coberturaFuncionarioId) {
         const funcCoberto = funcionarios.find(f => f.id === coberturaFuncionarioId);
         obs = `Cobrindo férias de: ${funcCoberto?.nome_completo || 'Não informado'}`;
       }

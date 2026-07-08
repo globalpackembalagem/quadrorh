@@ -161,7 +161,7 @@ async function getFuncionariosWriterBySession(supabase: any, sessionToken: strin
 
   const { data: user, error: userError } = await supabase
     .from("user_roles")
-    .select("id, ativo, acesso_admin, pode_editar_funcionarios, pode_editar_faltas")
+    .select("id, nome, ativo, acesso_admin, pode_editar_funcionarios, pode_editar_faltas")
     .eq("id", sessao.user_role_id)
     .eq("ativo", true)
     .single();
@@ -209,6 +209,74 @@ function hasFuncionariosFilters(filters: any) {
     Object.keys(filters?.in || {}).length ||
     Object.keys(filters?.ilike || {}).length
   );
+}
+
+function dataHojeLocalISO() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
+}
+
+async function aplicarProgramacoesSituacao(supabase: any) {
+  const hoje = dataHojeLocalISO();
+  const { data: sitAtivo, error: ativoError } = await supabase
+    .from("situacoes")
+    .select("id")
+    .eq("ativa", true)
+    .ilike("nome", "ATIVO")
+    .maybeSingle();
+
+  if (ativoError) throw ativoError;
+  if (!sitAtivo?.id) throw new Error("Situacao ATIVO nao encontrada");
+
+  const { data: programacoes, error } = await supabase
+    .from("programacoes_situacao")
+    .select("id, funcionario_id, situacao_id, data_inicio, data_fim, status")
+    .in("status", ["PENDENTE", "APLICADO"]);
+
+  if (error) throw error;
+
+  let aplicadas = 0;
+  let retornos = 0;
+
+  for (const prog of programacoes || []) {
+    if (prog.status === "PENDENTE" && prog.data_inicio <= hoje) {
+      const deveRetornarNoMesmoDia = prog.data_fim && prog.data_fim <= hoje;
+      const { error: funcError } = await supabase
+        .from("funcionarios")
+        .update({ situacao_id: deveRetornarNoMesmoDia ? sitAtivo.id : prog.situacao_id })
+        .eq("id", prog.funcionario_id);
+      if (funcError) throw funcError;
+
+      const { error: progError } = await supabase
+        .from("programacoes_situacao")
+        .update({
+          status: deveRetornarNoMesmoDia ? "FINALIZADO" : "APLICADO",
+          aplicado_em: new Date().toISOString(),
+          finalizado_em: deveRetornarNoMesmoDia ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", prog.id);
+      if (progError) throw progError;
+      if (deveRetornarNoMesmoDia) retornos++;
+      else aplicadas++;
+    }
+
+    if (prog.status === "APLICADO" && prog.data_fim && prog.data_fim <= hoje) {
+      const { error: funcError } = await supabase
+        .from("funcionarios")
+        .update({ situacao_id: sitAtivo.id })
+        .eq("id", prog.funcionario_id);
+      if (funcError) throw funcError;
+
+      const { error: progError } = await supabase
+        .from("programacoes_situacao")
+        .update({ status: "FINALIZADO", finalizado_em: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq("id", prog.id);
+      if (progError) throw progError;
+      retornos++;
+    }
+  }
+
+  return { aplicadas, retornos };
 }
 
 async function getUserCredentialPassword(supabase: any, userId: string): Promise<string> {
@@ -433,6 +501,66 @@ serve(async (req) => {
         const { data, error } = await query;
         if (error) throw error;
         return jsonResponse({ success: true, data });
+      }
+
+      case "programar_situacao_funcionario": {
+        const { session_token, funcionario_id, situacao_id, data_inicio, data_fim = null, observacao = null } = params;
+        if (!session_token) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
+        if (!funcionario_id || !situacao_id || !data_inicio) return jsonResponse({ error: "Dados incompletos" }, 400);
+
+        const writer = await getFuncionariosWriterBySession(supabase, session_token);
+        const canWrite = writer?.acesso_admin === true || writer?.pode_editar_funcionarios === true;
+        if (!canWrite) return jsonResponse({ error: "Acesso negado" }, 403);
+
+        const { data: situacao, error: sitError } = await supabase
+          .from("situacoes")
+          .select("id, nome")
+          .eq("id", situacao_id)
+          .single();
+        if (sitError || !situacao) return jsonResponse({ error: "Situacao nao encontrada" }, 404);
+
+        const payloadProgramacao = {
+          funcionario_id,
+          situacao_id,
+          situacao_nome: situacao.nome,
+          data_inicio,
+          data_fim,
+          status: "PENDENTE",
+          criado_por_id: writer.id,
+          criado_por_nome: writer.nome || null,
+          observacao,
+          updated_at: new Date().toISOString(),
+        };
+
+        const { data: existente } = await supabase
+          .from("programacoes_situacao")
+          .select("id")
+          .eq("funcionario_id", funcionario_id)
+          .in("status", ["PENDENTE", "APLICADO"])
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        const query = existente?.id
+          ? supabase.from("programacoes_situacao").update(payloadProgramacao).eq("id", existente.id).select().single()
+          : supabase.from("programacoes_situacao").insert(payloadProgramacao).select().single();
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        const resultado = await aplicarProgramacoesSituacao(supabase);
+        return jsonResponse({ success: true, data, resultado });
+      }
+
+      case "aplicar_programacoes_situacao": {
+        const { session_token, admin_id } = params;
+        if (!session_token && !admin_id) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
+
+        const isAdmin = await verifyAdminCompat(supabase, session_token, admin_id);
+        if (!isAdmin) return jsonResponse({ error: "Acesso negado" }, 403);
+
+        const resultado = await aplicarProgramacoesSituacao(supabase);
+        return jsonResponse({ success: true, ...resultado });
       }
 
       case "admin_reset_password": {
