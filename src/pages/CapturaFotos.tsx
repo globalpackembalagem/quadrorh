@@ -269,15 +269,20 @@ export default function CapturaFotos() {
               {termo.trim().length < 3 && entradaRapida && pendentesFoto.length === 0 && <p className="text-sm text-slate-500">{carregando ? "Carregando pendentes..." : "Nenhum pendente de foto encontrado."}</p>}
               {termo.trim().length >= 3 && resultados.length === 0 && <p className="text-sm text-slate-500">{carregando ? "Buscando..." : "Nenhum resultado encontrado."}</p>}
               {(termo.trim().length >= 3 ? resultados : pendentesFoto).map((funcionario) => (
-                <button key={funcionario.id} type="button" onClick={() => selecionar(funcionario)} className="w-full rounded-md border bg-white p-3 text-left hover:border-blue-500">
-                  <div className="flex items-center justify-between gap-3">
+                <div key={funcionario.id} role="button" tabIndex={0} onClick={() => selecionar(funcionario)} className="w-full rounded-md border bg-white p-3 text-left hover:border-blue-500">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="font-semibold text-slate-950">{funcionario.nome_completo}</p>
                       <p className="text-xs text-slate-600">{funcionario.matricula || "-"} | {funcionario.setor_nome || "SETOR NAO INFORMADO"}</p>
                     </div>
-                    <Badge variant={funcionario.tem_foto ? "default" : "outline"}>{funcionario.tem_foto ? "COM FOTO" : "SEM FOTO"}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={funcionario.tem_foto ? "default" : "outline"}>{funcionario.tem_foto ? "COM FOTO" : "SEM FOTO"}</Badge>
+                      <Button type="button" size="sm" onClick={(event) => { event.stopPropagation(); selecionar(funcionario); }}>
+                        SELECIONAR
+                      </Button>
+                    </div>
                   </div>
-                </button>
+                </div>
               ))}
             </CardContent>
           </Card>
