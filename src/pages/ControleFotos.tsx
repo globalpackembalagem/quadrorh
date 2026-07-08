@@ -75,6 +75,10 @@ function contaParaControleFotos(func: FuncionarioFotoControle) {
   return !situacoesSemFoto.includes(situacao) && !situacao.includes("DESLIG");
 }
 
+function temFotoValida(func: FuncionarioFotoControle) {
+  return func.tem_foto === true && Boolean(func.foto_storage_path || func.foto_arquivo_nome);
+}
+
 function getSessionToken() {
   try {
     const usuario = JSON.parse(localStorage.getItem("usuario_logado") || "null");
@@ -150,7 +154,7 @@ export default function ControleFotos() {
   const resumoSetores = useMemo(() => {
     return setores.map((setor) => {
       const lista = funcionariosControle.filter((func) => func.setor?.nome === setor);
-      const semFoto = lista.filter((func) => func.tem_foto !== true).length;
+      const semFoto = lista.filter((func) => !temFotoValida(func)).length;
       const comFoto = lista.length - semFoto;
       return { setor, total: lista.length, semFoto, comFoto };
     }).filter((item) => item.semFoto > 0).sort((a, b) => b.semFoto - a.semFoto || a.setor.localeCompare(b.setor));
@@ -165,11 +169,11 @@ export default function ControleFotos() {
   const filtrados = useMemo(() => {
     const termo = normalizar(busca.trim());
     return funcionariosControle.filter((func) => {
-      const temFoto = func.tem_foto === true;
+      const temFoto = temFotoValida(func);
       if (statusFoto === "COM" && !temFoto) return false;
       if (statusFoto === "SEM" && temFoto) return false;
-      if (statusDownload === "NAO_BAIXADAS" && func.foto_baixada_em) return false;
-      if (statusDownload === "BAIXADAS" && !func.foto_baixada_em) return false;
+      if (statusDownload === "NAO_BAIXADAS" && (!temFoto || func.foto_baixada_em)) return false;
+      if (statusDownload === "BAIXADAS" && (!temFoto || !func.foto_baixada_em)) return false;
       if (setoresSelecionados.length > 0 && !setoresSelecionados.includes(func.setor?.nome || "")) return false;
       if (!termo) return true;
       const alvo = normalizar(`${func.nome_completo} ${func.matricula || ""} ${func.setor?.nome || ""}`);
@@ -178,7 +182,7 @@ export default function ControleFotos() {
   }, [busca, funcionariosControle, setoresSelecionados, statusDownload, statusFoto]);
 
   const totais = useMemo(() => {
-    const com = funcionariosControle.filter((f) => f.tem_foto === true).length;
+    const com = funcionariosControle.filter(temFotoValida).length;
     return { total: funcionariosControle.length, com, sem: funcionariosControle.length - com };
   }, [funcionariosControle]);
 
