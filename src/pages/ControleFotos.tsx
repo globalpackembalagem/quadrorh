@@ -253,98 +253,102 @@ export default function ControleFotos() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-normal text-foreground">CONTROLE DE FOTOS</h1>
-          <p className="text-sm text-muted-foreground">Acompanhe quem ja tem foto, corrija baixas manuais e exporte a conferencia.</p>
+      <div className="sticky top-0 z-20 space-y-4 bg-background/95 pb-3 backdrop-blur">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold tracking-normal text-foreground">CONTROLE DE FOTOS</h1>
+            <p className="text-sm text-muted-foreground">Acompanhe quem ja tem foto, corrija baixas manuais e exporte a conferencia.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => refetch()} disabled={isLoading}>
+              <RefreshCw className="mr-2 h-4 w-4" /> Atualizar
+            </Button>
+            <Button variant="outline" onClick={exportarExcel}>
+              <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel
+            </Button>
+            <Button onClick={baixarFotosFiltradas} disabled={baixandoTodos}>
+              <ImageDown className="mr-2 h-4 w-4" /> Gerar ZIP das filtradas
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => refetch()} disabled={isLoading}>
-            <RefreshCw className="mr-2 h-4 w-4" /> Atualizar
-          </Button>
-          <Button variant="outline" onClick={exportarExcel}>
-            <FileSpreadsheet className="mr-2 h-4 w-4" /> Excel
-          </Button>
-          <Button onClick={baixarFotosFiltradas} disabled={baixandoTodos}>
-            <ImageDown className="mr-2 h-4 w-4" /> Gerar ZIP das filtradas
-          </Button>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">TOTAL ATIVOS</div><div className="text-2xl font-bold">{totais.total}</div></CardContent></Card>
+          <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">COM FOTO</div><div className="text-2xl font-bold text-emerald-600">{totais.com}</div></CardContent></Card>
+          <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">SEM FOTO</div><div className="text-2xl font-bold text-red-600">{totais.sem}</div></CardContent></Card>
         </div>
-      </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">TOTAL ATIVOS</div><div className="text-2xl font-bold">{totais.total}</div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">COM FOTO</div><div className="text-2xl font-bold text-emerald-600">{totais.com}</div></CardContent></Card>
-        <Card><CardContent className="p-4"><div className="text-xs text-muted-foreground">SEM FOTO</div><div className="text-2xl font-bold text-red-600">{totais.sem}</div></CardContent></Card>
-      </div>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <CardTitle className="text-base">FALTAM FOTOS POR SETOR</CardTitle>
-            <div className="flex flex-wrap gap-2">
-              {setoresSelecionados.length > 0 && (
-                <Button variant="outline" size="sm" onClick={() => setSetoresSelecionados([])}>
-                  Limpar setores ({setoresSelecionados.length})
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <CardTitle className="text-base">FALTAM FOTOS POR SETOR</CardTitle>
+              <div className="flex flex-wrap gap-2">
+                {setoresSelecionados.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={() => setSetoresSelecionados([])}>
+                    Limpar setores ({setoresSelecionados.length})
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" onClick={() => setMostrarResumoSetores((valor) => !valor)}>
+                  {mostrarResumoSetores ? "Ocultar setores" : `Ver setores (${resumoSetores.length})`}
                 </Button>
-              )}
-              <Button variant="outline" size="sm" onClick={() => setMostrarResumoSetores((valor) => !valor)}>
-                {mostrarResumoSetores ? "Ocultar setores" : `Ver setores (${resumoSetores.length})`}
-              </Button>
+              </div>
             </div>
-          </div>
-        </CardHeader>
-        {mostrarResumoSetores && (
-          <CardContent>
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-              {resumoSetores.map((item) => {
-                const selecionado = setoresSelecionados.includes(item.setor);
-                return (
-                  <button
-                    key={item.setor}
-                    type="button"
-                    onClick={() => alternarSetor(item.setor)}
-                    className={`rounded-md border p-3 text-left transition hover:border-primary hover:bg-primary/5 ${
-                      selecionado ? "border-primary bg-primary/10 ring-1 ring-primary" : "bg-background"
-                    }`}
-                  >
-                    <div className="truncate text-xs font-semibold text-muted-foreground">{item.setor}</div>
-                    <div className="mt-2 text-2xl font-bold text-red-600">{item.semFoto}</div>
-                    <div className="text-xs text-muted-foreground">{item.total} ativos | {item.comFoto} com foto</div>
-                  </button>
-                );
-              })}
-            </div>
-          </CardContent>
-        )}
-      </Card>
+          </CardHeader>
+          {mostrarResumoSetores && (
+            <CardContent>
+              <div className="max-h-52 overflow-y-auto pr-1">
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+                  {resumoSetores.map((item) => {
+                    const selecionado = setoresSelecionados.includes(item.setor);
+                    return (
+                      <button
+                        key={item.setor}
+                        type="button"
+                        onClick={() => alternarSetor(item.setor)}
+                        className={`rounded-md border p-3 text-left transition hover:border-primary hover:bg-primary/5 ${
+                          selecionado ? "border-primary bg-primary/10 ring-1 ring-primary" : "bg-background"
+                        }`}
+                      >
+                        <div className="truncate text-xs font-semibold text-muted-foreground">{item.setor}</div>
+                        <div className="mt-2 text-2xl font-bold text-red-600">{item.semFoto}</div>
+                        <div className="text-xs text-muted-foreground">{item.total} ativos | {item.comFoto} com foto</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </CardContent>
+          )}
+        </Card>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">FILTROS</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-[1fr_180px_190px]">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, matricula ou setor" className="pl-9" />
-          </div>
-          <select value={statusFoto} onChange={(e) => setStatusFoto(e.target.value as any)} className="h-10 rounded-md border bg-background px-3 text-sm">
-            <option value="TODOS">TODOS</option>
-            <option value="SEM">SEM FOTO</option>
-            <option value="COM">COM FOTO</option>
-          </select>
-          <select value={statusDownload} onChange={(e) => setStatusDownload(e.target.value as any)} className="h-10 rounded-md border bg-background px-3 text-sm">
-            <option value="TODOS">TODOS DOWNLOADS</option>
-            <option value="NAO_BAIXADAS">NAO BAIXADAS</option>
-            <option value="BAIXADAS">BAIXADAS</option>
-          </select>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">FILTROS</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-[1fr_180px_190px]">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, matricula ou setor" className="pl-9" />
+            </div>
+            <select value={statusFoto} onChange={(e) => setStatusFoto(e.target.value as any)} className="h-10 rounded-md border bg-background px-3 text-sm">
+              <option value="TODOS">TODOS</option>
+              <option value="SEM">SEM FOTO</option>
+              <option value="COM">COM FOTO</option>
+            </select>
+            <select value={statusDownload} onChange={(e) => setStatusDownload(e.target.value as any)} className="h-10 rounded-md border bg-background px-3 text-sm">
+              <option value="TODOS">TODOS DOWNLOADS</option>
+              <option value="NAO_BAIXADAS">NAO BAIXADAS</option>
+              <option value="BAIXADAS">BAIXADAS</option>
+            </select>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-auto">
+          <div className="max-h-[calc(100vh-360px)] min-h-[340px] overflow-auto">
             <table className="w-full min-w-[980px] text-sm">
-              <thead className="border-b bg-muted/50 text-xs text-muted-foreground">
+              <thead className="sticky top-0 z-10 border-b bg-muted text-xs text-muted-foreground">
                 <tr>
                   <th className="px-3 py-3 text-left">ID</th>
                   <th className="px-3 py-3 text-left">MATRICULA</th>
