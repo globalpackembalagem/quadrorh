@@ -608,6 +608,119 @@ serve(async (req) => {
         return jsonResponse({ success: true });
       }
 
+      case "criar_solicitacao_temporario": {
+        const { user_id, senha, funcionario = {}, acao, motivo = null } = params;
+        if (!user_id || !senha || !funcionario?.id || !acao) return jsonResponse({ error: "Dados incompletos" }, 400);
+        if (!["DESLIGAMENTO", "EFETIVACAO"].includes(acao)) return jsonResponse({ error: "Acao invalida" }, 400);
+        if (acao === "DESLIGAMENTO" && String(motivo || "").trim().length < 15) {
+          return jsonResponse({ error: "Informe o motivo com mais detalhes." }, 400);
+        }
+
+        const { data: user, error: userError } = await supabase
+          .from("user_roles")
+          .select("id, nome, ativo")
+          .eq("id", user_id)
+          .eq("ativo", true)
+          .single();
+        if (userError || !user) return jsonResponse({ error: "Usuario nao encontrado" }, 404);
+
+        const storedPassword = await getUserCredentialPassword(supabase, user_id);
+        const { valid: isValid } = await verifyPassword(senha, storedPassword);
+        if (!isValid) return jsonResponse({ error: "Senha incorreta" }, 403);
+
+        const isDesligamento = acao === "DESLIGAMENTO";
+        const acaoTexto = isDesligamento ? "desligamento" : "efetivacao";
+        const solicitadoEm = new Date().toISOString();
+        const nomeFunc = funcionario.nome_completo;
+        const setorNome = funcionario.setor_nome || "SEM SETOR";
+
+        const { data: solicitacao, error: solicitacaoError } = await supabase
+          .from("solicitacoes_temporarios")
+          .insert({
+            funcionario_id: funcionario.id,
+            funcionario_nome: nomeFunc,
+            matricula: funcionario.matricula || "TEMP",
+            setor_id: funcionario.setor_id || null,
+            setor_nome: setorNome,
+            turma: funcionario.turma || null,
+            acao,
+            motivo: motivo ? String(motivo).trim() : null,
+            solicitado_por_id: user.id,
+            solicitado_por_nome: user.nome || "GESTOR",
+            solicitado_em: solicitadoEm,
+            status: "PENDENTE",
+          })
+          .select("id")
+          .single();
+        if (solicitacaoError) throw solicitacaoError;
+
+        const mensagem = [
+          `Solicitacao de ${acaoTexto} de temporario:`,
+          "",
+          `Funcionario: ${nomeFunc}`,
+          `Matricula: ${funcionario.matricula || "-"}`,
+          `Setor: ${setorNome}`,
+          `Turma: ${funcionario.turma || "-"}`,
+          `Admissao: ${funcionario.data_admissao || "-"}`,
+          `Solicitado em: ${solicitadoEm}`,
+          isDesligamento ? "" : null,
+          isDesligamento ? `Motivo: ${String(motivo || "").trim()}` : null,
+          "",
+          isDesligamento
+            ? "Assim que houver substituicao, o RH deve informar a data para desligamento."
+            : "O RH deve avaliar a efetivacao.",
+        ].filter(Boolean).join("\n");
+
+        const { data: evento, error: eventoError } = await supabase
+          .from("eventos_sistema")
+          .insert({
+            tipo: isDesligamento ? "solicitacao_desligamento_temp" : "solicitacao_efetivacao_temp",
+            descricao: `Solicitacao de ${acaoTexto} de temporario: ${nomeFunc}`,
+            funcionario_id: funcionario.id,
+            funcionario_nome: nomeFunc,
+            setor_id: funcionario.setor_id || null,
+            setor_nome: setorNome,
+            turma: funcionario.turma || null,
+            criado_por: user.nome || "GESTOR",
+            dados_extra: {
+              origem: "aba_temporarios_funcionarios",
+              solicitacao_id: solicitacao?.id,
+              solicitante: user.nome || null,
+              acao,
+              motivo: isDesligamento ? String(motivo || "").trim() : null,
+              nao_desligar_automaticamente: true,
+            },
+          })
+          .select("id")
+          .single();
+        if (eventoError) throw eventoError;
+
+        const { data: destinatarios, error: destinatariosError } = await supabase
+          .from("user_roles")
+          .select("id, nome")
+          .eq("ativo", true);
+        if (destinatariosError) throw destinatariosError;
+
+        const normalizarNome = (valor: string) => valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+        const destinatariosSelecionados = (destinatarios || []).filter((dest: any) =>
+          ["PAULO", "LUCIANO"].includes(normalizarNome(dest.nome || ""))
+        );
+        if (!destinatariosSelecionados.length) return jsonResponse({ error: "Nenhum destinatario encontrado" }, 400);
+
+        const { error: notificacoesError } = await supabase.from("notificacoes").insert(
+          destinatariosSelecionados.map((dest: any) => ({
+            user_role_id: dest.id,
+            tipo: isDesligamento ? "pedido_demissao_lancado" : "aviso_rh",
+            titulo: isDesligamento ? "SOLICITACAO DE DESLIGAMENTO TEMPORARIO" : "SOLICITACAO DE EFETIVACAO TEMPORARIO",
+            mensagem,
+            referencia_id: evento?.id || null,
+          }))
+        );
+        if (notificacoesError) throw notificacoesError;
+
+        return jsonResponse({ success: true, solicitacao_id: solicitacao?.id, evento_id: evento?.id });
+      }
+
       case "admin_create_user": {
         const { session_token, admin_id, nome, email, setoresIds = [], permissoes = {}, tiposNotificacao = [] } = params;
 

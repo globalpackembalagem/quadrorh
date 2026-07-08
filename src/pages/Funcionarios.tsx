@@ -211,105 +211,26 @@ function TemporariosTab({
 
     setEnviandoSolicitacao(true);
     try {
-      const { data: senhaData, error: senhaError } = await supabase.functions.invoke('auth-handler', {
-        body: { action: 'verify_password', user_id: userRole?.id, senha: senhaConfirmacao },
-      });
-      if (senhaError) throw senhaError;
-      if (senhaData?.error) throw new Error(senhaData.error);
-
-      const nomeFunc = funcionarioSolicitado.nome_completo;
-      const setorNome = funcionarioSolicitado.setor?.nome || 'SEM SETOR';
-      const acaoTexto = isDesligamento ? 'desligamento' : 'efetivacao';
-      const solicitadoEm = new Date().toISOString();
-
-      const { data: solicitacao, error: solicitacaoError } = await (supabase as any)
-        .from('solicitacoes_temporarios')
-        .insert({
-          funcionario_id: funcionarioSolicitado.id,
-          funcionario_nome: nomeFunc,
-          matricula: funcionarioSolicitado.matricula || 'TEMP',
-          setor_id: funcionarioSolicitado.setor_id,
-          setor_nome: setorNome,
-          turma: funcionarioSolicitado.turma,
+      const { data, error } = await supabase.functions.invoke('auth-handler', {
+        body: {
+          action: 'criar_solicitacao_temporario',
+          user_id: userRole?.id,
+          senha: senhaConfirmacao,
+          funcionario: {
+            id: funcionarioSolicitado.id,
+            nome_completo: funcionarioSolicitado.nome_completo,
+            matricula: funcionarioSolicitado.matricula || 'TEMP',
+            setor_id: funcionarioSolicitado.setor_id,
+            setor_nome: funcionarioSolicitado.setor?.nome || 'SEM SETOR',
+            turma: funcionarioSolicitado.turma,
+            data_admissao: funcionarioSolicitado.data_admissao,
+          },
           acao: acaoSolicitacao,
           motivo: isDesligamento ? motivoSolicitacao.trim() : (motivoSolicitacao.trim() || null),
-          solicitado_por_id: userRole?.id || null,
-          solicitado_por_nome: userRole?.nome || 'GESTOR',
-          solicitado_em: solicitadoEm,
-          status: 'PENDENTE',
-        })
-        .select('id')
-        .single();
-      if (solicitacaoError) throw solicitacaoError;
-
-      const mensagem = [
-        `Solicitacao de ${acaoTexto} de temporario:`,
-        '',
-        `Funcionario: ${nomeFunc}`,
-        `Matricula: ${funcionarioSolicitado.matricula || '-'}`,
-        `Setor: ${setorNome}`,
-        `Turma: ${funcionarioSolicitado.turma || '-'}`,
-        `Admissao: ${funcionarioSolicitado.data_admissao ? isoDateToExcelSerial(funcionarioSolicitado.data_admissao) : '-'}`,
-        `Solicitado em: ${format(new Date(solicitadoEm), 'dd/MM/yyyy HH:mm')}`,
-        isDesligamento ? '' : null,
-        isDesligamento ? `Motivo: ${motivoSolicitacao.trim()}` : null,
-        '',
-        isDesligamento
-          ? 'Assim que houver substituicao, o RH deve informar a data para desligamento.'
-          : 'O RH deve avaliar a efetivacao.',
-      ].filter(Boolean).join('\n');
-
-      const { data: evento, error: eventoError } = await supabase
-        .from('eventos_sistema')
-        .insert({
-          tipo: isDesligamento ? 'solicitacao_desligamento_temp' : 'solicitacao_efetivacao_temp',
-          descricao: `Solicitacao de ${acaoTexto} de temporario: ${nomeFunc}`,
-          funcionario_id: funcionarioSolicitado.id,
-          funcionario_nome: nomeFunc,
-          setor_id: funcionarioSolicitado.setor_id,
-          setor_nome: setorNome,
-          turma: funcionarioSolicitado.turma,
-          criado_por: userRole?.nome || 'GESTOR',
-          dados_extra: {
-            origem: 'aba_temporarios_funcionarios',
-            solicitacao_id: solicitacao?.id,
-            solicitante: userRole?.nome || null,
-            acao: acaoSolicitacao,
-            motivo: isDesligamento ? motivoSolicitacao.trim() : null,
-            nao_desligar_automaticamente: true,
-          },
-        })
-        .select('id')
-        .single();
-
-      if (eventoError) throw eventoError;
-
-      const { data: destinatarios, error: destinatariosError } = await supabase
-        .from('user_roles')
-        .select('id, nome')
-        .eq('ativo', true);
-
-      if (destinatariosError) throw destinatariosError;
-
-      const destinatariosSelecionados = (destinatarios || []).filter(dest =>
-        DESTINATARIOS_SOLICITACAO_TEMP.includes(normalizarNomeUsuario(dest.nome))
-      );
-
-      if (destinatariosSelecionados.length === 0) {
-        throw new Error('Nenhum destinatario encontrado para receber a solicitacao.');
-      }
-
-      const { error: notificacoesError } = await supabase.from('notificacoes').insert(
-        destinatariosSelecionados.map(dest => ({
-          user_role_id: dest.id,
-          tipo: isDesligamento ? 'pedido_demissao_lancado' : 'aviso_rh',
-          titulo: isDesligamento ? 'SOLICITACAO DE DESLIGAMENTO TEMPORARIO' : 'SOLICITACAO DE EFETIVACAO TEMPORARIO',
-          mensagem,
-          referencia_id: evento?.id || null,
-        }))
-      );
-
-      if (notificacoesError) throw notificacoesError;
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast.success(isDesligamento ? 'Solicitacao registrada para o RH.' : 'Solicitacao de efetivacao enviada para o RH.');
       setFuncionarioSolicitado(null);
