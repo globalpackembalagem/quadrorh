@@ -9,6 +9,23 @@ interface State {
   error: Error | null;
 }
 
+const CHUNK_RELOAD_KEY = 'chunk_reload_auto_v1';
+
+function isChunkLoadError(error: Error) {
+  const message = String(error?.message || '');
+  return message.includes('Failed to fetch dynamically imported module')
+    || message.includes('Importing a module script failed')
+    || message.includes('Loading chunk')
+    || message.includes('dynamically imported module');
+}
+
+async function clearBrowserCaches() {
+  if ('caches' in window) {
+    const names = await caches.keys();
+    await Promise.all(names.map((name) => caches.delete(name)));
+  }
+}
+
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -21,13 +38,17 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('[ErrorBoundary] Erro capturado:', error, errorInfo);
+
+    if (isChunkLoadError(error) && sessionStorage.getItem(CHUNK_RELOAD_KEY) !== '1') {
+      sessionStorage.setItem(CHUNK_RELOAD_KEY, '1');
+      clearBrowserCaches().finally(() => {
+        window.location.reload();
+      });
+    }
   }
 
   handleReload = () => {
-    // Limpa caches e localStorage corrompido
-    if ('caches' in window) {
-      caches.keys().then(names => names.forEach(n => caches.delete(n)));
-    }
+    clearBrowserCaches();
     // Remove chunk reload flags
     Object.keys(sessionStorage).forEach(key => {
       if (key.startsWith('chunk_reload_')) sessionStorage.removeItem(key);
@@ -39,9 +60,7 @@ export class ErrorBoundary extends Component<Props, State> {
     // Limpa tudo e recarrega
     localStorage.clear();
     sessionStorage.clear();
-    if ('caches' in window) {
-      caches.keys().then(names => names.forEach(n => caches.delete(n)));
-    }
+    clearBrowserCaches();
     window.location.href = '/';
   };
 
