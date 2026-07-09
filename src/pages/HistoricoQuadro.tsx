@@ -16,10 +16,32 @@ import { loadXLSX } from '@/lib/xlsx';
 import { getTipoSetorTurma } from '@/lib/turmas';
 
 function montarLocalMovimentacao(setor?: string | null, turma?: string | null) {
-  if (setor && turma) return `${setor} / ${turma}`;
-  if (setor) return setor;
-  if (turma) return `TURMA ${turma}`;
-  return 'NAO INFORMADO';
+  const setorFormatado = normalizarValorTabela(setor);
+  const turmaFormatada = normalizarValorTabela(turma);
+  if (setorFormatado !== '-' && turmaFormatada !== '-') return `${setorFormatado} / ${turmaFormatada}`;
+  if (setorFormatado !== '-') return setorFormatado;
+  if (turmaFormatada !== '-') return `TURMA ${turmaFormatada}`;
+  return '-';
+}
+
+function normalizarValorTabela(valor?: string | number | null) {
+  const texto = String(valor ?? '').trim();
+  if (!texto || texto.toUpperCase() === 'NAO INFORMADO') return '-';
+  return texto;
+}
+
+function isTransferencia(tipo?: string | null) {
+  return String(tipo ?? '').toUpperCase().includes('TRANSFERENCIA');
+}
+
+function montarSetorMovimentacao(item: any) {
+  if (String(item.tipo_movimentacao ?? '').toUpperCase() === 'ADMISSAO') {
+    return montarLocalMovimentacao(item.setor_destino_nome, item.turma_destino);
+  }
+  if (String(item.tipo_movimentacao ?? '').toUpperCase() === 'DEMISSAO') {
+    return montarLocalMovimentacao(item.setor_origem_nome, item.turma_origem);
+  }
+  return '-';
 }
 
 export default function HistoricoQuadro() {
@@ -85,15 +107,15 @@ export default function HistoricoQuadro() {
     const XLSX = await loadXLSX();
     const dados = registrosVisiveis.map((item) => ({
       Data: format(parseISO(item.data_movimentacao), 'dd/MM/yyyy'),
-	      Funcionario: item.funcionario_nome,
-	      Matricula: item.matricula || '',
-	      Tipo: item.tipo_movimentacao,
-	      Origem: montarLocalMovimentacao(item.setor_origem_nome, item.turma_origem),
-	      Destino: montarLocalMovimentacao(item.setor_destino_nome, item.turma_destino),
-	      Impacto: item.impacto,
-	      'Quantidade antes': item.quantidade_antes ?? '',
-	      'Quantidade depois': item.quantidade_depois ?? '',
-	      Usuario: item.usuario_nome,
+      Funcionario: normalizarValorTabela(item.funcionario_nome),
+      Matricula: normalizarValorTabela(item.matricula),
+      Tipo: normalizarValorTabela(item.tipo_movimentacao),
+      Setor: isTransferencia(item.tipo_movimentacao) ? '-' : montarSetorMovimentacao(item),
+      Origem: isTransferencia(item.tipo_movimentacao) ? montarLocalMovimentacao(item.setor_origem_nome, item.turma_origem) : '-',
+      Destino: isTransferencia(item.tipo_movimentacao) ? montarLocalMovimentacao(item.setor_destino_nome, item.turma_destino) : '-',
+      Impacto: item.impacto,
+      'Quantidade antes': item.quantidade_antes ?? '',
+      'Quantidade depois': item.quantidade_depois ?? '',
 	    }));
 
     const worksheet = XLSX.utils.json_to_sheet(dados);
@@ -201,40 +223,44 @@ export default function HistoricoQuadro() {
                 <TableHead>Data</TableHead>
                 <TableHead>Funcionario</TableHead>
                 <TableHead>Tipo</TableHead>
-                <TableHead>Origem</TableHead>
+                <TableHead>Origem / Setor</TableHead>
                 <TableHead>Destino</TableHead>
-	                <TableHead>Impacto</TableHead>
-	                <TableHead>Antes/Depois</TableHead>
-	                <TableHead>Usuario</TableHead>
-	              </TableRow>
+		                <TableHead>Impacto</TableHead>
+		                <TableHead>Antes/Depois</TableHead>
+		              </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">Carregando...</TableCell>
+	                  <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">Carregando...</TableCell>
                 </TableRow>
               ) : registrosVisiveis.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">Nenhuma movimentacao registrada.</TableCell>
+	                  <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">Nenhuma movimentacao registrada.</TableCell>
                 </TableRow>
               ) : (
                 registrosVisiveis.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{format(parseISO(item.data_movimentacao), 'dd/MM/yyyy')}</TableCell>
-                    <TableCell>
-                      <div className="font-medium">{item.funcionario_nome}</div>
-                      <div className="text-xs text-muted-foreground">{item.matricula || '-'}</div>
-                    </TableCell>
-                    <TableCell>{item.tipo_movimentacao}</TableCell>
-	                    <TableCell>{montarLocalMovimentacao(item.setor_origem_nome, item.turma_origem)}</TableCell>
-	                    <TableCell>{montarLocalMovimentacao(item.setor_destino_nome, item.turma_destino)}</TableCell>
+	                    <TableCell>
+	                      <div className="font-medium">{normalizarValorTabela(item.funcionario_nome)}</div>
+	                      <div className="text-xs text-muted-foreground">{normalizarValorTabela(item.matricula)}</div>
+	                    </TableCell>
+	                    <TableCell>{normalizarValorTabela(item.tipo_movimentacao)}</TableCell>
+	                    {isTransferencia(item.tipo_movimentacao) ? (
+	                      <>
+		                    <TableCell>{montarLocalMovimentacao(item.setor_origem_nome, item.turma_origem)}</TableCell>
+		                    <TableCell>{montarLocalMovimentacao(item.setor_destino_nome, item.turma_destino)}</TableCell>
+	                      </>
+	                    ) : (
+	                      <TableCell colSpan={2}>{montarSetorMovimentacao(item)}</TableCell>
+	                    )}
                     <TableCell>
                       <Badge variant={item.impacto < 0 ? 'destructive' : item.impacto > 0 ? 'default' : 'outline'}>
                         {item.impacto > 0 ? `+${item.impacto}` : item.impacto}
                       </Badge>
 	                    </TableCell>
-	                    <TableCell>{item.quantidade_antes ?? '-'} / {item.quantidade_depois ?? '-'}</TableCell>
-	                    <TableCell>{item.usuario_nome}</TableCell>
+		                    <TableCell>{item.quantidade_antes ?? '-'} / {item.quantidade_depois ?? '-'}</TableCell>
 	                  </TableRow>
                 ))
               )}
