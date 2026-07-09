@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { FileSpreadsheet, Lock } from 'lucide-react';
-import { useTravarQuadro } from '@/hooks/useQuadroTrava';
+import { useNavigate } from 'react-router-dom';
 
 interface DashboardHeaderProps {
   isGestorSetor: boolean;
@@ -10,7 +10,7 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ podeExportar, onExportarExcel }: DashboardHeaderProps) {
-  const travarQuadro = useTravarQuadro();
+  const navigate = useNavigate();
 
   return (
     <div className="flex items-center justify-between flex-wrap gap-4">
@@ -32,20 +32,10 @@ export function DashboardHeader({ podeExportar, onExportarExcel }: DashboardHead
         <Button
           variant="outline"
           className="gap-2"
-          disabled={travarQuadro.isPending}
-          onClick={() => travarQuadro.mutate('SOPRO')}
+          onClick={() => navigate('/admin/travas-quadro')}
         >
           <Lock className="h-4 w-4" />
-          TRAVAR SOPRO
-        </Button>
-        <Button
-          variant="outline"
-          className="gap-2"
-          disabled={travarQuadro.isPending}
-          onClick={() => travarQuadro.mutate('DECORACAO')}
-        >
-          <Lock className="h-4 w-4" />
-          TRAVAR DECORACAO
+          Gerenciar Travas do Quadro
         </Button>
         {podeExportar && (
           <Button variant="outline" className="gap-2" onClick={onExportarExcel}>

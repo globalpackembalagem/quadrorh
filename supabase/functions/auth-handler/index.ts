@@ -215,6 +215,71 @@ function dataHojeLocalISO() {
   return new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
 }
 
+const AREAS_QUADRO_TRAVA = [
+  "SOPRO A",
+  "SOPRO B",
+  "SOPRO C",
+  "DECORACAO DIA-T1",
+  "DECORACAO DIA-T2",
+  "DECORACAO NOITE-T1",
+  "DECORACAO NOITE-T2",
+];
+
+function detectarAreaQuadroServidor(funcionario: any): string | null {
+  const grupoSetor = (funcionario?.setor?.grupo || "").toUpperCase().trim();
+  if (grupoSetor === "SOPRO A" || grupoSetor === "SOPRO B" || grupoSetor === "SOPRO C") {
+    return grupoSetor;
+  }
+
+  const turmaFunc = (funcionario?.turma || "").toUpperCase().trim();
+  const setorNome = (funcionario?.setor?.nome || "").toUpperCase();
+  const isDia = setorNome.includes("DIA");
+  const isNoite = setorNome.includes("NOITE");
+
+  if (turmaFunc === "T1" || turmaFunc === "1") {
+    return isDia ? "DECORACAO DIA-T1" : isNoite ? "DECORACAO NOITE-T1" : null;
+  }
+  if (turmaFunc === "T2" || turmaFunc === "2") {
+    return isDia ? "DECORACAO DIA-T2" : isNoite ? "DECORACAO NOITE-T2" : null;
+  }
+
+  return null;
+}
+
+async function contarFuncionariosDaAreaServidor(supabase: any, area: string): Promise<number> {
+  const pageSize = 1000;
+  let page = 0;
+  let total = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
+    const { data, error } = await supabase
+      .from("funcionarios")
+      .select(`
+        *,
+        setor:setores!setor_id!inner(*),
+        situacao:situacoes!inner(*)
+      `)
+      .eq("setor.conta_no_quadro", true)
+      .eq("setor.ativo", true)
+      .eq("situacao.conta_no_quadro", true)
+      .eq("situacao.ativa", true)
+      .range(from, to);
+
+    if (error) throw error;
+
+    const lote = data || [];
+    total += lote.filter((funcionario: any) => detectarAreaQuadroServidor(funcionario) === area).length;
+    hasMore = lote.length === pageSize;
+    page++;
+  }
+
+  return total;
+}
+
 async function aplicarProgramacoesSituacao(supabase: any) {
   const hoje = dataHojeLocalISO();
   const { data: sitAtivo, error: ativoError } = await supabase
@@ -501,6 +566,75 @@ serve(async (req) => {
         const { data, error } = await query;
         if (error) throw error;
         return jsonResponse({ success: true, data });
+      }
+
+      case "quadro_trava_gerenciar": {
+        const { session_token, area, acao } = params;
+        if (!session_token) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
+        if (acao !== "travar") return jsonResponse({ error: "Acao invalida" }, 400);
+        if (!AREAS_QUADRO_TRAVA.includes(area)) return jsonResponse({ error: "Area invalida" }, 400);
+
+        const writer = await getFuncionariosWriterBySession(supabase, session_token);
+        const canWrite = writer?.acesso_admin === true || writer?.pode_editar_funcionarios === true;
+        if (!canWrite) return jsonResponse({ error: "Acesso negado" }, 403);
+
+        const quantidadeInicial = await contarFuncionariosDaAreaServidor(supabase, area);
+
+        const { error: updateError } = await supabase
+          .from("quadro_travas")
+          .update({ ativo: false })
+          .eq("area", area)
+          .eq("ativo", true);
+        if (updateError) throw updateError;
+
+        const { data: trava, error: insertError } = await supabase
+          .from("quadro_travas")
+          .insert({
+            area,
+            usuario_nome: writer.nome || "SISTEMA",
+            observacao: `TRAVA ${area}`,
+            ativo: true,
+            quantidade_inicial: quantidadeInicial,
+          })
+          .select("*")
+          .single();
+        if (insertError) throw insertError;
+
+        return jsonResponse({ success: true, data: trava });
+      }
+
+      case "quadro_historico_registrar": {
+        const { session_token, registros_quadro_historico = [], registro_movimentacao = null } = params;
+        if (!session_token) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
+
+        const writer = await getFuncionariosWriterBySession(supabase, session_token);
+        const canWrite = writer?.acesso_admin === true || writer?.pode_editar_funcionarios === true;
+        if (!canWrite) return jsonResponse({ error: "Acesso negado" }, 403);
+        if (!Array.isArray(registros_quadro_historico)) {
+          return jsonResponse({ error: "Registros invalidos" }, 400);
+        }
+
+        let historicoCount = 0;
+        if (registros_quadro_historico.length > 0) {
+          const { error: historicoError } = await supabase
+            .from("quadro_historico")
+            .insert(registros_quadro_historico);
+          if (historicoError) throw historicoError;
+          historicoCount = registros_quadro_historico.length;
+        }
+
+        let movimentacaoData = null;
+        if (registro_movimentacao) {
+          const { data: movimentacao, error: movimentacaoError } = await supabase
+            .from("historico_movimentacao_quadro")
+            .upsert(registro_movimentacao)
+            .select("*")
+            .single();
+          if (movimentacaoError) throw movimentacaoError;
+          movimentacaoData = movimentacao;
+        }
+
+        return jsonResponse({ success: true, historico_count: historicoCount, movimentacao: movimentacaoData });
       }
 
       case "programar_situacao_funcionario": {

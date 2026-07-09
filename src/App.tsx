@@ -91,6 +91,7 @@ const ArmariosFemininoCadastro = lazyRetry(() => import("./pages/ArmariosFeminin
 const HistoricoQuadro = lazyRetry(() => import("./pages/HistoricoQuadro"));
 const CapturaFotos = lazyRetry(() => import("./pages/CapturaFotos"));
 const ControleFotos = lazyRetry(() => import("./pages/ControleFotos"));
+const GerenciarTravasQuadro = lazyRetry(() => import("./pages/admin/GerenciarTravasQuadro"));
 
 
 export const queryClient = new QueryClient({
@@ -229,6 +230,7 @@ function LayoutRouter() {
             <Route path="/admin/conferencia" element={<RotaProtegida requireAdmin><ConferenciaGestor /></RotaProtegida>} />
             <Route path="/admin/notificacoes" element={<RotaProtegida requireAdmin><Notificacoes /></RotaProtegida>} />
             <Route path="/admin/controle-fotos" element={<RotaProtegida requireAdmin><ControleFotos /></RotaProtegida>} />
+            <Route path="/admin/travas-quadro" element={<RotaProtegida requireAdmin><GerenciarTravasQuadro /></RotaProtegida>} />
             <Route path="/admin/comparar" element={<RotaProtegida requireAdmin><CompararPlanilhas /></RotaProtegida>} />
             <Route path="/admin/simulacao" element={<RotaProtegida requireAdmin><Simulacao /></RotaProtegida>} />
             <Route path="/admin/auditoria" element={<RotaProtegida requireAdmin><Auditoria /></RotaProtegida>} />

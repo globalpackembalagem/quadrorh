@@ -1,36 +1,37 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { AreaQuadroTrava } from '@/hooks/useFuncionarios';
 
-export type AreaQuadroTrava = 'SOPRO' | 'DECORACAO';
+function getSessionToken() {
+  try {
+    const usuario = JSON.parse(localStorage.getItem('usuario_logado') || 'null');
+    return usuario?.session_token || null;
+  } catch {
+    return null;
+  }
+}
 
 export function useTravarQuadro() {
   const queryClient = useQueryClient();
-  const { userRole } = useAuth();
 
   return useMutation({
     mutationFn: async (area: AreaQuadroTrava) => {
-      const usuarioNome = userRole?.nome || 'SISTEMA';
+      const sessionToken = getSessionToken();
+      if (!sessionToken) throw new Error('Sessao expirada. Entre novamente.');
 
-      const { error: updateError } = await (supabase as any)
-        .from('quadro_travas')
-        .update({ ativo: false })
-        .eq('area', area)
-        .eq('ativo', true);
-
-      if (updateError) throw updateError;
-
-      const { error: insertError } = await (supabase as any)
-        .from('quadro_travas')
-        .insert({
+      const { data, error } = await supabase.functions.invoke('auth-handler', {
+        body: {
+          action: 'quadro_trava_gerenciar',
+          session_token: sessionToken,
           area,
-          usuario_nome: usuarioNome,
-          observacao: `TRAVA ${area}`,
-          ativo: true,
-        });
+          acao: 'travar',
+        },
+      });
 
-      if (insertError) throw insertError;
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data?.data;
     },
     onSuccess: (_, area) => {
       queryClient.invalidateQueries({ queryKey: ['quadro_travas'] });

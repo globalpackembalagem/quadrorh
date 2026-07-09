@@ -37,6 +37,15 @@ function normalizarTextoHistorico(valor: unknown): string {
   return String(valor).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
 }
 
+function getSessionTokenHistoricoQuadro() {
+  try {
+    const usuario = JSON.parse(localStorage.getItem('usuario_logado') || 'null');
+    return usuario?.session_token || null;
+  } catch {
+    return null;
+  }
+}
+
 function situacaoRetornaAutomaticoParaAtivo(nome?: string | null): boolean {
   const normalizado = normalizarTextoHistorico(nome);
   return normalizado === 'FERIAS'
@@ -62,6 +71,73 @@ function contaNoQuadro(funcionario: any): boolean {
     'DISPENSA S/ JUSTA CAUSA',
     'ANT. TERMINO',
   ].includes(situacao);
+}
+
+export const AREAS_QUADRO_TRAVA = [
+  'SOPRO A',
+  'SOPRO B',
+  'SOPRO C',
+  'DECORACAO DIA-T1',
+  'DECORACAO DIA-T2',
+  'DECORACAO NOITE-T1',
+  'DECORACAO NOITE-T2',
+] as const;
+
+export type AreaQuadroTrava = typeof AREAS_QUADRO_TRAVA[number];
+
+export function detectarAreaQuadro(funcionario: any): AreaQuadroTrava | null {
+  const grupoSetor = (funcionario?.setor?.grupo || '').toUpperCase().trim();
+  if (grupoSetor === 'SOPRO A' || grupoSetor === 'SOPRO B' || grupoSetor === 'SOPRO C') {
+    return grupoSetor as AreaQuadroTrava;
+  }
+
+  const turmaFunc = (funcionario?.turma || '').toUpperCase().trim();
+  const setorNome = (funcionario?.setor?.nome || '').toUpperCase();
+  const isDia = setorNome.includes('DIA');
+  const isNoite = setorNome.includes('NOITE');
+
+  if (turmaFunc === 'T1' || turmaFunc === '1') {
+    return isDia ? 'DECORACAO DIA-T1' : isNoite ? 'DECORACAO NOITE-T1' : null;
+  }
+  if (turmaFunc === 'T2' || turmaFunc === '2') {
+    return isDia ? 'DECORACAO DIA-T2' : isNoite ? 'DECORACAO NOITE-T2' : null;
+  }
+
+  return null;
+}
+
+export async function contarFuncionariosDaArea(area: AreaQuadroTrava): Promise<number> {
+  const pageSize = 1000;
+  let page = 0;
+  let total = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const from = page * pageSize;
+    const to = from + pageSize - 1;
+
+    const { data, error } = await supabase
+      .from('funcionarios')
+      .select(`
+        *,
+        setor:setores!setor_id!inner(*),
+        situacao:situacoes!inner(*)
+      `)
+      .eq('setor.conta_no_quadro', true)
+      .eq('setor.ativo', true)
+      .eq('situacao.conta_no_quadro', true)
+      .eq('situacao.ativa', true)
+      .range(from, to);
+
+    if (error) throw error;
+
+    const lote = (data || []) as Funcionario[];
+    total += lote.filter((funcionario) => detectarAreaQuadro(funcionario) === area).length;
+    hasMore = lote.length === pageSize;
+    page++;
+  }
+
+  return total;
 }
 
 function tipoMovimentacaoQuadro(camposAlterados: string[], funcionarioAntes: any, funcionarioDepois: any): string {
@@ -147,9 +223,11 @@ export async function registrarHistoricoQuadroSeTravado(funcionarioAntes: any, f
   if (!funcionarioAntes || !funcionarioDepois) return;
 
   const areas = Array.from(new Set([
+    detectarAreaQuadro(funcionarioAntes),
+    detectarAreaQuadro(funcionarioDepois),
     areaDoFuncionario(funcionarioAntes),
     areaDoFuncionario(funcionarioDepois),
-  ].filter(Boolean))) as Array<'SOPRO' | 'DECORACAO'>;
+  ].filter(Boolean))) as Array<AreaQuadroTrava | 'SOPRO' | 'DECORACAO'>;
 
   if (areas.length === 0) return;
 
@@ -191,12 +269,26 @@ export async function registrarHistoricoQuadroSeTravado(funcionarioAntes: any, f
 
   if (registros.length === 0) return;
 
-  await (supabase as any)
-    .from('quadro_historico')
-    .insert(registros);
+  const sessionToken = getSessionTokenHistoricoQuadro();
+  if (!sessionToken) {
+    console.error('[QUADRO] Sessao ausente para registrar historico do quadro');
+    return;
+  }
 
   const camposAlterados = registros.map((registro: { campo_alterado: string }) => registro.campo_alterado);
-  if (!alteraQuadroVisual(camposAlterados, funcionarioAntes, funcionarioDepois)) return;
+  if (!alteraQuadroVisual(camposAlterados, funcionarioAntes, funcionarioDepois)) {
+    const { data, error } = await supabase.functions.invoke('auth-handler', {
+      body: {
+        action: 'quadro_historico_registrar',
+        session_token: sessionToken,
+        registros_quadro_historico: registros,
+      },
+    });
+    if (error || data?.error) {
+      console.error('[QUADRO] Erro ao registrar historico do quadro:', error || data?.error);
+    }
+    return;
+  }
 
   const estavaNoQuadro = contaNoQuadro(funcionarioAntes);
   const ficaNoQuadro = contaNoQuadro(funcionarioDepois);
@@ -229,9 +321,7 @@ export async function registrarHistoricoQuadroSeTravado(funcionarioAntes: any, f
 
   if (existente?.length && existente[0].usuario_nome !== 'SISTEMA') return;
 
-  await (supabase as any)
-    .from('historico_movimentacao_quadro')
-    .upsert({
+  const registroMovimentacao = {
       id: existente?.[0]?.id,
       funcionario_id: funcionarioDepois.id,
       funcionario_nome: funcionarioDepois.nome_completo,
@@ -251,7 +341,19 @@ export async function registrarHistoricoQuadroSeTravado(funcionarioAntes: any, f
       observacao,
       referencia_tabela: origem,
       referencia_id: funcionarioDepois.id,
-    });
+  };
+
+  const { data, error } = await supabase.functions.invoke('auth-handler', {
+    body: {
+      action: 'quadro_historico_registrar',
+      session_token: sessionToken,
+      registros_quadro_historico: registros,
+      registro_movimentacao: registroMovimentacao,
+    },
+  });
+  if (error || data?.error) {
+    console.error('[QUADRO] Erro ao registrar historico/movimentacao do quadro:', error || data?.error);
+  }
 }
 
 export function useDeleteFuncionario() {
