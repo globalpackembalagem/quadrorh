@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bell, Monitor, Send, Filter, CheckSquare, Square, RefreshCw, UserMinus, UserPlus, ArrowRightLeft, Trash2, Plus, Pencil, XCircle, Eye, History, Clock, FlaskConical, Loader2, AlertTriangle, RotateCcw, Users, ClipboardList } from 'lucide-react';
+import { Bell, Monitor, Send, Filter, CheckSquare, Square, RefreshCw, UserMinus, UserPlus, ArrowRightLeft, Trash2, Plus, Pencil, XCircle, Eye, History, Clock, FlaskConical, Loader2, AlertTriangle, RotateCcw, Users, ClipboardList, BarChart3 } from 'lucide-react';
 import { EventoFormDialog, EventoFormSaveData } from '@/components/notificacoes/EventoFormDialog';
 import { ConsultaExperienciaDialog } from '@/components/notificacoes/ConsultaExperienciaDialog';
 import { ConsultaCoberturaDialog } from '@/components/notificacoes/ConsultaCoberturaDialog';
@@ -51,6 +51,7 @@ const TIPO_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
   cobertura_treinamento: Users,
   turma_pendente: AlertTriangle,
   preencher_faltas: ClipboardList,
+  alteracao_quadro: BarChart3,
 };
 
 const podeCobrarTurmaNaSegundaSeguinte = (dataAdmissao?: string | null) => {
@@ -85,6 +86,7 @@ const TIPO_LABELS: Record<string, string> = {
   turma_pendente: 'TURMA PENDENTE',
   preencher_faltas: 'PREENCHER FALTAS',
   cobranca_faltas: 'COBRANCA FALTAS',
+  alteracao_quadro: 'ALTERACAO DO QUADRO',
 };
 
 const TIPOS_RECEBIMENTO = [
@@ -92,6 +94,7 @@ const TIPOS_RECEBIMENTO = [
   { value: 'transferencia', label: 'TRANSFERENCIA / TROCA TURNO' },
   { value: 'turma_pendente', label: 'TURMA PENDENTE' },
   { value: 'preencher_faltas', label: 'PREENCHER FALTAS' },
+  { value: 'alteracao_quadro', label: 'ALTERACAO DO QUADRO' },
 ];
 
 const REGRAS_NOTIFICACOES = [

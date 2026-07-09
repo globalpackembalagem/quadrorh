@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { QuadroDecoracao } from '@/types/database';
 import { toast } from 'sonner';
 import { useUsuario } from '@/contexts/UserContext';
+import { criarNotificacaoAlteracaoQuadro } from '@/lib/quadroNotificacoes';
 
 export function useQuadroDecoracao() {
   return useQuery({
@@ -76,6 +77,21 @@ export function useUpdateQuadroDecoracao() {
           turma: anterior.turma,
           usuario_nome: usuarioAtual.nome,
         });
+
+        try {
+          await criarNotificacaoAlteracaoQuadro({
+            tabela: 'quadro_decoracao',
+            registroId: id,
+            campo,
+            valorAnterior: typeof valorAnterior === 'number' ? valorAnterior : 0,
+            valorNovo: typeof valorNovo === 'number' ? valorNovo : 0,
+            grupo: 'DECORACAO',
+            turma: anterior.turma,
+            usuarioNome: usuarioAtual.nome,
+          });
+        } catch (notificationError) {
+          console.error('[QUADRO] Erro ao criar notificacao de alteracao:', notificationError);
+        }
       }
 
       return updated;
