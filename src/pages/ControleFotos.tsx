@@ -526,40 +526,43 @@ export default function ControleFotos() {
                 </tr>
               </thead>
               <tbody>
-                {filtrados.map((func) => (
-                  <tr key={func.id} className="border-b hover:bg-muted/30">
-                    <td className="px-3 py-3">{func.matricula || "TEMP"}</td>
-                    <td className="px-3 py-3 font-medium">{func.nome_completo}</td>
-                    <td className="px-3 py-3">{formatDate(func.data_admissao)}</td>
-                    <td className="px-3 py-3">{func.setor?.nome || "-"}</td>
-                    <td className="px-3 py-3">
-                      <Badge variant={func.tem_foto ? "default" : "destructive"}>{func.tem_foto ? "SIM" : "NAO"}</Badge>
-                    </td>
-                    <td className="max-w-[180px] truncate px-3 py-3">{func.foto_arquivo_nome || "-"}</td>
-                    <td className="px-3 py-3">{formatData(func.foto_verificada_em)}</td>
-                    <td className="px-3 py-3">{formatData(func.foto_baixada_em)}</td>
-                    <td className="px-3 py-3">
-                      <div className="flex justify-end gap-2">
-                        <Button size="sm" variant="outline" onClick={() => setEditando({ ...func })}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => baixarFoto(func)} disabled={!func.foto_storage_path}>
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        {isAdmin && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                            onClick={() => limparDadosFoto(func)}
-                          >
-                            <Trash2 className="h-4 w-4" />
+                {filtrados.map((func) => {
+                  const fotoValida = temFotoValida(func);
+                  return (
+                    <tr key={func.id} className="border-b hover:bg-muted/30">
+                      <td className="px-3 py-3">{func.matricula || "TEMP"}</td>
+                      <td className="px-3 py-3 font-medium">{func.nome_completo}</td>
+                      <td className="px-3 py-3">{formatDate(func.data_admissao)}</td>
+                      <td className="px-3 py-3">{func.setor?.nome || "-"}</td>
+                      <td className="px-3 py-3">
+                        <Badge variant={fotoValida ? "default" : "destructive"}>{fotoValida ? "SIM" : "NAO"}</Badge>
+                      </td>
+                      <td className="max-w-[180px] truncate px-3 py-3">{func.foto_arquivo_nome || "-"}</td>
+                      <td className="px-3 py-3">{formatData(func.foto_verificada_em)}</td>
+                      <td className="px-3 py-3">{formatData(func.foto_baixada_em)}</td>
+                      <td className="px-3 py-3">
+                        <div className="flex justify-end gap-2">
+                          <Button size="sm" variant="outline" onClick={() => setEditando({ ...func })}>
+                            <Pencil className="h-4 w-4" />
                           </Button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          <Button size="sm" variant="outline" onClick={() => baixarFoto(func)} disabled={!fotoValida || !func.foto_storage_path}>
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          {isAdmin && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                              onClick={() => limparDadosFoto(func)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
                 {!isLoading && filtrados.length === 0 && (
                   <tr><td colSpan={9} className="px-3 py-10 text-center text-muted-foreground">Nenhum funcionario encontrado.</td></tr>
                 )}
