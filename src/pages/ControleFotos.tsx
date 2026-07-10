@@ -79,6 +79,10 @@ function temFotoValida(func: FuncionarioFotoControle) {
   return func.tem_foto === true && Boolean(func.foto_storage_path || func.foto_arquivo_nome);
 }
 
+function temFotoMarcada(func: FuncionarioFotoControle) {
+  return func.tem_foto === true;
+}
+
 function getSessionToken() {
   try {
     const usuario = JSON.parse(localStorage.getItem("usuario_logado") || "null");
@@ -169,7 +173,7 @@ export default function ControleFotos() {
   const filtrados = useMemo(() => {
     const termo = normalizar(busca.trim());
     return funcionariosControle.filter((func) => {
-      const temFoto = temFotoValida(func);
+      const temFoto = temFotoMarcada(func);
       if (statusFoto === "COM" && !temFoto) return false;
       if (statusFoto === "SEM" && temFoto) return false;
       if (statusDownload === "NAO_BAIXADAS" && (!temFoto || func.foto_baixada_em)) return false;
@@ -182,7 +186,7 @@ export default function ControleFotos() {
   }, [busca, funcionariosControle, setoresSelecionados, statusDownload, statusFoto]);
 
   const totais = useMemo(() => {
-    const com = funcionariosControle.filter(temFotoValida).length;
+    const com = funcionariosControle.filter(temFotoMarcada).length;
     return { total: funcionariosControle.length, com, sem: funcionariosControle.length - com };
   }, [funcionariosControle]);
 
@@ -528,6 +532,7 @@ export default function ControleFotos() {
               <tbody>
                 {filtrados.map((func) => {
                   const fotoValida = temFotoValida(func);
+                  const fotoMarcada = temFotoMarcada(func);
                   return (
                     <tr key={func.id} className="border-b hover:bg-muted/30">
                       <td className="px-3 py-3">{func.matricula || "TEMP"}</td>
@@ -535,7 +540,7 @@ export default function ControleFotos() {
                       <td className="px-3 py-3">{formatDate(func.data_admissao)}</td>
                       <td className="px-3 py-3">{func.setor?.nome || "-"}</td>
                       <td className="px-3 py-3">
-                        <Badge variant={fotoValida ? "default" : "destructive"}>{fotoValida ? "SIM" : "NAO"}</Badge>
+                        <Badge variant={fotoMarcada ? "default" : "destructive"}>{fotoMarcada ? "SIM" : "NAO"}</Badge>
                       </td>
                       <td className="max-w-[180px] truncate px-3 py-3">{func.foto_arquivo_nome || "-"}</td>
                       <td className="px-3 py-3">{formatData(func.foto_verificada_em)}</td>
