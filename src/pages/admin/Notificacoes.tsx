@@ -268,6 +268,7 @@ export default function Notificacoes() {
   const [isInserindoTurmaPendente, setIsInserindoTurmaPendente] = useState(false);
   const [eventosSimulacao, setEventosSimulacao] = useState<EventoSistema[]>([]);
   const [reenviarEvento, setReenviarEvento] = useState<EventoSistema | null>(null);
+  const [envioComDestinatarios, setEnvioComDestinatarios] = useState(false);
   const [gestoresSelecionados, setGestoresSelecionados] = useState<Set<string>>(new Set());
   const [isReenviando, setIsReenviando] = useState(false);
   const [expandedVistas, setExpandedVistas] = useState<Set<string>>(new Set());
@@ -604,6 +605,16 @@ export default function Notificacoes() {
 
   const enviarNotificacoes = async () => {
     if (selecionados.size === 0) return;
+
+    const eventosSelecionados = eventosFiltrados.filter(e => selecionados.has(e.id));
+    const somenteAlteracaoQuadro = eventosSelecionados.length > 0 && eventosSelecionados.every(e => e.tipo === 'alteracao_quadro');
+    if (somenteAlteracaoQuadro) {
+      setEnvioComDestinatarios(true);
+      setReenviarEvento(eventosSelecionados[0]);
+      setGestoresSelecionados(new Set());
+      return;
+    }
+
     await enviarMutation.mutateAsync({
       eventoIds: Array.from(selecionados),
       tipoNotificacao,
@@ -635,19 +646,39 @@ export default function Notificacoes() {
     if (!reenviarEvento || gestoresSelecionados.size === 0) return;
     setIsReenviando(true);
     try {
-      const notificacoes = Array.from(gestoresSelecionados).map(userRoleId => ({
-        user_role_id: userRoleId,
-        tipo: reenviarEvento.notificado_tipo || 'evento_sistema_modal',
-        titulo: reenviarEvento.descricao,
-        mensagem: (reenviarEvento.dados_extra as any)?.mensagem_personalizada || reenviarEvento.descricao,
-        referencia_id: reenviarEvento.id,
-      }));
+      const eventosParaEnviar = envioComDestinatarios
+        ? eventosFiltrados.filter(e => selecionados.has(e.id))
+        : [reenviarEvento];
+      const notificacoes = eventosParaEnviar.flatMap(evento =>
+        Array.from(gestoresSelecionados).map(userRoleId => ({
+          user_role_id: userRoleId,
+          tipo: evento.tipo === 'alteracao_quadro' ? 'alteracao_quadro' : (evento.notificado_tipo || 'evento_sistema_modal'),
+          titulo: TIPO_LABELS[evento.tipo] || evento.descricao,
+          mensagem: (evento.dados_extra as any)?.mensagem_personalizada || evento.descricao,
+          referencia_id: evento.id,
+        }))
+      );
       await supabase.from('notificacoes').insert(notificacoes);
-      toast.success(`REENVIADO PARA ${gestoresSelecionados.size} GESTOR(ES)!`);
+      if (envioComDestinatarios) {
+        await supabase
+          .from('eventos_sistema')
+          .update({
+            notificado: true,
+            notificado_em: new Date().toISOString(),
+            notificado_tipo: tipoNotificacao,
+          })
+          .in('id', eventosParaEnviar.map(e => e.id));
+      }
+      toast.success(`${envioComDestinatarios ? 'ENVIADO' : 'REENVIADO'} PARA ${gestoresSelecionados.size} USUARIO(S)!`);
       setReenviarEvento(null);
+      setEnvioComDestinatarios(false);
       setGestoresSelecionados(new Set());
+      setSelecionados(new Set());
+      queryClient.invalidateQueries({ queryKey: ['eventos-sistema'] });
+      queryClient.invalidateQueries({ queryKey: ['historico-notificacoes-enviadas'] });
+      queryClient.invalidateQueries({ queryKey: ['notificacoes-destinatarios'] });
     } catch {
-      toast.error('ERRO AO REENVIAR');
+      toast.error(envioComDestinatarios ? 'ERRO AO ENVIAR' : 'ERRO AO REENVIAR');
     } finally {
       setIsReenviando(false);
     }
@@ -1264,6 +1295,7 @@ export default function Notificacoes() {
                                 className="gap-1 text-xs h-7"
                                 onClick={() => {
                                   setReenviarEvento(evento);
+                                  setEnvioComDestinatarios(false);
                                   setGestoresSelecionados(new Set());
                                 }}
                               >
@@ -1415,13 +1447,13 @@ export default function Notificacoes() {
         </TabsContent>
       </Tabs>
 
-      {/* Dialog de Reenviar */}
-      <Dialog open={!!reenviarEvento} onOpenChange={(open) => { if (!open) { setReenviarEvento(null); setGestoresSelecionados(new Set()); } }}>
+      {/* Dialog de Enviar/Reenviar */}
+      <Dialog open={!!reenviarEvento} onOpenChange={(open) => { if (!open) { setReenviarEvento(null); setEnvioComDestinatarios(false); setGestoresSelecionados(new Set()); } }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              REENVIAR NOTIFICAÇÃO
+              {envioComDestinatarios ? 'ENVIAR NOTIFICACAO' : 'REENVIAR NOTIFICACAO'}
             </DialogTitle>
           </DialogHeader>
           {reenviarEvento && (
@@ -1473,7 +1505,7 @@ export default function Notificacoes() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setReenviarEvento(null); setGestoresSelecionados(new Set()); }}>
+            <Button variant="outline" onClick={() => { setReenviarEvento(null); setEnvioComDestinatarios(false); setGestoresSelecionados(new Set()); }}>
               CANCELAR
             </Button>
             <Button
@@ -1482,7 +1514,7 @@ export default function Notificacoes() {
               className="gap-1.5"
             >
               <Send className="h-3.5 w-3.5" />
-              REENVIAR ({gestoresSelecionados.size})
+              {envioComDestinatarios ? 'ENVIAR' : 'REENVIAR'} ({gestoresSelecionados.size})
             </Button>
           </DialogFooter>
         </DialogContent>
