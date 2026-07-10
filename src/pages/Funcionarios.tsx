@@ -68,6 +68,7 @@ function isoDateToExcelSerial(isoDate?: string | null) {
 
 // ─── Componente de Temporários ──────────────────────────────────────────────────
 type OrdenacaoTemporarios = 'nome' | 'admissao';
+type FiltroAcaoTemporarios = 'TODOS' | 'SUBSTITUIR' | 'EFETIVAR';
 
 const LIDERES_SOLICITAM_DESLIGAMENTO_TEMP = ['ALEX', 'AMILTON', 'LEILA', 'SILVIA', 'LUCIANO'];
 const DESTINATARIOS_SOLICITACAO_TEMP = ['PAULO', 'MAURICIO', 'LUCIANO'];
@@ -113,6 +114,7 @@ function TemporariosTab({
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [ordenacao, setOrdenacao] = useState<OrdenacaoTemporarios>('nome');
+  const [filtroAcao, setFiltroAcao] = useState<FiltroAcaoTemporarios>('TODOS');
   const [funcionarioSolicitado, setFuncionarioSolicitado] = useState<Funcionario | null>(null);
   const [acaoSolicitacao, setAcaoSolicitacao] = useState<AcaoTemporario>('DESLIGAMENTO');
   const [motivoSolicitacao, setMotivoSolicitacao] = useState('');
@@ -156,27 +158,6 @@ function TemporariosTab({
     });
   }, [funcionarios]);
 
-  const filtrados = useMemo(() => {
-    const lista = !search.trim() ? temporarios : temporarios.filter(f => {
-      const s = search.toLowerCase();
-      return (
-        f.nome_completo.toLowerCase().includes(s) ||
-        f.matricula?.toLowerCase().includes(s) ||
-        f.setor?.nome?.toLowerCase().includes(s) ||
-        f.turma?.toLowerCase().includes(s)
-      );
-    });
-
-    return [...lista].sort((a, b) => {
-      if (ordenacao === 'admissao') {
-        const dataA = a.data_admissao || '';
-        const dataB = b.data_admissao || '';
-        return dataA.localeCompare(dataB) || a.nome_completo.localeCompare(b.nome_completo);
-      }
-      return a.nome_completo.localeCompare(b.nome_completo);
-    });
-  }, [temporarios, search, ordenacao]);
-
   const solicitacoesPorFuncionario = useMemo(() => {
     const mapa = new Map<string, SolicitacaoTemporario>();
     solicitacoes.forEach((sol) => {
@@ -186,6 +167,37 @@ function TemporariosTab({
     });
     return mapa;
   }, [solicitacoes]);
+
+  const filtrados = useMemo(() => {
+    const listaBusca = !search.trim() ? temporarios : temporarios.filter(f => {
+      const s = search.toLowerCase();
+      return (
+        f.nome_completo.toLowerCase().includes(s) ||
+        f.matricula?.toLowerCase().includes(s) ||
+        f.setor?.nome?.toLowerCase().includes(s) ||
+        f.turma?.toLowerCase().includes(s)
+      );
+    });
+
+    const lista = filtroAcao === 'TODOS'
+      ? listaBusca
+      : listaBusca.filter((func) => {
+        const solicitacao = solicitacoesPorFuncionario.get(func.id);
+        if (!solicitacao) return false;
+        return filtroAcao === 'SUBSTITUIR'
+          ? solicitacao.acao === 'DESLIGAMENTO'
+          : solicitacao.acao === 'EFETIVACAO';
+      });
+
+    return [...lista].sort((a, b) => {
+      if (ordenacao === 'admissao') {
+        const dataA = a.data_admissao || '';
+        const dataB = b.data_admissao || '';
+        return dataA.localeCompare(dataB) || a.nome_completo.localeCompare(b.nome_completo);
+      }
+      return a.nome_completo.localeCompare(b.nome_completo);
+    });
+  }, [temporarios, search, ordenacao, filtroAcao, solicitacoesPorFuncionario]);
 
   const abrirSolicitacao = (func: Funcionario, acao: AcaoTemporario) => {
     setFuncionarioSolicitado(func);
@@ -297,6 +309,29 @@ function TemporariosTab({
             <X className="h-3 w-3" />
           </Button>
         )}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {([
+            ['TODOS', 'TODOS'],
+            ['SUBSTITUIR', 'SUBSTITUIR'],
+            ['EFETIVAR', 'EFETIVAR'],
+          ] as [FiltroAcaoTemporarios, string][]).map(([value, label]) => (
+            <Button
+              key={value}
+              type="button"
+              variant={filtroAcao === value ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFiltroAcao(value)}
+              className={cn(
+                'h-10',
+                filtroAcao === value && value === 'SUBSTITUIR' && 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+                filtroAcao === value && value === 'EFETIVAR' && 'bg-primary text-primary-foreground hover:bg-primary/90'
+              )}
+            >
+              {label}
+            </Button>
+          ))}
         </div>
 
         <Select value={ordenacao} onValueChange={(value) => setOrdenacao(value as OrdenacaoTemporarios)}>
