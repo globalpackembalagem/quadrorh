@@ -131,6 +131,7 @@ function TemporariosTab({
   const isLiderSolicitanteTemp = LIDERES_SOLICITAM_DESLIGAMENTO_TEMP.includes(normalizarNomeUsuario(userRole?.nome)) && !isLuciano;
   const podeGerenciarSolicitacoesTemp = isRHMode && !isLiderSolicitanteTemp;
   const podeVerAcaoTemporario = podeSolicitarDesligamentoTemp || podeGerenciarSolicitacoesTemp;
+  const exigeSenhaSolicitacaoTemp = isLiderSolicitanteTemp;
 
   const { data: solicitacoes = [] } = useQuery({
     queryKey: ['solicitacoes-temporarios'],
@@ -201,11 +202,11 @@ function TemporariosTab({
       toast.error('Informe o motivo com mais detalhes.');
       return;
     }
-    if (!pedindoSenha) {
+    if (exigeSenhaSolicitacaoTemp && !pedindoSenha) {
       setPedindoSenha(true);
       return;
     }
-    if (!senhaConfirmacao) {
+    if (exigeSenhaSolicitacaoTemp && !senhaConfirmacao) {
       toast.error('Informe sua senha para confirmar.');
       return;
     }
@@ -216,7 +217,7 @@ function TemporariosTab({
         body: {
           action: 'criar_solicitacao_temporario',
           user_id: userRole?.id,
-          senha: senhaConfirmacao,
+          senha: exigeSenhaSolicitacaoTemp ? senhaConfirmacao : undefined,
           funcionario: {
             id: funcionarioSolicitado.id,
             nome_completo: funcionarioSolicitado.nome_completo,
@@ -336,13 +337,22 @@ function TemporariosTab({
                 const hoje = new Date();
                 const vencido = data90 && data90 <= hoje;
                 const vencido180 = data180 && data180 <= hoje;
+                const solicitacaoLinha = solicitacoesPorFuncionario.get(func.id);
+                const linhaSolicitacaoClasse = solicitacaoLinha
+                  ? solicitacaoLinha.acao === 'DESLIGAMENTO'
+                    ? 'bg-red-50 hover:bg-red-100/70'
+                    : 'bg-blue-50 hover:bg-blue-100/70'
+                  : '';
 
                 return (
                   <tr
                     key={func.id}
-                    className={podeSolicitarDesligamentoTemp ? 'hover:bg-muted/50 cursor-pointer' : 'hover:bg-muted/50'}
+                    className={cn(
+                      podeSolicitarDesligamentoTemp ? 'cursor-pointer' : '',
+                      linhaSolicitacaoClasse || 'hover:bg-muted/50'
+                    )}
                     onClick={() => {
-                      if (podeSolicitarDesligamentoTemp) abrirSolicitacao(func, 'DESLIGAMENTO');
+                      if (podeSolicitarDesligamentoTemp && !solicitacaoLinha) abrirSolicitacao(func, 'DESLIGAMENTO');
                     }}
                   >
                     <td className="text-muted-foreground">{func.matricula || '-'}</td>
@@ -378,7 +388,7 @@ function TemporariosTab({
 	                    {podeVerAcaoTemporario && (
 	                      <td>
 	                        {(() => {
-	                          const solicitacao = solicitacoesPorFuncionario.get(func.id);
+		                          const solicitacao = solicitacaoLinha;
 	                          if (solicitacao) {
 	                            const isSubstituir = solicitacao.acao === 'DESLIGAMENTO';
 	                            return (

@@ -744,7 +744,7 @@ serve(async (req) => {
 
       case "criar_solicitacao_temporario": {
         const { user_id, senha, funcionario = {}, acao, motivo = null } = params;
-        if (!user_id || !senha || !funcionario?.id || !acao) return jsonResponse({ error: "Dados incompletos" }, 400);
+        if (!user_id || !funcionario?.id || !acao) return jsonResponse({ error: "Dados incompletos" }, 400);
         if (!["DESLIGAMENTO", "EFETIVACAO"].includes(acao)) return jsonResponse({ error: "Acao invalida" }, 400);
         if (acao === "DESLIGAMENTO" && String(motivo || "").trim().length < 15) {
           return jsonResponse({ error: "Informe o motivo com mais detalhes." }, 400);
@@ -758,9 +758,19 @@ serve(async (req) => {
           .single();
         if (userError || !user) return jsonResponse({ error: "Usuario nao encontrado" }, 404);
 
-        const storedPassword = await getUserCredentialPassword(supabase, user_id);
-        const { valid: isValid } = await verifyPassword(senha, storedPassword);
-        if (!isValid) return jsonResponse({ error: "Senha incorreta" }, 403);
+        const nomeNormalizado = String(user.nome || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toUpperCase()
+          .trim();
+        const podeSemSenha = nomeNormalizado === "LUCIANO";
+
+        if (!podeSemSenha) {
+          if (!senha) return jsonResponse({ error: "Senha obrigatoria para confirmar." }, 400);
+          const storedPassword = await getUserCredentialPassword(supabase, user_id);
+          const { valid: isValid } = await verifyPassword(senha, storedPassword);
+          if (!isValid) return jsonResponse({ error: "Senha incorreta" }, 403);
+        }
 
         const isDesligamento = acao === "DESLIGAMENTO";
         const acaoTexto = isDesligamento ? "desligamento" : "efetivacao";
