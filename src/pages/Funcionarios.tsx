@@ -72,6 +72,7 @@ type FiltroAcaoTemporarios = 'TODOS' | 'SUBSTITUIR' | 'EFETIVAR';
 
 const LIDERES_SOLICITAM_DESLIGAMENTO_TEMP = ['ALEX', 'AMILTON', 'LEILA', 'SILVIA', 'LUCIANO'];
 const DESTINATARIOS_SOLICITACAO_TEMP = ['PAULO', 'MAURICIO', 'LUCIANO'];
+const LINHAS_FRETADO = ['VARZEA A', 'VARZEA B', 'CAMPINAS', 'LOUVEIRA'];
 type AcaoTemporario = 'DESLIGAMENTO' | 'EFETIVACAO';
 type SolicitacaoTemporario = {
   id: string;
@@ -681,6 +682,9 @@ export default function Funcionarios() {
   const [turma, setTurma] = useState('');
   const [situacaoId, setSituacaoId] = useState('');
   const [sexo, setSexo] = useState<SexoTipo>('masculino');
+  const [telefoneWhatsapp, setTelefoneWhatsapp] = useState('');
+  const [usaFretado, setUsaFretado] = useState(false);
+  const [linhaFretado, setLinhaFretado] = useState('');
   const [dataDemissao, setDataDemissao] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [coberturaFuncionarioId, setCoberturaFuncionarioId] = useState('');
@@ -841,6 +845,9 @@ export default function Funcionarios() {
     setTurma('');
     setSituacaoId('');
     setSexo('masculino');
+    setTelefoneWhatsapp('');
+    setUsaFretado(false);
+    setLinhaFretado('');
     setDataDemissao('');
     setObservacoes('');
     setCoberturaFuncionarioId('');
@@ -864,6 +871,9 @@ export default function Funcionarios() {
     setTurma(func.turma || '');
     setSituacaoId(func.situacao_id);
     setSexo(func.sexo);
+    setTelefoneWhatsapp(func.telefone_whatsapp || '');
+    setUsaFretado(func.usa_fretado === true);
+    setLinhaFretado(func.linha_fretado || '');
     setDataDemissao(func.data_demissao || '');
     setObservacoes(func.observacoes || '');
     setCoberturaFuncionarioId(func.cobertura_funcionario_id || '');
@@ -966,6 +976,9 @@ export default function Funcionarios() {
       turma: validacaoTurma.turma,
       situacao_id: situacaoIdEfetiva,
       sexo,
+      telefone_whatsapp: telefoneWhatsapp.trim() || null,
+      usa_fretado: usaFretado,
+      linha_fretado: usaFretado ? (linhaFretado || null) : null,
       data_demissao: dataDemissao || null,
       observacoes: observacoes || null,
       cobertura_funcionario_id: coberturaFuncionarioId && coberturaFuncionarioId !== 'nenhum' ? coberturaFuncionarioId : null,
@@ -1773,7 +1786,48 @@ export default function Funcionarios() {
               </div>
             </div>
 
-            {/* Campos condicionais situação */}
+            {/* WhatsApp e Fretado */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>WhatsApp</Label>
+                <Input
+                  type="tel"
+                  inputMode="tel"
+                  value={telefoneWhatsapp}
+                  onChange={e => setTelefoneWhatsapp(e.target.value)}
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+              <label className="flex items-center gap-2 pt-8 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  checked={usaFretado}
+                  onChange={e => {
+                    setUsaFretado(e.target.checked);
+                    if (!e.target.checked) setLinhaFretado('');
+                  }}
+                />
+                Usa Fretado
+              </label>
+            </div>
+
+            {usaFretado && (
+              <div className="space-y-2">
+                <Label>Linha do Fretado</Label>
+                <Select value={linhaFretado || 'sem_linha'} onValueChange={v => setLinhaFretado(v === 'sem_linha' ? '' : v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a linha" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sem_linha">SELECIONE</SelectItem>
+                    {LINHAS_FRETADO.map(linha => (
+                      <SelectItem key={linha} value={linha}>{linha}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             <CamposSituacaoEspecial
               situacaoNome={situacoesAtivas.find(s => s.id === situacaoId)?.nome || ''}
               coberturaFuncionarioId={coberturaFuncionarioId}

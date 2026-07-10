@@ -52,6 +52,9 @@ export interface Funcionario {
   transferencia_data: string | null;
   transferencia_setor_id: string | null;
   nao_e_meu_funcionario: boolean;
+  telefone_whatsapp: string | null;
+  usa_fretado: boolean | null;
+  linha_fretado: string | null;
   tamanho_uniforme: string | null;
   tamanho_calca: string | null;
   tamanho_camiseta: string | null;
