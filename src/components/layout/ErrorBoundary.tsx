@@ -24,6 +24,16 @@ async function clearBrowserCaches() {
     const names = await caches.keys();
     await Promise.all(names.map((name) => caches.delete(name)));
   }
+  if ('serviceWorker' in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((registration) => registration.unregister()));
+  }
+}
+
+function reloadWithFreshAssets() {
+  const url = new URL(window.location.href);
+  url.searchParams.set('app_reload', Date.now().toString());
+  window.location.replace(url.toString());
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -41,9 +51,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
     if (isChunkLoadError(error) && sessionStorage.getItem(CHUNK_RELOAD_KEY) !== '1') {
       sessionStorage.setItem(CHUNK_RELOAD_KEY, '1');
-      clearBrowserCaches().finally(() => {
-        window.location.reload();
-      });
+      clearBrowserCaches().finally(reloadWithFreshAssets);
     }
   }
 
@@ -53,7 +61,7 @@ export class ErrorBoundary extends Component<Props, State> {
     Object.keys(sessionStorage).forEach(key => {
       if (key.startsWith('chunk_reload_')) sessionStorage.removeItem(key);
     });
-    window.location.reload();
+    reloadWithFreshAssets();
   };
 
   handleClearAndReload = () => {

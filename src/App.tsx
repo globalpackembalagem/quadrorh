@@ -28,20 +28,36 @@ import { useForceLogout } from "@/hooks/useForceLogout";
 import { ErrorBoundary } from "@/components/layout/ErrorBoundary";
 
 // Retry wrapper para imports dinâmicos (evita erro de cache stale)
+async function clearRuntimeCaches() {
+  if ('caches' in window) {
+    const names = await caches.keys();
+    await Promise.all(names.map((name) => caches.delete(name)));
+  }
+  if ('serviceWorker' in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((registration) => registration.unregister()));
+  }
+}
+
+function reloadWithFreshAssets() {
+  const url = new URL(window.location.href);
+  url.searchParams.set('app_reload', Date.now().toString());
+  window.location.replace(url.toString());
+}
+
 function lazyRetry(factory: () => Promise<{ default: ComponentType<any> }>) {
   return lazy(() =>
-    factory().catch(() => {
+    factory().catch(async (error) => {
       // Limpa caches do browser e força reload com assets novos
-      if ('caches' in window) {
-        caches.keys().then(names => names.forEach(n => caches.delete(n)));
-      }
       // Evita loop infinito: marca que já tentou reload
       const key = 'chunk_reload_' + window.location.pathname;
       if (!sessionStorage.getItem(key)) {
         sessionStorage.setItem(key, '1');
-        window.location.reload();
+        await clearRuntimeCaches();
+        reloadWithFreshAssets();
+        return new Promise<{ default: ComponentType<any> }>(() => {});
       }
-      return factory();
+      throw error;
     })
   );
 }
