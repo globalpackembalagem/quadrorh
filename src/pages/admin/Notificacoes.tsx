@@ -1482,24 +1482,37 @@ export default function Notificacoes() {
                   </Button>
                 </div>
                 <div className="space-y-1 max-h-[300px] overflow-y-auto">
-                  {(usuarios || []).map(u => (
-                    <label key={u.id} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-muted/50 p-2 rounded">
-                      <Checkbox
-                        checked={gestoresSelecionados.has(u.id)}
-                        onCheckedChange={(checked) => {
+                  {(usuarios || []).map(u => {
+                    const selecionado = gestoresSelecionados.has(u.id);
+                    return (
+                      <button
+                        key={u.id}
+                        type="button"
+                        onClick={() => {
                           setGestoresSelecionados(prev => {
                             const next = new Set(prev);
-                            checked ? next.add(u.id) : next.delete(u.id);
+                            next.has(u.id) ? next.delete(u.id) : next.add(u.id);
                             return next;
                           });
                         }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium block">{u.nome.toUpperCase()}</span>
-                        <span className="text-[10px] text-muted-foreground">{u.setor?.nome?.toUpperCase() || 'SEM SETOR'}</span>
-                      </div>
-                    </label>
-                  ))}
+                        className={cn(
+                          'flex w-full items-center gap-3 rounded border p-3 text-left text-sm transition-colors',
+                          selecionado ? 'border-primary bg-primary/10 text-primary' : 'border-border hover:bg-muted/60'
+                        )}
+                      >
+                        <span className={cn(
+                          'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold',
+                          selecionado ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/40 text-transparent'
+                        )}>
+                          ✓
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium block">{u.nome.toUpperCase()}</span>
+                          <span className="text-[10px] text-muted-foreground">{u.setor?.nome?.toUpperCase() || 'SEM SETOR'}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
