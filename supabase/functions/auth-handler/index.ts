@@ -798,6 +798,10 @@ serve(async (req) => {
           .single();
         if (solicitacaoError) throw solicitacaoError;
 
+        if (podeSemSenha) {
+          return jsonResponse({ success: true, solicitacao_id: solicitacao?.id, evento_id: null });
+        }
+
         const mensagem = [
           `Solicitacao de ${acaoTexto} de temporario:`,
           "",
@@ -838,29 +842,6 @@ serve(async (req) => {
           .select("id")
           .single();
         if (eventoError) throw eventoError;
-
-        const { data: destinatarios, error: destinatariosError } = await supabase
-          .from("user_roles")
-          .select("id, nome")
-          .eq("ativo", true);
-        if (destinatariosError) throw destinatariosError;
-
-        const normalizarNome = (valor: string) => valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
-        const destinatariosSelecionados = (destinatarios || []).filter((dest: any) =>
-          ["PAULO", "LUCIANO"].includes(normalizarNome(dest.nome || ""))
-        );
-        if (!destinatariosSelecionados.length) return jsonResponse({ error: "Nenhum destinatario encontrado" }, 400);
-
-        const { error: notificacoesError } = await supabase.from("notificacoes").insert(
-          destinatariosSelecionados.map((dest: any) => ({
-            user_role_id: dest.id,
-            tipo: isDesligamento ? "pedido_demissao_lancado" : "aviso_rh",
-            titulo: isDesligamento ? "SOLICITACAO DE DESLIGAMENTO TEMPORARIO" : "SOLICITACAO DE EFETIVACAO TEMPORARIO",
-            mensagem,
-            referencia_id: evento?.id || null,
-          }))
-        );
-        if (notificacoesError) throw notificacoesError;
 
         return jsonResponse({ success: true, solicitacao_id: solicitacao?.id, evento_id: evento?.id });
       }
