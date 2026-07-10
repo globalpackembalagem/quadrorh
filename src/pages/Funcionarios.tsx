@@ -69,7 +69,7 @@ function isoDateToExcelSerial(isoDate?: string | null) {
 type OrdenacaoTemporarios = 'nome' | 'admissao';
 
 const LIDERES_SOLICITAM_DESLIGAMENTO_TEMP = ['ALEX', 'AMILTON', 'LEILA', 'SILVIA', 'LUCIANO'];
-const DESTINATARIOS_SOLICITACAO_TEMP = ['PAULO', 'LUCIANO'];
+const DESTINATARIOS_SOLICITACAO_TEMP = ['PAULO', 'MAURICIO', 'LUCIANO'];
 type AcaoTemporario = 'DESLIGAMENTO' | 'EFETIVACAO';
 type SolicitacaoTemporario = {
   id: string;
@@ -130,6 +130,7 @@ function TemporariosTab({
   const isLuciano = normalizarNomeUsuario(userRole?.nome) === 'LUCIANO';
   const isLiderSolicitanteTemp = LIDERES_SOLICITAM_DESLIGAMENTO_TEMP.includes(normalizarNomeUsuario(userRole?.nome)) && !isLuciano;
   const podeGerenciarSolicitacoesTemp = isRHMode && !isLiderSolicitanteTemp;
+  const podeVerAcaoTemporario = podeSolicitarDesligamentoTemp || podeGerenciarSolicitacoesTemp;
 
   const { data: solicitacoes = [] } = useQuery({
     queryKey: ['solicitacoes-temporarios'],
@@ -316,13 +317,13 @@ function TemporariosTab({
               <th className="w-[100px]">Admissão</th>
               <th className="w-[100px]">Data 90 Dias</th>
               <th className="w-[100px]">Data 180 Dias</th>
-              {podeSolicitarDesligamentoTemp && <th className="w-[180px]">Acao</th>}
+              {podeVerAcaoTemporario && <th className="w-[180px]">Acao</th>}
             </tr>
           </thead>
           <tbody>
             {filtrados.length === 0 ? (
               <tr>
-		                <td colSpan={podeSolicitarDesligamentoTemp ? 6 : 5} className="text-center py-8 text-muted-foreground">
+			                <td colSpan={podeVerAcaoTemporario ? 6 : 5} className="text-center py-8 text-muted-foreground">
                   <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
                   <p>Nenhum temporário encontrado</p>
                 </td>
@@ -374,36 +375,48 @@ function TemporariosTab({
                         </Badge>
                       ) : '-'}
                     </td>
-                    {podeSolicitarDesligamentoTemp && (
-                      <td>
-                        {solicitacoesPorFuncionario.has(func.id) ? (
-                          <Badge variant="outline">SOLICITADO</Badge>
-                        ) : (
-                          <div className="grid grid-cols-2 gap-2">
-                            <button
-                              type="button"
-                              className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-left text-xs font-semibold text-primary hover:bg-primary/10"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                abrirSolicitacao(func, 'EFETIVACAO');
-                              }}
-                            >
-                              EFETIVAR
-                            </button>
-                            <button
-                              type="button"
-                              className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-left text-xs font-semibold text-destructive hover:bg-destructive/10"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                abrirSolicitacao(func, 'DESLIGAMENTO');
-                              }}
-                            >
-                              SUBSTITUIR
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    )}
+	                    {podeVerAcaoTemporario && (
+	                      <td>
+	                        {(() => {
+	                          const solicitacao = solicitacoesPorFuncionario.get(func.id);
+	                          if (solicitacao) {
+	                            const isSubstituir = solicitacao.acao === 'DESLIGAMENTO';
+	                            return (
+	                              <Badge variant={isSubstituir ? 'destructive' : 'default'} className="whitespace-nowrap">
+	                                {isSubstituir ? 'PARA SUBSTITUIR' : 'PARA EFETIVAR'}
+	                              </Badge>
+	                            );
+	                          }
+
+	                          if (!podeSolicitarDesligamentoTemp) return <span className="text-muted-foreground">-</span>;
+
+	                          return (
+	                            <div className="grid grid-cols-2 gap-2">
+	                              <button
+	                                type="button"
+	                                className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-left text-xs font-semibold text-primary hover:bg-primary/10"
+	                                onClick={(event) => {
+	                                  event.stopPropagation();
+	                                  abrirSolicitacao(func, 'EFETIVACAO');
+	                                }}
+	                              >
+	                                EFETIVAR
+	                              </button>
+	                              <button
+	                                type="button"
+	                                className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-left text-xs font-semibold text-destructive hover:bg-destructive/10"
+	                                onClick={(event) => {
+	                                  event.stopPropagation();
+	                                  abrirSolicitacao(func, 'DESLIGAMENTO');
+	                                }}
+	                              >
+	                                SUBSTITUIR
+	                              </button>
+	                            </div>
+	                          );
+	                        })()}
+	                      </td>
+	                    )}
                   </tr>
                 );
               })

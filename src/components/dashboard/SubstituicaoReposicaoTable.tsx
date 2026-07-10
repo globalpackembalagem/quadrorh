@@ -1,4 +1,5 @@
 import { useMemo, useState, forwardRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { format, parse, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
@@ -6,6 +7,7 @@ import { Funcionario } from '@/types/database';
 import { Demissao, PeriodoDemissao } from '@/types/demissao';
 import { useUpdatePeriodoDemissao } from '@/hooks/useDemissoes';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -27,6 +29,16 @@ interface SubstituicaoReposicaoTableProps {
   periodos: PeriodoDemissao[];
   desfalquePorTurma: Record<string, number>;
 }
+
+type SolicitacaoTemporarioQuadro = {
+  id: string;
+  funcionario_id: string;
+  funcionario_nome: string;
+  acao: string;
+  status: string;
+};
+
+const STATUS_SOLICITACAO_TEMP_IGNORADOS = new Set(['CANCELADA', 'CONCLUIDA', 'CONCLUÍDA', 'FINALIZADA']);
 
 // Turmas para cada grupo
 const TURMAS_SOPRO = ['A', 'B', 'C'];
@@ -105,6 +117,23 @@ export function SubstituicaoReposicaoTable({
   const headerPrefix = grupo === 'SOPRO' ? 'SOPRO' : '';
   const updatePeriodo = useUpdatePeriodoDemissao();
 
+  const { data: solicitacoesTemporarios = [] } = useQuery({
+    queryKey: ['solicitacoes-temporarios-quadro'],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from('solicitacoes_temporarios')
+        .select('id, funcionario_id, funcionario_nome, acao, status')
+        .eq('acao', 'DESLIGAMENTO');
+
+      if (error) throw error;
+
+      return ((data || []) as SolicitacaoTemporarioQuadro[]).filter((item) => {
+        const status = (item.status || '').toUpperCase().trim();
+        return !STATUS_SOLICITACAO_TEMP_IGNORADOS.has(status);
+      });
+    },
+  });
+
   // Estado para controlar qual período está sendo editado
   const [editingPeriodo, setEditingPeriodo] = useState<string | null>(null);
   const [editingField, setEditingField] = useState<'inicio' | 'fim' | null>(null);
@@ -175,6 +204,7 @@ export function SubstituicaoReposicaoTable({
       temporariosTotal[turma] = 0; 
       temporariosNomes[turma] = [];
     });
+    const temporariosJaContados = new Set<string>();
 
     // Contar demissões do tipo "Término de Contrato" ou "Ant. Término"
     // Efetivos vão por período, temporários vão em linha única
@@ -216,6 +246,7 @@ export function SubstituicaoReposicaoTable({
           // Temporários: contagem única (sem período)
           temporariosTotal[turma] = (temporariosTotal[turma] || 0) + 1;
           temporariosNomes[turma].push(nome);
+          if (demissao.funcionario_id) temporariosJaContados.add(demissao.funcionario_id);
         } else {
           // Efetivos: por período
           periodos.forEach(periodo => {
@@ -229,6 +260,20 @@ export function SubstituicaoReposicaoTable({
       });
 
     // Calcular Dispensas Normais
+    solicitacoesTemporarios.forEach((solicitacao) => {
+      if (temporariosJaContados.has(solicitacao.funcionario_id)) return;
+
+      const funcionario = funcionarios.find((func) => func.id === solicitacao.funcionario_id);
+      if (!funcionario) return;
+
+      const turma = getTurmaFuncionario(funcionario, grupo);
+      if (!turma || !turmas.includes(turma)) return;
+
+      temporariosTotal[turma] = (temporariosTotal[turma] || 0) + 1;
+      temporariosNomes[turma].push((solicitacao.funcionario_nome || funcionario.nome_completo || 'SEM NOME').toUpperCase());
+      temporariosJaContados.add(solicitacao.funcionario_id);
+    });
+
     const dispensasNormais: Record<string, number> = {};
     const dispensasNomais: Record<string, string[]> = {};
     turmas.forEach(turma => { 
@@ -302,7 +347,7 @@ export function SubstituicaoReposicaoTable({
       dispensasNormais, dispensasNomais,
       previsaoAdmissao, previsaoNomes
     };
-  }, [funcionarios, demissoesPendentes, periodos, turmas, grupo]);
+  }, [funcionarios, demissoesPendentes, periodos, turmas, grupo, solicitacoesTemporarios]);
 
   // Total de Substituição (soma das linhas: sumidos, contrato exp, temporários, dispensas, cob férias, treinamento)
   // Sempre positivo (quantidade de pessoas que vão sair e que o RH já precisa trabalhar)
