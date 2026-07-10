@@ -59,6 +59,7 @@ export async function criarNotificacaoAlteracaoQuadro(params: Params) {
     .insert({
       tipo: 'alteracao_quadro',
       descricao: mensagem,
+      funcionario_nome: 'ALTERACAO DO QUADRO',
       setor_nome: area,
       turma: params.turma || null,
       criado_por: usuario,

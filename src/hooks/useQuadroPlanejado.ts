@@ -101,6 +101,8 @@ export function useUpdateQuadroPlanejado() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quadro-planejado'] });
       queryClient.invalidateQueries({ queryKey: ['historico_quadro'] });
+      queryClient.invalidateQueries({ queryKey: ['eventos-sistema'] });
+      queryClient.invalidateQueries({ queryKey: ['historico-notificacoes-enviadas'] });
       toast.success('Quadro atualizado com sucesso!');
     },
     onError: (error) => {
