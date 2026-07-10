@@ -949,25 +949,33 @@ export default function Funcionarios() {
       await updateFuncionario.mutateAsync({ id: editingFuncionario.id, ...data });
       funcionarioId = editingFuncionario.id;
       const dadosNovos = formatarDadosFuncionario(data as unknown as Record<string, unknown>, setoresAtivos, situacoesAtivas);
-      await registrarHistorico.mutateAsync({
-        tabela: 'funcionarios',
-        operacao: 'UPDATE',
-        registro_id: funcionarioId,
-        dados_anteriores: dadosAnteriores,
-        dados_novos: dadosNovos,
-      });
+      try {
+        await registrarHistorico.mutateAsync({
+          tabela: 'funcionarios',
+          operacao: 'UPDATE',
+          registro_id: funcionarioId,
+          dados_anteriores: dadosAnteriores,
+          dados_novos: dadosNovos,
+        });
+      } catch (historicoError) {
+        console.warn('Falha ao registrar historico do funcionario:', historicoError);
+      }
     } else {
       const result = await createFuncionario.mutateAsync(data);
       funcionarioId = result?.id || '';
       if (funcionarioId) {
         const dadosNovos = formatarDadosFuncionario(data as unknown as Record<string, unknown>, setoresAtivos, situacoesAtivas);
-        await registrarHistorico.mutateAsync({
-          tabela: 'funcionarios',
-          operacao: 'INSERT',
-          registro_id: funcionarioId,
-          dados_anteriores: null,
-          dados_novos: dadosNovos,
-        });
+        try {
+          await registrarHistorico.mutateAsync({
+            tabela: 'funcionarios',
+            operacao: 'INSERT',
+            registro_id: funcionarioId,
+            dados_anteriores: null,
+            dados_novos: dadosNovos,
+          });
+        } catch (historicoError) {
+          console.warn('Falha ao registrar historico do funcionario:', historicoError);
+        }
       }
     }
 

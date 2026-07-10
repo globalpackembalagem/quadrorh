@@ -582,8 +582,8 @@ export function useCreateFuncionario() {
         turma: variables.turma || null,
       });
     },
-    onError: () => {
-      toast.error('Erro ao cadastrar funcionÃ¡rio');
+    onError: (error: any) => {
+      toast.error(error?.message || 'Erro ao cadastrar funcionÃ¡rio');
     },
   });
 }

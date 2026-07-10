@@ -564,7 +564,7 @@ serve(async (req) => {
         }
 
         const { data, error } = await query;
-        if (error) throw error;
+        if (error) return jsonResponse({ error: error.message || "Erro ao gravar funcionario" }, 400);
         return jsonResponse({ success: true, data });
       }
 
