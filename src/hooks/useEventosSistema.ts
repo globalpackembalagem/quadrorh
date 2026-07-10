@@ -283,7 +283,7 @@ export function useEnviarNotificacaoEventos() {
       // Buscar todos os usuários ativos
       const { data: userRoles } = await supabase
         .from('user_roles')
-        .select('id, nome, email, perfil, setor_id, acesso_admin, recebe_notificacoes')
+        .select('id, nome, email, perfil, setor_id, acesso_admin, recebe_notificacoes, tipos_notificacao')
         .eq('ativo', true);
 
       if (!userRoles) throw new Error('Sem usuários');
@@ -363,6 +363,20 @@ export function useEnviarNotificacaoEventos() {
           if (destinatariosFixos && !destinatariosFixos.has(ur.id)) return;
 
           const isAdmin = ur.acesso_admin;
+          const isAlteracaoQuadro = grupo.tipo === 'alteracao_quadro';
+
+          if (isAlteracaoQuadro) {
+            if (!Array.isArray((ur as any).tipos_notificacao) || !(ur as any).tipos_notificacao.includes('alteracao_quadro')) return;
+
+            notificacoes.push({
+              user_role_id: ur.id,
+              tipo: 'alteracao_quadro',
+              titulo: tipoLabel,
+              mensagem: `${mensagemBase}${nomesStr}${msgPersonalizada}`,
+              referencia_id: grupo.evento_id,
+            });
+            return;
+          }
           
           // Admin não recebe notificação — é quem envia
           if (isAdmin) return;
