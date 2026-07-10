@@ -54,6 +54,7 @@ import { format, parseISO, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { loadXLSX } from '@/lib/xlsx';
 import { normalizarTextoSistema } from '@/lib/normalizacao';
+import { cn } from '@/lib/utils';
 // xlsx-js-style loaded dynamically
 import { toast } from 'sonner';
 
