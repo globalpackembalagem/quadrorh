@@ -30,14 +30,29 @@ type Params = {
   grupo?: string | null;
   turma?: string | null;
   usuarioNome?: string | null;
+  dataInicio?: string | null;
 };
+
+function formatarDataBR(data?: string | null) {
+  if (!data) return '-';
+  const [ano, mes, dia] = data.split('-');
+  if (!ano || !mes || !dia) return data;
+  return `${dia}/${mes}/${ano}`;
+}
 
 export async function criarNotificacaoAlteracaoQuadro(params: Params) {
   const area = params.grupo || 'DECORACAO';
   const turma = params.turma ? ` ${params.turma}` : '';
   const campoLabel = LABELS_QUADRO[params.campo] || params.campo.toUpperCase();
   const usuario = params.usuarioNome || 'SISTEMA';
-  const mensagem = `${area}${turma} - ${campoLabel}: ${params.valorAnterior} -> ${params.valorNovo}. ALTERADO POR ${usuario}.`;
+  const dataInicio = params.dataInicio || new Date().toISOString().slice(0, 10);
+  const mensagem = [
+    `AREA: ${area}${turma}`,
+    `CAMPO: ${campoLabel}`,
+    `ANTES: ${params.valorAnterior}`,
+    `DEPOIS: ${params.valorNovo}`,
+    `A PARTIR DE: ${formatarDataBR(dataInicio)}`,
+  ].join('\n');
 
   const { data: evento, error: eventoError } = await supabase
     .from('eventos_sistema')
@@ -53,6 +68,7 @@ export async function criarNotificacaoAlteracaoQuadro(params: Params) {
         campo: params.campo,
         valor_anterior: params.valorAnterior,
         valor_novo: params.valorNovo,
+        data_inicio: dataInicio,
       },
       notificado: true,
       notificado_em: new Date().toISOString(),
@@ -65,14 +81,14 @@ export async function criarNotificacaoAlteracaoQuadro(params: Params) {
 
   const { data: destinatarios, error: destinatariosError } = await supabase
     .from('user_roles')
-    .select('id, perfil, acesso_admin, recebe_notificacoes')
+    .select('id, recebe_notificacoes, tipos_notificacao')
     .eq('ativo', true);
 
   if (destinatariosError) throw destinatariosError;
 
   const notificacoes = (destinatarios || [])
     .filter((user: any) => user.recebe_notificacoes !== false)
-    .filter((user: any) => user.acesso_admin || user.perfil === 'rh_completo' || user.perfil === 'rh_demissoes')
+    .filter((user: any) => Array.isArray(user.tipos_notificacao) && user.tipos_notificacao.includes('alteracao_quadro'))
     .map((user: any) => ({
       user_role_id: user.id,
       tipo: 'alteracao_quadro',

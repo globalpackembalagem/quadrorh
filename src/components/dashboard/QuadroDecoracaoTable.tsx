@@ -45,6 +45,7 @@ export function QuadroDecoracaoTable({ dados }: QuadroDecoracaoTableProps) {
   const updateMutation = useUpdateQuadroDecoracao();
   const [editingCell, setEditingCell] = useState<{ id: string; key: string } | null>(null);
   const [editValue, setEditValue] = useState<string>('');
+  const [dataInicioNotificacao, setDataInicioNotificacao] = useState(() => new Date().toISOString().slice(0, 10));
 
   const turmasOrdenadas = ['DIA-T1', 'DIA-T2', 'NOITE-T1', 'NOITE-T2'];
 
@@ -65,13 +66,14 @@ export function QuadroDecoracaoTable({ dados }: QuadroDecoracaoTableProps) {
     if (!editingCell) return;
 
     const novoValor = parseInt(editValue, 10) || 0;
-    updateMutation.mutate({
-      id: editingCell.id,
-      [editingCell.key]: novoValor,
-    });
+	    updateMutation.mutate({
+	      id: editingCell.id,
+	      [editingCell.key]: novoValor,
+	      data_inicio_notificacao: dataInicioNotificacao,
+	    });
     setEditingCell(null);
     setEditValue('');
-  }, [editingCell, editValue, updateMutation]);
+	  }, [dataInicioNotificacao, editingCell, editValue, updateMutation]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -94,10 +96,21 @@ export function QuadroDecoracaoTable({ dados }: QuadroDecoracaoTableProps) {
   }, [dadosPorTurma]);
 
   return (
-    <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
-      <div className="px-4 py-3 font-bold text-center uppercase tracking-wide bg-primary text-primary-foreground">
-        DECORACAO
-      </div>
+	    <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
+	      <div className="px-4 py-3 bg-primary text-primary-foreground">
+	        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+	          <div className="font-bold text-center sm:text-left uppercase tracking-wide">DECORACAO</div>
+	          <label className="flex items-center justify-center gap-2 text-xs font-semibold">
+	            A PARTIR DE
+	            <Input
+	              type="date"
+	              value={dataInicioNotificacao}
+	              onChange={(e) => setDataInicioNotificacao(e.target.value)}
+	              className="h-8 w-[150px] bg-background text-foreground"
+	            />
+	          </label>
+	        </div>
+	      </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">

@@ -250,6 +250,7 @@ export default function Notificacoes() {
   const { userRole } = useAuth();
   const queryClient = useQueryClient();
   const { data: usuarios } = useUsuariosAtivos();
+  const podeEditarRecebimentoQuadro = userRole?.nome?.trim().toUpperCase() === 'LUCIANO';
 
   const historicoIds = useMemo(() => (historicoEventos || []).map(e => e.id), [historicoEventos]);
   const { data: vistas, refetch: refetchVistas } = useNotificacoesVistas(historicoIds);
@@ -320,13 +321,20 @@ export default function Notificacoes() {
     },
   });
 
-  const toggleRecebimentoUsuario = async (userId: string, tipo: string) => {
-    const usuario = usuarios?.find(u => u.id === userId);
-    if (!usuario) return;
+	  const toggleRecebimentoUsuario = async (userId: string, tipo: string) => {
+	    if (tipo === 'alteracao_quadro' && !podeEditarRecebimentoQuadro) {
+	      toast.error('APENAS LUCIANO ALTERA RECEBIMENTO DO QUADRO');
+	      return;
+	    }
 
-    const atuais = usuario.tipos_notificacao?.length
-      ? usuario.tipos_notificacao
-      : TIPOS_RECEBIMENTO.map(t => t.value);
+	    const usuario = usuarios?.find(u => u.id === userId);
+	    if (!usuario) return;
+
+	    const atuais = tipo === 'alteracao_quadro'
+	      ? (usuario.tipos_notificacao || [])
+	      : usuario.tipos_notificacao?.length
+	      ? usuario.tipos_notificacao
+	      : TIPOS_RECEBIMENTO.map(t => t.value);
     const proximos = atuais.includes(tipo)
       ? atuais.filter(t => t !== tipo)
       : [...atuais, tipo];
@@ -1296,19 +1304,22 @@ export default function Notificacoes() {
                           </Badge>
                         </TableCell>
                         {(usuarios || []).map((usuario) => {
-                          const tiposUsuario = usuario.tipos_notificacao?.length
-                            ? usuario.tipos_notificacao
-                            : TIPOS_RECEBIMENTO.map(t => t.value);
-                          const checked = usuario.recebe_notificacoes !== false && tiposUsuario.includes(tipo.value);
-                          const saving = salvandoRecebimento === `${usuario.id}-${tipo.value}`;
+	                          const tiposUsuario = tipo.value === 'alteracao_quadro'
+	                            ? (usuario.tipos_notificacao || [])
+	                            : usuario.tipos_notificacao?.length
+	                            ? usuario.tipos_notificacao
+	                            : TIPOS_RECEBIMENTO.map(t => t.value);
+	                          const checked = usuario.recebe_notificacoes !== false && tiposUsuario.includes(tipo.value);
+	                          const saving = salvandoRecebimento === `${usuario.id}-${tipo.value}`;
+	                          const bloqueadoQuadro = tipo.value === 'alteracao_quadro' && !podeEditarRecebimentoQuadro;
 
-                          return (
-                            <TableCell key={`${usuario.id}-${tipo.value}`} className="text-center">
-                              <Checkbox
-                                checked={checked}
-                                disabled={saving || salvarRecebimentoMutation.isPending}
-                                onCheckedChange={() => toggleRecebimentoUsuario(usuario.id, tipo.value)}
-                              />
+	                          return (
+	                            <TableCell key={`${usuario.id}-${tipo.value}`} className="text-center">
+	                              <Checkbox
+	                                checked={checked}
+	                                disabled={bloqueadoQuadro || saving || salvarRecebimentoMutation.isPending}
+	                                onCheckedChange={() => toggleRecebimentoUsuario(usuario.id, tipo.value)}
+	                              />
                             </TableCell>
                           );
                         })}

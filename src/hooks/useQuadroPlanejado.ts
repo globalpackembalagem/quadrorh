@@ -26,7 +26,7 @@ export function useUpdateQuadroPlanejado() {
   const { usuarioAtual } = useUsuario();
   
   return useMutation({
-    mutationFn: async ({ id, ...data }: Partial<QuadroPlanejado> & { id: string }) => {
+    mutationFn: async ({ id, data_inicio_notificacao, ...data }: Partial<QuadroPlanejado> & { id: string; data_inicio_notificacao?: string }) => {
       // Primeiro buscar os dados anteriores
       const { data: anterior, error: fetchError } = await supabase
         .from('quadro_planejado')
@@ -86,10 +86,11 @@ export function useUpdateQuadroPlanejado() {
             campo,
             valorAnterior: typeof valorAnterior === 'number' ? valorAnterior : 0,
             valorNovo: typeof valorNovo === 'number' ? valorNovo : 0,
-            grupo: anterior.grupo,
-            turma: anterior.turma,
-            usuarioNome: usuarioAtual.nome,
-          });
+	            grupo: anterior.grupo,
+	            turma: anterior.turma,
+	            usuarioNome: usuarioAtual.nome,
+	            dataInicio: data_inicio_notificacao,
+	          });
         } catch (notificationError) {
           console.error('[QUADRO] Erro ao criar notificacao de alteracao:', notificationError);
         }
