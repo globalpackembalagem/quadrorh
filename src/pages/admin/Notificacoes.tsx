@@ -612,6 +612,25 @@ export default function Notificacoes() {
     queryClient.invalidateQueries({ queryKey: ['historico-notificacoes-enviadas'] });
   };
 
+  const deletarSelecionados = async () => {
+    if (selecionados.size === 0) return;
+    const ids = Array.from(selecionados);
+    const { error } = await supabase
+      .from('eventos_sistema')
+      .delete()
+      .in('id', ids);
+
+    if (error) {
+      toast.error('ERRO AO EXCLUIR SELECIONADOS: ' + error.message);
+      return;
+    }
+
+    setSelecionados(new Set());
+    queryClient.invalidateQueries({ queryKey: ['eventos-sistema'] });
+    queryClient.invalidateQueries({ queryKey: ['historico-notificacoes-enviadas'] });
+    toast.success(`${ids.length} evento(s) excluido(s).`);
+  };
+
   const handleReenviar = async () => {
     if (!reenviarEvento || gestoresSelecionados.size === 0) return;
     setIsReenviando(true);
@@ -906,6 +925,37 @@ export default function Notificacoes() {
                   <Eye className="h-3.5 w-3.5" />
                   SIMULAR ({selecionados.size})
                 </Button>
+
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={selecionados.size === 0}
+                      className="gap-1.5 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      EXCLUIR ({selecionados.size})
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir eventos selecionados</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja excluir os eventos selecionados da Central?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={deletarSelecionados}
+                        className="bg-destructive hover:bg-destructive/90"
+                      >
+                        Excluir
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
 
                 <Button
                   size="sm"

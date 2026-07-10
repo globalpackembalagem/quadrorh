@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { QuadroPlanejado } from '@/types/database';
 import { useUpdateQuadroPlanejado } from '@/hooks/useQuadroPlanejado';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface QuadroPlanejadoTableProps {
@@ -70,6 +71,7 @@ export function QuadroPlanejadoTable({ grupo, dados, turmas }: QuadroPlanejadoTa
   const updateMutation = useUpdateQuadroPlanejado();
   const [editingCell, setEditingCell] = useState<{ id: string; key: string } | null>(null);
   const [editValue, setEditValue] = useState<string>('');
+  const [alteracoesPendentes, setAlteracoesPendentes] = useState<Record<string, number>>({});
   const [dataInicioNotificacao, setDataInicioNotificacao] = useState(() => new Date().toISOString().slice(0, 10));
 
   const dadosPorTurma = useMemo(() => {
@@ -82,21 +84,38 @@ export function QuadroPlanejadoTable({ grupo, dados, turmas }: QuadroPlanejadoTa
 
   const handleStartEdit = useCallback((id: string, key: string, valor: number) => {
     setEditingCell({ id, key });
-    setEditValue(valor.toString());
-  }, []);
+    setEditValue((alteracoesPendentes[`${id}:${key}`] ?? valor).toString());
+  }, [alteracoesPendentes]);
 
   const handleSaveEdit = useCallback(() => {
     if (!editingCell) return;
     
     const novoValor = parseInt(editValue) || 0;
-	    updateMutation.mutate({
-	      id: editingCell.id,
-	      [editingCell.key]: novoValor,
-	      data_inicio_notificacao: dataInicioNotificacao,
-	    });
+    setAlteracoesPendentes(prev => ({
+      ...prev,
+      [`${editingCell.id}:${editingCell.key}`]: novoValor,
+    }));
     setEditingCell(null);
     setEditValue('');
-	  }, [dataInicioNotificacao, editingCell, editValue, updateMutation]);
+	  }, [editingCell, editValue]);
+
+  const handleSalvarAlteracoes = useCallback(() => {
+    Object.entries(alteracoesPendentes).forEach(([chave, valor]) => {
+      const [id, key] = chave.split(':');
+      updateMutation.mutate({
+        id,
+        [key]: valor,
+        data_inicio_notificacao: dataInicioNotificacao,
+      });
+    });
+    setAlteracoesPendentes({});
+  }, [alteracoesPendentes, dataInicioNotificacao, updateMutation]);
+
+  const handleCancelarAlteracoes = useCallback(() => {
+    setEditingCell(null);
+    setEditValue('');
+    setAlteracoesPendentes({});
+  }, []);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -193,7 +212,10 @@ export function QuadroPlanejadoTable({ grupo, dados, turmas }: QuadroPlanejadoTa
                   const d = dadosPorTurma[turma];
                   if (!d) return <td key={turma} className="text-center py-2 px-3 border-b">-</td>;
                   
-                  const valor = getValorLinha(linha, d);
+                  const chave = `${d.id}:${linha.key}`;
+                  const valorOriginal = getValorLinha(linha, d);
+                  const valor = alteracoesPendentes[chave] ?? valorOriginal;
+                  const temAlteracao = alteracoesPendentes[chave] !== undefined && alteracoesPendentes[chave] !== valorOriginal;
                   const isEditing = editingCell?.id === d.id && editingCell?.key === linha.key;
                   
                   return (
@@ -204,7 +226,6 @@ export function QuadroPlanejadoTable({ grupo, dados, turmas }: QuadroPlanejadoTa
                             type="number"
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
-                            onBlur={handleSaveEdit}
                             onKeyDown={handleKeyDown}
                             className="w-20 h-8 text-center mx-auto"
                             autoFocus
@@ -212,7 +233,7 @@ export function QuadroPlanejadoTable({ grupo, dados, turmas }: QuadroPlanejadoTa
                         ) : (
                           <button
                             onClick={() => handleStartEdit(d.id, linha.key, valor)}
-                            className="w-full h-full py-1 px-2 hover:bg-primary/10 rounded transition-colors tabular-nums font-medium"
+                            className={`w-full h-full py-1 px-2 hover:bg-primary/10 rounded transition-colors tabular-nums font-medium ${temAlteracao ? 'bg-amber-100 text-amber-900 ring-1 ring-amber-300' : ''}`}
                           >
                             {valor}
                           </button>
@@ -281,6 +302,19 @@ export function QuadroPlanejadoTable({ grupo, dados, turmas }: QuadroPlanejadoTa
           </tfoot>
         </table>
       </div>
+      {Object.keys(alteracoesPendentes).length > 0 && (
+        <div className="flex items-center justify-end gap-2 border-t bg-amber-50 px-4 py-3">
+          <span className="mr-auto text-sm font-medium text-amber-900">
+            {Object.keys(alteracoesPendentes).length} alteracao pendente
+          </span>
+          <Button variant="outline" size="sm" onClick={handleCancelarAlteracoes}>
+            Cancelar
+          </Button>
+          <Button size="sm" onClick={handleSalvarAlteracoes} disabled={updateMutation.isPending}>
+            Salvar
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

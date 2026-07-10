@@ -54,7 +54,7 @@ export async function criarNotificacaoAlteracaoQuadro(params: Params) {
     `A PARTIR DE: ${formatarDataBR(dataInicio)}`,
   ].join('\n');
 
-  const { data: evento, error: eventoError } = await supabase
+  const { error: eventoError } = await supabase
     .from('eventos_sistema')
     .insert({
       tipo: 'alteracao_quadro',
@@ -70,35 +70,11 @@ export async function criarNotificacaoAlteracaoQuadro(params: Params) {
         valor_novo: params.valorNovo,
         data_inicio: dataInicio,
       },
-      notificado: true,
-      notificado_em: new Date().toISOString(),
-      notificado_tipo: 'modal',
+      notificado: false,
+      notificado_em: null,
+      notificado_tipo: null,
     })
-    .select('id')
-    .single();
+    .select('id');
 
   if (eventoError) throw eventoError;
-
-  const { data: destinatarios, error: destinatariosError } = await supabase
-    .from('user_roles')
-    .select('id, recebe_notificacoes, tipos_notificacao')
-    .eq('ativo', true);
-
-  if (destinatariosError) throw destinatariosError;
-
-  const notificacoes = (destinatarios || [])
-    .filter((user: any) => user.recebe_notificacoes !== false)
-    .filter((user: any) => Array.isArray(user.tipos_notificacao) && user.tipos_notificacao.includes('alteracao_quadro'))
-    .map((user: any) => ({
-      user_role_id: user.id,
-      tipo: 'alteracao_quadro',
-      titulo: 'ALTERACAO DO QUADRO',
-      mensagem,
-      referencia_id: evento.id,
-    }));
-
-  if (notificacoes.length > 0) {
-    const { error: notificacoesError } = await supabase.from('notificacoes').insert(notificacoes);
-    if (notificacoesError) throw notificacoesError;
-  }
 }

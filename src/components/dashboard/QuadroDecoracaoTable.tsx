@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { QuadroDecoracao } from '@/types/database';
 import { useUpdateQuadroDecoracao } from '@/hooks/useQuadroDecoracao';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 interface QuadroDecoracaoTableProps {
   dados: QuadroDecoracao[];
@@ -10,16 +11,17 @@ interface QuadroDecoracaoTableProps {
 interface LinhaConfig {
   key: 'aux_maquina' | 'reserva_refeicao' | 'reserva_faltas' | 'reserva_ferias' | 'apoio_topografia' | 'reserva_afastadas' | 'reserva_covid';
   label: string;
+  editavel: boolean;
 }
 
 const linhasConfig: LinhaConfig[] = [
-  { key: 'aux_maquina', label: 'Auxiliares em Maquina' },
-  { key: 'reserva_refeicao', label: 'Reserva Refeicao' },
-  { key: 'reserva_faltas', label: 'Reserva Faltas' },
-  { key: 'reserva_ferias', label: 'Reserva Ferias' },
-  { key: 'apoio_topografia', label: 'Apoio Topografia' },
-  { key: 'reserva_afastadas', label: 'Reserva Afastadas' },
-  { key: 'reserva_covid', label: 'Reserva Covid' },
+  { key: 'aux_maquina', label: 'Auxiliares em Maquina', editavel: true },
+  { key: 'reserva_refeicao', label: 'Reserva Refeicao', editavel: true },
+  { key: 'reserva_faltas', label: 'Reserva Faltas', editavel: true },
+  { key: 'reserva_ferias', label: 'Reserva Ferias', editavel: true },
+  { key: 'apoio_topografia', label: 'Apoio Topografia', editavel: true },
+  { key: 'reserva_afastadas', label: 'Reserva Afastadas', editavel: true },
+  { key: 'reserva_covid', label: 'Reserva Covid', editavel: true },
 ];
 
 const turmasLabels: Record<string, string> = {
@@ -45,6 +47,7 @@ export function QuadroDecoracaoTable({ dados }: QuadroDecoracaoTableProps) {
   const updateMutation = useUpdateQuadroDecoracao();
   const [editingCell, setEditingCell] = useState<{ id: string; key: string } | null>(null);
   const [editValue, setEditValue] = useState<string>('');
+  const [alteracoesPendentes, setAlteracoesPendentes] = useState<Record<string, number>>({});
   const [dataInicioNotificacao, setDataInicioNotificacao] = useState(() => new Date().toISOString().slice(0, 10));
 
   const turmasOrdenadas = ['DIA-T1', 'DIA-T2', 'NOITE-T1', 'NOITE-T2'];
@@ -59,21 +62,38 @@ export function QuadroDecoracaoTable({ dados }: QuadroDecoracaoTableProps) {
 
   const handleStartEdit = useCallback((id: string, key: string, valor: number) => {
     setEditingCell({ id, key });
-    setEditValue(valor.toString());
-  }, []);
+    setEditValue((alteracoesPendentes[`${id}:${key}`] ?? valor).toString());
+  }, [alteracoesPendentes]);
 
   const handleSaveEdit = useCallback(() => {
     if (!editingCell) return;
 
     const novoValor = parseInt(editValue, 10) || 0;
-	    updateMutation.mutate({
-	      id: editingCell.id,
-	      [editingCell.key]: novoValor,
-	      data_inicio_notificacao: dataInicioNotificacao,
-	    });
+    setAlteracoesPendentes(prev => ({
+      ...prev,
+      [`${editingCell.id}:${editingCell.key}`]: novoValor,
+    }));
     setEditingCell(null);
     setEditValue('');
-	  }, [dataInicioNotificacao, editingCell, editValue, updateMutation]);
+	  }, [editingCell, editValue]);
+
+  const handleSalvarAlteracoes = useCallback(() => {
+    Object.entries(alteracoesPendentes).forEach(([chave, valor]) => {
+      const [id, key] = chave.split(':');
+      updateMutation.mutate({
+        id,
+        [key]: valor,
+        data_inicio_notificacao: dataInicioNotificacao,
+      });
+    });
+    setAlteracoesPendentes({});
+  }, [alteracoesPendentes, dataInicioNotificacao, updateMutation]);
+
+  const handleCancelarAlteracoes = useCallback(() => {
+    setEditingCell(null);
+    setEditValue('');
+    setAlteracoesPendentes({});
+  }, []);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -139,17 +159,20 @@ export function QuadroDecoracaoTable({ dados }: QuadroDecoracaoTableProps) {
                   const d = dadosPorTurma[turma];
                   if (!d) return <td key={turma} className="text-center py-2 px-3 border-b">-</td>;
 
-                  const valor = d[linha.key] as number;
+                  const chave = `${d.id}:${linha.key}`;
+                  const valorOriginal = d[linha.key] as number;
+                  const valor = alteracoesPendentes[chave] ?? valorOriginal;
+                  const temAlteracao = alteracoesPendentes[chave] !== undefined && alteracoesPendentes[chave] !== valorOriginal;
                   const isEditing = editingCell?.id === d.id && editingCell?.key === linha.key;
 
                   return (
                     <td key={turma} className="text-center py-2 px-3 border-b">
-                      {isEditing ? (
+                      {linha.editavel ? (
+                      isEditing ? (
                         <Input
                           type="number"
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
-                          onBlur={handleSaveEdit}
                           onKeyDown={handleKeyDown}
                           className="w-20 h-8 text-center mx-auto"
                           autoFocus
@@ -157,10 +180,15 @@ export function QuadroDecoracaoTable({ dados }: QuadroDecoracaoTableProps) {
                       ) : (
                         <button
                           onClick={() => handleStartEdit(d.id, linha.key, valor)}
-                          className="w-full h-full py-1 px-2 hover:bg-primary/10 rounded transition-colors tabular-nums font-medium"
+                          className={`w-full h-full py-1 px-2 hover:bg-primary/10 rounded transition-colors tabular-nums font-medium ${temAlteracao ? 'bg-amber-100 text-amber-900 ring-1 ring-amber-300' : ''}`}
                         >
                           {valor}
                         </button>
+                      )
+                      ) : (
+                        <span className="tabular-nums text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+                          {valor}
+                        </span>
                       )}
                     </td>
                   );
@@ -181,6 +209,19 @@ export function QuadroDecoracaoTable({ dados }: QuadroDecoracaoTableProps) {
           </tfoot>
         </table>
       </div>
+      {Object.keys(alteracoesPendentes).length > 0 && (
+        <div className="flex items-center justify-end gap-2 border-t bg-amber-50 px-4 py-3">
+          <span className="mr-auto text-sm font-medium text-amber-900">
+            {Object.keys(alteracoesPendentes).length} alteracao pendente
+          </span>
+          <Button variant="outline" size="sm" onClick={handleCancelarAlteracoes}>
+            Cancelar
+          </Button>
+          <Button size="sm" onClick={handleSalvarAlteracoes} disabled={updateMutation.isPending}>
+            Salvar
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
