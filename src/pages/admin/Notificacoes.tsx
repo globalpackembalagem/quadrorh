@@ -175,6 +175,8 @@ interface NotificacaoDestinatario {
   evento_id: string;
   user_role_id: string;
   gestor_nome: string;
+  cancelada: boolean;
+  lida: boolean;
 }
 
 function useNotificacoesDestinatarios(eventoIds: string[]) {
@@ -192,7 +194,7 @@ function useNotificacoesDestinatarios(eventoIds: string[]) {
         const chunk = eventoIds.slice(i, i + CHUNK_SIZE);
         const { data, error } = await supabase
           .from('notificacoes')
-          .select('referencia_id, user_role_id, user_role:user_roles!user_role_id(nome)')
+          .select('referencia_id, user_role_id, cancelada, lida, user_role:user_roles!user_role_id(nome)')
           .in('referencia_id', chunk);
         if (error) throw error;
         if (data) {
@@ -200,17 +202,21 @@ function useNotificacoesDestinatarios(eventoIds: string[]) {
             evento_id: d.referencia_id,
             user_role_id: d.user_role_id,
             gestor_nome: d.user_role?.nome || 'DESCONHECIDO',
+            cancelada: d.cancelada === true,
+            lida: d.lida === true,
           })));
         }
       }
-      // Deduplicate by evento_id + user_role_id
-      const seen = new Set<string>();
-      return results.filter(r => {
+      // Deduplicate by evento_id + user_role_id, preferring active rows over canceled old duplicates.
+      const dedup = new Map<string, NotificacaoDestinatario>();
+      results.forEach(r => {
         const key = `${r.evento_id}-${r.user_role_id}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
+        const current = dedup.get(key);
+        if (!current || (current.cancelada && !r.cancelada)) {
+          dedup.set(key, r);
+        }
       });
+      return Array.from(dedup.values());
     },
     enabled: eventoIds.length > 0,
     staleTime: 30000,
@@ -649,16 +655,49 @@ export default function Notificacoes() {
       const eventosParaEnviar = envioComDestinatarios
         ? eventosFiltrados.filter(e => selecionados.has(e.id))
         : [reenviarEvento];
-      const notificacoes = eventosParaEnviar.flatMap(evento =>
-        Array.from(gestoresSelecionados).map(userRoleId => ({
-          user_role_id: userRoleId,
-          tipo: evento.tipo === 'alteracao_quadro' ? 'alteracao_quadro' : (evento.notificado_tipo || 'evento_sistema_modal'),
-          titulo: TIPO_LABELS[evento.tipo] || evento.descricao,
-          mensagem: (evento.dados_extra as any)?.mensagem_personalizada || evento.descricao,
-          referencia_id: evento.id,
-        }))
+      const eventoIdsReenvio = eventosParaEnviar.map(e => e.id);
+      const usuariosIds = Array.from(gestoresSelecionados);
+      const { data: existentes, error: existentesError } = await supabase
+        .from('notificacoes')
+        .select('id, referencia_id, user_role_id, cancelada')
+        .in('referencia_id', eventoIdsReenvio)
+        .in('user_role_id', usuariosIds);
+
+      if (existentesError) throw existentesError;
+
+      const existentesAtivas = new Set(
+        (existentes || [])
+          .filter((n: any) => n.cancelada !== true)
+          .map((n: any) => `${n.referencia_id}:${n.user_role_id}`)
       );
-      await supabase.from('notificacoes').insert(notificacoes);
+      const canceladasIds = (existentes || [])
+        .filter((n: any) => n.cancelada === true)
+        .map((n: any) => n.id);
+
+      if (canceladasIds.length > 0) {
+        const { error: reativarError } = await supabase
+          .from('notificacoes')
+          .update({ cancelada: false, cancelada_em: null, cancelada_por: null, lida: false })
+          .in('id', canceladasIds);
+        if (reativarError) throw reativarError;
+      }
+
+      const notificacoes = eventosParaEnviar.flatMap(evento =>
+        usuariosIds
+          .filter(userRoleId => !existentesAtivas.has(`${evento.id}:${userRoleId}`))
+          .filter(userRoleId => !(existentes || []).some((n: any) => n.cancelada === true && n.referencia_id === evento.id && n.user_role_id === userRoleId))
+          .map(userRoleId => ({
+            user_role_id: userRoleId,
+            tipo: evento.tipo === 'alteracao_quadro' ? 'alteracao_quadro' : (evento.notificado_tipo || 'evento_sistema_modal'),
+            titulo: TIPO_LABELS[evento.tipo] || evento.descricao,
+            mensagem: (evento.dados_extra as any)?.mensagem_personalizada || evento.descricao,
+            referencia_id: evento.id,
+          }))
+      );
+
+      if (notificacoes.length > 0) {
+        await supabase.from('notificacoes').insert(notificacoes);
+      }
       if (envioComDestinatarios) {
         await supabase
           .from('eventos_sistema')
@@ -1166,7 +1205,7 @@ export default function Notificacoes() {
               const semCienciaTotal = (historicoEventos || []).filter(ev => {
                 const eventDests = destinatariosPorEvento[ev.id] || [];
                 const eventVistasSet = new Set((vistasPorEvento[ev.id] || []).map(v => v.user_role_id));
-                const faltam = eventDests.filter(d => !eventVistasSet.has(d.user_role_id));
+                const faltam = eventDests.filter(d => !d.cancelada && !eventVistasSet.has(d.user_role_id));
                 return faltam.length > 0 || (eventDests.length === 0 && (vistasPorEvento[ev.id] || []).length === 0);
               });
               return semCienciaTotal.length > 0 ? (
@@ -1189,7 +1228,7 @@ export default function Notificacoes() {
                   ? historicoEventos.filter(ev => {
                       const eventDests = destinatariosPorEvento[ev.id] || [];
                       const eventVistasSet = new Set((vistasPorEvento[ev.id] || []).map(v => v.user_role_id));
-                      const faltam = eventDests.filter(d => !eventVistasSet.has(d.user_role_id));
+                      const faltam = eventDests.filter(d => !d.cancelada && !eventVistasSet.has(d.user_role_id));
                       return faltam.length > 0 || (eventDests.length === 0 && (vistasPorEvento[ev.id] || []).length === 0);
                     })
                   : historicoEventos;
@@ -1217,7 +1256,9 @@ export default function Notificacoes() {
                       const eventVistas = vistasPorEvento[evento.id] || [];
                       const eventDests = destinatariosPorEvento[evento.id] || [];
                       const vistasUserIds = new Set(eventVistas.map(v => v.user_role_id));
-                      const faltamVer = eventDests.filter(d => !vistasUserIds.has(d.user_role_id));
+                      const cancelados = eventDests.filter(d => d.cancelada);
+                      const ativosDestinatarios = eventDests.filter(d => !d.cancelada);
+                      const faltamVer = eventDests.filter(d => !d.cancelada && !vistasUserIds.has(d.user_role_id));
                       const isExpanded = expandedVistas.has(evento.id);
                       
                       return (
@@ -1271,12 +1312,17 @@ export default function Notificacoes() {
                             )}
                           </TableCell>
                           <TableCell>
-                            {faltamVer.length === 0 && eventDests.length > 0 ? (
+                            {faltamVer.length === 0 && ativosDestinatarios.length > 0 ? (
                               <Badge variant="outline" className="text-[10px] border-success text-success">
                                 TODOS VIRAM
                               </Badge>
-                            ) : faltamVer.length > 0 ? (
+                            ) : faltamVer.length > 0 || cancelados.length > 0 ? (
                               <div className="space-y-0.5">
+                                {cancelados.map(d => (
+                                  <div key={`cancelado-${d.user_role_id}`} className="text-[10px] text-muted-foreground font-medium">
+                                    CANCELADO: {d.gestor_nome.toUpperCase()}
+                                  </div>
+                                ))}
                                 {faltamVer.map(d => (
                                   <div key={d.user_role_id} className="text-[10px] text-destructive font-medium">
                                     ❌ {d.gestor_nome.toUpperCase()}
