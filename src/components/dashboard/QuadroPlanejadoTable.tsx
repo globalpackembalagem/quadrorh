@@ -154,15 +154,28 @@ export function QuadroPlanejadoTable({ grupo, dados, turmas }: QuadroPlanejadoTa
 	      <div className="px-4 py-3 bg-primary text-primary-foreground">
 	        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 	          <div className="font-bold text-center sm:text-left uppercase tracking-wide">{grupo}</div>
-	          <label className="flex items-center justify-center gap-2 text-xs font-semibold">
-	            A PARTIR DE
-	            <Input
-	              type="date"
-	              value={dataInicioNotificacao}
-	              onChange={(e) => setDataInicioNotificacao(e.target.value)}
-	              className="h-8 w-[150px] bg-background text-foreground"
-	            />
-	          </label>
+	          <div className="flex flex-col items-center justify-center gap-2 sm:flex-row">
+	            <label className="flex items-center justify-center gap-2 text-xs font-semibold">
+	              A PARTIR DE
+	              <Input
+	                type="date"
+	                value={dataInicioNotificacao}
+	                onChange={(e) => setDataInicioNotificacao(e.target.value)}
+	                className="h-8 w-[150px] bg-background text-foreground"
+	              />
+	            </label>
+              {Object.keys(alteracoesPendentes).length > 0 && (
+                <div className="flex items-center gap-2 rounded-md bg-amber-50 px-2 py-1 text-amber-950">
+                  <span className="text-xs font-semibold">{Object.keys(alteracoesPendentes).length} pendente</span>
+                  <Button variant="outline" size="sm" className="h-8" onClick={handleCancelarAlteracoes}>
+                    Cancelar
+                  </Button>
+                  <Button size="sm" className="h-8" onClick={handleSalvarAlteracoes} disabled={updateMutation.isPending}>
+                    Salvar
+                  </Button>
+                </div>
+              )}
+	          </div>
 	        </div>
 	      </div>
 
@@ -227,6 +240,7 @@ export function QuadroPlanejadoTable({ grupo, dados, turmas }: QuadroPlanejadoTa
                             value={editValue}
                             onChange={(e) => setEditValue(e.target.value)}
                             onKeyDown={handleKeyDown}
+                            onBlur={handleSaveEdit}
                             className="w-20 h-8 text-center mx-auto"
                             autoFocus
                           />
