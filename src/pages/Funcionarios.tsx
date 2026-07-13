@@ -50,7 +50,7 @@ import { TrocaUnificadaDialog } from '@/components/funcionarios/TrocaUnificadaDi
 import { useCriarDivergenciaAuto, devecriarDivergencia } from '@/hooks/useDivergenciasAuto';
 
 import { Funcionario, SexoTipo, EmpresaTipo } from '@/types/database';
-import { format, parseISO, addDays } from 'date-fns';
+import { format, parseISO, addDays, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { loadXLSX } from '@/lib/xlsx';
 import { normalizarTextoSistema } from '@/lib/normalizacao';
@@ -92,6 +92,17 @@ type SolicitacaoTemporario = {
 
 function normalizarNomeUsuario(nome?: string | null) {
   return normalizarTextoSistema(nome || '').trim();
+}
+
+function parseDataSegura(valor?: string | null) {
+  if (!valor) return null;
+  const data = valor.includes('T') ? new Date(valor) : parseISO(valor);
+  return isValid(data) ? data : null;
+}
+
+function formatarDataSegura(valor?: string | null, formato = 'dd/MM/yyyy') {
+  const data = parseDataSegura(valor);
+  return data ? format(data, formato) : '-';
 }
 
 function getSessionToken() {
@@ -368,7 +379,7 @@ function TemporariosTab({
               </tr>
             ) : (
               filtrados.map(func => {
-                const dataAdm = func.data_admissao ? parseISO(func.data_admissao) : null;
+                const dataAdm = parseDataSegura(func.data_admissao);
                 const data90 = dataAdm ? addDays(dataAdm, 90) : null;
                 const data180 = dataAdm ? addDays(dataAdm, 180) : null;
                 const hoje = new Date();
@@ -506,7 +517,7 @@ function TemporariosTab({
                     </Badge>
                   </td>
                   {podeGerenciarSolicitacoesTemp && <td>{sol.solicitado_por_nome}</td>}
-                  <td>{format(new Date(sol.solicitado_em), 'dd/MM/yyyy HH:mm')}</td>
+                  <td>{formatarDataSegura(sol.solicitado_em, 'dd/MM/yyyy HH:mm')}</td>
                   <td className="max-w-[260px] truncate">
                     {(podeGerenciarSolicitacoesTemp || sol.solicitado_por_id === userRole?.id) ? (sol.motivo || sol.observacao_admin || '-') : '-'}
                   </td>
@@ -1048,7 +1059,7 @@ export default function Funcionarios() {
     if (criar && funcionarioId) {
       let obs = '';
       if (situacaoNomeEfetiva.toUpperCase().includes('SUMIDO') && sumidoDesde) {
-        obs = `Funcionário sumido desde ${format(parseISO(sumidoDesde), 'dd/MM/yyyy')}`;
+        obs = `Funcionário sumido desde ${formatarDataSegura(sumidoDesde)}`;
       } else if (situacaoNomeEfetiva.toUpperCase().includes('TREINAMENTO') && treinamentoSetorId) {
         const setorTreinamento = setoresAtivos.find(s => s.id === treinamentoSetorId);
         obs = `Em treinamento no setor: ${setorTreinamento?.nome || 'Não informado'}`;
@@ -1654,7 +1665,7 @@ export default function Funcionarios() {
                             </Badge>
                           </td>
                           <td>
-                            {func.data_admissao ? format(parseISO(func.data_admissao), 'dd/MM/yyyy') : '-'}
+                            {formatarDataSegura(func.data_admissao)}
                           </td>
                         </tr>
                       );
@@ -1852,7 +1863,7 @@ export default function Funcionarios() {
                   <span className="font-medium">Transferência Programada</span>
                 </div>
                 <div className="mt-1 text-sm text-purple-600">
-                  <p><strong>Data:</strong> {editingFuncionario.transferencia_data ? format(parseISO(editingFuncionario.transferencia_data), 'dd/MM/yyyy') : '-'}</p>
+                  <p><strong>Data:</strong> {formatarDataSegura(editingFuncionario.transferencia_data)}</p>
                   <p><strong>Setor destino:</strong> {setoresAtivos.find(s => s.id === editingFuncionario.transferencia_setor_id)?.nome || '-'}</p>
                 </div>
               </div>
