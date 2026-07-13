@@ -1798,35 +1798,32 @@ export default function Funcionarios() {
                   placeholder="(00) 00000-0000"
                 />
               </div>
-              <label className="flex items-center gap-2 pt-8 text-sm font-medium">
-                <input
-                  type="checkbox"
-                  checked={usaFretado}
-                  onChange={e => {
-                    setUsaFretado(e.target.checked);
-                    if (!e.target.checked) setLinhaFretado('');
-                  }}
-                />
-                Usa Fretado
-              </label>
-            </div>
-
-            {usaFretado && (
               <div className="space-y-2">
-                <Label>Linha do Fretado</Label>
-                <Select value={linhaFretado || 'sem_linha'} onValueChange={v => setLinhaFretado(v === 'sem_linha' ? '' : v)}>
+                <Label>Fretado</Label>
+                <Select
+                  value={usaFretado ? (linhaFretado || 'sem_linha') : 'nao_utiliza'}
+                  onValueChange={v => {
+                    if (v === 'nao_utiliza') {
+                      setUsaFretado(false);
+                      setLinhaFretado('');
+                      return;
+                    }
+                    setUsaFretado(true);
+                    setLinhaFretado(v === 'sem_linha' ? '' : v);
+                  }}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione a linha" />
+                    <SelectValue placeholder="Selecione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="sem_linha">SELECIONE</SelectItem>
+                    <SelectItem value="nao_utiliza">NAO UTILIZA</SelectItem>
                     {LINHAS_FRETADO.map(linha => (
                       <SelectItem key={linha} value={linha}>{linha}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            )}
+            </div>
 
             <CamposSituacaoEspecial
               situacaoNome={situacoesAtivas.find(s => s.id === situacaoId)?.nome || ''}
