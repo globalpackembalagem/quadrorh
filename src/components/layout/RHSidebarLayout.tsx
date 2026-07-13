@@ -326,6 +326,7 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
     .trim()
     .toUpperCase();
   const canAccessFakeQuadro = isRHMode && nomeUsuarioNormalizado === 'LUCIANO';
+  const canAccessSimuladorQuadro = isRHMode && ['LUCIANO', 'MAURICIO'].includes(nomeUsuarioNormalizado);
 
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';
@@ -539,11 +540,26 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
                 onClick={forcarAtualizacao}
                 disabled={forcandoAtualizacao}
                 className="flex items-center gap-3.5 rounded-xl px-4 py-3 text-[13px] font-semibold transition-all duration-200 w-full text-left text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-foreground disabled:opacity-60"
-              >
-                <RefreshCw className="h-5 w-5 shrink-0 text-sidebar-primary/70" />
-                <span className="truncate">{forcandoAtualizacao ? 'ENVIANDO...' : 'FORCAR ATUALIZACAO'}</span>
-              </button>
-              {adminMainItems.map((item) => (
+	              >
+	                <RefreshCw className="h-5 w-5 shrink-0 text-sidebar-primary/70" />
+	                <span className="truncate">{forcandoAtualizacao ? 'ENVIANDO...' : 'FORCAR ATUALIZACAO'}</span>
+	              </button>
+	              {canAccessSimuladorQuadro && (
+	                <Link
+	                  to="/admin/simulacao"
+	                  onClick={closeFn}
+	                  className={cn(
+	                    'flex items-center gap-3.5 rounded-xl px-4 py-3 text-[13px] font-semibold transition-all duration-200 border',
+	                    isActive('/admin/simulacao')
+	                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20'
+	                      : 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30 hover:bg-emerald-500/20'
+	                  )}
+	                >
+	                  <Activity className={cn("h-5 w-5 shrink-0", isActive('/admin/simulacao') ? "text-white" : "text-emerald-600")} />
+	                  <span className="truncate">SIMULADOR DO QUADRO</span>
+	                </Link>
+	              )}
+	              {adminMainItems.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}

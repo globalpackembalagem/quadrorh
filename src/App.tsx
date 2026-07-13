@@ -150,6 +150,12 @@ function LayoutRouter() {
   const location = useLocation();
   const { userRole, isRHMode, isAdmin, isVisualizacao, canEditFaltas } = useAuth();
   const { setoresNomes, destinoGestor, isGestorSetor } = useSetoresUsuario();
+  const nomeUsuarioNormalizado = (userRole?.nome || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toUpperCase();
+  const canAccessSimuladorQuadro = ['LUCIANO', 'MAURICIO'].includes(nomeUsuarioNormalizado);
 
   // Ativa subscriptions realtime para todas as tabelas
   useRealtimeData();
@@ -248,7 +254,7 @@ function LayoutRouter() {
             <Route path="/admin/controle-fotos" element={<RotaProtegida requireAdmin><ControleFotos /></RotaProtegida>} />
             <Route path="/admin/travas-quadro" element={<RotaProtegida requireAdmin><GerenciarTravasQuadro /></RotaProtegida>} />
             <Route path="/admin/comparar" element={<RotaProtegida requireAdmin><CompararPlanilhas /></RotaProtegida>} />
-            <Route path="/admin/simulacao" element={<RotaProtegida requireAdmin><Simulacao /></RotaProtegida>} />
+	            <Route path="/admin/simulacao" element={<RotaProtegida requireAdmin>{canAccessSimuladorQuadro ? <Simulacao /> : <Navigate to="/home" replace />}</RotaProtegida>} />
             <Route path="/admin/auditoria" element={<RotaProtegida requireAdmin><Auditoria /></RotaProtegida>} />
             <Route path="/admin/acessos-usuarios" element={<RotaProtegida requireAdmin><AcessosUsuarios /></RotaProtegida>} />
             <Route path="/admin/historico-acesso" element={<RotaProtegida requireAdmin><HistoricoAcesso /></RotaProtegida>} />
