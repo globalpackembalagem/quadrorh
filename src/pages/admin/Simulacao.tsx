@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Plus, Trash2, ArrowRightLeft, Users, TrendingDown, TrendingUp, X, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { Plus, Trash2, ArrowRightLeft, Users, TrendingDown, TrendingUp, X, ChevronDown, ChevronUp, Eye, RefreshCw, ClipboardList } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -31,6 +32,7 @@ interface AdmissaoSimulada {
 }
 
 export default function Simulacao() {
+  const queryClient = useQueryClient();
   const { data: funcionariosQuadro = [] } = useFuncionariosNoQuadro();
   const { data: quadroPlanejadoSopro = [] } = useQuadroPlanejado('SOPRO');
   const { data: quadroDecoracao = [] } = useQuadroDecoracao();
@@ -46,6 +48,7 @@ export default function Simulacao() {
   const [idsTransferenciasSimulando, setIdsTransferenciasSimulando] = useState<Set<string>>(new Set());
   const [idsDemissoesSimulando, setIdsDemissoesSimulando] = useState<Set<string>>(new Set());
   const [idsPrevisaoSimulando, setIdsPrevisaoSimulando] = useState<Set<string>>(new Set());
+  const [atualizadoEm, setAtualizadoEm] = useState<Date | null>(null);
   const [secaoAberta, setSecaoAberta] = useState<Record<string, boolean>>({
     transferencias: true,
     demissoes: false,
@@ -187,6 +190,62 @@ export default function Simulacao() {
 
   const totalSimulacoes = trocasSimuladas.length + demissoesSimuladas.length + previsaoSimulada.length + admissoesSimuladas.reduce((a, b) => a + b.quantidade, 0);
 
+  const limparSimulacao = () => {
+    setIdsTransferenciasSimulando(new Set());
+    setIdsDemissoesSimulando(new Set());
+    setIdsPrevisaoSimulando(new Set());
+    setAdmissoesSimuladas([]);
+  };
+
+  const atualizarDoOriginal = async () => {
+    limparSimulacao();
+    await queryClient.invalidateQueries();
+    setAtualizadoEm(new Date());
+  };
+
+  const alteracoesSimulacao = useMemo(() => {
+    const itens: { id: string; tipo: string; descricao: string; cor: string }[] = [];
+
+    trocasSimuladas.forEach((t) => {
+      itens.push({
+        id: `troca-${t.id}`,
+        tipo: 'TRANSFERENCIA',
+        descricao: `${t.funcionario?.nome_completo || 'FUNCIONARIO'} | ${t.setor_origem?.nome || '-'} -> ${t.setor_destino?.nome || '-'}${t.turma_destino ? ` | TURMA ${t.turma_destino}` : ''}`,
+        cor: 'border-blue-200 bg-blue-50 text-blue-900',
+      });
+    });
+
+    demissoesSimuladas.forEach((d) => {
+      itens.push({
+        id: `demissao-${d.id}`,
+        tipo: 'DEMISSAO',
+        descricao: `${d.funcionario?.nome_completo || 'FUNCIONARIO'} | ${d.funcionario?.setor?.nome || '-'} | ${d.data_prevista || '-'}`,
+        cor: 'border-red-200 bg-red-50 text-red-900',
+      });
+    });
+
+    previsaoSimulada.forEach((f) => {
+      itens.push({
+        id: `previsao-${f.id}`,
+        tipo: 'PREVISAO',
+        descricao: `${f.nome_completo || 'FUNCIONARIO'} | ${f.setor?.nome || '-'} | ${f.turma || '-'}`,
+        cor: 'border-emerald-200 bg-emerald-50 text-emerald-900',
+      });
+    });
+
+    admissoesSimuladas.forEach((a) => {
+      const setor = setores.find(s => s.id === a.setor_id);
+      itens.push({
+        id: `admissao-${a.id}`,
+        tipo: 'ADMISSAO FICTICIA',
+        descricao: `${a.quantidade} pessoa(s) | ${setor?.nome || '-'}${a.turma ? ` | TURMA ${a.turma}` : ''}`,
+        cor: 'border-purple-200 bg-purple-50 text-purple-900',
+      });
+    });
+
+    return itens;
+  }, [trocasSimuladas, demissoesSimuladas, previsaoSimulada, admissoesSimuladas, setores]);
+
   const toggleSecao = (key: string) => {
     setSecaoAberta(prev => ({ ...prev, [key]: !prev[key] }));
   };
@@ -226,6 +285,19 @@ export default function Simulacao() {
         <p className="page-description text-xs">
           Clique em SIMULAR nos itens abaixo para ver o impacto no quadro
         </p>
+      </div>
+
+      <div className="flex flex-col gap-2 rounded-lg border bg-card p-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wide">Base original</p>
+          <p className="text-[11px] text-muted-foreground">
+            {atualizadoEm ? atualizadoEm.toLocaleString('pt-BR') : 'dados carregados ao abrir'}
+          </p>
+        </div>
+        <Button type="button" onClick={atualizarDoOriginal} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
+          <RefreshCw className="h-4 w-4" />
+          Atualizar do Original
+        </Button>
       </div>
 
       {/* ===== RESUMO CARDS ===== */}
@@ -285,6 +357,36 @@ export default function Simulacao() {
       )}
 
       {/* Badges das simulações ativas */}
+      <Card className={alteracoesSimulacao.length > 0 ? 'border-emerald-200 bg-emerald-50/40' : ''}>
+        <CardContent className="p-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-emerald-700" />
+              <h3 className="text-xs font-bold uppercase tracking-wide">Alteracoes da Simulacao</h3>
+            </div>
+            {alteracoesSimulacao.length > 0 && (
+              <Button type="button" size="sm" variant="outline" className="h-7 text-[10px]" onClick={limparSimulacao}>
+                Limpar alteracoes
+              </Button>
+            )}
+          </div>
+
+          {alteracoesSimulacao.length === 0 ? (
+            <p className="text-xs text-muted-foreground">Nenhuma alteracao feita depois da ultima atualizacao do original.</p>
+          ) : (
+            <div className="grid gap-1.5">
+              {alteracoesSimulacao.map((item) => (
+                <div key={item.id} className={`rounded-md border px-3 py-2 text-xs ${item.cor}`}>
+                  <span className="font-bold">{item.tipo}</span>
+                  <span className="mx-2 text-muted-foreground">|</span>
+                  <span>{item.descricao}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {(trocasSimuladas.length > 0 || demissoesSimuladas.length > 0 || previsaoSimulada.length > 0) && (
         <div className="flex flex-wrap gap-1">
           {trocasSimuladas.map(t => (
