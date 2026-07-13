@@ -6,7 +6,8 @@ import { getTempoInatividadeMinutos } from '@/lib/inatividade';
 
 const LAST_ACTIVITY_KEY = 'ultima_atividade_ts';
 const LOGIN_TIMESTAMP_KEY = 'login_timestamp';
-const GRACE_PERIOD_MS = 60_000; // 60 segundos de graça após login (cobre redirecionamentos)
+const GRACE_PERIOD_MS = 60_000; // 60 segundos de graca apos login
+const ACTIVITY_EVENTS = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'scroll', 'touchstart', 'touchmove', 'click', 'focus'];
 
 export function useInactivityLogout() {
   const { isRHMode, sairModoRH, userRole } = useAuth();
@@ -77,12 +78,18 @@ export function useInactivityLogout() {
       }
     }
 
-    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
-    events.forEach(event => window.addEventListener(event, resetTimer, { passive: true }));
+    const onVisibilityChange = () => {
+      if (!document.hidden) resetTimer();
+    };
+
+    ACTIVITY_EVENTS.forEach(event => window.addEventListener(event, resetTimer, { passive: true }));
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
-      events.forEach(event => window.removeEventListener(event, resetTimer));
+      ACTIVITY_EVENTS.forEach(event => window.removeEventListener(event, resetTimer));
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [isRHMode, tempoMinutos, timeoutMs, resetTimer, doLogout]);
 }
+

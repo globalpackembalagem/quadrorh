@@ -5,6 +5,9 @@ import { Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getTempoInatividadeMinutos } from '@/lib/inatividade';
 
+const LAST_ACTIVITY_KEY = 'ultima_atividade_ts';
+const ACTIVITY_EVENTS = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'scroll', 'touchstart', 'touchmove', 'click', 'focus'];
+
 export function SessionTimer() {
   const { isRHMode } = useAuth();
   const { usuarioAtual } = useUsuario();
@@ -15,7 +18,9 @@ export function SessionTimer() {
 
   // Atualizar último timestamp de atividade
   const updateActivity = useCallback(() => {
-    lastActivityRef.current = Date.now();
+    const agora = Date.now();
+    lastActivityRef.current = agora;
+    localStorage.setItem(LAST_ACTIVITY_KEY, String(agora));
   }, []);
 
   useEffect(() => {
@@ -24,8 +29,15 @@ export function SessionTimer() {
       return;
     }
 
-    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
-    events.forEach(e => window.addEventListener(e, updateActivity, { passive: true }));
+    const lastActivity = Number(localStorage.getItem(LAST_ACTIVITY_KEY) || 0);
+    lastActivityRef.current = lastActivity > 0 ? lastActivity : Date.now();
+
+    const onVisibilityChange = () => {
+      if (!document.hidden) updateActivity();
+    };
+
+    ACTIVITY_EVENTS.forEach(e => window.addEventListener(e, updateActivity, { passive: true }));
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     const interval = setInterval(() => {
       const elapsed = Date.now() - lastActivityRef.current;
@@ -35,7 +47,8 @@ export function SessionTimer() {
     }, 1000);
 
     return () => {
-      events.forEach(e => window.removeEventListener(e, updateActivity));
+      ACTIVITY_EVENTS.forEach(e => window.removeEventListener(e, updateActivity));
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       clearInterval(interval);
     };
   }, [isRHMode, tempoMinutos, updateActivity]);
