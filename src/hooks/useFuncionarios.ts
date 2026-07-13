@@ -15,6 +15,21 @@ export const invalidarFuncionarios = (queryClient: QueryClient) => {
   queryClient.invalidateQueries({ queryKey: ['funcionarios', 'ponto'] });
 };
 
+const atualizarFuncionarioNoCache = (queryClient: QueryClient, funcionarioAtualizado: Funcionario | null | undefined) => {
+  if (!funcionarioAtualizado?.id) return;
+  const atualizarLista = (lista?: Funcionario[]) => {
+    if (!Array.isArray(lista)) return lista;
+    return lista.map((funcionario) =>
+      funcionario.id === funcionarioAtualizado.id ? { ...funcionario, ...funcionarioAtualizado } : funcionario
+    );
+  };
+
+  queryClient.setQueryData<Funcionario[]>(['funcionarios'], atualizarLista);
+  queryClient.setQueryData<Funcionario[]>(['funcionarios', 'quadro'], atualizarLista);
+  queryClient.setQueryData<Funcionario[]>(['funcionarios', 'quadro', 'conferidos'], atualizarLista);
+  queryClient.setQueryData<Funcionario[]>(['funcionarios', 'ponto'], atualizarLista);
+};
+
 export function useFuncionariosRealtime() {
   const queryClient = useQueryClient();
 
@@ -648,7 +663,8 @@ export function useUpdateFuncionario() {
       await registrarHistoricoQuadroSeTravado(funcionarioAntes as any, data as any, userRole?.nome || 'SISTEMA');
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      atualizarFuncionarioNoCache(queryClient, data as Funcionario);
       invalidarFuncionarios(queryClient);
       toast.success('FuncionÃ¡rio atualizado com sucesso!');
     },
