@@ -166,7 +166,7 @@ export default function ControleFotos() {
   const resumoSetores = useMemo(() => {
     return setores.map((setor) => {
       const lista = funcionariosControle.filter((func) => grupoSetorControleFotos(func) === setor);
-      const semFoto = lista.filter((func) => !temFotoValida(func)).length;
+      const semFoto = lista.filter((func) => !temFotoMarcada(func)).length;
       const comFoto = lista.length - semFoto;
       return { setor, total: lista.length, semFoto, comFoto };
     }).filter((item) => item.semFoto > 0).sort((a, b) => b.semFoto - a.semFoto || a.setor.localeCompare(b.setor));
