@@ -328,8 +328,11 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
   const canAccessFakeQuadro = isRHMode && nomeUsuarioNormalizado === 'LUCIANO';
   const canAccessSimuladorQuadro = isRHMode && ['LUCIANO', 'MAURICIO'].includes(nomeUsuarioNormalizado);
   const canAccessConferencia = isRHMode && nomeUsuarioNormalizado === 'LUCIANO';
+  const usuarioComBloqueioTurma = ['LEILA', 'ALEX', 'AMILTON', 'SILVIA'].some((nome) =>
+    nomeUsuarioNormalizado.includes(nome)
+  );
   const turmaPendenteObrigatoria = useMemo(() => {
-    if (!isGestorSetor || !usuarioAtual?.setoresIds?.length) return [];
+    if (!usuarioComBloqueioTurma || !isGestorSetor || !usuarioAtual?.setoresIds?.length) return [];
 
     const setoresDoUsuario = new Set(usuarioAtual.setoresIds);
     const turmasSopro = new Set(['1A', '1B', '2A', '2B']);
@@ -350,7 +353,7 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
       if (textoSetor.includes('DECORACAO') && (textoSetor.includes('DIA') || textoSetor.includes('NOITE'))) return !turmasDecoracao.has(turma);
       return false;
     });
-  }, [funcionarios, isGestorSetor, usuarioAtual?.setoresIds]);
+  }, [funcionarios, isGestorSetor, usuarioAtual?.setoresIds, usuarioComBloqueioTurma]);
 
   const bloquearGestorPorTurma = turmaPendenteObrigatoria.length > 0;
   const navigationVisivel = bloquearGestorPorTurma
