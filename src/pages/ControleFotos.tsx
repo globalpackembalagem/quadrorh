@@ -83,6 +83,14 @@ function temFotoMarcada(func: FuncionarioFotoControle) {
   return func.tem_foto === true;
 }
 
+function grupoSetorControleFotos(func: FuncionarioFotoControle) {
+  const setor = normalizar(func.setor?.nome || "");
+  if (setor.includes("SOPRO A") || setor.includes("SOPRO G+P A")) return "SOPRO A";
+  if (setor.includes("SOPRO B") || setor.includes("SOPRO G+P B")) return "SOPRO B";
+  if (setor.includes("SOPRO C") || setor.includes("SOPRO G+P C")) return "SOPRO C";
+  return func.setor?.nome || "SEM SETOR";
+}
+
 function getSessionToken() {
   try {
     const usuario = JSON.parse(localStorage.getItem("usuario_logado") || "null");
@@ -148,7 +156,7 @@ export default function ControleFotos() {
   });
 
   const setores = useMemo(() => {
-    return Array.from(new Set(funcionarios.filter(contaParaControleFotos).map((f) => f.setor?.nome).filter(Boolean) as string[])).sort();
+    return Array.from(new Set(funcionarios.filter(contaParaControleFotos).map(grupoSetorControleFotos))).sort();
   }, [funcionarios]);
 
   const funcionariosControle = useMemo(() => {
@@ -157,7 +165,7 @@ export default function ControleFotos() {
 
   const resumoSetores = useMemo(() => {
     return setores.map((setor) => {
-      const lista = funcionariosControle.filter((func) => func.setor?.nome === setor);
+      const lista = funcionariosControle.filter((func) => grupoSetorControleFotos(func) === setor);
       const semFoto = lista.filter((func) => !temFotoValida(func)).length;
       const comFoto = lista.length - semFoto;
       return { setor, total: lista.length, semFoto, comFoto };
@@ -178,7 +186,7 @@ export default function ControleFotos() {
       if (statusFoto === "SEM" && temFoto) return false;
       if (statusDownload === "NAO_BAIXADAS" && (!temFoto || func.foto_baixada_em)) return false;
       if (statusDownload === "BAIXADAS" && (!temFoto || !func.foto_baixada_em)) return false;
-      if (setoresSelecionados.length > 0 && !setoresSelecionados.includes(func.setor?.nome || "")) return false;
+      if (setoresSelecionados.length > 0 && !setoresSelecionados.includes(grupoSetorControleFotos(func))) return false;
       if (!termo) return true;
       const alvo = normalizar(`${func.nome_completo} ${func.matricula || ""} ${func.setor?.nome || ""}`);
       return alvo.includes(termo);
