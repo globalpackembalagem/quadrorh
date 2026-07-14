@@ -115,7 +115,6 @@ const allRHNavigation: NavItem[] = [
 // Itens exclusivos admin no menu principal (fora de Configuração)
 const adminMainItems: NavItem[] = [
   { name: 'NOTIFICAÇÕES', href: '/admin/notificacoes', icon: Megaphone },
-  { name: 'CAPTURA DE FOTOS', href: '/captura-fotos?rhfoto=1', icon: ExternalLink, external: true },
   { name: 'CONTROLE DE FOTOS', href: '/admin/controle-fotos', icon: ImageDown },
 ];
 
