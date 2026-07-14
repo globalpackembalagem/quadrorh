@@ -184,6 +184,13 @@ function isFaltasSumidoUpdate(payload: any, operation: string) {
   return keys.length > 0 && keys.every((key) => allowed.has(key));
 }
 
+function isLiderTurmaUpdate(payload: any, operation: string, filters: any) {
+  if (operation !== "update" || !payload || Array.isArray(payload)) return false;
+  const keys = Object.keys(payload);
+  const temFiltroId = Boolean(filters?.eq?.id);
+  return temFiltroId && keys.length === 1 && keys[0] === "turma";
+}
+
 function applyFuncionariosFilters(query: any, filters: any) {
   const eqFilters = filters?.eq || {};
   for (const [column, value] of Object.entries(eqFilters)) {
@@ -539,7 +546,8 @@ serve(async (req) => {
         const writer = await getFuncionariosWriterBySession(supabase, session_token);
         const canWrite = writer?.acesso_admin === true || writer?.pode_editar_funcionarios === true;
         const canFaltasSumido = writer?.pode_editar_faltas === true && hasFuncionariosFilters(filters) && isFaltasSumidoUpdate(payload, operation);
-        if (!canWrite && !canFaltasSumido) return jsonResponse({ error: "Acesso negado" }, 403);
+        const canLiderTurma = writer?.pode_editar_faltas === true && isLiderTurmaUpdate(payload, operation, filters);
+        if (!canWrite && !canFaltasSumido && !canLiderTurma) return jsonResponse({ error: "Acesso negado" }, 403);
 
         let query = supabase.from("funcionarios");
         if (operation === "insert") query = query.insert(payload);
