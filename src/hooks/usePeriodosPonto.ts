@@ -48,7 +48,10 @@ export function useCreatePeriodo() {
       queryClient.invalidateQueries({ queryKey: ['periodos_ponto'] });
       toast.success('Período criado com sucesso!');
     },
-    onError: () => toast.error('Erro ao criar período'),
+    onError: (error: Error) => {
+      console.error('Erro ao criar periodo:', error);
+      toast.error(`Erro ao criar periodo: ${error.message}`);
+    },
   });
 }
 
