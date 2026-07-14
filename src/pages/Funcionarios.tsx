@@ -679,7 +679,7 @@ export default function Funcionarios() {
   const [situacaoFilter, setSituacaoFilter] = useFilterPersistence<string>('func_situacao', 'TODAS');
   const [admissaoInicioFilter, setAdmissaoInicioFilter] = useFilterPersistence<string>('func_admissao_inicio', '');
   const [admissaoFimFilter, setAdmissaoFimFilter] = useFilterPersistence<string>('func_admissao_fim', '');
-  const [grupoFilter, setGrupoFilter] = useFilterPersistence<'TODOS' | 'SOPRO' | 'DECORACAO' | 'AJUSTAR_SITUACAO'>('func_grupo', 'TODOS');
+  const [grupoFilter, setGrupoFilter] = useFilterPersistence<'TODOS' | 'SOPRO_A' | 'SOPRO_B' | 'SOPRO_C' | 'DECORACAO_DIA' | 'DECORACAO_NOITE'>('func_grupo', 'TODOS');
   const [editingFuncionario, setEditingFuncionario] = useState<Funcionario | null>(null);
 
   // Form state
@@ -726,26 +726,25 @@ export default function Funcionarios() {
   const TURMAS_SOPRO = ['1A', '1B', '2A', '2B'];
   const TURMAS_DECORACAO = ['T1', 'T2'];
 
+  const funcionarioPertenceGrupo = useCallback((f: Funcionario, grupoFiltro: typeof grupoFilter) => {
+    if (grupoFiltro === 'TODOS') return true;
+    const grupo = normalizarTextoSistema((f.setor as any)?.grupo || '') || '';
+    const nomeSetor = normalizarTextoSistema((f.setor as any)?.nome || '') || '';
+    const texto = `${grupo} ${nomeSetor}`;
+
+    if (grupoFiltro === 'SOPRO_A') return texto.includes('SOPRO A');
+    if (grupoFiltro === 'SOPRO_B') return texto.includes('SOPRO B');
+    if (grupoFiltro === 'SOPRO_C') return texto.includes('SOPRO C');
+    if (grupoFiltro === 'DECORACAO_DIA') return texto.includes('DECORACAO') && texto.includes('DIA');
+    if (grupoFiltro === 'DECORACAO_NOITE') return texto.includes('DECORACAO') && texto.includes('NOITE');
+    return true;
+  }, []);
+
   // Funcionários pré-filtrados pelo grupo selecionado
   const funcionariosDoGrupo = useMemo(() => {
     if (grupoFilter === 'TODOS') return funcionarios;
-    if (grupoFilter === 'AJUSTAR_SITUACAO') {
-      return funcionarios.filter(f => normalizarTextoSistema(f.situacao?.nome) === 'AJUSTAR SITUACAO');
-    }
-    if (grupoFilter === 'SOPRO') {
-      return funcionarios.filter(f => {
-        const grupo = (f.setor as any)?.grupo?.toUpperCase() || '';
-        return grupo.startsWith('SOPRO');
-      });
-    }
-    if (grupoFilter === 'DECORACAO') {
-      return funcionarios.filter(f => {
-        const grupo = (f.setor as any)?.grupo?.toUpperCase() || '';
-        return grupo.startsWith('DECORAÇÃO') || grupo.startsWith('DECORACAO');
-      });
-    }
-    return funcionarios;
-  }, [funcionarios, grupoFilter]);
+    return funcionarios.filter(f => funcionarioPertenceGrupo(f, grupoFilter));
+  }, [funcionarios, grupoFilter, funcionarioPertenceGrupo]);
 
   const funcionariosAtivosGrupo = useMemo(() => {
     return funcionariosDoGrupo.filter(f => {
@@ -763,9 +762,9 @@ export default function Funcionarios() {
   }, [funcionariosDoGrupo]);
 
   const turmaOptions = useMemo(() => {
-    const turmasPermitidas = grupoFilter === 'SOPRO'
+    const turmasPermitidas = grupoFilter.startsWith('SOPRO')
       ? TURMAS_SOPRO
-      : grupoFilter === 'DECORACAO'
+      : grupoFilter.startsWith('DECORACAO')
       ? TURMAS_DECORACAO
       : null;
 
@@ -1518,11 +1517,13 @@ export default function Funcionarios() {
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest w-14 shrink-0">GRUPO</span>
                 <div className="flex flex-wrap gap-1.5">
                   {([
-                    { key: 'TODOS', label: 'TODOS', count: funcionarios.filter(f => { const s = f.situacao?.nome?.toUpperCase() || ''; return s === 'ATIVO' || s === 'FÉRIAS'; }).length },
-                    { key: 'SOPRO', label: 'SOPRO', count: funcionarios.filter(f => { const s = f.situacao?.nome?.toUpperCase() || ''; const g = ((f.setor as any)?.grupo || '').toUpperCase(); return (s === 'ATIVO' || s === 'FÉRIAS') && g.startsWith('SOPRO'); }).length },
-                    { key: 'DECORACAO', label: 'DECORAÇÃO', count: funcionarios.filter(f => { const s = f.situacao?.nome?.toUpperCase() || ''; const g = ((f.setor as any)?.grupo || '').toUpperCase(); return (s === 'ATIVO' || s === 'FÉRIAS') && (g.startsWith('DECORAÇÃO') || g.startsWith('DECORACAO')); }).length },
-                    { key: 'AJUSTAR_SITUACAO', label: 'AJUSTAR SITUACAO', count: funcionarios.filter(f => normalizarTextoSistema(f.situacao?.nome) === 'AJUSTAR SITUACAO').length },
-                  ] as { key: 'TODOS' | 'SOPRO' | 'DECORACAO' | 'AJUSTAR_SITUACAO'; label: string; count: number }[]).map(g => {
+                    { key: 'TODOS', label: 'TODOS', count: funcionarios.filter(f => { const s = normalizarTextoSistema(f.situacao?.nome) || ''; return s === 'ATIVO' || s === 'FERIAS'; }).length },
+                    { key: 'SOPRO_A', label: 'SOPRO A', count: funcionarios.filter(f => { const s = normalizarTextoSistema(f.situacao?.nome) || ''; return (s === 'ATIVO' || s === 'FERIAS') && funcionarioPertenceGrupo(f, 'SOPRO_A'); }).length },
+                    { key: 'SOPRO_B', label: 'SOPRO B', count: funcionarios.filter(f => { const s = normalizarTextoSistema(f.situacao?.nome) || ''; return (s === 'ATIVO' || s === 'FERIAS') && funcionarioPertenceGrupo(f, 'SOPRO_B'); }).length },
+                    { key: 'SOPRO_C', label: 'SOPRO C', count: funcionarios.filter(f => { const s = normalizarTextoSistema(f.situacao?.nome) || ''; return (s === 'ATIVO' || s === 'FERIAS') && funcionarioPertenceGrupo(f, 'SOPRO_C'); }).length },
+                    { key: 'DECORACAO_DIA', label: 'DECORACAO DIA', count: funcionarios.filter(f => { const s = normalizarTextoSistema(f.situacao?.nome) || ''; return (s === 'ATIVO' || s === 'FERIAS') && funcionarioPertenceGrupo(f, 'DECORACAO_DIA'); }).length },
+                    { key: 'DECORACAO_NOITE', label: 'DECORACAO NOITE', count: funcionarios.filter(f => { const s = normalizarTextoSistema(f.situacao?.nome) || ''; return (s === 'ATIVO' || s === 'FERIAS') && funcionarioPertenceGrupo(f, 'DECORACAO_NOITE'); }).length },
+                  ] as { key: 'TODOS' | 'SOPRO_A' | 'SOPRO_B' | 'SOPRO_C' | 'DECORACAO_DIA' | 'DECORACAO_NOITE'; label: string; count: number }[]).map(g => {
                     const active = grupoFilter === g.key;
                     return (
                       <button
