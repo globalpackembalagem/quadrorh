@@ -327,6 +327,7 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
     .toUpperCase();
   const canAccessFakeQuadro = isRHMode && nomeUsuarioNormalizado === 'LUCIANO';
   const canAccessSimuladorQuadro = isRHMode && ['LUCIANO', 'MAURICIO'].includes(nomeUsuarioNormalizado);
+  const canAccessConferencia = isRHMode && nomeUsuarioNormalizado === 'LUCIANO';
 
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';
@@ -559,7 +560,22 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
 	                  <span className="truncate">SIMULADOR DO QUADRO</span>
 	                </Link>
 	              )}
-	              {adminMainItems.map((item) => (
+	              {canAccessConferencia && (
+	                <Link
+	                  to="/conferencia-funcionarios"
+	                  onClick={closeFn}
+	                  className={cn(
+	                    'flex items-center gap-3.5 rounded-xl px-4 py-3 text-[13px] font-semibold transition-all duration-200 border',
+	                    isActive('/conferencia-funcionarios')
+	                      ? 'bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-500/20'
+	                      : 'bg-amber-500/10 text-amber-700 border-amber-500/30 hover:bg-amber-500/20'
+	                  )}
+	                >
+	                  <ClipboardCheck className={cn("h-5 w-5 shrink-0", isActive('/conferencia-funcionarios') ? "text-white" : "text-amber-600")} />
+	                  <span className="truncate">CONFERENCIA</span>
+	                </Link>
+	              )}
+		              {adminMainItems.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}

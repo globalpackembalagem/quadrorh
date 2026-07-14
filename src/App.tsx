@@ -156,6 +156,7 @@ function LayoutRouter() {
     .trim()
     .toUpperCase();
   const canAccessSimuladorQuadro = ['LUCIANO', 'MAURICIO'].includes(nomeUsuarioNormalizado);
+  const canAccessConferencia = nomeUsuarioNormalizado === 'LUCIANO';
 
   // Ativa subscriptions realtime para todas as tabelas
   useRealtimeData();
@@ -220,7 +221,7 @@ function LayoutRouter() {
             <Route path="/experiencia-geral" element={<RotaProtegida requireFaltas><ExperienciaGeral /></RotaProtegida>} />
             
             <Route path="/funcionarios" element={<RotaProtegida requireFuncionarios><Funcionarios /></RotaProtegida>} />
-            <Route path="/conferencia-funcionarios" element={<RotaProtegida requireFuncionarios><ConferenciaFuncionarios /></RotaProtegida>} />
+	            <Route path="/conferencia-funcionarios" element={<RotaProtegida requireFuncionarios>{canAccessConferencia ? <ConferenciaFuncionarios /> : <Navigate to="/home" replace />}</RotaProtegida>} />
             <Route path="/demissoes" element={<RotaProtegida requireDemissoes><Demissoes /></RotaProtegida>} />
             <Route path="/carta-desligamento" element={<RotaProtegida requireDemissoes><CartaDesligamento /></RotaProtegida>} />
             <Route path="/homologacoes" element={<RotaProtegida requireHomologacoes><Homologacoes /></RotaProtegida>} />
