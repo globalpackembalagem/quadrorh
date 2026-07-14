@@ -382,7 +382,6 @@ export default function ControleFotos() {
       MATRICULA: func.matricula || "",
       NOME: func.nome_completo,
       ADMISSAO: formatDate(func.data_admissao),
-      "GRUPO FOTO": grupoSetorControleFotos(func),
       SETOR: func.setor?.nome || "",
       SITUACAO: func.situacao?.nome || "",
       "TEM FOTO": temFotoMarcada(func) ? "SIM" : "NAO",
