@@ -84,10 +84,10 @@ function temFotoMarcada(func: FuncionarioFotoControle) {
 }
 
 function grupoSetorControleFotos(func: FuncionarioFotoControle) {
-  const setor = normalizar(func.setor?.nome || "");
-  if (setor.includes("SOPRO A") || setor.includes("SOPRO G+P A")) return "SOPRO A";
-  if (setor.includes("SOPRO B") || setor.includes("SOPRO G+P B")) return "SOPRO B";
-  if (setor.includes("SOPRO C") || setor.includes("SOPRO G+P C")) return "SOPRO C";
+  const setor = normalizar(func.setor?.nome || "").replace(/\s+/g, " ").trim();
+  if (setor === "MOD - SOPRO A" || setor === "PRODUCAO SOPRO G+P A") return "SOPRO A";
+  if (setor === "MOD - SOPRO B" || setor === "PRODUCAO SOPRO G+P B") return "SOPRO B";
+  if (setor === "MOD - SOPRO C" || setor === "PRODUCAO SOPRO G+P C") return "SOPRO C";
   return func.setor?.nome || "SEM SETOR";
 }
 
@@ -378,10 +378,11 @@ export default function ControleFotos() {
 
   const exportarExcel = async () => {
     const XLSX = await loadXLSX();
-    const rows = filtrados.map((func) => ({
+    const rows = funcionariosControle.map((func) => ({
       MATRICULA: func.matricula || "",
       NOME: func.nome_completo,
       ADMISSAO: formatDate(func.data_admissao),
+      "GRUPO FOTO": grupoSetorControleFotos(func),
       SETOR: func.setor?.nome || "",
       SITUACAO: func.situacao?.nome || "",
       "TEM FOTO": temFotoMarcada(func) ? "SIM" : "NAO",
