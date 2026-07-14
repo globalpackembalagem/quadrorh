@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, FileSpreadsheet, ImageDown, Pencil, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Copy, Download, FileSpreadsheet, ImageDown, Pencil, RefreshCw, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { funcionariosApi } from "@/lib/funcionariosApi";
@@ -391,6 +391,12 @@ export default function ControleFotos() {
     XLSX.writeFile(wb, `controle_fotos_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
+  const copiarLinkCaptura = async () => {
+    const link = "https://quadrorh-kohl.vercel.app/captura-fotos?rhfoto=1";
+    await navigator.clipboard.writeText(link);
+    toast.success("Link da captura copiado.");
+  };
+
   return (
     <div className="space-y-5">
       <div className="sticky top-0 z-20 space-y-4 bg-background/95 pb-3 backdrop-blur">
@@ -400,6 +406,9 @@ export default function ControleFotos() {
             <p className="text-sm text-muted-foreground">Acompanhe quem ja tem foto, corrija baixas manuais e exporte a conferencia.</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={copiarLinkCaptura}>
+              <Copy className="mr-2 h-4 w-4" /> Copiar link captura
+            </Button>
             <Button variant="outline" onClick={() => refetch()} disabled={isLoading}>
               <RefreshCw className="mr-2 h-4 w-4" /> Atualizar
             </Button>

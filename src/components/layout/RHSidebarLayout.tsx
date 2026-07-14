@@ -47,7 +47,7 @@ import { ThemeSelectorButton } from '@/components/layout/ThemeSelectorButton';
 import { cn } from '@/lib/utils';
 import { BotaoAcessoRH } from '@/components/auth/BotaoAcessoRH';
 import { useAuth } from '@/hooks/useAuth';
-import { useFuncionariosRealtime } from '@/hooks/useFuncionarios';
+import { useFuncionarios, useFuncionariosRealtime } from '@/hooks/useFuncionarios';
 import { UsuarioLocal, useUsuario } from '@/contexts/UserContext';
 import logoGlobalpack from '@/assets/logo-globalpack-new.png';
 
@@ -307,6 +307,7 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
   const location = useLocation();
   const { isRHMode, userRole, isAdmin, isVisualizacao, canEditFaltas } = useAuth();
   const { usuarioAtual } = useUsuario();
+  const { data: funcionarios = [] } = useFuncionarios();
   const isGestorSetor = isRHMode && !isAdmin && canEditFaltas();
   const [openSubmenus, setOpenSubmenus] = useState<string[]>(['CONTROLE DE FALTAS', 'DEMISSÕES']);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -328,6 +329,34 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
   const canAccessFakeQuadro = isRHMode && nomeUsuarioNormalizado === 'LUCIANO';
   const canAccessSimuladorQuadro = isRHMode && ['LUCIANO', 'MAURICIO'].includes(nomeUsuarioNormalizado);
   const canAccessConferencia = isRHMode && nomeUsuarioNormalizado === 'LUCIANO';
+  const turmaPendenteObrigatoria = useMemo(() => {
+    if (!isGestorSetor || !usuarioAtual?.setoresIds?.length) return [];
+
+    const setoresDoUsuario = new Set(usuarioAtual.setoresIds);
+    const turmasSopro = new Set(['1A', '1B', '2A', '2B']);
+    const turmasDecoracao = new Set(['T1', 'T2']);
+
+    return funcionarios.filter((funcionario: any) => {
+      if (!funcionario?.setor_id || !setoresDoUsuario.has(funcionario.setor_id)) return false;
+
+      const situacao = (funcionario?.situacao?.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+      if (['DEMISSAO', 'PEDIDO DEMISSAO', 'PED. DEMISSAO', 'TERMINO DE CONTRATO', 'DISPENSA S/ JUSTA CAUSA', 'DEM. JUSTA CAUSA'].includes(situacao)) return false;
+
+      const grupo = (funcionario?.setor?.grupo || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+      const nomeSetor = (funcionario?.setor?.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+      const textoSetor = `${grupo} ${nomeSetor}`;
+      const turma = (funcionario?.turma || '').toUpperCase().trim();
+
+      if (textoSetor.includes('SOPRO')) return !turmasSopro.has(turma);
+      if (textoSetor.includes('DECORACAO') && (textoSetor.includes('DIA') || textoSetor.includes('NOITE'))) return !turmasDecoracao.has(turma);
+      return false;
+    });
+  }, [funcionarios, isGestorSetor, usuarioAtual?.setoresIds]);
+
+  const bloquearGestorPorTurma = turmaPendenteObrigatoria.length > 0;
+  const navigationVisivel = bloquearGestorPorTurma
+    ? rhNavigation.filter(item => item.href === '/funcionarios')
+    : rhNavigation;
 
   const isActive = (href: string) => {
     if (href === '/') return location.pathname === '/';
@@ -524,12 +553,20 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
             </div>
           </div>
         </div>
+        {bloquearGestorPorTurma && (
+          <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-800">
+            <div className="font-bold">TURMA OBRIGATORIA</div>
+            <div className="mt-1">
+              Existem {turmaPendenteObrigatoria.length} funcionario(s) do seu setor sem turma. Preencha hoje para liberar os outros modulos.
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4">
         <div className="px-3 space-y-1">
-          {rhNavigation.map(item => renderNavItem(item, closeFn))}
+          {navigationVisivel.map(item => renderNavItem(item, closeFn))}
         </div>
 
         {/* Admin main items - fora de Configuração */}
@@ -759,7 +796,30 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
 
         {/* Main Content */}
         <main className="flex-1 overflow-auto">
-          <div className={cn(isMobile ? "px-3 py-4" : "container py-6")}>{children}</div>
+          <div className={cn(isMobile ? "px-3 py-4" : "container py-6")}>
+            {bloquearGestorPorTurma && location.pathname !== '/funcionarios' ? (
+              <div className="mx-auto mt-10 max-w-2xl rounded-2xl border border-red-200 bg-white p-6 shadow-sm">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-full bg-red-100 p-3 text-red-600">
+                    <AlertTriangle className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-bold text-red-900">TURMA PENDENTE</h1>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Existem {turmaPendenteObrigatoria.length} funcionario(s) dos seus setores obrigatorios sem turma.
+                      Para continuar usando o sistema, preencha a turma hoje na tela de Funcionarios.
+                    </p>
+                    <Link
+                      to="/funcionarios"
+                      className="mt-5 inline-flex rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90"
+                    >
+                      IR PARA FUNCIONARIOS
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ) : children}
+          </div>
         </main>
       </div>
 
