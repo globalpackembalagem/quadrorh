@@ -25,8 +25,8 @@ type FuncionarioFotoControle = {
   data_admissao: string | null;
   setor_id: string | null;
   cargo: string | null;
-  situacao?: { nome: string | null } | null;
-  setor?: { nome: string | null } | null;
+  situacao?: { nome: string | null; conta_no_quadro?: boolean | null } | null;
+  setor?: { nome: string | null; grupo?: string | null; conta_no_quadro?: boolean | null } | null;
   tem_foto: boolean | null;
   foto_arquivo_nome: string | null;
   foto_storage_path: string | null;
@@ -84,11 +84,22 @@ function temFotoMarcada(func: FuncionarioFotoControle) {
 }
 
 function grupoSetorControleFotos(func: FuncionarioFotoControle) {
+  const grupo = normalizar(func.setor?.grupo || "").replace(/\s+/g, " ").trim();
+  if (grupo === "SOPRO A" || grupo === "SOPRO B" || grupo === "SOPRO C") return grupo;
+
   const setor = normalizar(func.setor?.nome || "").replace(/\s+/g, " ").trim();
-  if (setor === "MOD - SOPRO A" || setor === "PRODUCAO SOPRO G+P A") return "SOPRO A";
-  if (setor === "MOD - SOPRO B" || setor === "PRODUCAO SOPRO G+P B") return "SOPRO B";
-  if (setor === "MOD - SOPRO C" || setor === "PRODUCAO SOPRO G+P C") return "SOPRO C";
+  if (setor.includes("DECORACAO") && setor.includes("DIA")) return "DECORACAO DIA";
+  if (setor.includes("DECORACAO") && setor.includes("NOITE")) return "DECORACAO NOITE";
+
   return func.setor?.nome || "SEM SETOR";
+}
+
+function contaNoQuadroControleFotos(func: FuncionarioFotoControle) {
+  return func.setor?.conta_no_quadro === true && func.situacao?.conta_no_quadro === true;
+}
+
+function grupoUsaRegraDoQuadro(grupo: string) {
+  return ["SOPRO A", "SOPRO B", "SOPRO C", "DECORACAO DIA", "DECORACAO NOITE"].includes(normalizar(grupo));
 }
 
 function getSessionToken() {
@@ -139,7 +150,7 @@ export default function ControleFotos() {
         const fim = inicio + tamanhoPagina - 1;
         const { data, error } = await supabase
           .from("funcionarios")
-          .select("id,matricula,nome_completo,data_admissao,setor_id,cargo,tem_foto,foto_arquivo_nome,foto_storage_path,foto_verificada_em,foto_baixada_em,telefone_whatsapp,usa_fretado,linha_fretado,setor:setores!setor_id(nome),situacao:situacoes!situacao_id(nome)")
+          .select("id,matricula,nome_completo,data_admissao,setor_id,cargo,tem_foto,foto_arquivo_nome,foto_storage_path,foto_verificada_em,foto_baixada_em,telefone_whatsapp,usa_fretado,linha_fretado,setor:setores!setor_id(nome,grupo,conta_no_quadro),situacao:situacoes!situacao_id(nome,conta_no_quadro)")
           .order("nome_completo")
           .range(inicio, fim);
 
@@ -165,7 +176,11 @@ export default function ControleFotos() {
 
   const resumoSetores = useMemo(() => {
     return setores.map((setor) => {
-      const lista = funcionariosControle.filter((func) => grupoSetorControleFotos(func) === setor);
+      const lista = funcionariosControle.filter((func) => {
+        const grupo = grupoSetorControleFotos(func);
+        if (grupo !== setor) return false;
+        return grupoUsaRegraDoQuadro(grupo) ? contaNoQuadroControleFotos(func) : true;
+      });
       const semFoto = lista.filter((func) => !temFotoMarcada(func)).length;
       const comFoto = lista.length - semFoto;
       return { setor, total: lista.length, semFoto, comFoto };
@@ -186,7 +201,11 @@ export default function ControleFotos() {
       if (statusFoto === "SEM" && temFoto) return false;
       if (statusDownload === "NAO_BAIXADAS" && (!temFoto || func.foto_baixada_em)) return false;
       if (statusDownload === "BAIXADAS" && (!temFoto || !func.foto_baixada_em)) return false;
-      if (setoresSelecionados.length > 0 && !setoresSelecionados.includes(grupoSetorControleFotos(func))) return false;
+      if (setoresSelecionados.length > 0) {
+        const grupo = grupoSetorControleFotos(func);
+        if (!setoresSelecionados.includes(grupo)) return false;
+        if (grupoUsaRegraDoQuadro(grupo) && !contaNoQuadroControleFotos(func)) return false;
+      }
       if (!termo) return true;
       const alvo = normalizar(`${func.nome_completo} ${func.matricula || ""} ${func.setor?.nome || ""}`);
       return alvo.includes(termo);
