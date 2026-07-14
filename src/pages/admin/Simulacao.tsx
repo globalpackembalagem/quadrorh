@@ -250,6 +250,10 @@ export default function Simulacao() {
     setSecaoAberta(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const abrirSecao = (key: string) => {
+    setSecaoAberta(prev => ({ ...prev, [key]: true }));
+  };
+
   const toggleTransferencia = (id: string) => {
     setIdsTransferenciasSimulando(prev => {
       const next = new Set(prev);
@@ -293,12 +297,44 @@ export default function Simulacao() {
           <p className="text-[11px] text-muted-foreground">
             {atualizadoEm ? atualizadoEm.toLocaleString('pt-BR') : 'dados carregados ao abrir'}
           </p>
+          <p className="mt-1 text-[11px] font-medium text-emerald-700">
+            Simulação não altera o quadro oficial.
+          </p>
         </div>
         <Button type="button" onClick={atualizarDoOriginal} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
           <RefreshCw className="h-4 w-4" />
           Atualizar do Original
         </Button>
       </div>
+
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="p-3">
+          <div className="mb-3">
+            <h2 className="text-sm font-bold uppercase tracking-wide">Movimentos da Simulação</h2>
+            <p className="text-xs text-muted-foreground">
+              Escolha o movimento, selecione os funcionários ou informe uma admissão fictícia e veja o quadro recalculado abaixo.
+            </p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-4">
+            <Button type="button" variant="outline" className="h-12 justify-start gap-2 bg-white" onClick={() => abrirSecao('demissoes')}>
+              <TrendingDown className="h-4 w-4 text-destructive" />
+              <span className="text-left text-xs font-bold">Simular Demissão</span>
+            </Button>
+            <Button type="button" variant="outline" className="h-12 justify-start gap-2 bg-white" onClick={() => abrirSecao('admissao')}>
+              <Plus className="h-4 w-4 text-primary" />
+              <span className="text-left text-xs font-bold">Simular Admissão</span>
+            </Button>
+            <Button type="button" variant="outline" className="h-12 justify-start gap-2 bg-white" onClick={() => abrirSecao('transferencias')}>
+              <ArrowRightLeft className="h-4 w-4 text-primary" />
+              <span className="text-left text-xs font-bold">Simular Transferência</span>
+            </Button>
+            <Button type="button" variant="outline" className="h-12 justify-start gap-2 bg-white" onClick={() => abrirSecao('previsao')}>
+              <TrendingUp className="h-4 w-4 text-emerald-700" />
+              <span className="text-left text-xs font-bold">Usar Previsão</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ===== RESUMO CARDS ===== */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -437,7 +473,7 @@ export default function Simulacao() {
 
       {/* ===== SEÇÕES COLAPSÁVEIS ===== */}
       <div className="border-t pt-3 space-y-1.5">
-        <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Dados para Simulação</h3>
+        <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">Movimentos da Simulação</h3>
 
         {/* TRANSFERÊNCIAS */}
         <Collapsible open={secaoAberta.transferencias} onOpenChange={() => toggleSecao('transferencias')}>
