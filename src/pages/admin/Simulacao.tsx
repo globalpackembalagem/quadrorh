@@ -77,7 +77,7 @@ export default function Simulacao() {
     if (termo.length < 2) return [];
     return funcionariosQuadro
       .filter(f => {
-        const texto = `${f.nome_completo || ''} ${f.matricula || ''} ${f.setor?.nome || ''}`.toUpperCase();
+        const texto = `${f.nome_completo || ''} ${f.matricula || ''} ${f.setor?.nome || ''} ${f.turma || ''}`.toUpperCase();
         return texto.includes(termo) && !demissoesManuais.includes(f.id);
       })
       .slice(0, 8);
@@ -699,11 +699,11 @@ export default function Simulacao() {
                         className={`flex w-full items-center justify-between px-2 py-1.5 text-left text-xs hover:bg-muted ${selecionado ? 'bg-red-50 font-bold text-red-700' : ''}`}
                         onClick={() => {
                           setFuncionarioDemissaoManual(f.id);
-                          setBuscaDemissaoManual(`${f.nome_completo} - ${f.setor?.nome || ''}`);
+                          setBuscaDemissaoManual(`${f.nome_completo} - ${f.setor?.nome || ''} / TURMA ${f.turma || '-'}`);
                         }}
                       >
                         <span>{f.nome_completo}</span>
-                        <span className="text-[10px] text-muted-foreground">{f.matricula || '-'} | {f.setor?.nome || '-'}</span>
+                        <span className="text-[10px] text-muted-foreground">{f.matricula || '-'} | {f.setor?.nome || '-'} | TURMA {f.turma || '-'}</span>
                       </button>
                     );
                   })}
@@ -715,7 +715,7 @@ export default function Simulacao() {
                     const funcionario = funcionariosQuadro.find(f => f.id === id);
                     return (
                       <div key={id} className="flex items-center justify-between rounded bg-red-50 px-2 py-1 text-xs">
-                        <span>{funcionario?.nome_completo} - {funcionario?.setor?.nome}</span>
+                        <span>{funcionario?.nome_completo} - {funcionario?.setor?.nome} / TURMA {funcionario?.turma || '-'}</span>
                         <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-destructive" onClick={() => setDemissoesManuais(prev => prev.filter(x => x !== id))}>
                           <X className="h-3 w-3" />
                         </Button>
@@ -890,3 +890,4 @@ export default function Simulacao() {
     </div>
   );
 }
+
