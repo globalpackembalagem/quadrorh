@@ -7,6 +7,7 @@ import { criarEventoENotificar } from '@/hooks/useEventosSistema';
 import { normalizarFuncionarioPayload } from '@/lib/normalizacao';
 import { useAuth } from '@/hooks/useAuth';
 import { funcionariosApi } from '@/lib/funcionariosApi';
+import { notificarMovimentacaoLider } from '@/lib/notificarMovimentacaoLider';
 
 export const invalidarFuncionarios = (queryClient: QueryClient) => {
   queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
@@ -605,7 +606,7 @@ export function useCreateFuncionario() {
 
 export function useUpdateFuncionario() {
   const queryClient = useQueryClient();
-  const { userRole } = useAuth();
+  const { userRole, isAdmin } = useAuth();
   
   return useMutation({
     mutationFn: async ({ id, situacao_id, situacaoAtualNome, ...funcionario }: Partial<Funcionario> & { 
@@ -661,6 +662,18 @@ export function useUpdateFuncionario() {
       if (error) throw error;
 
       await registrarHistoricoQuadroSeTravado(funcionarioAntes as any, data as any, userRole?.nome || 'SISTEMA');
+      const antes = funcionarioAntes as any;
+      const depois = data as any;
+      const mudouTurma = (antes?.turma || '') !== (depois?.turma || '');
+      const mudouSetor = (antes?.setor_id || '') !== (depois?.setor_id || '');
+
+      if (!isAdmin && (mudouTurma || mudouSetor)) {
+        await notificarMovimentacaoLider({
+          titulo: mudouSetor ? 'ALTERACAO DE SETOR/TURMA' : 'ALTERACAO DE TURMA',
+          mensagem: `${(depois?.nome_completo || '').toUpperCase()}\nLider: ${(userRole?.nome || 'SISTEMA').toUpperCase()}\nOrigem: ${(antes?.setor?.nome || '-').toUpperCase()}${antes?.turma ? ` / ${antes.turma}` : ''}\nDestino: ${(depois?.setor?.nome || '-').toUpperCase()}${depois?.turma ? ` / ${depois.turma}` : ''}`,
+          referenciaId: depois?.id || null,
+        });
+      }
       return data;
     },
     onSuccess: (data) => {

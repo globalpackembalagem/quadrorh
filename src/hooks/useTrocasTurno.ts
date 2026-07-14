@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { criarEventoENotificar, inserirEventoSemDuplicata } from '@/hooks/useEventosSistema';
 import { registrarHistoricoQuadroSeTravado } from '@/hooks/useFuncionarios';
 import { funcionariosApi } from '@/lib/funcionariosApi';
+import { notificarMovimentacaoLider } from '@/lib/notificarMovimentacaoLider';
 
 const invalidarBaseFuncionarios = (queryClient: ReturnType<typeof useQueryClient>) => {
   queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
@@ -191,6 +192,12 @@ export function useCriarTrocaTurno() {
         const { error: notifError } = await supabase.from('notificacoes').insert(notificacoes);
         if (notifError) console.error('Erro ao notificar gestor destino da troca:', notifError);
       }
+
+      await notificarMovimentacaoLider({
+        titulo: `${tipoLabel} SOLICITADA`,
+        mensagem: `${funcionario?.nome_completo?.toUpperCase() || 'FUNCIONARIO'}\nLider: ${(variables.criado_por || 'SISTEMA').toUpperCase()}\nOrigem: ${(setorOrigem?.nome || '-').toUpperCase()}${variables.turma_origem ? ` / ${variables.turma_origem}` : ''}\nDestino: ${(setorDestino?.nome || '-').toUpperCase()}${variables.turma_destino ? ` / ${variables.turma_destino}` : ''}${observacao}`,
+        referenciaId: data.id,
+      });
     },
     onError: () => {
       toast.error('Erro ao criar movimentação');
