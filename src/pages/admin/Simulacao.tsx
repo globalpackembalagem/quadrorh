@@ -54,6 +54,7 @@ export default function Simulacao() {
   const [novaQtd, setNovaQtd] = useState('1');
   const [demissoesManuais, setDemissoesManuais] = useState<string[]>([]);
   const [funcionarioDemissaoManual, setFuncionarioDemissaoManual] = useState('');
+  const [buscaDemissaoManual, setBuscaDemissaoManual] = useState('');
   const [transferenciasManuais, setTransferenciasManuais] = useState<TransferenciaManualSimulada[]>([]);
   const [funcionarioTransferenciaManual, setFuncionarioTransferenciaManual] = useState('');
   const [setorTransferenciaManual, setSetorTransferenciaManual] = useState('');
@@ -70,6 +71,17 @@ export default function Simulacao() {
   });
 
   const setoresAtivos = setores.filter(s => s.ativo);
+
+  const funcionariosDemissaoFiltrados = useMemo(() => {
+    const termo = buscaDemissaoManual.trim().toUpperCase();
+    if (termo.length < 2) return [];
+    return funcionariosQuadro
+      .filter(f => {
+        const texto = `${f.nome_completo || ''} ${f.matricula || ''} ${f.setor?.nome || ''}`.toUpperCase();
+        return texto.includes(termo) && !demissoesManuais.includes(f.id);
+      })
+      .slice(0, 8);
+  }, [buscaDemissaoManual, demissoesManuais, funcionariosQuadro]);
 
   const trocasPendentes = useMemo(() => {
     return trocas.filter(t => !t.efetivada && t.status === 'pendente_rh');
@@ -211,6 +223,7 @@ export default function Simulacao() {
     if (!funcionarioDemissaoManual || demissoesManuais.includes(funcionarioDemissaoManual)) return;
     setDemissoesManuais(prev => [...prev, funcionarioDemissaoManual]);
     setFuncionarioDemissaoManual('');
+    setBuscaDemissaoManual('');
   };
 
   const handleAddTransferenciaManual = () => {
@@ -662,20 +675,40 @@ export default function Simulacao() {
             <div className="mb-2 rounded-md border bg-background p-2">
               <p className="mb-2 text-[10px] font-bold uppercase text-muted-foreground">Demissão simulada manual</p>
               <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-                <Select value={funcionarioDemissaoManual} onValueChange={setFuncionarioDemissaoManual}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue placeholder="Selecionar funcionário" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {funcionariosQuadro.map(f => (
-                      <SelectItem key={f.id} value={f.id}>{f.nome_completo} - {f.setor?.nome}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  value={buscaDemissaoManual}
+                  onChange={(e) => {
+                    setBuscaDemissaoManual(e.target.value);
+                    setFuncionarioDemissaoManual('');
+                  }}
+                  placeholder="Digite nome, matricula ou setor"
+                  className="h-8 text-xs"
+                />
                 <Button type="button" size="sm" className="h-8 text-xs bg-destructive hover:bg-destructive/90" onClick={handleAddDemissaoManual} disabled={!funcionarioDemissaoManual}>
-                  Simular demissão
+                  Simular demissao
                 </Button>
               </div>
+              {funcionariosDemissaoFiltrados.length > 0 && (
+                <div className="mt-2 max-h-52 overflow-y-auto rounded-md border">
+                  {funcionariosDemissaoFiltrados.map(f => {
+                    const selecionado = funcionarioDemissaoManual === f.id;
+                    return (
+                      <button
+                        key={f.id}
+                        type="button"
+                        className={`flex w-full items-center justify-between px-2 py-1.5 text-left text-xs hover:bg-muted ${selecionado ? 'bg-red-50 font-bold text-red-700' : ''}`}
+                        onClick={() => {
+                          setFuncionarioDemissaoManual(f.id);
+                          setBuscaDemissaoManual(`${f.nome_completo} - ${f.setor?.nome || ''}`);
+                        }}
+                      >
+                        <span>{f.nome_completo}</span>
+                        <span className="text-[10px] text-muted-foreground">{f.matricula || '-'} | {f.setor?.nome || '-'}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               {demissoesManuais.length > 0 && (
                 <div className="mt-2 space-y-1">
                   {demissoesManuais.map(id => {
