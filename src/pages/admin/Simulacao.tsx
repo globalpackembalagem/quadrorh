@@ -31,6 +31,13 @@ interface AdmissaoSimulada {
   quantidade: number;
 }
 
+interface TransferenciaManualSimulada {
+  id: string;
+  funcionario_id: string;
+  setor_destino_id: string;
+  turma_destino: string;
+}
+
 export default function Simulacao() {
   const queryClient = useQueryClient();
   const { data: funcionariosQuadro = [] } = useFuncionariosNoQuadro();
@@ -45,6 +52,12 @@ export default function Simulacao() {
   const [novoSetor, setNovoSetor] = useState('');
   const [novaTurma, setNovaTurma] = useState('');
   const [novaQtd, setNovaQtd] = useState('1');
+  const [demissoesManuais, setDemissoesManuais] = useState<string[]>([]);
+  const [funcionarioDemissaoManual, setFuncionarioDemissaoManual] = useState('');
+  const [transferenciasManuais, setTransferenciasManuais] = useState<TransferenciaManualSimulada[]>([]);
+  const [funcionarioTransferenciaManual, setFuncionarioTransferenciaManual] = useState('');
+  const [setorTransferenciaManual, setSetorTransferenciaManual] = useState('');
+  const [turmaTransferenciaManual, setTurmaTransferenciaManual] = useState('');
   const [idsTransferenciasSimulando, setIdsTransferenciasSimulando] = useState<Set<string>>(new Set());
   const [idsDemissoesSimulando, setIdsDemissoesSimulando] = useState<Set<string>>(new Set());
   const [idsPrevisaoSimulando, setIdsPrevisaoSimulando] = useState<Set<string>>(new Set());
@@ -80,26 +93,32 @@ export default function Simulacao() {
 
   // Apply transfers
   const funcionariosComTrocas = useMemo(() => {
-    if (trocasSimuladas.length === 0) return funcionariosQuadro;
+    if (trocasSimuladas.length === 0 && transferenciasManuais.length === 0) return funcionariosQuadro;
     return funcionariosQuadro.map(f => {
       const troca = trocasSimuladas.find(t => t.funcionario_id === f.id);
-      if (!troca) return f;
-      const setorDestino = funcionariosQuadro.find(func => func.setor_id === troca.setor_destino_id)?.setor;
-      const novoSetorObj = setorDestino || {
-        id: troca.setor_destino_id,
-        nome: troca.setor_destino?.nome || 'SETOR DESTINO',
+      const manual = transferenciasManuais.find(t => t.funcionario_id === f.id);
+      if (!troca && !manual) return f;
+      const setorDestinoId = manual?.setor_destino_id || troca?.setor_destino_id || f.setor_id;
+      const turmaDestino = manual?.turma_destino || troca?.turma_destino || f.turma;
+      const setorDestino = troca
+        ? funcionariosQuadro.find(func => func.setor_id === troca.setor_destino_id)?.setor
+        : undefined;
+      const setorManual = setores.find(s => s.id === setorDestinoId);
+      const novoSetorObj = setorManual || setorDestino || {
+        id: setorDestinoId,
+        nome: troca?.setor_destino?.nome || 'SETOR DESTINO',
         ativo: true, conta_no_quadro: true, grupo: null, created_at: '', updated_at: '',
       };
-      return { ...f, setor_id: troca.setor_destino_id, setor: novoSetorObj, turma: troca.turma_destino || f.turma } as Funcionario;
+      return { ...f, setor_id: setorDestinoId, setor: novoSetorObj, turma: turmaDestino } as Funcionario;
     });
-  }, [funcionariosQuadro, trocasSimuladas]);
+  }, [funcionariosQuadro, setores, trocasSimuladas, transferenciasManuais]);
 
   // Remove dismissed employees
   const funcionariosComDemissoes = useMemo(() => {
-    if (demissoesSimuladas.length === 0) return funcionariosComTrocas;
-    const demitidosIds = new Set(demissoesSimuladas.map(d => d.funcionario_id));
+    if (demissoesSimuladas.length === 0 && demissoesManuais.length === 0) return funcionariosComTrocas;
+    const demitidosIds = new Set([...demissoesSimuladas.map(d => d.funcionario_id), ...demissoesManuais]);
     return funcionariosComTrocas.filter(f => !demitidosIds.has(f.id));
-  }, [funcionariosComTrocas, demissoesSimuladas]);
+  }, [funcionariosComTrocas, demissoesSimuladas, demissoesManuais]);
 
   // Add previsão employees
   const funcionariosComPrevisao = useMemo(() => {
@@ -188,13 +207,37 @@ export default function Simulacao() {
     setNovaQtd('1');
   };
 
-  const totalSimulacoes = trocasSimuladas.length + demissoesSimuladas.length + previsaoSimulada.length + admissoesSimuladas.reduce((a, b) => a + b.quantidade, 0);
+  const handleAddDemissaoManual = () => {
+    if (!funcionarioDemissaoManual || demissoesManuais.includes(funcionarioDemissaoManual)) return;
+    setDemissoesManuais(prev => [...prev, funcionarioDemissaoManual]);
+    setFuncionarioDemissaoManual('');
+  };
+
+  const handleAddTransferenciaManual = () => {
+    if (!funcionarioTransferenciaManual || !setorTransferenciaManual) return;
+    setTransferenciasManuais(prev => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        funcionario_id: funcionarioTransferenciaManual,
+        setor_destino_id: setorTransferenciaManual,
+        turma_destino: turmaTransferenciaManual,
+      },
+    ]);
+    setFuncionarioTransferenciaManual('');
+    setSetorTransferenciaManual('');
+    setTurmaTransferenciaManual('');
+  };
+
+  const totalSimulacoes = trocasSimuladas.length + transferenciasManuais.length + demissoesSimuladas.length + demissoesManuais.length + previsaoSimulada.length + admissoesSimuladas.reduce((a, b) => a + b.quantidade, 0);
 
   const limparSimulacao = () => {
     setIdsTransferenciasSimulando(new Set());
     setIdsDemissoesSimulando(new Set());
     setIdsPrevisaoSimulando(new Set());
     setAdmissoesSimuladas([]);
+    setDemissoesManuais([]);
+    setTransferenciasManuais([]);
   };
 
   const atualizarDoOriginal = async () => {
@@ -215,11 +258,32 @@ export default function Simulacao() {
       });
     });
 
+    transferenciasManuais.forEach((t) => {
+      const funcionario = funcionariosQuadro.find(f => f.id === t.funcionario_id);
+      const setorDestino = setores.find(s => s.id === t.setor_destino_id);
+      itens.push({
+        id: `transferencia-manual-${t.id}`,
+        tipo: 'TRANSFERENCIA SIMULADA',
+        descricao: `${funcionario?.nome_completo || 'FUNCIONARIO'} | ${funcionario?.setor?.nome || '-'} -> ${setorDestino?.nome || '-'}${t.turma_destino ? ` | TURMA ${t.turma_destino}` : ''}`,
+        cor: 'border-blue-200 bg-blue-50 text-blue-900',
+      });
+    });
+
     demissoesSimuladas.forEach((d) => {
       itens.push({
         id: `demissao-${d.id}`,
         tipo: 'DEMISSAO',
         descricao: `${d.funcionario?.nome_completo || 'FUNCIONARIO'} | ${d.funcionario?.setor?.nome || '-'} | ${d.data_prevista || '-'}`,
+        cor: 'border-red-200 bg-red-50 text-red-900',
+      });
+    });
+
+    demissoesManuais.forEach((id) => {
+      const funcionario = funcionariosQuadro.find(f => f.id === id);
+      itens.push({
+        id: `demissao-manual-${id}`,
+        tipo: 'DEMISSAO SIMULADA',
+        descricao: `${funcionario?.nome_completo || 'FUNCIONARIO'} | ${funcionario?.setor?.nome || '-'}`,
         cor: 'border-red-200 bg-red-50 text-red-900',
       });
     });
@@ -244,7 +308,7 @@ export default function Simulacao() {
     });
 
     return itens;
-  }, [trocasSimuladas, demissoesSimuladas, previsaoSimulada, admissoesSimuladas, setores]);
+  }, [trocasSimuladas, transferenciasManuais, demissoesSimuladas, demissoesManuais, previsaoSimulada, admissoesSimuladas, setores, funcionariosQuadro]);
 
   const toggleSecao = (key: string) => {
     setSecaoAberta(prev => ({ ...prev, [key]: !prev[key] }));
@@ -488,6 +552,63 @@ export default function Simulacao() {
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-1.5 pt-1 pl-2">
+            <div className="rounded-md border bg-background p-2">
+              <p className="mb-2 text-[10px] font-bold uppercase text-muted-foreground">Transferência simulada manual</p>
+              <div className="grid gap-2 sm:grid-cols-4">
+                <Select value={funcionarioTransferenciaManual} onValueChange={setFuncionarioTransferenciaManual}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Funcionário" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {funcionariosQuadro.map(f => (
+                      <SelectItem key={f.id} value={f.id}>{f.nome_completo}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={setorTransferenciaManual} onValueChange={setSetorTransferenciaManual}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Setor destino" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {setoresAtivos.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={turmaTransferenciaManual} onValueChange={setTurmaTransferenciaManual}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Turma" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1A">1A</SelectItem>
+                    <SelectItem value="1B">1B</SelectItem>
+                    <SelectItem value="2A">2A</SelectItem>
+                    <SelectItem value="2B">2B</SelectItem>
+                    <SelectItem value="T1">T1</SelectItem>
+                    <SelectItem value="T2">T2</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button type="button" size="sm" className="h-8 text-xs" onClick={handleAddTransferenciaManual} disabled={!funcionarioTransferenciaManual || !setorTransferenciaManual}>
+                  Simular
+                </Button>
+              </div>
+              {transferenciasManuais.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {transferenciasManuais.map(t => {
+                    const funcionario = funcionariosQuadro.find(f => f.id === t.funcionario_id);
+                    const setor = setores.find(s => s.id === t.setor_destino_id);
+                    return (
+                      <div key={t.id} className="flex items-center justify-between rounded bg-blue-50 px-2 py-1 text-xs">
+                        <span>{funcionario?.nome_completo} {'->'} {setor?.nome}{t.turma_destino ? ` / ${t.turma_destino}` : ''}</span>
+                        <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-destructive" onClick={() => setTransferenciasManuais(prev => prev.filter(x => x.id !== t.id))}>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
             {trocasPendentes.length === 0 ? (
               <p className="text-center py-3 text-muted-foreground text-[10px]">Nenhuma pendente.</p>
             ) : (
@@ -538,6 +659,39 @@ export default function Simulacao() {
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="pt-1 pl-2">
+            <div className="mb-2 rounded-md border bg-background p-2">
+              <p className="mb-2 text-[10px] font-bold uppercase text-muted-foreground">Demissão simulada manual</p>
+              <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                <Select value={funcionarioDemissaoManual} onValueChange={setFuncionarioDemissaoManual}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Selecionar funcionário" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {funcionariosQuadro.map(f => (
+                      <SelectItem key={f.id} value={f.id}>{f.nome_completo} - {f.setor?.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button type="button" size="sm" className="h-8 text-xs bg-destructive hover:bg-destructive/90" onClick={handleAddDemissaoManual} disabled={!funcionarioDemissaoManual}>
+                  Simular demissão
+                </Button>
+              </div>
+              {demissoesManuais.length > 0 && (
+                <div className="mt-2 space-y-1">
+                  {demissoesManuais.map(id => {
+                    const funcionario = funcionariosQuadro.find(f => f.id === id);
+                    return (
+                      <div key={id} className="flex items-center justify-between rounded bg-red-50 px-2 py-1 text-xs">
+                        <span>{funcionario?.nome_completo} - {funcionario?.setor?.nome}</span>
+                        <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-destructive" onClick={() => setDemissoesManuais(prev => prev.filter(x => x !== id))}>
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
             {demissoesPendentes.length === 0 ? (
               <p className="text-center py-3 text-muted-foreground text-[10px]">Nenhuma demissão pendente.</p>
             ) : (
