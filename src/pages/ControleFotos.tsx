@@ -181,7 +181,7 @@ export default function ControleFotos() {
   const filtrados = useMemo(() => {
     const termo = normalizar(busca.trim());
     return funcionariosControle.filter((func) => {
-      const temFoto = temFotoValida(func);
+      const temFoto = temFotoMarcada(func);
       if (statusFoto === "COM" && !temFoto) return false;
       if (statusFoto === "SEM" && temFoto) return false;
       if (statusDownload === "NAO_BAIXADAS" && (!temFoto || func.foto_baixada_em)) return false;
@@ -194,7 +194,7 @@ export default function ControleFotos() {
   }, [busca, funcionariosControle, setoresSelecionados, statusDownload, statusFoto]);
 
   const totais = useMemo(() => {
-    const com = funcionariosControle.filter(temFotoValida).length;
+    const com = funcionariosControle.filter(temFotoMarcada).length;
     return { total: funcionariosControle.length, com, sem: funcionariosControle.length - com };
   }, [funcionariosControle]);
 
@@ -384,7 +384,7 @@ export default function ControleFotos() {
       ADMISSAO: formatDate(func.data_admissao),
       SETOR: func.setor?.nome || "",
       SITUACAO: func.situacao?.nome || "",
-      "TEM FOTO": temFotoValida(func) ? "SIM" : "NAO",
+      "TEM FOTO": temFotoMarcada(func) ? "SIM" : "NAO",
       "ARQUIVO FOTO": func.foto_arquivo_nome || "",
       "CAMINHO FOTO": func.foto_storage_path || "",
       "VERIFICADA EM": formatData(func.foto_verificada_em),
