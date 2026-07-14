@@ -25,8 +25,8 @@ type FuncionarioFotoControle = {
   data_admissao: string | null;
   setor_id: string | null;
   cargo: string | null;
-  situacao?: { nome: string | null; conta_no_quadro?: boolean | null } | null;
-  setor?: { nome: string | null; grupo?: string | null; conta_no_quadro?: boolean | null } | null;
+  situacao?: { nome: string | null; conta_no_quadro?: boolean | null; ativa?: boolean | null } | null;
+  setor?: { nome: string | null; grupo?: string | null; conta_no_quadro?: boolean | null; ativo?: boolean | null } | null;
   tem_foto: boolean | null;
   foto_arquivo_nome: string | null;
   foto_storage_path: string | null;
@@ -95,7 +95,12 @@ function grupoSetorControleFotos(func: FuncionarioFotoControle) {
 }
 
 function contaNoQuadroControleFotos(func: FuncionarioFotoControle) {
-  return func.setor?.conta_no_quadro === true && func.situacao?.conta_no_quadro === true;
+  return (
+    func.setor?.conta_no_quadro === true &&
+    func.setor?.ativo === true &&
+    func.situacao?.conta_no_quadro === true &&
+    func.situacao?.ativa === true
+  );
 }
 
 function grupoUsaRegraDoQuadro(grupo: string) {
@@ -150,7 +155,7 @@ export default function ControleFotos() {
         const fim = inicio + tamanhoPagina - 1;
         const { data, error } = await supabase
           .from("funcionarios")
-          .select("id,matricula,nome_completo,data_admissao,setor_id,cargo,tem_foto,foto_arquivo_nome,foto_storage_path,foto_verificada_em,foto_baixada_em,telefone_whatsapp,usa_fretado,linha_fretado,setor:setores!setor_id(nome,grupo,conta_no_quadro),situacao:situacoes!situacao_id(nome,conta_no_quadro)")
+          .select("id,matricula,nome_completo,data_admissao,setor_id,cargo,tem_foto,foto_arquivo_nome,foto_storage_path,foto_verificada_em,foto_baixada_em,telefone_whatsapp,usa_fretado,linha_fretado,setor:setores!setor_id(nome,grupo,conta_no_quadro,ativo),situacao:situacoes!situacao_id(nome,conta_no_quadro,ativa)")
           .order("nome_completo")
           .range(inicio, fim);
 
