@@ -94,12 +94,12 @@ export default function ControleFaltas() {
   // Estados para controlar blocos de dias visíveis
   const [blocosVisiveis, setBlocosVisiveis] = useState<Set<number>>(new Set([1])); // Bloco 1 (atual) visível por padrão
   
-  // Selecionar automaticamente o período aberto mais ANTIGO
+  // Selecionar automaticamente o período aberto mais recente
   const periodoAtivoId = useMemo(() => {
     const periodosAbertos = periodos.filter(p => p.status === 'aberto');
-    // periodos vem ordenado por data_inicio desc, então o mais antigo é o último
-    const periodoMaisAntigo = periodosAbertos.length > 0 ? periodosAbertos[periodosAbertos.length - 1] : null;
-    return periodoMaisAntigo?.id || periodos[0]?.id || '';
+    // periodos vem ordenado por data_inicio desc, então o mais recente é o primeiro
+    const periodoMaisRecente = periodosAbertos.length > 0 ? periodosAbertos[0] : null;
+    return periodoMaisRecente?.id || periodos[0]?.id || '';
   }, [periodos]);
 
   // Se não há período selecionado, usar o ativo
