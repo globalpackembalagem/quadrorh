@@ -26,6 +26,12 @@ type QuadroTrava = {
   created_at: string | null;
 };
 
+type RegistroHistoricoQuadro = ReturnType<typeof useHistoricoMovimentacaoQuadro>['data'] extends Array<infer T> ? T : any;
+type RegistroHistoricoQuadroComSaldo = RegistroHistoricoQuadro & {
+  quantidade_antes_calculada: number | null;
+  quantidade_depois_calculada: number | null;
+};
+
 function montarLocalMovimentacao(setor?: string | null, turma?: string | null) {
   const setorFormatado = normalizarValorTabela(setor);
   const turmaFormatada = normalizarValorTabela(turma);
@@ -189,6 +195,33 @@ export default function HistoricoQuadro() {
     });
   }, [areaSelecionada, busca, historico, isAdmin, setoresPermitidos, usuarioAtual.setoresIds.length]);
 
+  const registrosComSaldo = useMemo<RegistroHistoricoQuadroComSaldo[]>(() => {
+    const trava = travasPorArea.get(areaSelecionada);
+    let saldo = trava?.quantidade_inicial ?? null;
+
+    return [...registrosVisiveis]
+      .sort((a, b) => {
+        const dataA = new Date(a.created_at ?? a.data_movimentacao).getTime();
+        const dataB = new Date(b.created_at ?? b.data_movimentacao).getTime();
+        return dataA - dataB;
+      })
+      .map((item) => {
+        const antes = item.quantidade_antes ?? saldo;
+        const depois = item.quantidade_depois ?? (antes !== null ? antes + (item.impacto ?? 0) : null);
+        saldo = depois;
+        return {
+          ...item,
+          quantidade_antes_calculada: antes,
+          quantidade_depois_calculada: depois,
+        };
+      })
+      .sort((a, b) => {
+        const dataA = new Date(a.created_at ?? a.data_movimentacao).getTime();
+        const dataB = new Date(b.created_at ?? b.data_movimentacao).getTime();
+        return dataB - dataA;
+      });
+  }, [areaSelecionada, registrosVisiveis, travasPorArea]);
+
   const podeAcessar = isAdmin || usuarioAtual.setoresIds.length > 0;
 
   const renderAreaCard = (area: AreaQuadroTrava) => {
@@ -226,13 +259,13 @@ export default function HistoricoQuadro() {
   };
 
   const exportarExcel = async () => {
-    if (registrosVisiveis.length === 0) {
+    if (registrosComSaldo.length === 0) {
       toast.info('Nenhum registro para exportar');
       return;
     }
 
     const XLSX = await loadXLSX();
-    const dados = registrosVisiveis.map((item) => ({
+    const dados = registrosComSaldo.map((item) => ({
       Data: format(parseISO(item.data_movimentacao), 'dd/MM/yyyy'),
       Funcionario: normalizarValorTabela(item.funcionario_nome),
       Matricula: normalizarValorTabela(item.matricula),
@@ -241,8 +274,8 @@ export default function HistoricoQuadro() {
       Origem: isTransferencia(item.tipo_movimentacao) ? montarLocalMovimentacao(item.setor_origem_nome, item.turma_origem) : '-',
       Destino: isTransferencia(item.tipo_movimentacao) ? montarLocalMovimentacao(item.setor_destino_nome, item.turma_destino) : '-',
       Impacto: item.impacto,
-      'Quantidade antes': item.quantidade_antes ?? '',
-      'Quantidade depois': item.quantidade_depois ?? '',
+      'Quantidade antes': item.quantidade_antes_calculada ?? '',
+      'Quantidade depois': item.quantidade_depois_calculada ?? '',
 	    }));
 
     const worksheet = XLSX.utils.json_to_sheet(dados);
@@ -360,7 +393,7 @@ export default function HistoricoQuadro() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">
-            Detalhes da Area: {formatarArea(areaSelecionada)} <Badge variant="secondary">{registrosVisiveis.length}</Badge>
+            Detalhes da Area: {formatarArea(areaSelecionada)} <Badge variant="secondary">{registrosComSaldo.length}</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent className="overflow-x-auto">
@@ -381,12 +414,12 @@ export default function HistoricoQuadro() {
                 <TableRow>
 	                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Carregando...</TableCell>
                 </TableRow>
-              ) : registrosVisiveis.length === 0 ? (
+              ) : registrosComSaldo.length === 0 ? (
                 <TableRow>
 	                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Nenhuma movimentacao registrada.</TableCell>
                 </TableRow>
               ) : (
-                registrosVisiveis.map((item) => (
+                registrosComSaldo.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{format(parseISO(item.data_movimentacao), 'dd/MM/yyyy')}</TableCell>
 	                    <TableCell>
@@ -407,7 +440,7 @@ export default function HistoricoQuadro() {
                         {item.impacto > 0 ? `+${item.impacto}` : item.impacto}
                       </Badge>
 	                    </TableCell>
-		                    <TableCell>{item.quantidade_antes ?? '-'} / {item.quantidade_depois ?? '-'}</TableCell>
+		                    <TableCell>{item.quantidade_antes_calculada ?? '-'} / {item.quantidade_depois_calculada ?? '-'}</TableCell>
 	                  </TableRow>
                 ))
               )}
