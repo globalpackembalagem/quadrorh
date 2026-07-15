@@ -37,6 +37,12 @@ export default function Dashboard() {
     return 'SEM TURMA';
   };
 
+  const noQuadro = (f: any) => {
+    const setorConta = f.setor?.conta_no_quadro === true;
+    const situacaoNome = (f.situacao?.nome || '').toUpperCase();
+    return setorConta && situacaoNome === 'ATIVO' ? 'SIM' : 'NAO';
+  };
+
   const exportarExcelPorTurma = async () => {
     const XLSX = await loadXLSX();
     const grupo = data.grupoSelecionado;
@@ -83,9 +89,10 @@ export default function Dashboard() {
         'Cargo': f.cargo || '',
         'Empresa': f.empresa || '',
         'Admissão': f.data_admissao ? format(new Date(f.data_admissao), 'dd/MM/yyyy') : '',
+        'Conta no Quadro': noQuadro(f),
       }));
       const ws = XLSX.utils.json_to_sheet(dadosAba);
-      ws['!cols'] = [{ wch: 5 }, { wch: 12 }, { wch: 35 }, { wch: 18 }, { wch: 25 }, { wch: 14 }, { wch: 12 }];
+      ws['!cols'] = [{ wch: 5 }, { wch: 12 }, { wch: 35 }, { wch: 18 }, { wch: 25 }, { wch: 14 }, { wch: 12 }, { wch: 16 }];
       const nomeAba = turma.length > 31 ? turma.substring(0, 31) : turma;
       XLSX.utils.book_append_sheet(wb, ws, nomeAba);
     });
@@ -113,12 +120,6 @@ export default function Dashboard() {
           };
         }
       }
-    };
-
-    const noQuadro = (f: any) => {
-      const setorConta = f.setor?.conta_no_quadro === true;
-      const situacaoNome = (f.situacao?.nome || '').toUpperCase();
-      return setorConta && situacaoNome === 'ATIVO' ? 'SIM' : 'NAO';
     };
 
     const resumoSoproData = data.quadroPlanejado.map(q => {
@@ -204,6 +205,7 @@ export default function Dashboard() {
       'Situação': f.situacao?.nome || '',
       'Cargo': f.cargo || '',
       'Admissão': f.data_admissao || '',
+      'Conta no Quadro': noQuadro(f),
     }));
     const wsFuncSopro = XLSX.utils.json_to_sheet(funcSoproData);
     aplicarPadraoExcel(wsFuncSopro);
@@ -217,6 +219,7 @@ export default function Dashboard() {
       'Situação': f.situacao?.nome || '',
       'Cargo': f.cargo || '',
       'Admissão': f.data_admissao || '',
+      'Conta no Quadro': noQuadro(f),
     }));
     const wsFuncDeco = XLSX.utils.json_to_sheet(funcDecoData);
     aplicarPadraoExcel(wsFuncDeco);
