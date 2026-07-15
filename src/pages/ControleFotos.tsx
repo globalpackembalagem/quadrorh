@@ -84,6 +84,15 @@ function temFotoMarcada(func: FuncionarioFotoControle) {
   return func.tem_foto === true;
 }
 
+function naoPrecisaFoto(func: FuncionarioFotoControle) {
+  return func.tem_foto === true && !func.foto_storage_path && !func.foto_arquivo_nome;
+}
+
+function statusFotoLabel(func: FuncionarioFotoControle) {
+  if (naoPrecisaFoto(func)) return "NAO PRECISA";
+  return temFotoMarcada(func) ? "SIM" : "NAO";
+}
+
 function grupoSetorControleFotos(func: FuncionarioFotoControle) {
   const grupo = normalizar(func.setor?.grupo || "").replace(/\s+/g, " ").trim();
   if (grupo === "SOPRO A" || grupo === "SOPRO B" || grupo === "SOPRO C") return grupo;
@@ -203,10 +212,11 @@ export default function ControleFotos() {
     const termo = normalizar(busca.trim());
     return funcionariosControle.filter((func) => {
       const temFoto = temFotoMarcada(func);
+      const fotoValida = temFotoValida(func);
       if (statusFoto === "COM" && !temFoto) return false;
       if (statusFoto === "SEM" && temFoto) return false;
-      if (statusDownload === "NAO_BAIXADAS" && (!temFoto || func.foto_baixada_em)) return false;
-      if (statusDownload === "BAIXADAS" && (!temFoto || !func.foto_baixada_em)) return false;
+      if (statusDownload === "NAO_BAIXADAS" && (!fotoValida || func.foto_baixada_em)) return false;
+      if (statusDownload === "BAIXADAS" && (!fotoValida || !func.foto_baixada_em)) return false;
       if (setoresSelecionados.length > 0) {
         const grupo = grupoSetorControleFotos(func);
         if (!setoresSelecionados.includes(grupo)) return false;
@@ -410,8 +420,8 @@ export default function ControleFotos() {
       SETOR: func.setor?.nome || "",
       TURMA: func.turma || "",
       SITUACAO: func.situacao?.nome || "",
-      "TEM FOTO": temFotoMarcada(func) ? "SIM" : "NAO",
-      "ARQUIVO FOTO": func.foto_arquivo_nome || "",
+      "TEM FOTO": statusFotoLabel(func),
+      "ARQUIVO FOTO": naoPrecisaFoto(func) ? "NAO PRECISA" : func.foto_arquivo_nome || "",
       "CAMINHO FOTO": func.foto_storage_path || "",
       "VERIFICADA EM": formatData(func.foto_verificada_em),
       "BAIXADA EM": formatData(func.foto_baixada_em),
@@ -576,6 +586,7 @@ export default function ControleFotos() {
                 {filtrados.map((func) => {
                   const fotoValida = temFotoValida(func);
                   const fotoMarcada = temFotoMarcada(func);
+                  const naoPrecisa = naoPrecisaFoto(func);
                   return (
                     <tr key={func.id} className="border-b hover:bg-muted/30">
                       <td className="px-3 py-3">{func.matricula || "TEMP"}</td>
@@ -583,9 +594,11 @@ export default function ControleFotos() {
                       <td className="px-3 py-3">{formatDate(func.data_admissao)}</td>
                       <td className="px-3 py-3">{func.setor?.nome || "-"}</td>
                       <td className="px-3 py-3">
-                        <Badge variant={fotoMarcada ? "default" : "destructive"}>{fotoMarcada ? "SIM" : "NAO"}</Badge>
+                        <Badge variant={fotoMarcada ? (naoPrecisa ? "secondary" : "default") : "destructive"}>
+                          {statusFotoLabel(func)}
+                        </Badge>
                       </td>
-                      <td className="max-w-[180px] truncate px-3 py-3">{func.foto_arquivo_nome || "-"}</td>
+                      <td className="max-w-[180px] truncate px-3 py-3">{naoPrecisa ? "NAO PRECISA" : func.foto_arquivo_nome || "-"}</td>
                       <td className="px-3 py-3">{formatData(func.foto_verificada_em)}</td>
                       <td className="px-3 py-3">{formatData(func.foto_baixada_em)}</td>
                       <td className="px-3 py-3">
@@ -633,7 +646,7 @@ export default function ControleFotos() {
               </div>
               <label className="flex items-center gap-2 text-sm font-medium">
                 <input type="checkbox" checked={editando.tem_foto === true} onChange={(e) => setEditando({ ...editando, tem_foto: e.target.checked })} />
-                TEM FOTO
+                TEM FOTO / NAO PRECISA
               </label>
               <div className="space-y-2">
                 <Label>Nome do arquivo</Label>
