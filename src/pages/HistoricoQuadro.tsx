@@ -214,11 +214,6 @@ export default function HistoricoQuadro() {
           quantidade_antes_calculada: antes,
           quantidade_depois_calculada: depois,
         };
-      })
-      .sort((a, b) => {
-        const dataA = new Date(a.created_at ?? a.data_movimentacao).getTime();
-        const dataB = new Date(b.created_at ?? b.data_movimentacao).getTime();
-        return dataB - dataA;
       });
   }, [areaSelecionada, registrosVisiveis, travasPorArea]);
 
@@ -396,9 +391,9 @@ export default function HistoricoQuadro() {
             Detalhes da Area: {formatarArea(areaSelecionada)} <Badge variant="secondary">{registrosComSaldo.length}</Badge>
           </CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
+        <CardContent className="max-h-[520px] overflow-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 z-10 bg-card">
               <TableRow>
                 <TableHead>Data</TableHead>
                 <TableHead>Funcionario</TableHead>
