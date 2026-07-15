@@ -65,6 +65,7 @@ export default function CapturaFotos() {
   const [selecionado, setSelecionado] = useState<FuncionarioFoto | null>(null);
   const [telefone, setTelefone] = useState("");
   const [usaFretado, setUsaFretado] = useState(false);
+  const [fretadoEscolhido, setFretadoEscolhido] = useState(false);
   const [linhaFretado, setLinhaFretado] = useState("");
   const [imagemBase64, setImagemBase64] = useState("");
   const [preview, setPreview] = useState("");
@@ -72,8 +73,13 @@ export default function CapturaFotos() {
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const buscaInputRef = useRef<HTMLInputElement | null>(null);
 
-  const podeSalvar = useMemo(() => Boolean(selecionado && (imagemBase64 || telefone || usaFretado !== Boolean(selecionado.usa_fretado) || linhaFretado)), [imagemBase64, linhaFretado, selecionado, telefone, usaFretado]);
+  const podeSalvar = useMemo(() => {
+    const telefoneOk = telefone.replace(/\D/g, "").length >= 10;
+    const fretadoOk = fretadoEscolhido && (!usaFretado || Boolean(linhaFretado));
+    return Boolean(selecionado && telefoneOk && fretadoOk && imagemBase64);
+  }, [fretadoEscolhido, imagemBase64, linhaFretado, selecionado, telefone, usaFretado]);
 
   const chamarFotosHandler = async (body: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke("fotos-handler", { body: { codigo, ...body } });
@@ -160,6 +166,7 @@ export default function CapturaFotos() {
     setSelecionado(funcionario);
     setTelefone(formatTelefone(funcionario.telefone_whatsapp || ""));
     setUsaFretado(Boolean(funcionario.usa_fretado));
+    setFretadoEscolhido(funcionario.usa_fretado !== null || Boolean(funcionario.linha_fretado));
     setLinhaFretado(funcionario.linha_fretado || "");
     setImagemBase64("");
     setPreview("");
@@ -192,8 +199,13 @@ export default function CapturaFotos() {
       setTermo("");
       setResultados([]);
       setPendentesFoto((atuais) => atuais.filter((funcionario) => funcionario.id !== selecionado.id));
+      setTelefone("");
+      setUsaFretado(false);
+      setFretadoEscolhido(false);
+      setLinhaFretado("");
       setImagemBase64("");
       setPreview("");
+      window.setTimeout(() => buscaInputRef.current?.focus(), 100);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Erro ao salvar");
     } finally {
@@ -243,7 +255,7 @@ export default function CapturaFotos() {
           <CardContent className="flex flex-col gap-3 pt-6 md:flex-row">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-              <Input className="pl-9" value={termo} onChange={(e) => setTermo(e.target.value)} placeholder="Buscar por nome ou matricula" onKeyDown={(e) => e.key === "Enter" && buscarAgora()} />
+              <Input ref={buscaInputRef} className="pl-9" value={termo} onChange={(e) => setTermo(e.target.value)} placeholder="Buscar por nome ou matricula" onKeyDown={(e) => e.key === "Enter" && buscarAgora()} />
             </div>
             <Button onClick={buscarAgora} disabled={carregando || termo.trim().length < 3} variant="outline" className="md:w-36">
               {carregando ? "Buscando" : "Atualizar"}
@@ -305,7 +317,7 @@ export default function CapturaFotos() {
 
                   <div className="space-y-2">
                     <Label>Telefone / WhatsApp</Label>
-                    <Input type="tel" inputMode="tel" autoComplete="tel" value={telefone} onChange={(e) => setTelefone(formatTelefone(e.target.value))} placeholder="(00) 00000-0000" />
+                    <Input type="tel" inputMode="numeric" pattern="[0-9]*" autoComplete="tel" value={telefone} onChange={(e) => setTelefone(formatTelefone(e.target.value))} placeholder="(00) 00000-0000" />
                   </div>
 
                   <div className="space-y-2">
@@ -318,6 +330,7 @@ export default function CapturaFotos() {
                           variant={usaFretado && linhaFretado === linha ? "default" : "outline"}
                           onClick={() => {
                             setUsaFretado(true);
+                            setFretadoEscolhido(true);
                             setLinhaFretado(linha);
                           }}
                         >
@@ -330,6 +343,7 @@ export default function CapturaFotos() {
                         className="col-span-2"
                         onClick={() => {
                           setUsaFretado(false);
+                          setFretadoEscolhido(true);
                           setLinhaFretado("");
                         }}
                       >
@@ -360,9 +374,14 @@ export default function CapturaFotos() {
 	                    )}
 	                  </div>
 
-                  <Button onClick={salvar} disabled={carregando || !podeSalvar || (usaFretado && !linhaFretado)} className="w-full">
+                  <Button onClick={salvar} disabled={carregando || !podeSalvar} className="w-full">
                     <Camera className="mr-2 h-4 w-4" /> Salvar
                   </Button>
+                  {!podeSalvar && (
+                    <p className="text-xs text-slate-500">
+                      Preencha telefone, fretado e tire a foto para salvar.
+                    </p>
+                  )}
                   <div className="flex items-center gap-2 text-xs text-slate-500">
                     {selecionado.tem_foto ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <XCircle className="h-4 w-4 text-slate-400" />}
                     Status atual da foto
