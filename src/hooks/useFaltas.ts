@@ -73,6 +73,13 @@ export function useCreatePeriodoProximoMes() {
         dataFim.setDate(13);
       }
 
+      const { error: closeError } = await supabase
+        .from('periodos_ponto')
+        .update({ status: 'fechado' as PeriodoStatus })
+        .eq('status', 'aberto');
+
+      if (closeError) throw closeError;
+
       const { data, error } = await supabase
         .from('periodos_ponto')
         .insert({
@@ -101,6 +108,16 @@ export function useUpdatePeriodoStatus() {
   
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: PeriodoStatus }) => {
+      if (status === 'aberto') {
+        const { error: closeError } = await supabase
+          .from('periodos_ponto')
+          .update({ status: 'fechado' as PeriodoStatus })
+          .eq('status', 'aberto')
+          .neq('id', id);
+
+        if (closeError) throw closeError;
+      }
+
       const { data, error } = await supabase
         .from('periodos_ponto')
         .update({ status })
