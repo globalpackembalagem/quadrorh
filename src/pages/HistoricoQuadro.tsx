@@ -435,7 +435,13 @@ export default function HistoricoQuadro() {
                         {item.impacto > 0 ? `+${item.impacto}` : item.impacto}
                       </Badge>
 	                    </TableCell>
-		                    <TableCell>{item.quantidade_antes_calculada ?? '-'} / {item.quantidade_depois_calculada ?? '-'}</TableCell>
+		                    <TableCell>
+                          <span className="inline-flex min-w-[72px] items-center justify-center gap-1 tabular-nums">
+                            <span>{item.quantidade_antes_calculada ?? '-'}</span>
+                            <span className="text-muted-foreground">/</span>
+                            <span className="font-bold text-primary">{item.quantidade_depois_calculada ?? '-'}</span>
+                          </span>
+                        </TableCell>
 	                  </TableRow>
                 ))
               )}
