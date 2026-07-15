@@ -645,6 +645,39 @@ serve(async (req) => {
         return jsonResponse({ success: true, historico_count: historicoCount, movimentacao: movimentacaoData });
       }
 
+      case "quadro_historico_remover_funcionario_dia": {
+        const { session_token, funcionario_id, data_movimentacao = new Date().toISOString().slice(0, 10) } = params;
+        if (!session_token) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
+        if (!funcionario_id) return jsonResponse({ error: "Funcionario obrigatorio" }, 400);
+
+        const writer = await getFuncionariosWriterBySession(supabase, session_token);
+        const canWrite = writer?.acesso_admin === true || writer?.pode_editar_funcionarios === true;
+        if (!canWrite) return jsonResponse({ error: "Acesso negado" }, 403);
+
+        const { count: movimentacoesRemovidas, error: movError } = await supabase
+          .from("historico_movimentacao_quadro")
+          .delete({ count: "exact" })
+          .eq("funcionario_id", funcionario_id)
+          .eq("data_movimentacao", data_movimentacao);
+        if (movError) throw movError;
+
+        const inicio = `${data_movimentacao}T00:00:00.000Z`;
+        const fim = `${data_movimentacao}T23:59:59.999Z`;
+        const { count: historicosRemovidos, error: histError } = await supabase
+          .from("quadro_historico")
+          .delete({ count: "exact" })
+          .eq("funcionario_id", funcionario_id)
+          .gte("created_at", inicio)
+          .lte("created_at", fim);
+        if (histError) throw histError;
+
+        return jsonResponse({
+          success: true,
+          movimentacoes_removidas: movimentacoesRemovidas || 0,
+          historicos_removidos: historicosRemovidos || 0,
+        });
+      }
+
       case "programar_situacao_funcionario": {
         const { session_token, funcionario_id, situacao_id, data_inicio, data_fim = null, observacao = null } = params;
         if (!session_token) return jsonResponse({ error: "Sessao obrigatoria" }, 403);

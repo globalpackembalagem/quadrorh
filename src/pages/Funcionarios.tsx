@@ -1960,7 +1960,15 @@ export default function Funcionarios() {
                           <AlertDialogAction
                             onClick={async () => {
                               try {
-                              await updateFuncionario.mutateAsync({ id: editingFuncionario.id, situacao_id: sitPrevisao.id });
+                                await updateFuncionario.mutateAsync({ id: editingFuncionario.id, situacao_id: sitPrevisao.id });
+                                await supabase.functions.invoke('auth-handler', {
+                                  body: {
+                                    action: 'quadro_historico_remover_funcionario_dia',
+                                    session_token: getSessionToken(),
+                                    funcionario_id: editingFuncionario.id,
+                                    data_movimentacao: new Date().toISOString().slice(0, 10),
+                                  },
+                                });
                                 // Excluir registros de treinamento do funcionário
                                 await supabase
                                   .from('treinamentos_previsao')
