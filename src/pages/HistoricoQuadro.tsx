@@ -202,23 +202,23 @@ export default function HistoricoQuadro() {
         key={area}
         type="button"
         onClick={() => setAreaSelecionada(area)}
-        className={`rounded-2xl border bg-card p-4 text-left shadow-sm transition hover:border-primary/50 ${
+        className={`flex h-full min-h-[116px] flex-col rounded-2xl border bg-card p-4 text-left shadow-sm transition hover:border-primary/50 ${
           selecionada ? 'border-primary ring-2 ring-primary/15' : 'border-border'
         }`}
       >
         <div className="mb-3 text-sm font-bold text-foreground">{formatarArea(area)}</div>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-lg bg-muted/60 p-3">
-            <div className="text-[11px] font-bold uppercase text-muted-foreground">
+        <div className="grid flex-1 grid-cols-2 gap-2">
+          <div className="flex min-h-[64px] flex-col justify-between rounded-lg bg-muted/60 p-3">
+            <div className="truncate text-[10px] font-bold uppercase leading-tight text-muted-foreground" title={`Trava ${formatarDataHora(trava?.created_at)}`}>
               Trava {formatarDataHora(trava?.created_at)}
             </div>
-            <div className="mt-1 text-3xl font-bold text-primary">
+            <div className="mt-1 text-3xl font-bold leading-none text-primary">
               {quantidadeInicial ?? '-'}
             </div>
           </div>
-          <div className="rounded-lg bg-muted/60 p-3">
-            <div className="text-[11px] font-bold uppercase text-muted-foreground">Atual</div>
-            <div className="mt-1 text-3xl font-bold text-primary">{atual}</div>
+          <div className="flex min-h-[64px] flex-col justify-between rounded-lg bg-muted/60 p-3">
+            <div className="text-[10px] font-bold uppercase leading-tight text-muted-foreground">Atual</div>
+            <div className="mt-1 text-3xl font-bold leading-none text-primary">{atual}</div>
           </div>
         </div>
       </button>
