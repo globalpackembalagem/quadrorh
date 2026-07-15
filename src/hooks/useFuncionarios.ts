@@ -72,6 +72,10 @@ function situacaoRetornaAutomaticoParaAtivo(nome?: string | null): boolean {
 }
 
 function contaNoQuadro(funcionario: any): boolean {
+  if (typeof funcionario?.situacao?.conta_no_quadro === 'boolean') {
+    return funcionario.situacao.conta_no_quadro === true && funcionario.situacao.ativa !== false;
+  }
+
   const situacao = normalizarTextoHistorico(funcionario?.situacao?.nome);
   if (!situacao) return false;
 
