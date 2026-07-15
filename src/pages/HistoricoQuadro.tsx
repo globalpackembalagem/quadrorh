@@ -74,10 +74,11 @@ function montarSetorMovimentacao(item: any) {
   if (String(item.tipo_movimentacao ?? '').toUpperCase() === 'ADMISSAO') {
     return montarLocalMovimentacao(item.setor_destino_nome, item.turma_destino);
   }
-  if (String(item.tipo_movimentacao ?? '').toUpperCase() === 'DEMISSAO') {
-    return montarLocalMovimentacao(item.setor_origem_nome, item.turma_origem);
-  }
-  return '-';
+
+  const origem = montarLocalMovimentacao(item.setor_origem_nome, item.turma_origem);
+  if (origem !== '-') return origem;
+
+  return montarLocalMovimentacao(item.setor_destino_nome, item.turma_destino);
 }
 
 function areaDoRegistro(item: any): AreaQuadroTrava | null {
