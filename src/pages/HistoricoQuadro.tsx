@@ -274,8 +274,8 @@ export default function HistoricoQuadro() {
       Origem: isTransferencia(item.tipo_movimentacao) ? montarLocalMovimentacao(item.setor_origem_nome, item.turma_origem) : '-',
       Destino: isTransferencia(item.tipo_movimentacao) ? montarLocalMovimentacao(item.setor_destino_nome, item.turma_destino) : '-',
       Impacto: item.impacto,
-      'Quantidade antes': item.quantidade_antes_calculada ?? '',
-      'Quantidade depois': item.quantidade_depois_calculada ?? '',
+      'Antes': item.quantidade_antes_calculada ?? '',
+      'Atual': item.quantidade_depois_calculada ?? '',
 	    }));
 
     const worksheet = XLSX.utils.json_to_sheet(dados);
@@ -406,7 +406,7 @@ export default function HistoricoQuadro() {
                 <TableHead>Origem / Setor</TableHead>
                 <TableHead>Destino</TableHead>
 		                <TableHead>Impacto</TableHead>
-		                <TableHead>Antes/Depois</TableHead>
+		                <TableHead>Antes / Atual</TableHead>
 		              </TableRow>
             </TableHeader>
             <TableBody>
