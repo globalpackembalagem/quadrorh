@@ -146,7 +146,11 @@ function getNavigationForUser(
     ?.normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toUpperCase();
-  const podeVerHistoricoQuadro = ['LUCIANO', 'MAURICIO'].includes(userNameNormalizado || '');
+  const podeVerTudoHistoricoQuadro = isAdmin
+    || ['LUCIANO', 'MAURICIO', 'PAULO'].includes(userNameNormalizado || '')
+    || Boolean(perms?.pode_editar_funcionarios || perms?.pode_visualizar_demissoes || perms?.pode_editar_demissoes);
+  const podeVerHistoricoQuadro = podeVerTudoHistoricoQuadro
+    || Boolean(canEditFaltas && perms?.setoresIds?.length);
 
   // REAL PARCERIA: acesso pontual, sempre em modo visualização
   if (userName?.toUpperCase() === 'REAL PARCERIA') {
@@ -186,9 +190,7 @@ function getNavigationForUser(
   
   // Admin: tudo
   if (isAdmin) {
-    return podeVerHistoricoQuadro
-      ? allRHNavigation
-      : allRHNavigation.filter((item) => item.href !== '/historico-quadro');
+    return allRHNavigation;
   }
   
   // Gestor de setor: menu baseado nas permissões granulares

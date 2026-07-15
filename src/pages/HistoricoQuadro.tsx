@@ -114,6 +114,12 @@ export default function HistoricoQuadro() {
   const [dataFim, setDataFim] = useState('');
   const [busca, setBusca] = useState('');
   const [areaSelecionada, setAreaSelecionada] = useState<AreaQuadroTrava>('SOPRO A');
+  const nomeUsuarioNormalizado = normalizarBusca(usuarioAtual.nome);
+  const podeVerTudo = isAdmin
+    || ['LUCIANO', 'MAURICIO', 'PAULO'].includes(nomeUsuarioNormalizado)
+    || usuarioAtual.pode_editar_funcionarios
+    || usuarioAtual.pode_visualizar_demissoes
+    || usuarioAtual.pode_editar_demissoes;
 
   const areasSopro = AREAS_QUADRO_TRAVA.filter((area) => area.startsWith('SOPRO'));
   const areasDecoracao = AREAS_QUADRO_TRAVA.filter((area) => area.startsWith('DECORACAO'));
@@ -157,11 +163,11 @@ export default function HistoricoQuadro() {
   );
 
   const setoresPermitidos = useMemo(() => {
-    if (isAdmin || usuarioAtual.setoresIds.length === 0) return setoresDoQuadro;
+    if (podeVerTudo || usuarioAtual.setoresIds.length === 0) return setoresDoQuadro;
     return setoresDoQuadro.filter((setor) => usuarioAtual.setoresIds.includes(setor.id));
-  }, [isAdmin, setoresDoQuadro, usuarioAtual.setoresIds]);
+  }, [podeVerTudo, setoresDoQuadro, usuarioAtual.setoresIds]);
 
-  const setorFiltro = setorId === 'todos' && !isAdmin && usuarioAtual.setoresIds.length === 1
+  const setorFiltro = setorId === 'todos' && !podeVerTudo && usuarioAtual.setoresIds.length === 1
     ? usuarioAtual.setoresIds[0]
     : setorId;
 
@@ -177,7 +183,7 @@ export default function HistoricoQuadro() {
     const termo = busca.trim().toLowerCase();
 
     return historico.filter((item) => {
-      if (!isAdmin && usuarioAtual.setoresIds.length > 0) {
+      if (!podeVerTudo && usuarioAtual.setoresIds.length > 0) {
         const podeVer = (item.setor_origem_id && permitidos.has(item.setor_origem_id))
           || (item.setor_destino_id && permitidos.has(item.setor_destino_id));
         if (!podeVer) return false;
@@ -194,7 +200,7 @@ export default function HistoricoQuadro() {
         item.setor_destino_nome,
       ].some((valor) => valor?.toLowerCase().includes(termo));
     });
-  }, [areaSelecionada, busca, historico, isAdmin, setoresPermitidos, usuarioAtual.setoresIds.length]);
+  }, [areaSelecionada, busca, historico, podeVerTudo, setoresPermitidos, usuarioAtual.setoresIds.length]);
 
   const registrosComSaldo = useMemo<RegistroHistoricoQuadroComSaldo[]>(() => {
     const trava = travasPorArea.get(areaSelecionada);
@@ -218,7 +224,7 @@ export default function HistoricoQuadro() {
       });
   }, [areaSelecionada, registrosVisiveis, travasPorArea]);
 
-  const podeAcessar = isAdmin || usuarioAtual.setoresIds.length > 0;
+  const podeAcessar = podeVerTudo || usuarioAtual.setoresIds.length > 0;
 
   const renderAreaCard = (area: AreaQuadroTrava) => {
     const trava = travasPorArea.get(area);
