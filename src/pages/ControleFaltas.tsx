@@ -102,6 +102,25 @@ export default function ControleFaltas() {
     return periodoMaisRecente?.id || periodos[0]?.id || '';
   }, [periodos]);
 
+  useEffect(() => {
+    if (!periodoAtivoId) return;
+
+    setPeriodoSelecionado((atual) => {
+      if (!atual) return periodoAtivoId;
+
+      const periodoSelecionadoAtual = periodos.find((p) => p.id === atual);
+      const periodoAbertoMaisRecente = periodos.find((p) => p.id === periodoAtivoId);
+
+      if (!periodoSelecionadoAtual) return periodoAtivoId;
+      if (periodoSelecionadoAtual.status !== 'aberto') return periodoAtivoId;
+      if (periodoAbertoMaisRecente?.status === 'aberto' && periodoSelecionadoAtual.data_inicio < periodoAbertoMaisRecente.data_inicio) {
+        return periodoAtivoId;
+      }
+
+      return atual;
+    });
+  }, [periodoAtivoId, periodos]);
+
   // Se não há período selecionado, usar o ativo
   const periodoEfetivo = periodoSelecionado || periodoAtivoId;
   
