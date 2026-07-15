@@ -25,6 +25,7 @@ type FuncionarioFotoControle = {
   data_admissao: string | null;
   setor_id: string | null;
   cargo: string | null;
+  turma: string | null;
   situacao?: { nome: string | null; conta_no_quadro?: boolean | null; ativa?: boolean | null } | null;
   setor?: { nome: string | null; grupo?: string | null; conta_no_quadro?: boolean | null; ativo?: boolean | null } | null;
   tem_foto: boolean | null;
@@ -155,7 +156,7 @@ export default function ControleFotos() {
         const fim = inicio + tamanhoPagina - 1;
         const { data, error } = await supabase
           .from("funcionarios")
-          .select("id,matricula,nome_completo,data_admissao,setor_id,cargo,tem_foto,foto_arquivo_nome,foto_storage_path,foto_verificada_em,foto_baixada_em,telefone_whatsapp,usa_fretado,linha_fretado,setor:setores!setor_id(nome,grupo,conta_no_quadro,ativo),situacao:situacoes!situacao_id(nome,conta_no_quadro,ativa)")
+          .select("id,matricula,nome_completo,data_admissao,setor_id,cargo,turma,tem_foto,foto_arquivo_nome,foto_storage_path,foto_verificada_em,foto_baixada_em,telefone_whatsapp,usa_fretado,linha_fretado,setor:setores!setor_id(nome,grupo,conta_no_quadro,ativo),situacao:situacoes!situacao_id(nome,conta_no_quadro,ativa)")
           .order("nome_completo")
           .range(inicio, fim);
 
@@ -407,6 +408,7 @@ export default function ControleFotos() {
       NOME: func.nome_completo,
       ADMISSAO: formatDate(func.data_admissao),
       SETOR: func.setor?.nome || "",
+      TURMA: func.turma || "",
       SITUACAO: func.situacao?.nome || "",
       "TEM FOTO": temFotoMarcada(func) ? "SIM" : "NAO",
       "ARQUIVO FOTO": func.foto_arquivo_nome || "",
