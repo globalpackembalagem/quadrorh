@@ -23,6 +23,11 @@ function grupoResponsavelUsuario(nome?: string | null) {
   return null;
 }
 
+function isLiderTurmaObrigatoria(nome?: string | null) {
+  const n = normalizarTextoSetor(nome);
+  return ['LEILA', 'ALEX', 'SILVIA', 'AMILTON'].some((lider) => n.includes(lider));
+}
+
 /**
  * Insere um evento na central de notificações apenas se não existir
  * outro evento pendente (notificado=false) com mesmo funcionario_nome + tipo.
@@ -449,12 +454,13 @@ export function useEnviarNotificacaoEventos() {
           const isCoberturaTreinamento = grupo.tipo === 'cobertura_treinamento';
           const isTurmaPendente = grupo.tipo === 'turma_pendente';
           const isGestorDoSetor = (isGestorDaArea || isResponsavelGrupo) && ur.perfil !== 'visualizacao';
+          const isLiderTurma = isLiderTurmaObrigatoria(ur.nome);
 
           let tipoNotif: string;
           if (isRH) {
             // RH SEMPRE recebe como visualização — nunca interativo
             tipoNotif = 'evento_sistema_modal';
-          } else if (isTurmaPendente && isGestorDoSetor) {
+          } else if (isTurmaPendente && isGestorDoSetor && isLiderTurma) {
             tipoNotif = 'turma_pendente_consulta';
           } else if (isCoberturaTreinamento && isGestorDoSetor) {
             tipoNotif = 'cobertura_treinamento_consulta';

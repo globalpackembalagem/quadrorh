@@ -54,20 +54,31 @@ const TIPO_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
   alteracao_quadro: BarChart3,
 };
 
-const podeCobrarTurmaNaSegundaSeguinte = (dataAdmissao?: string | null) => {
-  if (!dataAdmissao) return false;
-
+const calcularCobrancaTurmaPendente = (dataReferencia?: string | null) => {
   const hoje = startOfDay(new Date());
-  if (hoje.getDay() !== 1) return false;
+  const dataBase = dataReferencia ? startOfDay(parseISO(dataReferencia)) : hoje;
 
-  const admissao = startOfDay(parseISO(dataAdmissao));
-  if (Number.isNaN(admissao.getTime())) return false;
+  if (Number.isNaN(dataBase.getTime()) || differenceInCalendarDays(dataBase, hoje) > 0) {
+    return { cobrar: false, mensagemPrazo: '', prazoTurma: null as string | null };
+  }
 
-  const prazo = admissao.getDay() === 1
-    ? addDays(admissao, 7)
-    : addDays(admissao, 2);
+  const diasDesdeInicio = differenceInCalendarDays(hoje, dataBase);
+  const dataLimite = addDays(dataBase, 4);
 
-  return differenceInCalendarDays(hoje, prazo) >= 0;
+  if (diasDesdeInicio <= 4) {
+    const diasRestantes = Math.max(0, 4 - diasDesdeInicio);
+    return {
+      cobrar: true,
+      mensagemPrazo: `Preencher turma ate ${format(dataLimite, 'dd/MM/yyyy')} (${diasRestantes} dia(s) restante(s)).`,
+      prazoTurma: format(dataLimite, 'yyyy-MM-dd'),
+    };
+  }
+
+  return {
+    cobrar: true,
+    mensagemPrazo: 'Prazo vencido. Preencher a turma hoje para regularizar.',
+    prazoTurma: 'vencido',
+  };
 };
 
 const TIPO_LABELS: Record<string, string> = {
@@ -470,17 +481,34 @@ export default function Notificacoes() {
         if (!atual || dataRef > atual) dataTransferenciaPorFuncionario.set(troca.funcionario_id, dataRef);
       });
 
-      const todos = [...(funcs || []), ...(funcsVazio || [])]
-        .filter((func: any) => podeCobrarTurmaNaSegundaSeguinte(dataTransferenciaPorFuncionario.get(func.id) || func.data_admissao));
+      const funcionariosComCobranca = [...(funcs || []), ...(funcsVazio || [])]
+        .map((func: any) => ({
+          func,
+          cobranca: calcularCobrancaTurmaPendente(dataTransferenciaPorFuncionario.get(func.id) || func.data_admissao),
+        }))
+        .filter((item) => item.cobranca.cobrar);
+
+      const idsComCobranca = funcionariosComCobranca.map((item) => item.func.id);
+      const { data: eventosExistentes } = idsComCobranca.length > 0
+        ? await supabase
+          .from('eventos_sistema')
+          .select('funcionario_id')
+          .eq('tipo', 'turma_pendente')
+          .eq('notificado', false)
+          .in('funcionario_id', idsComCobranca)
+        : { data: [] as any[] };
+
+      const idsJaPendentes = new Set((eventosExistentes || []).map((evento: any) => evento.funcionario_id));
+      const todos = funcionariosComCobranca.filter((item) => !idsJaPendentes.has(item.func.id));
 
       if (todos.length === 0) {
-        toast.info('Nenhum funcionário sem turma para cobrar nesta semana.');
+        toast.info('Nenhum funcionario sem turma pendente para inserir.');
         return;
       }
 
-      const eventosParaInserir = todos.map((func: any) => ({
+      const eventosParaInserir = todos.map(({ func, cobranca }: any) => ({
         tipo: 'turma_pendente',
-        descricao: `LEMBRETE TURMA PENDENTE — ${func.nome_completo}`,
+        descricao: `TURMA PENDENTE - PRECISA COLOCAR A TURMA - ${func.nome_completo}`,
         funcionario_id: func.id,
         funcionario_nome: func.nome_completo,
         setor_id: func.setor_id,
@@ -489,8 +517,8 @@ export default function Notificacoes() {
         criado_por: userRole?.nome || 'ADMIN',
         dados_extra: {
           setor_grupo: ((func.setor as any)?.grupo || '').toUpperCase(),
-          mensagem_personalizada: `Funcionário sem turma. Você já tem a turma deste funcionário? Prazo para incluir a turma: hoje.`,
-          prazo_turma: 'hoje',
+          mensagem_personalizada: `Funcionario sem turma. Precisa colocar a turma para regularizar. ${cobranca.mensagemPrazo}`,
+          prazo_turma: cobranca.prazoTurma,
         },
         notificado: false,
       }));
@@ -1607,3 +1635,4 @@ export default function Notificacoes() {
     </div>
   );
 }
+
