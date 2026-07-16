@@ -1,5 +1,5 @@
-import React, { ReactNode, useState, useMemo } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { ReactNode, useState, useMemo, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -306,8 +306,9 @@ function getNavigationForUser(
 export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
   useFuncionariosRealtime();
   const location = useLocation();
+  const navigate = useNavigate();
   const { isRHMode, userRole, isAdmin, isVisualizacao, canEditFaltas } = useAuth();
-  const { usuarioAtual } = useUsuario();
+  const { usuarioAtual, setUsuarioAtual } = useUsuario();
   const { data: funcionarios = [] } = useFuncionarios();
   const isGestorSetor = isRHMode && !isAdmin && canEditFaltas();
   const [openSubmenus, setOpenSubmenus] = useState<string[]>(['CONTROLE DE FALTAS', 'DEMISSÕES']);
@@ -318,7 +319,35 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
   const [sidebarPinned, setSidebarPinned] = useState(() => {
     try { return localStorage.getItem('sidebar-pinned') === 'true'; } catch { return false; }
   });
+  const [usuarioOriginalImpersonacao, setUsuarioOriginalImpersonacao] = useState<UsuarioLocal | null>(() => {
+    try {
+      const stored = localStorage.getItem('usuario_impersonacao_original');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      localStorage.removeItem('usuario_impersonacao_original');
+      return null;
+    }
+  });
   const isMobile = useIsMobile();
+
+  const voltarParaLuciano = () => {
+    if (!usuarioOriginalImpersonacao) return;
+    localStorage.removeItem('usuario_impersonacao_original');
+    setUsuarioOriginalImpersonacao(null);
+    setUsuarioAtual(usuarioOriginalImpersonacao);
+    toast.success('Sessao restaurada para LUCIANO');
+    navigate('/admin/usuarios');
+  };
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('usuario_impersonacao_original');
+      setUsuarioOriginalImpersonacao(stored ? JSON.parse(stored) : null);
+    } catch {
+      localStorage.removeItem('usuario_impersonacao_original');
+      setUsuarioOriginalImpersonacao(null);
+    }
+  }, [usuarioAtual.id]);
 
   // Navegação filtrada por perfil
   const rhNavigation = getNavigationForUser(isAdmin, isRHMode, isVisualizacao, canEditFaltas(), userRole?.nome, isRHMode ? usuarioAtual : undefined);
@@ -839,10 +868,21 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
       </div>
 
       {/* Modal unificado de avisos */}
-      <CentralAvisosModal />
-      <ForceUpdateModal />
-      <AlterarMinhaSenhaDialog open={alterarSenhaOpen} onOpenChange={setAlterarSenhaOpen} />
-      <GuiaInterativoGestor open={guiaOpen} onOpenChange={setGuiaOpen} />
+	      <CentralAvisosModal />
+	      {usuarioOriginalImpersonacao && usuarioAtual.id !== usuarioOriginalImpersonacao.id && (
+	        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 shadow-lg">
+	          <div className="text-xs">
+	            <div className="font-bold text-amber-900">SIMULANDO ACESSO</div>
+	            <div className="text-amber-800">Usuario atual: {usuarioAtual.nome.toUpperCase()}</div>
+	          </div>
+	          <Button size="sm" variant="outline" onClick={voltarParaLuciano}>
+	            Voltar para LUCIANO
+	          </Button>
+	        </div>
+	      )}
+	      <ForceUpdateModal />
+	      <AlterarMinhaSenhaDialog open={alterarSenhaOpen} onOpenChange={setAlterarSenhaOpen} />
+	      <GuiaInterativoGestor open={guiaOpen} onOpenChange={setGuiaOpen} />
     </div>
   );
 }

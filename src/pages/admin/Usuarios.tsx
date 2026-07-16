@@ -159,6 +159,9 @@ export default function Usuarios() {
         .eq('id', userId)
         .single();
       if (error) throw error;
+      if (usuarioAtual.nome.toUpperCase() === 'LUCIANO' && !localStorage.getItem('usuario_impersonacao_original')) {
+        localStorage.setItem('usuario_impersonacao_original', JSON.stringify(usuarioAtual));
+      }
       setUsuarioAtual(montarUsuarioLocal(data));
       await supabase.from('historico_acesso').insert({
         user_role_id: userId,
