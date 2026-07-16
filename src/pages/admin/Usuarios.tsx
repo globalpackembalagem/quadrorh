@@ -566,18 +566,19 @@ export default function Usuarios() {
               </div>
 
               {/* Ações */}
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex gap-1">
                 {isMaster && !isLuciano && user.ativo && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
-                          className="h-7 w-7 p-0 text-primary hover:text-primary"
+                          className="h-7 gap-1 px-2 text-primary hover:text-primary"
                           onClick={() => acessarComoUsuario(user.id, user.nome)}
                         >
                           <LogIn className="h-3.5 w-3.5" />
+                          <span className="hidden xl:inline">Acessar</span>
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent><p className="text-xs">Acessar como {user.nome.toUpperCase()}</p></TooltipContent>
