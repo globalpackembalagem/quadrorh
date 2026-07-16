@@ -318,11 +318,15 @@ export default function ControleFotos() {
     }
     try {
       const url = await gerarUrlFoto(func.foto_storage_path);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error("Erro ao baixar arquivo da foto.");
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = url;
+      link.href = objectUrl;
       link.download = nomeArquivoFoto(func);
-      link.target = "_blank";
       link.click();
+      URL.revokeObjectURL(objectUrl);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao baixar foto.");
     }
