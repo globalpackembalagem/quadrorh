@@ -1054,6 +1054,24 @@ export default function Funcionarios() {
       if (programacaoData?.error) throw new Error(programacaoData.error);
     }
 
+    if (funcionarioId && editingFuncionario) {
+      const setorAtual = setoresAtivos.find(s => s.id === setorId);
+      await supabase
+        .from('treinamentos_previsao')
+        .update({
+          nome_completo: nome,
+          matricula: matricula || null,
+          empresa,
+          setor_nome: setorAtual?.nome || null,
+          setor_grupo: setorAtual?.grupo || null,
+          turma: validacaoTurma.turma,
+          cargo: cargo || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('funcionario_id', funcionarioId)
+        .eq('ativo', true);
+    }
+
     const { criar, tipo } = devecriarDivergencia(situacaoNomeEfetiva);
     if (criar && funcionarioId) {
       let obs = '';
