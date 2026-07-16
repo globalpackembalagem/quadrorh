@@ -39,7 +39,7 @@ export default function GateAcesso() {
       }
 
       setUsuarioAtual(montarUsuarioLocal(data.user, data.session_token));
-      navigate('/home');
+      navigate(data.user?.nome?.toUpperCase() === 'FOTOS' ? '/captura-fotos?rhfoto=1' : '/home');
     } catch (error) {
       console.error('Erro no login:', error);
       setErro('Nome ou senha invalidos');

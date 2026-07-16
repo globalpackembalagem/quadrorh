@@ -454,6 +454,9 @@ export default function ControleFotos() {
             <p className="text-sm text-muted-foreground">Acompanhe quem ja tem foto, corrija baixas manuais e exporte a conferencia.</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button onClick={() => window.open("/captura-fotos?rhfoto=1", "_blank", "noopener,noreferrer")}>
+              <ImageDown className="mr-2 h-4 w-4" /> Iniciar captura
+            </Button>
             <Button variant="outline" onClick={copiarLinkCaptura}>
               <Copy className="mr-2 h-4 w-4" /> Copiar link captura
             </Button>

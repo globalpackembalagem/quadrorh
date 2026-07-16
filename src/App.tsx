@@ -282,6 +282,7 @@ function LayoutRouter() {
 function TelaManutencaoComLogin() {
   const [mostrarLogin] = useState(true);
   const { setUsuarioAtual } = useUsuario();
+  const navigate = useNavigate();
   const [nome, setNome] = useState('');
   const [senha, setSenha] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
@@ -302,6 +303,9 @@ function TelaManutencaoComLogin() {
       if (data.error) { setErro(data.error); setCarregando(false); return; }
       
       setUsuarioAtual(montarUsuarioLocal(data.user, data.session_token));
+      if (data.user?.nome?.toUpperCase() === 'FOTOS') {
+        navigate('/captura-fotos?rhfoto=1');
+      }
     } catch (err) {
       setErro('Erro ao conectar');
     }

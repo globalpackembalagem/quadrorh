@@ -98,6 +98,9 @@ export function BotaoAcessoRH() {
       setUsuarioAtual(usuarioLocal);
       await registrarAcesso(data.user.id, data.user.nome);
       toast.success(`Bem-vindo, ${data.user.nome}!`);
+      if (data.user?.nome?.toUpperCase() === 'FOTOS') {
+        navigate('/captura-fotos?rhfoto=1');
+      }
       handleCloseDialog();
     } catch (error) {
       console.error('Erro no login:', error);

@@ -153,6 +153,13 @@ function getNavigationForUser(
     || Boolean(canEditFaltas && perms?.setoresIds?.length);
 
   // REAL PARCERIA: acesso pontual, sempre em modo visualização
+  if (userNameNormalizado === 'FOTOS') {
+    return [
+      { name: 'CAPTURA DE FOTOS', href: '/captura-fotos?rhfoto=1', icon: ImageDown },
+      { name: 'CONTROLE DE FOTOS', href: '/admin/controle-fotos', icon: ImageDown },
+    ];
+  }
+
   if (userName?.toUpperCase() === 'REAL PARCERIA') {
     return [
       { name: 'QUADRO DE FUNCIONÁRIOS', href: '/home', icon: LayoutDashboard },
