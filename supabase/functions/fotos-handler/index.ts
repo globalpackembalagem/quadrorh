@@ -142,6 +142,7 @@ serve(async (req) => {
         .from("funcionarios")
         .select("id,nome_completo,matricula,setor_id,tem_foto,telefone_whatsapp,usa_fretado,linha_fretado")
         .in("situacao_id", situacoesIds)
+        .or("tem_foto.is.null,tem_foto.eq.false")
         .or(`nome_completo.ilike.%${safeTerm}%,matricula.eq.${termo}`)
         .order("nome_completo")
         .limit(20);
