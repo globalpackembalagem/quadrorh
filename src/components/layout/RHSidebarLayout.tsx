@@ -352,11 +352,14 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
 	      const turma = (funcionario?.turma || '').toUpperCase().trim();
 	      const dataAdmissao = funcionario?.data_admissao ? new Date(`${funcionario.data_admissao}T00:00:00`) : null;
 	      const hoje = new Date();
-	      const inicioRegraQuatroDias = new Date('2026-07-16T00:00:00');
 	      hoje.setHours(0, 0, 0, 0);
-	      if (dataAdmissao && dataAdmissao >= inicioRegraQuatroDias) {
-	        const diasDesdeAdmissao = Math.floor((hoje.getTime() - dataAdmissao.getTime()) / 86400000);
-	        if (diasDesdeAdmissao < 4) return false;
+	      if (dataAdmissao) {
+	        const prazoTurma = new Date(dataAdmissao);
+	        const diaSemana = dataAdmissao.getDay();
+	        const diasAteSegunda = diaSemana === 1 ? 7 : diaSemana === 0 ? 1 : 8 - diaSemana;
+	        prazoTurma.setDate(dataAdmissao.getDate() + diasAteSegunda);
+	        prazoTurma.setHours(0, 0, 0, 0);
+	        if (hoje <= prazoTurma) return false;
 	      }
 
 	      if (textoSetor.includes('SOPRO')) return !turmasSopro.has(turma);

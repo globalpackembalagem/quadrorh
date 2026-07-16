@@ -57,31 +57,23 @@ const TIPO_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
 const calcularCobrancaTurmaPendente = (dataReferencia?: string | null) => {
   const hoje = startOfDay(new Date());
   const dataBase = dataReferencia ? startOfDay(parseISO(dataReferencia)) : hoje;
-  const inicioRegraQuatroDias = startOfDay(parseISO('2026-07-16'));
 
   if (Number.isNaN(dataBase.getTime()) || differenceInCalendarDays(dataBase, hoje) > 0) {
     return { cobrar: false, mensagemPrazo: '', prazoTurma: null as string | null };
   }
 
-  const diasDesdeInicio = differenceInCalendarDays(hoje, dataBase);
-  const dataLimite = addDays(dataBase, 4);
+  const diaSemana = dataBase.getDay();
+  const diasAteSegunda = diaSemana === 1 ? 7 : diaSemana === 0 ? 1 : 8 - diaSemana;
+  const dataLimite = addDays(dataBase, diasAteSegunda);
 
-  if (differenceInCalendarDays(dataBase, inicioRegraQuatroDias) >= 0 && diasDesdeInicio < 4) {
+  if (differenceInCalendarDays(hoje, dataLimite) <= 0) {
     return { cobrar: false, mensagemPrazo: '', prazoTurma: format(dataLimite, 'yyyy-MM-dd') };
-  }
-
-  if (differenceInCalendarDays(dataBase, inicioRegraQuatroDias) >= 0) {
-    return {
-      cobrar: true,
-      mensagemPrazo: `Prazo de 4 dias vencido. Preencher a turma hoje para regularizar.`,
-      prazoTurma: format(dataLimite, 'yyyy-MM-dd'),
-    };
   }
 
   return {
     cobrar: true,
-    mensagemPrazo: 'Prazo vencido. Preencher a turma hoje para regularizar.',
-    prazoTurma: 'vencido',
+    mensagemPrazo: `Prazo vencido em ${format(dataLimite, 'dd/MM/yyyy')}. Preencher a turma hoje para regularizar.`,
+    prazoTurma: format(dataLimite, 'yyyy-MM-dd'),
   };
 };
 
