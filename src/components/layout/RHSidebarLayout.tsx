@@ -348,10 +348,18 @@ export function RHSidebarLayout({ children }: RHSidebarLayoutProps) {
 
       const grupo = (funcionario?.setor?.grupo || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
       const nomeSetor = (funcionario?.setor?.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
-      const textoSetor = `${grupo} ${nomeSetor}`;
-      const turma = (funcionario?.turma || '').toUpperCase().trim();
+	      const textoSetor = `${grupo} ${nomeSetor}`;
+	      const turma = (funcionario?.turma || '').toUpperCase().trim();
+	      const dataAdmissao = funcionario?.data_admissao ? new Date(`${funcionario.data_admissao}T00:00:00`) : null;
+	      const hoje = new Date();
+	      const inicioRegraQuatroDias = new Date('2026-07-16T00:00:00');
+	      hoje.setHours(0, 0, 0, 0);
+	      if (dataAdmissao && dataAdmissao >= inicioRegraQuatroDias) {
+	        const diasDesdeAdmissao = Math.floor((hoje.getTime() - dataAdmissao.getTime()) / 86400000);
+	        if (diasDesdeAdmissao < 4) return false;
+	      }
 
-      if (textoSetor.includes('SOPRO')) return !turmasSopro.has(turma);
+	      if (textoSetor.includes('SOPRO')) return !turmasSopro.has(turma);
       if (textoSetor.includes('DECORACAO') && (textoSetor.includes('DIA') || textoSetor.includes('NOITE'))) return !turmasDecoracao.has(turma);
       return false;
     });
