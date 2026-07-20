@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { funcionariosApi } from "@/lib/funcionariosApi";
 import { isFolgaEscalaDecoracao } from "@/lib/escalaPanama";
-import { isFolgaEscalaSopro } from "@/lib/escalaSopro";
 import { loadXLSX } from "@/lib/xlsx";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -95,6 +94,11 @@ function statusFotoLabel(func: FuncionarioFotoControle) {
   return temFotoMarcada(func) ? "SIM" : "NAO";
 }
 
+function getStatusEscalaHoje(func: FuncionarioFotoControle) {
+  const folga = isFolgaEscalaDecoracao(func.setor?.nome, func.turma, new Date());
+  if (folga === null) return null;
+  return folga ? "FOLGA" : "TRABALHANDO";
+}
 function grupoSetorControleFotos(func: FuncionarioFotoControle) {
   const grupo = normalizar(func.setor?.grupo || "").replace(/\s+/g, " ").trim();
   if (grupo === "SOPRO A" || grupo === "SOPRO B" || grupo === "SOPRO C") return grupo;
@@ -235,26 +239,6 @@ export default function ControleFotos() {
   }, [funcionariosControle]);
 
 
-  const resumoEscalaHoje = useMemo(() => {
-    const hoje = new Date();
-    const grupos = ["SOPRO A", "SOPRO B", "SOPRO C", "DECORACAO DIA", "DECORACAO NOITE"];
-
-    return grupos.map((grupo) => {
-      const lista = funcionariosControle.filter((func) => {
-        if (grupoSetorControleFotos(func) !== grupo) return false;
-        return contaNoQuadroControleFotos(func);
-      });
-
-      const trabalhando = lista.filter((func) => {
-        const folgaSopro = isFolgaEscalaSopro(func.setor?.nome, func.turma, hoje);
-        const folgaDecoracao = isFolgaEscalaDecoracao(func.setor?.nome, func.turma, hoje);
-        const folga = folgaSopro ?? folgaDecoracao;
-        return folga !== true;
-      }).length;
-
-      return { grupo, trabalhando, folga: lista.length - trabalhando };
-    }).filter((item) => item.trabalhando > 0 || item.folga > 0);
-  }, [funcionariosControle]);
   const resumoDownload = useMemo(() => {
     const fotosComArquivo = funcionariosControle.filter((f) => f.foto_storage_path);
     const baixadas = fotosComArquivo.filter((f) => f.foto_baixada_em).length;
@@ -567,31 +551,6 @@ export default function ControleFotos() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">ESCALA DE HOJE</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-              {resumoEscalaHoje.map((item) => (
-                <div key={item.grupo} className="rounded-md border bg-background p-3">
-                  <div className="truncate text-xs font-semibold text-muted-foreground">{item.grupo}</div>
-                  <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
-                    <div className="rounded bg-emerald-50 px-2 py-1 text-emerald-700">
-                      <div className="font-semibold">TRABALHANDO</div>
-                      <div className="text-lg font-bold">{item.trabalhando}</div>
-                    </div>
-                    <div className="rounded bg-red-50 px-2 py-1 text-red-700">
-                      <div className="font-semibold">FOLGA</div>
-                      <div className="text-lg font-bold">{item.folga}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
             <CardTitle className="text-base">FILTROS</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 md:grid-cols-[1fr_180px_190px]">
@@ -635,10 +594,20 @@ export default function ControleFotos() {
                   const fotoValida = temFotoValida(func);
                   const fotoMarcada = temFotoMarcada(func);
                   const naoPrecisa = naoPrecisaFoto(func);
+                  const statusEscala = getStatusEscalaHoje(func);
                   return (
                     <tr key={func.id} className="border-b hover:bg-muted/30">
                       <td className="px-3 py-3">{func.matricula || "TEMP"}</td>
-                      <td className="px-3 py-3 font-medium">{func.nome_completo}</td>
+                      <td className="px-3 py-3 font-medium">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span>{func.nome_completo}</span>
+                          {statusEscala && (
+                            <span className={`rounded px-2 py-0.5 text-[10px] font-bold ${statusEscala === "TRABALHANDO" ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>
+                              {statusEscala}
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-3 py-3">{formatDate(func.data_admissao)}</td>
                       <td className="px-3 py-3">{func.setor?.nome || "-"}</td>
                       <td className="px-3 py-3">
