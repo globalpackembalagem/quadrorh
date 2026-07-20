@@ -281,8 +281,9 @@ export default function PrevisaoAdmissao() {
       queryClient.invalidateQueries({ queryKey: ['treinamentos_previsao'] });
       queryClient.invalidateQueries({ queryKey: ['admissao-recente'] });
       toast.success('Funcionário ativado e movido para o quadro!');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Erro ao ativar funcionário:', err);
+      toast.error(err?.message || 'Erro ao ativar funcionario');
     }
   };
 
@@ -708,13 +709,14 @@ export default function PrevisaoAdmissao() {
                     <TableHead>TURMA</TableHead>
                     <TableHead>CARGO</TableHead>
                     <TableHead>DATA PREVISTA</TableHead>
+                    <TableHead className="text-center">ACAO</TableHead>
                     {showDocStatus && <TableHead className="text-center">DOCS</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {funcionariosFiltrados.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={showDocStatus ? 8 : 7} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={showDocStatus ? 9 : 8} className="text-center py-8 text-muted-foreground">
                         Nenhuma previsão de admissão encontrada
                       </TableCell>
                     </TableRow>
@@ -749,6 +751,21 @@ export default function PrevisaoAdmissao() {
                           {func.data_admissao
                             ? formatIsoDateBR(func.data_admissao)
                             : '-'}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            size="sm"
+                            className="h-8 gap-1"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              setSelectedFuncionario(func);
+                              await handleAtivar(func.id);
+                            }}
+                            disabled={updateFuncionario.isPending}
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                            Ativar
+                          </Button>
                         </TableCell>
                         {showDocStatus && (
                           <TableCell className="text-center">
@@ -902,13 +919,14 @@ export default function PrevisaoAdmissao() {
                   <TableHead>TURMA</TableHead>
                   <TableHead>CARGO</TableHead>
                   <TableHead>DATA PREVISTA</TableHead>
+                  <TableHead className="text-center">ACAO</TableHead>
                   {showDocStatus && <TableHead className="text-center">DOCS</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {funcionariosFiltrados.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={showDocStatus ? 8 : 7} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={showDocStatus ? 9 : 8} className="text-center py-8 text-muted-foreground">
                       Nenhuma previsão de admissão encontrada
                     </TableCell>
                   </TableRow>
@@ -938,6 +956,21 @@ export default function PrevisaoAdmissao() {
                         {func.data_admissao
                           ? formatIsoDateBR(func.data_admissao)
                           : '-'}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          size="sm"
+                          className="h-8 gap-1"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            setSelectedFuncionario(func);
+                            await handleAtivar(func.id);
+                          }}
+                          disabled={updateFuncionario.isPending}
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          Ativar
+                        </Button>
                       </TableCell>
                       {showDocStatus && (
                         <TableCell className="text-center">
