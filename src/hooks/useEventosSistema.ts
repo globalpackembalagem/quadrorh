@@ -370,6 +370,17 @@ export function useEnviarNotificacaoEventos() {
           const isAdmin = ur.acesso_admin;
           const isAlteracaoQuadro = grupo.tipo === 'alteracao_quadro';
 
+          if (destinatariosFixos) {
+            notificacoes.push({
+              user_role_id: ur.id,
+              tipo: grupo.tipo === 'historico_quadro_comunicado' ? 'historico_quadro_comunicado' : 'evento_sistema_modal',
+              titulo: tipoLabel,
+              mensagem: `${mensagemBase}${nomesStr}${msgPersonalizada}`,
+              referencia_id: grupo.evento_id,
+            });
+            return;
+          }
+
           if (isAlteracaoQuadro) {
             if (!Array.isArray((ur as any).tipos_notificacao) || !(ur as any).tipos_notificacao.includes('alteracao_quadro')) return;
 
@@ -604,6 +615,7 @@ function getTipoLabel(tipo: string, tipoDesligamento?: string | null): string {
     cobertura_treinamento_resposta: 'RESPOSTA COB/TREIN.',
     turma_pendente: 'TURMA PENDENTE',
     preencher_faltas: 'PREENCHER FALTAS',
+      historico_quadro_comunicado: 'HISTORICO DO QUADRO',
   };
   return labels[tipo] || tipo.toUpperCase();
 }

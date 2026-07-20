@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import {
   UserMinus, AlertTriangle, UserPlus, RefreshCw, ArrowRightLeft, Bell,
   CheckCircle2, X, CheckCheck, ThumbsUp, ThumbsDown, RotateCcw, Filter,
@@ -39,8 +40,8 @@ const tipoNotificacaoLiberado = (tipo: string | null | undefined, liberados?: st
     if (l === 'demissao' && t.includes('demissao')) return true;
     if (l === 'divergencia' && t.includes('divergencia')) return true;
     if (l === 'previsao_admissao' && (t.includes('previsao') || t.includes('admissao'))) return true;
-    if (l === 'evento_sistema_modal' && (t.includes('evento_sistema') || t.includes('ciencia') || t.includes('alteracao_quadro'))) return true;
-    if (l === 'alteracao_quadro' && t.includes('alteracao_quadro')) return true;
+    if (l === 'evento_sistema_modal' && (t.includes('evento_sistema') || t.includes('ciencia') || t.includes('alteracao_quadro') || t.includes('historico_quadro'))) return true;
+    if (l === 'alteracao_quadro' && (t.includes('alteracao_quadro') || t.includes('historico_quadro'))) return true;
     return false;
   });
 };
@@ -69,7 +70,8 @@ const TIPO_BADGE_LABELS: Record<string, string> = {
   turma_pendente_resposta: 'RESPOSTA TURMA',
   alerta_temp_sumido: 'ALERTA 3+',
   alteracao_quadro: 'ALTERACAO DO QUADRO',
-  ciencia_retorno: 'CIÊNCIA DO GESTOR',
+    historico_quadro_comunicado: 'HISTORICO DO QUADRO',
+ciencia_retorno: 'CIÊNCIA DO GESTOR',
 };
 
 const TIPO_CONFIG: Record<string, { icon: typeof Bell; color: string; bgColor: string; borderColor: string; badgeClass: string }> = {
@@ -97,7 +99,8 @@ const TIPO_CONFIG: Record<string, { icon: typeof Bell; color: string; bgColor: s
   turma_pendente_resposta: { icon: CheckCircle2, color: 'text-teal-600', bgColor: 'bg-teal-50 dark:bg-teal-950/30', borderColor: 'border-teal-200 dark:border-teal-800', badgeClass: 'bg-teal-600 text-white' },
   alerta_temp_sumido: { icon: AlertTriangle, color: 'text-amber-700', bgColor: 'bg-amber-50 dark:bg-amber-950/30', borderColor: 'border-amber-300 dark:border-amber-800', badgeClass: 'bg-amber-700 text-white' },
   alteracao_quadro: { icon: BarChart3, color: 'text-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-950/30', borderColor: 'border-blue-200 dark:border-blue-800', badgeClass: 'bg-blue-600 text-white' },
-  ciencia_retorno: { icon: CheckCheck, color: 'text-emerald-600', bgColor: 'bg-emerald-50 dark:bg-emerald-950/30', borderColor: 'border-emerald-200 dark:border-emerald-800', badgeClass: 'bg-emerald-600 text-white' },
+    historico_quadro_comunicado: { icon: BarChart3, color: 'text-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-950/30', borderColor: 'border-blue-200 dark:border-blue-800', badgeClass: 'bg-blue-600 text-white' },
+ciencia_retorno: { icon: CheckCheck, color: 'text-emerald-600', bgColor: 'bg-emerald-50 dark:bg-emerald-950/30', borderColor: 'border-emerald-200 dark:border-emerald-800', badgeClass: 'bg-emerald-600 text-white' },
 };
 
 function normalizarAvisoTexto(texto: string) {
@@ -177,6 +180,7 @@ const montarMensagemRetornoCiencia = (nomeGestor: string, tipoLabel: string, men
 
 export function CentralAvisosModal() {
   const { userRole, isAdmin } = useAuth();
+  const navigate = useNavigate();
   
   // RH e Admin só visualizam — nunca respondem SIM/NÃO
   const isRHUser = userRole?.perfil === 'rh_completo' || userRole?.perfil === 'rh_demissoes' || userRole?.perfil === 'admin';
@@ -1120,6 +1124,31 @@ export function CentralAvisosModal() {
                         >
                           <ThumbsDown className="h-3.5 w-3.5" />
                           NAO AUTORIZO
+                        </Button>
+                      </>
+                    ) : aviso.tipo === 'historico_quadro_comunicado' ? (
+                      <>
+                        <Button
+                          size="sm"
+                          className="gap-1.5 text-xs h-8 bg-blue-600 hover:bg-blue-700 text-white"
+                          onClick={() => {
+                            marcarCiente(aviso.id);
+                            navigate('/historico-quadro');
+                          }}
+                          disabled={isCiente}
+                        >
+                          <BarChart3 className="h-3.5 w-3.5" />
+                          VER HISTORICO
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className={cn('gap-1.5 text-xs h-8', config.color, 'border-current')}
+                          onClick={() => marcarCiente(aviso.id)}
+                          disabled={isCiente}
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          CIENTE
                         </Button>
                       </>
                     ) : isRHUser ? (

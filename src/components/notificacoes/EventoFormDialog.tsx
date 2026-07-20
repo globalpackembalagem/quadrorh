@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { EventoSistema } from '@/hooks/useEventosSistema';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { Search, Users, CheckSquare, Square, Eye, EyeOff, Bell, UserMinus, AlertTriangle, UserPlus, ArrowRightLeft } from 'lucide-react';
+import { Search, Users, CheckSquare, Square, Eye, EyeOff, Bell, UserMinus, AlertTriangle, UserPlus, ArrowRightLeft, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -23,6 +23,7 @@ const TIPO_OPTIONS = [
   { value: 'pedido_demissao', label: 'PED. DEMISSÃO' },
   { value: 'transferencia', label: 'TRANSFERÊNCIA' },
   { value: 'previsao_admissao', label: 'PREVISÃO DE ADMISSÃO' },
+  { value: 'historico_quadro_comunicado', label: 'HISTORICO DO QUADRO' },
   { value: 'evento_sistema_modal', label: 'COMUNICADO GERAL' },
 ];
 
@@ -34,6 +35,7 @@ const TIPO_PREVIEW_CONFIG: Record<string, { icon: typeof Bell; badgeLabel: strin
   previsao_admissao: { icon: UserPlus, badgeLabel: 'PREVISÃO ADMISSÃO', badgeClass: 'bg-purple-600 text-white', bgColor: 'bg-purple-50 dark:bg-purple-950/30', borderColor: 'border-purple-200 dark:border-purple-800', iconColor: 'text-purple-600' },
   cobertura_treinamento: { icon: Users, badgeLabel: 'COB. FÉRIAS / TREINAMENTO', badgeClass: 'bg-orange-600 text-white', bgColor: 'bg-orange-50 dark:bg-orange-950/30', borderColor: 'border-orange-200 dark:border-orange-800', iconColor: 'text-orange-600' },
   evento_sistema_modal: { icon: Bell, badgeLabel: 'AVISO RH', badgeClass: 'bg-primary text-primary-foreground', bgColor: 'bg-primary/5', borderColor: 'border-primary/20', iconColor: 'text-primary' },
+  historico_quadro_comunicado: { icon: BarChart3, badgeLabel: 'HISTORICO DO QUADRO', badgeClass: 'bg-blue-600 text-white', bgColor: 'bg-blue-50 dark:bg-blue-950/30', borderColor: 'border-blue-200 dark:border-blue-800', iconColor: 'text-blue-600' },
 };
 
 function NotificationPreviewCard({ tipo, mensagem }: { tipo: string; mensagem: string }) {

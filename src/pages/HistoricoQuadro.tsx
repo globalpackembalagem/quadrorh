@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
 import { Download, History, Search } from 'lucide-react';
@@ -105,6 +105,20 @@ function areaDoRegistro(item: any): AreaQuadroTrava | null {
   return null;
 }
 
+function areaDoSetor(setor: any): AreaQuadroTrava | null {
+  const nome = normalizarBusca(setor?.nome);
+  const grupo = normalizarBusca(setor?.grupo);
+  const texto = `${nome} ${grupo}`;
+
+  if (grupo === 'SOPRO A' || texto.includes('SOPRO A') || texto.includes('G+P A')) return 'SOPRO A';
+  if (grupo === 'SOPRO B' || texto.includes('SOPRO B') || texto.includes('G+P B')) return 'SOPRO B';
+  if (grupo === 'SOPRO C' || texto.includes('SOPRO C') || texto.includes('G+P C')) return 'SOPRO C';
+
+  if (texto.includes('DECORACAO') && texto.includes('DIA')) return 'DECORACAO DIA-T1';
+  if (texto.includes('DECORACAO') && texto.includes('NOITE')) return 'DECORACAO NOITE-T1';
+  return null;
+}
+
 export default function HistoricoQuadro() {
   const { usuarioAtual, isAdmin } = useUsuario();
   const { data: setores = [] } = useSetoresAtivos();
@@ -120,9 +134,6 @@ export default function HistoricoQuadro() {
     || usuarioAtual.pode_editar_funcionarios
     || usuarioAtual.pode_visualizar_demissoes
     || usuarioAtual.pode_editar_demissoes;
-
-  const areasSopro = AREAS_QUADRO_TRAVA.filter((area) => area.startsWith('SOPRO'));
-  const areasDecoracao = AREAS_QUADRO_TRAVA.filter((area) => area.startsWith('DECORACAO'));
 
   const { data: travasAtivas = [] } = useQuery({
     queryKey: ['quadro_travas_ativas_historico'],
@@ -167,6 +178,28 @@ export default function HistoricoQuadro() {
     return setoresDoQuadro.filter((setor) => usuarioAtual.setoresIds.includes(setor.id));
   }, [podeVerTudo, setoresDoQuadro, usuarioAtual.setoresIds]);
 
+  const areasPermitidas = useMemo(() => {
+    if (podeVerTudo || usuarioAtual.setoresIds.length === 0) return AREAS_QUADRO_TRAVA;
+    const areas = new Set<AreaQuadroTrava>();
+    setoresPermitidos.forEach((setor) => {
+      const area = areaDoSetor(setor);
+      if (!area) return;
+      areas.add(area);
+      if (area === 'DECORACAO DIA-T1') areas.add('DECORACAO DIA-T2');
+      if (area === 'DECORACAO NOITE-T1') areas.add('DECORACAO NOITE-T2');
+    });
+    return AREAS_QUADRO_TRAVA.filter((area) => areas.has(area));
+  }, [podeVerTudo, setoresPermitidos, usuarioAtual.setoresIds.length]);
+
+  useEffect(() => {
+    if (areasPermitidas.length > 0 && !areasPermitidas.includes(areaSelecionada)) {
+      setAreaSelecionada(areasPermitidas[0]);
+    }
+  }, [areaSelecionada, areasPermitidas]);
+
+  const areasSopro = areasPermitidas.filter((area) => area.startsWith('SOPRO'));
+  const areasDecoracao = areasPermitidas.filter((area) => area.startsWith('DECORACAO'));
+
   const setorFiltro = setorId === 'todos' && !podeVerTudo && usuarioAtual.setoresIds.length === 1
     ? usuarioAtual.setoresIds[0]
     : setorId;
@@ -189,7 +222,9 @@ export default function HistoricoQuadro() {
         if (!podeVer) return false;
       }
 
-      if (areaSelecionada && areaDoRegistro(item) !== areaSelecionada) return false;
+      const areaRegistro = areaDoRegistro(item);
+      if (!podeVerTudo && areaRegistro && !areasPermitidas.includes(areaRegistro)) return false;
+      if (areaSelecionada && areaRegistro !== areaSelecionada) return false;
 
       if (!termo) return true;
       return [
@@ -200,7 +235,7 @@ export default function HistoricoQuadro() {
         item.setor_destino_nome,
       ].some((valor) => valor?.toLowerCase().includes(termo));
     });
-  }, [areaSelecionada, busca, historico, podeVerTudo, setoresPermitidos, usuarioAtual.setoresIds.length]);
+  }, [areaSelecionada, areasPermitidas, busca, historico, podeVerTudo, setoresPermitidos, usuarioAtual.setoresIds.length]);
 
   const registrosComSaldo = useMemo<RegistroHistoricoQuadroComSaldo[]>(() => {
     const trava = travasPorArea.get(areaSelecionada);

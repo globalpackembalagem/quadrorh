@@ -52,6 +52,7 @@ const TIPO_ICONS: Record<string, React.ComponentType<{ className?: string }>> = 
   turma_pendente: AlertTriangle,
   preencher_faltas: ClipboardList,
   alteracao_quadro: BarChart3,
+  historico_quadro_comunicado: BarChart3,
 };
 
 const calcularCobrancaTurmaPendente = (dataReferencia?: string | null) => {
@@ -94,6 +95,7 @@ const TIPO_LABELS: Record<string, string> = {
   preencher_faltas: 'PREENCHER FALTAS',
   cobranca_faltas: 'COBRANCA FALTAS',
   alteracao_quadro: 'ALTERACAO DO QUADRO',
+  historico_quadro_comunicado: 'HISTORICO DO QUADRO',
 };
 
 const TIPOS_RECEBIMENTO = [
@@ -289,7 +291,8 @@ export default function Notificacoes() {
   const [consultaExperienciaOpen, setConsultaExperienciaOpen] = useState(false);
   const [isInserindoCobTrein, setIsInserindoCobTrein] = useState(false);
   const [isInserindoFaltas, setIsInserindoFaltas] = useState(false);
-  const [galeriaOpen, setGaleriaOpen] = useState(false);
+    const [isInserindoHistoricoQuadro, setIsInserindoHistoricoQuadro] = useState(false);
+const [galeriaOpen, setGaleriaOpen] = useState(false);
   const [salvandoRecebimento, setSalvandoRecebimento] = useState<string | null>(null);
 
   const salvarRecebimentoMutation = useMutation({
@@ -583,6 +586,70 @@ export default function Notificacoes() {
     }
   };
 
+
+  const inserirComunicadoHistoricoQuadro = async () => {
+    setIsInserindoHistoricoQuadro(true);
+    try {
+      const { data: existente, error: existenteError } = await supabase
+        .from('eventos_sistema')
+        .select('id')
+        .eq('tipo', 'historico_quadro_comunicado')
+        .eq('notificado', false)
+        .limit(1);
+
+      if (existenteError) throw existenteError;
+      if (existente && existente.length > 0) {
+        toast.info('Ja existe comunicado de Historico do Quadro pendente para envio.');
+        return;
+      }
+
+      const { data: usuariosAtivos, error: usuariosError } = await supabase
+        .from('user_roles')
+        .select('id, nome, perfil, acesso_admin, recebe_notificacoes')
+        .eq('ativo', true);
+
+      if (usuariosError) throw usuariosError;
+
+      const destinatarios = (usuariosAtivos || [])
+        .filter((usuario: any) => usuario.recebe_notificacoes !== false)
+        .filter((usuario: any) => {
+          const nome = String(usuario.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+          return usuario.acesso_admin
+            || ['LUCIANO', 'MAURICIO', 'PAULO'].includes(nome)
+            || ['rh_completo', 'rh_demissoes', 'gestor_setor'].includes(usuario.perfil);
+        })
+        .map((usuario: any) => usuario.id);
+
+      if (destinatarios.length === 0) {
+        toast.info('Nenhum usuario ativo encontrado para receber o comunicado.');
+        return;
+      }
+
+      const { error } = await supabase.from('eventos_sistema').insert({
+        tipo: 'historico_quadro_comunicado',
+        descricao: 'HISTORICO DO QUADRO DISPONIVEL',
+        funcionario_nome: 'HISTORICO DO QUADRO',
+        setor_nome: 'QUADRO DE FUNCIONARIOS',
+        criado_por: userRole?.nome || 'LUCIANO',
+        dados_extra: {
+          destinatarios,
+          mensagem_personalizada: 'O HISTORICO DO QUADRO ESTA DISPONIVEL PARA CONSULTA. ELE MOSTRA AS MOVIMENTACOES QUE ALTERAM O QUADRO, COM DATA, FUNCIONARIO, SETOR/TURMA E IMPACTO. LIDERANCA VISUALIZA APENAS SEUS SETORES; RH, PAULO E MAURICIO VISUALIZAM TODOS.',
+          link: '/historico-quadro',
+        },
+        notificado: false,
+      });
+
+      if (error) throw error;
+
+      toast.success('Comunicado criado na Central. Selecione e envie para os usuarios.');
+      queryClient.invalidateQueries({ queryKey: ['eventos-sistema'] });
+    } catch (err) {
+      toast.error('Erro ao criar comunicado do historico.');
+      console.error(err);
+    } finally {
+      setIsInserindoHistoricoQuadro(false);
+    }
+  };
   // Mapa de vistas por evento_id
   const vistasPorEvento = useMemo(() => {
     const map: Record<string, NotificacaoVista[]> = {};
@@ -850,6 +917,16 @@ export default function Notificacoes() {
           >
             {isInserindoFaltas ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ClipboardList className="h-3.5 w-3.5" />}
             FALTAS
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 text-blue-600 border-blue-300 hover:bg-blue-50"
+            onClick={inserirComunicadoHistoricoQuadro}
+            disabled={isInserindoHistoricoQuadro}
+          >
+            {isInserindoHistoricoQuadro ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BarChart3 className="h-3.5 w-3.5" />}
+            HIST. QUADRO
           </Button>
           <Button
             size="sm"
