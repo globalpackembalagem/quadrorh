@@ -72,7 +72,21 @@ const getTipoEventoSaida = (tipo?: string | null) => isPedidoDemissao(tipo) ? 'p
 
 const getTipoLabelSaida = (tipo?: string | null) => (tipo || 'Demiss�o').toUpperCase();
 
+const SITUACOES_DESLIGAMENTO = new Set([
+  'DEMISSAO',
+  'PED. DEMISSAO',
+  'PEDIDO DEMISSAO',
+  'DISPENSA S/ JUSTA CAUSA',
+  'DEM. JUSTA CAUSA',
+  'TERMINO CONTRATO',
+  'TERMINO DE CONTRATO',
+  'ANT. TERMINO',
+]);
 
+const isSituacaoDesligamento = (situacao?: string | null) => {
+  const normalizada = normalizarTextoSistema(situacao) || '';
+  return SITUACOES_DESLIGAMENTO.has(normalizada);
+};
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (error && typeof error === 'object' && 'message' in error) {
@@ -121,10 +135,15 @@ export function NovaDemissaoForm({ onSuccess }: NovaDemissaoFormProps) {
   const isFormValid = !!funcionarioId && !!tipoDesligamento && !!dataPrevista;
 
   const funcionariosFiltrados = funcionarios.filter((f) => {
-    const termo = searchTerm.toLowerCase();
+    if (isSituacaoDesligamento(f.situacao?.nome)) return false;
+
+    const termo = normalizarTextoSistema(searchTerm) || '';
+    const nome = normalizarTextoSistema(f.nome_completo) || '';
+    const matricula = normalizarTextoSistema(f.matricula) || '';
+
     return (
-      f.nome_completo.toLowerCase().includes(termo) ||
-      (f.matricula && f.matricula.toLowerCase().includes(termo))
+      nome.includes(termo) ||
+      matricula.includes(termo)
     );
   });
 
@@ -222,8 +241,7 @@ export function NovaDemissaoForm({ onSuccess }: NovaDemissaoFormProps) {
       // Sem duplicata - fluxo normal
       // Verificar se funcionário já está na situação correta
       if (funcionarioSelecionado) {
-        const situacaoAtualNome = normalizarTextoSistema(funcionarioSelecionado.situacao?.nome) || '';
-        const jaEstaNaSituacao = ['DEMISSAO', 'PED. DEMISSAO', 'PEDIDO DEMISSAO', 'TERMINO CONTRATO', 'TERMINO DE CONTRATO'].includes(situacaoAtualNome);
+        const jaEstaNaSituacao = isSituacaoDesligamento(funcionarioSelecionado.situacao?.nome);
         await criarDemissao(data, jaEstaNaSituacao);
       } else {
         await criarDemissao(data, false);
@@ -335,9 +353,7 @@ export function NovaDemissaoForm({ onSuccess }: NovaDemissaoFormProps) {
                                 <span className="font-medium">{f.nome_completo}</span>
                                 <span className={cn(
                                   "text-xs px-2 py-0.5 rounded-full font-medium shrink-0",
-                                  isDesligado
-                                    ? "bg-destructive/15 text-destructive"
-                                    : "bg-primary/10 text-primary"
+                                  "bg-primary/10 text-primary"
                                 )}>
                                   {situacaoNome || 'S/ SITUAÇÃO'}
                                 </span>
