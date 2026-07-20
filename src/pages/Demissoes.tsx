@@ -563,7 +563,7 @@ export default function Demissoes() {
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>AGENDAR DEMISSÃO</DialogTitle>
+                <DialogTitle>CADASTRO DE DEMISSAO</DialogTitle>
               </DialogHeader>
               <NovaDemissaoForm onSuccess={() => setDialogOpen(false)} />
             </DialogContent>

@@ -135,8 +135,6 @@ export function NovaDemissaoForm({ onSuccess }: NovaDemissaoFormProps) {
   const isFormValid = !!funcionarioId && !!tipoDesligamento && !!dataPrevista;
 
   const funcionariosFiltrados = funcionarios.filter((f) => {
-    if (isSituacaoDesligamento(f.situacao?.nome)) return false;
-
     const termo = normalizarTextoSistema(searchTerm) || '';
     const nome = normalizarTextoSistema(f.nome_completo) || '';
     const matricula = normalizarTextoSistema(f.matricula) || '';
@@ -646,7 +644,7 @@ export function NovaDemissaoForm({ onSuccess }: NovaDemissaoFormProps) {
             disabled={createDemissao.isPending || !isFormValid}
             className={cn(!isFormValid && "opacity-50")}
           >
-            {createDemissao.isPending ? 'Salvando...' : 'Agendar Demissão'}
+            {createDemissao.isPending ? 'Salvando...' : 'Cadastrar Demissao'}
           </Button>
         </div>
         
