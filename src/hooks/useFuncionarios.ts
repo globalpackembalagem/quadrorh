@@ -1,4 +1,4 @@
-﻿import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient, QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Funcionario, SexoTipo } from '@/types/database';
@@ -8,6 +8,9 @@ import { normalizarFuncionarioPayload } from '@/lib/normalizacao';
 import { useAuth } from '@/hooks/useAuth';
 import { funcionariosApi } from '@/lib/funcionariosApi';
 import { notificarMovimentacaoLider } from '@/lib/notificarMovimentacaoLider';
+
+const FUNCIONARIOS_STALE_TIME = 5 * 60 * 1000;
+const FUNCIONARIOS_GC_TIME = 30 * 60 * 1000;
 
 export const invalidarFuncionarios = (queryClient: QueryClient) => {
   queryClient.invalidateQueries({ queryKey: ['funcionarios'] });
@@ -33,16 +36,24 @@ const atualizarFuncionarioNoCache = (queryClient: QueryClient, funcionarioAtuali
 
 export function useFuncionariosRealtime() {
   const queryClient = useQueryClient();
+  const invalidateTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
+    const agendarInvalidacao = () => {
+      if (invalidateTimerRef.current) window.clearTimeout(invalidateTimerRef.current);
+      invalidateTimerRef.current = window.setTimeout(() => {
+        invalidarFuncionarios(queryClient);
+        invalidateTimerRef.current = null;
+      }, 1000);
+    };
+
     const channel = supabase
       .channel('funcionarios-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'funcionarios' }, () => {
-        invalidarFuncionarios(queryClient);
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'funcionarios' }, agendarInvalidacao)
       .subscribe();
 
     return () => {
+      if (invalidateTimerRef.current) window.clearTimeout(invalidateTimerRef.current);
       supabase.removeChannel(channel);
     };
   }, [queryClient]);
@@ -393,13 +404,13 @@ export function useDeleteFuncionario() {
     },
     onSuccess: () => {
       invalidarFuncionarios(queryClient);
-      toast.success('FuncionÃ¡rio excluÃ­do com sucesso!');
+      toast.success('Funcionário excluído com sucesso!');
     },
     onError: (error: Error) => {
       if (error.message.includes('violates foreign key')) {
-        toast.error('NÃ£o Ã© possÃ­vel excluir: funcionÃ¡rio possui registros vinculados');
+        toast.error('Não é possível excluir: funcionário possui registros vinculados');
       } else {
-        toast.error('Erro ao excluir funcionÃ¡rio');
+        toast.error('Erro ao excluir funcionário');
       }
     },
   });
@@ -409,7 +420,7 @@ export function useFuncionarios() {
   return useQuery({
     queryKey: ['funcionarios'],
     queryFn: async () => {
-      // Buscar todos os funcionÃ¡rios em lotes para superar limite de 1000
+      // Buscar todos os funcionários em lotes para superar limite de 1000
       const pageSize = 1000;
       let allData: Funcionario[] = [];
       let page = 0;
@@ -442,6 +453,8 @@ export function useFuncionarios() {
       
       return allData;
     },
+    staleTime: FUNCIONARIOS_STALE_TIME,
+    gcTime: FUNCIONARIOS_GC_TIME,
   });
 }
 
@@ -487,6 +500,8 @@ export function useFuncionariosNoQuadro() {
       await retornarSituacoesVencidasParaAtivo(allData);
       return allData;
     },
+    staleTime: FUNCIONARIOS_STALE_TIME,
+    gcTime: FUNCIONARIOS_GC_TIME,
   });
 }
 
@@ -509,6 +524,8 @@ export function useFuncionariosQuadroConferido() {
 
       return (funcionariosQuadro.data || []).filter((funcionario) => idsConferidos.has(funcionario.id));
     },
+    staleTime: FUNCIONARIOS_STALE_TIME,
+    gcTime: FUNCIONARIOS_GC_TIME,
   });
 }
 
@@ -551,6 +568,8 @@ export function useFuncionariosNoPonto() {
       
       return allData;
     },
+    staleTime: FUNCIONARIOS_STALE_TIME,
+    gcTime: FUNCIONARIOS_GC_TIME,
   });
 }
 
@@ -584,9 +603,9 @@ export function useCreateFuncionario() {
     },
     onSuccess: async (data, variables) => {
       invalidarFuncionarios(queryClient);
-      toast.success('FuncionÃ¡rio cadastrado com sucesso!');
+      toast.success('Funcionário cadastrado com sucesso!');
 
-      // Buscar nome do setor para a notificaÃ§Ã£o
+      // Buscar nome do setor para a notificação
       const { data: setor } = await supabase
         .from('setores')
         .select('nome')
@@ -595,7 +614,7 @@ export function useCreateFuncionario() {
 
       criarEventoENotificar({
         tipo: 'admissao',
-        descricao: 'Nova admissÃ£o cadastrada',
+        descricao: 'Nova admissão cadastrada',
         funcionario_nome: variables.nome_completo,
         setor_id: variables.setor_id,
         setor_nome: setor?.nome || '',
@@ -603,7 +622,7 @@ export function useCreateFuncionario() {
       });
     },
     onError: (error: any) => {
-      toast.error(error?.message || 'Erro ao cadastrar funcionÃ¡rio');
+      toast.error(error?.message || 'Erro ao cadastrar funcionário');
     },
   });
 }
@@ -615,15 +634,15 @@ export function useUpdateFuncionario() {
   return useMutation({
     mutationFn: async ({ id, situacao_id, situacaoAtualNome, ...funcionario }: Partial<Funcionario> & { 
       id: string;
-      situacaoAtualNome?: string; // Nome da situaÃ§Ã£o atual para detectar mudanÃ§a
+      situacaoAtualNome?: string; // Nome da situação atual para detectar mudança
     }) => {
-      // Se estÃ¡ mudando de uma situaÃ§Ã£o de demissÃ£o para ATIVO, limpar data_demissao
+      // Se está mudando de uma situação de demissão para ATIVO, limpar data_demissao
       const situacoesDesligamento = ['DEMISSAO', 'PED. DEMISSAO', 'PEDIDO DEMISSAO', 'TERMINO CONTRATO'];
       const estaVindoDeDesligamento = situacoesDesligamento.some(s => 
         normalizarTextoHistorico(situacaoAtualNome).includes(s)
       );
       
-      // Buscar nome da nova situaÃ§Ã£o
+      // Buscar nome da nova situação
       let novaSituacaoNome = '';
       if (situacao_id) {
         const { data: situacao } = await supabase
@@ -636,7 +655,7 @@ export function useUpdateFuncionario() {
       
       const estaMudandoParaAtivo = normalizarTextoHistorico(novaSituacaoNome) === 'ATIVO';
       
-      // Se estava em demissÃ£o e estÃ¡ voltando para Ativo, limpa a data de demissÃ£o
+      // Se estava em demissão e está voltando para Ativo, limpa a data de demissão
       const updateData = normalizarFuncionarioPayload({
         ...funcionario,
         situacao_id,
@@ -683,7 +702,7 @@ export function useUpdateFuncionario() {
     onSuccess: (data) => {
       atualizarFuncionarioNoCache(queryClient, data as Funcionario);
       invalidarFuncionarios(queryClient);
-      toast.success('FuncionÃ¡rio atualizado com sucesso!');
+      toast.success('Funcionário atualizado com sucesso!');
     },
     onError: (error: any) => {
       toast.error(error?.message || 'Erro ao atualizar funcionario');
