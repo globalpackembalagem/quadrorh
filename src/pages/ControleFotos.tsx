@@ -4,6 +4,8 @@ import { Copy, Download, FileSpreadsheet, ImageDown, Pencil, RefreshCw, Search, 
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { funcionariosApi } from "@/lib/funcionariosApi";
+import { isFolgaEscalaDecoracao } from "@/lib/escalaPanama";
+import { isFolgaEscalaSopro } from "@/lib/escalaSopro";
 import { loadXLSX } from "@/lib/xlsx";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -233,6 +235,27 @@ export default function ControleFotos() {
     return { total: funcionariosControle.length, com, sem: funcionariosControle.length - com };
   }, [funcionariosControle]);
 
+
+  const resumoEscalaHoje = useMemo(() => {
+    const hoje = new Date();
+    const grupos = ["SOPRO A", "SOPRO B", "SOPRO C", "DECORACAO DIA", "DECORACAO NOITE"];
+
+    return grupos.map((grupo) => {
+      const lista = funcionariosControle.filter((func) => {
+        if (grupoSetorControleFotos(func) !== grupo) return false;
+        return contaNoQuadroControleFotos(func);
+      });
+
+      const trabalhando = lista.filter((func) => {
+        const folgaSopro = isFolgaEscalaSopro(func.setor?.nome, func.turma, hoje);
+        const folgaDecoracao = isFolgaEscalaDecoracao(func.setor?.nome, func.turma, hoje);
+        const folga = folgaSopro ?? folgaDecoracao;
+        return folga !== true;
+      }).length;
+
+      return { grupo, trabalhando, folga: lista.length - trabalhando };
+    }).filter((item) => item.trabalhando > 0 || item.folga > 0);
+  }, [funcionariosControle]);
   const resumoDownloadData = useMemo(() => {
     const fotosDaData = funcionariosControle.filter((f) =>
       f.foto_storage_path && toDateKey(f.foto_verificada_em) === dataDownload
@@ -547,6 +570,31 @@ export default function ControleFotos() {
               </div>
             </CardContent>
           )}
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">ESCALA DE HOJE</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+              {resumoEscalaHoje.map((item) => (
+                <div key={item.grupo} className="rounded-md border bg-background p-3">
+                  <div className="truncate text-xs font-semibold text-muted-foreground">{item.grupo}</div>
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded bg-emerald-50 px-2 py-1 text-emerald-700">
+                      <div className="font-semibold">TRABALHANDO</div>
+                      <div className="text-lg font-bold">{item.trabalhando}</div>
+                    </div>
+                    <div className="rounded bg-red-50 px-2 py-1 text-red-700">
+                      <div className="font-semibold">FOLGA</div>
+                      <div className="text-lg font-bold">{item.folga}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
         </Card>
 
         <Card>
