@@ -206,8 +206,11 @@ function alteraQuadroVisual(camposAlterados: string[], funcionarioAntes: any, fu
   const depoisConta = contaNoQuadro(funcionarioDepois);
   const setorAntes = normalizarTextoHistorico(funcionarioAntes?.setor?.nome);
   const setorDepois = normalizarTextoHistorico(funcionarioDepois?.setor?.nome);
+  const areaAntes = detectarAreaQuadro(funcionarioAntes);
+  const areaDepois = detectarAreaQuadro(funcionarioDepois);
 
   if (antesConta !== depoisConta) return true;
+  if (antesConta && depoisConta && areaAntes !== areaDepois) return true;
   if (antesConta && depoisConta && camposAlterados.includes('SETOR') && setorAntes !== setorDepois) return true;
   return false;
 }
@@ -672,32 +675,43 @@ export function useUpdateFuncionario() {
         .eq('id', id)
         .single();
 
-      const { data, error } = await funcionariosApi.update(updateData, {
-        eq: { id },
-        select: `
-          *,
-          setor:setores!setor_id(*),
-          situacao:situacoes(*)
-        `,
-        single: true,
-      });
-      
-      if (error) throw error;
+	      const { data, error } = await funcionariosApi.update(updateData, {
+	        eq: { id },
+	        select: `
+	          *,
+	          setor:setores!setor_id(*),
+	          situacao:situacoes(*)
+	        `,
+	        single: true,
+	      });
+	      
+	      if (error) throw error;
 
-      await registrarHistoricoQuadroSeTravado(funcionarioAntes as any, data as any, userRole?.nome || 'SISTEMA');
-      const antes = funcionarioAntes as any;
-      const depois = data as any;
-      const mudouTurma = (antes?.turma || '') !== (depois?.turma || '');
-      const mudouSetor = (antes?.setor_id || '') !== (depois?.setor_id || '');
+	      const { data: funcionarioDepoisCompleto } = await supabase
+	        .from('funcionarios')
+	        .select(`
+	          *,
+	          setor:setores!setor_id(*),
+	          situacao:situacoes(*)
+	        `)
+	        .eq('id', id)
+	        .single();
 
-      if (!isAdmin && (mudouTurma || mudouSetor)) {
-        await notificarMovimentacaoLider({
-          titulo: mudouSetor ? 'ALTERACAO DE SETOR/TURMA' : 'ALTERACAO DE TURMA',
-          mensagem: `${(depois?.nome_completo || '').toUpperCase()}\nLider: ${(userRole?.nome || 'SISTEMA').toUpperCase()}\nOrigem: ${(antes?.setor?.nome || '-').toUpperCase()}${antes?.turma ? ` / ${antes.turma}` : ''}\nDestino: ${(depois?.setor?.nome || '-').toUpperCase()}${depois?.turma ? ` / ${depois.turma}` : ''}`,
-          referenciaId: depois?.id || null,
-        });
-      }
-      return data;
+	      const funcionarioDepois = funcionarioDepoisCompleto || data;
+	      await registrarHistoricoQuadroSeTravado(funcionarioAntes as any, funcionarioDepois as any, userRole?.nome || 'SISTEMA');
+	      const antes = funcionarioAntes as any;
+	      const depois = funcionarioDepois as any;
+	      const mudouTurma = (antes?.turma || '') !== (depois?.turma || '');
+	      const mudouSetor = (antes?.setor_id || '') !== (depois?.setor_id || '');
+
+	      if (!isAdmin && (mudouTurma || mudouSetor)) {
+	        await notificarMovimentacaoLider({
+	          titulo: mudouSetor ? 'ALTERACAO DE SETOR/TURMA' : 'ALTERACAO DE TURMA',
+	          mensagem: `${(depois?.nome_completo || '').toUpperCase()}\nLider: ${(userRole?.nome || 'SISTEMA').toUpperCase()}\nOrigem: ${(antes?.setor?.nome || '-').toUpperCase()}${antes?.turma ? ` / ${antes.turma}` : ''}\nDestino: ${(depois?.setor?.nome || '-').toUpperCase()}${depois?.turma ? ` / ${depois.turma}` : ''}`,
+	          referenciaId: depois?.id || null,
+	        });
+	      }
+	      return funcionarioDepois;
     },
     onSuccess: (data) => {
       atualizarFuncionarioNoCache(queryClient, data as Funcionario);
