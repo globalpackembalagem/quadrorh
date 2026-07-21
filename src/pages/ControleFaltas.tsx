@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/useDebounce';
-import { useFilterPersistence } from '@/hooks/useFilterPersistence';
 import { isFolgaEscalaDecoracao } from '@/lib/escalaPanama';
 import { isFolgaEscalaSopro } from '@/lib/escalaSopro';
 import { supabase } from '@/integrations/supabase/client';
@@ -166,7 +165,7 @@ export default function ControleFaltas() {
   const debouncedFiltroNome = useDebounce(filtroNome, 300);
   
   // Estado para filtro de grupo (usado em Dashboard e Lançamentos)
-  const [grupoFiltro, setGrupoFiltro] = useFilterPersistence<'TOTAL' | 'SOPRO' | 'DECORAÇÃO'>('faltas_grupo', 'TOTAL');
+  const [grupoFiltro, setGrupoFiltro] = useState<'TOTAL' | 'SOPRO' | 'DECORAÇÃO'>('TOTAL');
   
   // Estados para filtros multi-select de turma/turno
   const [turmasSopro, setTurmasSopro] = useState<Set<string>>(new Set());
@@ -477,6 +476,38 @@ export default function ControleFaltas() {
       funcionarios: grupos[setor].sort((a, b) => a.nome_completo.localeCompare(b.nome_completo)),
     }));
   }, [funcionariosFiltrados]);
+
+  const funcionariosAgrupadosMetricas = useMemo(() => {
+    const grupos: Record<string, typeof funcionarios> = {};
+
+    funcionarios
+      .filter(func => isSetorDoQuadro(func.setor))
+      .forEach(func => {
+        const setorNome = func.setor?.nome || 'SEM SETOR';
+        const setorGrupo = func.setor?.grupo || null;
+        const grupoConsolidado = getGrupoConsolidado(setorNome, setorGrupo, func.turma);
+
+        if (!grupos[grupoConsolidado]) {
+          grupos[grupoConsolidado] = [];
+        }
+        grupos[grupoConsolidado].push(func);
+      });
+
+    const ordemGrupos = ['SOPRO A', 'SOPRO B', 'SOPRO C', 'DECORAÇÃO DIA - T1', 'DECORAÇÃO DIA - T2', 'DECORAÇÃO NOITE - T1', 'DECORAÇÃO NOITE - T2', 'DECORAÇÃO DIA', 'DECORAÇÃO NOITE'];
+    const setoresOrdenados = Object.keys(grupos).sort((a, b) => {
+      const idxA = ordemGrupos.indexOf(a);
+      const idxB = ordemGrupos.indexOf(b);
+      if (idxA >= 0 && idxB >= 0) return idxA - idxB;
+      if (idxA >= 0) return -1;
+      if (idxB >= 0) return 1;
+      return a.localeCompare(b);
+    });
+
+    return setoresOrdenados.map(setor => ({
+      setor,
+      funcionarios: grupos[setor].sort((a, b) => a.nome_completo.localeCompare(b.nome_completo)),
+    }));
+  }, [funcionarios]);
 
   // Filtrar funcionários agrupados por grupo selecionado (para visualização)
   const funcionariosAgrupadosFiltrados = useMemo(() => {
@@ -1381,9 +1412,9 @@ export default function ControleFaltas() {
         </DialogContent>
       </Dialog>
 
-      {periodo && funcionariosAgrupadosFiltrados.length > 0 && (
+      {periodo && funcionariosAgrupadosMetricas.length > 0 && (
         <DashboardFaltasDiario
-          funcionariosAgrupados={funcionariosAgrupadosFiltrados}
+          funcionariosAgrupados={funcionariosAgrupadosMetricas}
           registros={registros}
           diasPeriodo={diasPeriodo}
           periodo={periodo}
