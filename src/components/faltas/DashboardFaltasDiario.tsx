@@ -174,10 +174,10 @@ export function DashboardFaltasDiario({
   }, [blocosDias, blocosVisiveis, diasPeriodo]);
 
   const colunaDiaClass = diasVisiveis.length <= 10
-    ? "w-[84px] min-w-[84px] max-w-[84px]"
+    ? "w-[88px] min-w-[88px] max-w-[88px]"
     : diasVisiveis.length <= 15
-      ? "w-[64px] min-w-[64px] max-w-[64px]"
-      : "w-[52px] min-w-[52px] max-w-[52px]";
+      ? "w-[72px] min-w-[72px] max-w-[72px]"
+      : "w-[62px] min-w-[62px] max-w-[62px]";
 
   const funcionarioAtivoNaData = (func: FuncionarioBase, data: Date): boolean => {
     // Regra 2: Admissão — só entra se admitido até o dia
@@ -654,30 +654,30 @@ export function DashboardFaltasDiario({
     }
 
     const cellContent = (
-      <div className="flex flex-col items-center justify-center gap-0.5 overflow-visible">
-        <div className="flex items-center justify-center gap-px flex-nowrap whitespace-nowrap">
+      <div className="flex min-h-[34px] flex-col items-center justify-center gap-1 overflow-visible">
+        <div className="flex items-center justify-center gap-0.5 flex-nowrap whitespace-nowrap">
           {folga && (
             <span className="text-[10px] opacity-60" title="Folga">🛏️</span>
           )}
           {badgeF > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[18px] h-[16px] rounded bg-foreground text-background text-[10px] px-[2px] shadow-sm leading-none">
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[15px] rounded-md bg-slate-900 text-white text-[10px] font-bold px-[3px] shadow-sm leading-none">
               {badgeF}F
             </span>
           )}
           {badgeA > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[18px] h-[16px] rounded bg-foreground text-background text-[10px] px-[2px] shadow-sm leading-none">
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[15px] rounded-md bg-slate-900 text-white text-[10px] font-bold px-[3px] shadow-sm leading-none">
               {badgeA}A
             </span>
           )}
           {badgeT > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[18px] h-[16px] rounded bg-primary text-primary-foreground text-[10px] px-[2px] shadow-sm leading-none">
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[15px] rounded-md bg-primary text-primary-foreground text-[10px] font-bold px-[3px] shadow-sm leading-none">
               {badgeT}T
             </span>
           )}
         </div>
         {saldo != null && (
                     <span className={cn(
-                     "inline-flex items-center justify-center h-[16px] rounded px-[2px] shadow-sm whitespace-nowrap leading-none text-[10px]",
+                     "inline-flex items-center justify-center h-[16px] rounded-md px-1.5 shadow-sm whitespace-nowrap leading-none text-[9px] font-black",
                       saldo > 0 ? "bg-success text-success-foreground" : saldo < 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"
                     )}>
                       {saldo > 0 ? `+${saldo}` : saldo} SALDO
@@ -739,13 +739,13 @@ export function DashboardFaltasDiario({
   };
 
   return (
-    <Card className="shadow-sm border-border/60">
-      <CardHeader className="pb-3 pt-5 px-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 flex-wrap min-w-0">
+    <Card className="shadow-sm border-border/60 overflow-hidden">
+      <CardHeader className="pb-3 pt-5 px-5 border-b bg-card">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+          <div className="flex flex-col gap-2 min-w-0">
             <CardTitle className="text-base font-extrabold tracking-wide text-foreground">MÉTRICAS POR SETOR / DIA</CardTitle>
             {gruposDisponiveis.length > 1 && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 {gruposDisponiveis.map(grupo => (
                   <Button
                     key={grupo}
@@ -753,7 +753,7 @@ export function DashboardFaltasDiario({
                     size="sm"
                     onClick={() => toggleGrupo(grupo)}
                     className={cn(
-                      "h-7 px-3 text-[10px] font-bold rounded-md transition-all",
+	                      "h-8 px-4 text-[11px] font-bold rounded-md transition-all",
                       gruposVisiveis.has(grupo) && "bg-primary text-primary-foreground shadow-sm"
                     )}
                   >
@@ -763,16 +763,17 @@ export function DashboardFaltasDiario({
               </div>
             )}
           </div>
+          <div className="flex flex-col gap-2 xl:items-end">
           {blocosDias.length > 1 && (
-            <div className="flex items-center gap-1.5 flex-wrap justify-center">
+            <div className="flex max-w-[560px] items-center gap-1.5 overflow-x-auto rounded-lg bg-muted/40 p-1">
               {blocosDias.map(bloco => (
                 <Button
                   key={bloco.id}
-                  variant={blocosVisiveis.has(bloco.id) ? 'default' : 'outline'}
+	                  variant={blocosVisiveis.has(bloco.id) ? 'default' : 'ghost'}
                   size="sm"
                   onClick={() => toggleBloco(bloco.id)}
                   className={cn(
-                    "h-8 px-3 text-[11px] font-bold gap-1.5 rounded-md transition-all",
+	                    "h-8 shrink-0 px-3 text-[11px] font-bold gap-1.5 rounded-md transition-all",
                     blocosVisiveis.has(bloco.id) && "bg-primary text-primary-foreground shadow-sm"
                   )}
                 >
@@ -791,7 +792,7 @@ export function DashboardFaltasDiario({
                   }
                 }}
                 className={cn(
-                  "h-8 px-3 text-[11px] font-bold rounded-md",
+	                  "h-8 shrink-0 px-3 text-[11px] font-bold rounded-md",
                   blocosVisiveis.size === blocosDias.length && "bg-primary/15 text-primary border border-primary/30"
                 )}
               >
@@ -799,7 +800,7 @@ export function DashboardFaltasDiario({
               </Button>
             </div>
           )}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 justify-end">
             <Button variant="outline" size="sm" onClick={() => window.location.href = '/faltas'} className="gap-2 h-8 text-[11px] font-bold">
               <Clock className="h-3.5 w-3.5" />
               CONTROLE COMPLETO
@@ -808,6 +809,7 @@ export function DashboardFaltasDiario({
               <Download className="h-3.5 w-3.5" />
               EXPORTAR EXCEL
             </Button>
+          </div>
           </div>
         </div>
         <div className="flex items-center gap-3 mt-2 flex-wrap">
@@ -847,12 +849,12 @@ export function DashboardFaltasDiario({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="px-0 pb-3">
-        <div className="overflow-x-auto">
+      <CardContent className="px-0 pb-3 bg-background">
+        <div className="max-h-[620px] overflow-auto">
           <Table className="w-max min-w-full table-fixed">
-            <TableHeader>
+            <TableHeader className="sticky top-0 z-30">
               <TableRow className="bg-card border-b-2 border-border">
-                <TableHead className="text-[13px] font-extrabold text-foreground sticky left-0 bg-card z-10 w-[140px] min-w-[140px] max-w-[140px] py-1.5 px-2 border-r border-border/50">SETOR</TableHead>
+                <TableHead className="text-[13px] font-extrabold text-foreground sticky left-0 bg-card z-40 w-[176px] min-w-[176px] max-w-[176px] py-2 px-3 border-r border-border/50 shadow-[4px_0_8px_-8px_rgba(15,23,42,0.55)]">SETOR</TableHead>
                 {diasVisiveis.map((dia, colIndex) => {
                   const dataStr = format(dia, 'yyyy-MM-dd');
                   const isHoje = dataStr === hojeStr;
@@ -863,7 +865,7 @@ export function DashboardFaltasDiario({
                     <TableHead
                       key={dataStr}
                       className={cn(
-                        "text-center px-0.5 py-1.5",
+	                        "text-center px-1 py-2 bg-card",
                         colunaDiaClass,
                         isHoje && "bg-green-100 dark:bg-green-900/30",
                         !isHoje && isAlternate && "bg-muted/90",
@@ -891,7 +893,7 @@ export function DashboardFaltasDiario({
 
                 return (
                   <TableRow key={setor} className={cn("hover:bg-accent/30 transition-colors", isEven ? "bg-card/50" : "bg-card")}>
-                    <TableCell className={cn("text-[12px] font-semibold py-2 px-2 sticky left-0 z-10 whitespace-normal leading-tight border-r border-border/50 w-[140px] min-w-[140px] max-w-[140px]", isEven ? "bg-card" : "bg-card")}>
+	                    <TableCell className={cn("text-[12px] font-semibold py-2.5 px-3 sticky left-0 z-20 whitespace-normal leading-tight border-r border-border/50 w-[176px] min-w-[176px] max-w-[176px] shadow-[4px_0_8px_-8px_rgba(15,23,42,0.55)]", isEven ? "bg-card" : "bg-card")}>
                       <div>{setor}</div>
                       {trabalhaHoje !== null && (
                         <div className={cn(
@@ -936,7 +938,7 @@ export function DashboardFaltasDiario({
               })}
               {/* Linha TOTAL */}
               <TableRow className="border-t-2 border-border bg-card">
-                <TableCell className="text-[12px] font-extrabold py-2 px-2 sticky left-0 bg-card z-10 border-r border-border/50 w-[140px] min-w-[140px] max-w-[140px]">TOTAL</TableCell>
+	                <TableCell className="text-[12px] font-extrabold py-2.5 px-3 sticky left-0 bg-card z-20 border-r border-border/50 w-[176px] min-w-[176px] max-w-[176px] shadow-[4px_0_8px_-8px_rgba(15,23,42,0.55)]">TOTAL</TableCell>
                 {diasVisiveis.map((dia, colIndex) => {
                   const dataStr = format(dia, 'yyyy-MM-dd');
                   const d = totaisPorDia[dataStr];
