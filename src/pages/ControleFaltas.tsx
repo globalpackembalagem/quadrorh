@@ -509,6 +509,26 @@ export default function ControleFaltas() {
     }));
   }, [funcionarios]);
 
+  const funcionariosAgrupadosPorFuncionario = useMemo(() => {
+    if (!debouncedFiltroNome.trim()) return funcionariosAgrupadosMetricas;
+
+    const termo = debouncedFiltroNome.toUpperCase().trim();
+    return funcionariosAgrupadosMetricas
+      .map(({ setor, funcionarios }) => ({
+        setor,
+        funcionarios: funcionarios.filter(func =>
+          func.nome_completo.toUpperCase().includes(termo) ||
+          func.matricula?.toUpperCase().includes(termo)
+        ),
+      }))
+      .filter(({ funcionarios }) => funcionarios.length > 0);
+  }, [funcionariosAgrupadosMetricas, debouncedFiltroNome]);
+
+  const totalFuncionariosPorFuncionario = useMemo(
+    () => funcionariosAgrupadosPorFuncionario.reduce((total, grupo) => total + grupo.funcionarios.length, 0),
+    [funcionariosAgrupadosPorFuncionario]
+  );
+
   // Filtrar funcionários agrupados por grupo selecionado (para visualização)
   const funcionariosAgrupadosFiltrados = useMemo(() => {
     let resultado = funcionariosAgrupados;
@@ -711,7 +731,7 @@ export default function ControleFaltas() {
   }, [quadroPlanejadoSopro, quadroDecoracaoData]);
 
   const totaisPorDia = useMemo(() => {
-    const funcionariosIds = new Set(funcionariosFiltrados.map(f => f.id));
+    const funcionariosIds = new Set(funcionariosAgrupadosPorFuncionario.flatMap(({ funcionarios }) => funcionarios.map(f => f.id)));
     const result: Record<string, { faltas: number; atestados: number; dayoff: number }> = {};
     
     diasPeriodo.forEach(dia => {
@@ -730,13 +750,13 @@ export default function ControleFaltas() {
     });
     
     return result;
-  }, [registros, funcionariosFiltrados, diasPeriodo]);
+  }, [registros, funcionariosAgrupadosPorFuncionario, diasPeriodo]);
 
   // Calcular totais por setor por dia - com detalhamento por tipo e nomes
   const totaisPorSetorDia = useMemo(() => {
     // Criar mapa de funcionário ID → nome
     const funcNomeMap = new Map<string, string>();
-    funcionariosAgrupados.forEach(({ funcionarios }) => {
+    funcionariosAgrupadosPorFuncionario.forEach(({ funcionarios }) => {
       funcionarios.forEach(f => funcNomeMap.set(f.id, f.nome_completo));
     });
 
@@ -745,7 +765,7 @@ export default function ControleFaltas() {
       porTipo: Record<string, { count: number; nomes: string[] }>;
     }>> = {};
     
-    funcionariosAgrupados.forEach(({ setor, funcionarios }) => {
+    funcionariosAgrupadosPorFuncionario.forEach(({ setor, funcionarios }) => {
       result[setor] = {};
       const funcIds = new Set(funcionarios.map(f => f.id));
       
@@ -771,7 +791,7 @@ export default function ControleFaltas() {
     });
     
     return result;
-  }, [registros, funcionariosAgrupados, diasPeriodo]);
+  }, [registros, funcionariosAgrupadosPorFuncionario, diasPeriodo]);
 
   // Verifica se funcionário estava ativo na data
   const funcionarioAtivoNaData = (func: Funcionario, data: Date): boolean => {
@@ -1129,7 +1149,7 @@ export default function ControleFaltas() {
 
   // Calcular resumo por setor para o dashboard
   const resumoPorSetor = useMemo(() => {
-    return funcionariosAgrupados.map(({ setor, funcionarios }) => {
+    return funcionariosAgrupadosPorFuncionario.map(({ setor, funcionarios }) => {
       const funcIds = new Set(funcionarios.map(f => f.id));
       let totalFaltas = 0;
       let totalAtestados = 0;
@@ -1158,7 +1178,7 @@ export default function ControleFaltas() {
         atestados: totalAtestados,
       };
     });
-  }, [funcionariosAgrupados, registros]);
+  }, [funcionariosAgrupadosPorFuncionario, registros]);
 
   const podeVerAlertasTemp = useMemo(() => {
     const nome = (userRole?.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase();
@@ -1616,7 +1636,7 @@ export default function ControleFaltas() {
 
               {/* Contador */}
               <span className="text-xs text-muted-foreground whitespace-nowrap font-medium">
-                {funcionariosFiltrados.length} funcionários
+                {totalFuncionariosPorFuncionario} funcionários
               </span>
 
               {/* Legenda em popover */}
@@ -1729,7 +1749,7 @@ export default function ControleFaltas() {
                 </tr>
               </thead>
               <tbody>
-                {funcionariosAgrupados.length === 0 && debouncedFiltroNome.trim() && (
+                {funcionariosAgrupadosPorFuncionario.length === 0 && debouncedFiltroNome.trim() && (
                   <tr>
                     <td colSpan={diasVisiveis.length + 1} className="text-center py-8 text-muted-foreground">
                       <p className="text-sm font-medium">Nenhum funcionário encontrado para "{debouncedFiltroNome}"</p>
@@ -1737,7 +1757,7 @@ export default function ControleFaltas() {
                     </td>
                   </tr>
                 )}
-                {funcionariosAgrupados.map(({ setor, funcionarios: funcsSetor }) => (
+                {funcionariosAgrupadosPorFuncionario.map(({ setor, funcionarios: funcsSetor }) => (
                   <>
                     {/* Cabeçalho do Setor */}
                     <tr key={`header-${setor}`} className="bg-primary/10 border-y border-primary/30">
