@@ -131,6 +131,8 @@ export default function ControleFaltas() {
   const { data: setores = [] } = useSetores();
   const { canEditFaltas, isAdmin, userRole, isRHMode } = useAuth();
   const isRealParceria = isRHMode && userRole?.nome?.toUpperCase() === 'REAL PARCERIA';
+  const nomeUsuarioFaltas = (userRole?.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+  const podeVerTodasMetricasFaltas = isAdmin || isRHMode || ['LUCIANO', 'MAURICIO', 'PAULO'].includes(nomeUsuarioFaltas);
   const { data: liberacoes = [] } = useLiberacoesFaltas();
   const [liberarDatasOpen, setLiberarDatasOpen] = useState(false);
   const [cobrarFaltasOpen, setCobrarFaltasOpen] = useState(false);
@@ -185,7 +187,7 @@ export default function ControleFaltas() {
 
   // Detectar grupo do gestor automaticamente
   const grupoDoGestor = useMemo(() => {
-    if (isAdmin) return null; // Admin vê tudo
+    if (podeVerTodasMetricasFaltas) return null; // Visao total ve tudo
     const setoresUsuario = userRole?.setores_ids || [];
     if (setoresUsuario.length === 0) return null;
     
@@ -200,7 +202,7 @@ export default function ControleFaltas() {
     if (temSopro && !temDecoracao) return 'SOPRO' as const;
     if (temDecoracao && !temSopro) return 'DECORAÇÃO' as const;
     return null;
-  }, [isAdmin, userRole, setores]);
+  }, [podeVerTodasMetricasFaltas, userRole, setores]);
 
   // Filtra funcionários por setor do usuário (gestores só veem seus setores)
   // E também filtra apenas setores do quadro
@@ -219,7 +221,7 @@ export default function ControleFaltas() {
         const matricula = (func.matricula || '').toUpperCase().trim();
         return matricula === 'TEMP' || matricula.includes('TEMP');
       });
-    } else if (!isAdmin) {
+    } else if (!podeVerTodasMetricasFaltas) {
       // Se não é admin e tem setores específicos atribuídos, filtrar apenas pelos setores do gestor
       const setoresUsuario = userRole?.setores_ids || [];
       
@@ -294,7 +296,7 @@ export default function ControleFaltas() {
     }
     
     return filtered;
-  }, [funcionarios, isAdmin, isRealParceria, userRole, grupoFiltro, grupoDoGestor, turmasSopro, subTurmasSopro, debouncedFiltroNome, turnosDecoracao, turmasDecoracao, setores]);
+  }, [funcionarios, podeVerTodasMetricasFaltas, isRealParceria, userRole, grupoFiltro, grupoDoGestor, turmasSopro, subTurmasSopro, debouncedFiltroNome, turnosDecoracao, turmasDecoracao, setores]);
 
   const diasPeriodo = useMemo(() => {
     if (!periodo) return [];
@@ -1408,7 +1410,7 @@ export default function ControleFaltas() {
           <div className="sticky top-0 z-40 bg-background pb-3 -mx-3 px-3 pt-1 border-b">
             <div className="flex flex-wrap items-center gap-3">
               {/* Filtro de Grupo - admin ou REAL PARCERIA */}
-              {(isAdmin || isRealParceria) && (
+              {(podeVerTodasMetricasFaltas || isRealParceria) && (
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-muted-foreground shrink-0" />
                   <div className="flex gap-1">
@@ -1458,7 +1460,7 @@ export default function ControleFaltas() {
               )}
 
               {/* Se é gestor, mostrar badge do grupo */}
-              {!isAdmin && grupoDoGestor && (
+              {!podeVerTodasMetricasFaltas && grupoDoGestor && (
                 <Badge variant="outline" className="h-9 px-4 text-xs gap-1.5">
                   {grupoDoGestor === 'SOPRO' ? <Wind className="h-3.5 w-3.5" /> : <Palette className="h-3.5 w-3.5" />}
                   {grupoDoGestor}
@@ -1466,7 +1468,7 @@ export default function ControleFaltas() {
               )}
 
               {/* Sub-filtros SOPRO: A/B/C + 1A/2A/1B/2B */}
-              {((isAdmin && grupoFiltro === 'SOPRO') || (!isAdmin && grupoDoGestor === 'SOPRO') || (isRealParceria && grupoFiltro === 'SOPRO')) && (
+              {((podeVerTodasMetricasFaltas && grupoFiltro === 'SOPRO') || (!podeVerTodasMetricasFaltas && grupoDoGestor === 'SOPRO') || (isRealParceria && grupoFiltro === 'SOPRO')) && (
                 <>
                   <div className="flex items-center gap-1.5 border-l pl-3">
                     {(['A', 'B', 'C'] as const).map((turma) => (
@@ -1504,7 +1506,7 @@ export default function ControleFaltas() {
               )}
 
               {/* Sub-filtros DECORAÇÃO: DIA, NOITE | T1, T2 */}
-              {((isAdmin && grupoFiltro === 'DECORAÇÃO') || (!isAdmin && grupoDoGestor === 'DECORAÇÃO') || (isRealParceria && grupoFiltro === 'DECORAÇÃO')) && (
+              {((podeVerTodasMetricasFaltas && grupoFiltro === 'DECORAÇÃO') || (!podeVerTodasMetricasFaltas && grupoDoGestor === 'DECORAÇÃO') || (isRealParceria && grupoFiltro === 'DECORAÇÃO')) && (
                 <>
                   <div className="flex items-center gap-1.5 border-l pl-3">
                     {(['DIA', 'NOITE'] as const).map((turno) => (
