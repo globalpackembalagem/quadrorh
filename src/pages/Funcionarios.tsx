@@ -172,15 +172,23 @@ function TemporariosTab({
     });
   }, [funcionarios]);
 
+  const solicitacoesValidas = useMemo(() => {
+    const temporariosValidosIds = new Set(temporarios.map((func) => func.id));
+    return solicitacoes.filter((sol) =>
+      temporariosValidosIds.has(sol.funcionario_id) &&
+      !['CANCELADA', 'CONCLUIDA', 'CONCLUÍDA'].includes(sol.status || '')
+    );
+  }, [solicitacoes, temporarios]);
+
   const solicitacoesPorFuncionario = useMemo(() => {
     const mapa = new Map<string, SolicitacaoTemporario>();
-    solicitacoes.forEach((sol) => {
-      if (!mapa.has(sol.funcionario_id) && !['CANCELADA', 'CONCLUIDA', 'CONCLUÍDA'].includes(sol.status || '')) {
+    solicitacoesValidas.forEach((sol) => {
+      if (!mapa.has(sol.funcionario_id)) {
         mapa.set(sol.funcionario_id, sol);
       }
     });
     return mapa;
-  }, [solicitacoes]);
+  }, [solicitacoesValidas]);
 
   const filtrados = useMemo(() => {
     const listaBusca = !search.trim() ? temporarios : temporarios.filter(f => {
@@ -489,7 +497,7 @@ function TemporariosTab({
         Total: {filtrados.length} temporário(s)
       </div>
 
-      {solicitacoes.length > 0 && (
+      {solicitacoesValidas.length > 0 && (
         <div className="rounded-lg border bg-card overflow-x-auto">
           <div className="border-b px-4 py-3">
             <h3 className="text-sm font-semibold">SOLICITACOES DE TEMPORARIOS</h3>
@@ -507,7 +515,7 @@ function TemporariosTab({
               </tr>
             </thead>
             <tbody>
-              {solicitacoes.map((sol) => (
+              {solicitacoesValidas.map((sol) => (
                 <tr key={sol.id}>
                   <td>
                     <div className="font-medium">{sol.funcionario_nome}</div>
