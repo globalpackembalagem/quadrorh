@@ -166,9 +166,16 @@ function TemporariosTab({
     return funcionarios.filter(f => {
       const mat = f.matricula?.toUpperCase() || '';
       const situacao = normalizarTextoSistema(f.situacao?.nome) || '';
+      const situacaoDesligada = (
+        situacao.includes('DEMISSAO') ||
+        situacao.includes('PEDIDO') ||
+        situacao.includes('TERMINO') ||
+        situacao.includes('DISPENSA') ||
+        situacao.includes('JUSTA CAUSA')
+      );
       const setorContaNoQuadro = f.setor?.conta_no_quadro !== false && f.setor?.ativo !== false;
       const situacaoContaNoQuadro = f.situacao?.conta_no_quadro !== false && f.situacao?.ativa !== false;
-      return mat.startsWith('TEMP') && situacao === 'ATIVO' && setorContaNoQuadro && situacaoContaNoQuadro;
+      return mat.startsWith('TEMP') && situacao === 'ATIVO' && !situacaoDesligada && !f.data_demissao && setorContaNoQuadro && situacaoContaNoQuadro;
     });
   }, [funcionarios]);
 
