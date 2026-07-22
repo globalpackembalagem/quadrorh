@@ -511,7 +511,18 @@ export default function Usuarios() {
             >
               {/* Nome + badges */}
               <div className="flex items-center gap-2 min-w-[140px]">
-                <span className="font-semibold text-sm">{user.nome.toUpperCase()}</span>
+                {isMaster && !isLuciano && user.ativo ? (
+                  <button
+                    type="button"
+                    className="text-left font-semibold text-sm text-primary hover:underline underline-offset-2"
+                    title={`Acessar como ${user.nome.toUpperCase()}`}
+                    onClick={() => acessarComoUsuario(user.id, user.nome)}
+                  >
+                    {user.nome.toUpperCase()}
+                  </button>
+                ) : (
+                  <span className="font-semibold text-sm">{user.nome.toUpperCase()}</span>
+                )}
                 {isLuciano && (
                   <Badge variant="outline" className="text-[9px] px-1 py-0 gap-0.5 border-warning/50 text-warning">
                     <Star className="h-2.5 w-2.5" /> MESTRE
