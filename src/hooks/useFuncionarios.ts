@@ -84,6 +84,11 @@ function situacaoRetornaAutomaticoParaAtivo(nome?: string | null): boolean {
 }
 
 function contaNoQuadro(funcionario: any): boolean {
+  if (funcionario?.setor) {
+    if (funcionario.setor.ativo === false) return false;
+    if (funcionario.setor.conta_no_quadro === false) return false;
+  }
+
   if (typeof funcionario?.situacao?.conta_no_quadro === 'boolean') {
     return funcionario.situacao.conta_no_quadro === true && funcionario.situacao.ativa !== false;
   }
