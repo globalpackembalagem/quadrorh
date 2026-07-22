@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 // xlsx-js-style loaded dynamically
 import { getTrabalhaOuFolga } from '@/lib/escalaPanama';
 import { loadXLSX } from '@/lib/xlsx';
+import logoGlobalpack from '@/assets/logo-globalpack-new.png';
 
 const DIAS_SEMANA = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'SÃ¡b', 'Dom'];
 const MESES = [
@@ -258,41 +259,46 @@ export function EscalaFolgaCalendario() {
       <head>
         <title>Escala ${turmaLabel} - ${ano}</title>
 	        <style>
-	          @page { size: A4 landscape; margin: 6mm; }
+		          @page { size: A4 portrait; margin: 6mm; }
 	          @media print {
 	            body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 	            .no-print { display: none !important; }
 	          }
 	          * { box-sizing: border-box; }
 	          body { font-family: Inter, Arial, sans-serif; color: #0f172a; }
-	          .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 5px; margin-bottom: 6px; }
-	          .title { margin: 0; font-size: 15px; font-weight: 800; text-transform: uppercase; }
-	          .subtitle { margin: 2px 0 0; font-size: 11px; color: #475569; font-weight: 700; }
-	          .legend { display: flex; gap: 10px; font-size: 10px; font-weight: 700; align-items: center; }
-	          .legend-badge, .badge { display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; color: #fff; font-weight: 800; }
-	          .legend-badge { width: 18px; height: 14px; margin-right: 3px; }
-	          .work { background: #15803d; }
-	          .off { background: #b91c1c; }
-	          .year-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
-	          .month { border: 1px solid #cbd5e1; border-radius: 5px; overflow: hidden; break-inside: avoid; }
-	          .month-title { background: #f59e0b; color: #111827; font-weight: 800; text-align: center; padding: 3px; font-size: 10px; text-transform: uppercase; }
-	          .month-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
-	          .weekday { text-align: center; padding: 2px 1px; font-weight: 800; background: #f1f5f9; border-bottom: 1px solid #cbd5e1; font-size: 8px; color: #475569; }
-	          .day { min-height: 19px; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; gap: 3px; }
-	          .day:nth-child(7n) { border-right: 0; }
-	          .empty { background: #f8fafc; }
-	          .num { font-size: 8px; min-width: 8px; text-align: right; }
-	          .badge { width: 15px; height: 11px; font-size: 8px; line-height: 1; }
-	          .footer { text-align: right; margin-top: 4px; font-size: 8px; color: #64748b; }
+		          .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 5px; margin-bottom: 5px; }
+		          .brand { display: flex; align-items: center; gap: 8px; }
+		          .logo { width: 34px; height: 34px; object-fit: contain; }
+		          .title { margin: 0; font-size: 13px; font-weight: 800; text-transform: uppercase; }
+		          .subtitle { margin: 2px 0 0; font-size: 9px; color: #475569; font-weight: 700; }
+		          .legend { display: flex; gap: 8px; font-size: 8px; font-weight: 700; align-items: center; }
+		          .legend-badge, .badge { display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; color: #fff; font-weight: 800; }
+		          .legend-badge { width: 16px; height: 12px; margin-right: 3px; }
+		          .work { background: #15803d; }
+		          .off { background: #b91c1c; }
+		          .year-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+		          .month { border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; break-inside: avoid; }
+		          .month-title { background: #f59e0b; color: #111827; font-weight: 800; text-align: center; padding: 2px; font-size: 8px; text-transform: uppercase; }
+		          .month-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+		          .weekday { text-align: center; padding: 1px; font-weight: 800; background: #f1f5f9; border-bottom: 1px solid #cbd5e1; font-size: 6px; color: #475569; }
+		          .day { min-height: 16px; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; gap: 2px; }
+		          .day:nth-child(7n) { border-right: 0; }
+		          .empty { background: #f8fafc; }
+		          .num { font-size: 6px; min-width: 7px; text-align: right; }
+		          .badge { width: 13px; height: 9px; font-size: 6px; line-height: 1; }
+		          .footer { text-align: right; margin-top: 3px; font-size: 7px; color: #64748b; }
 	        </style>
       </head>
       <body>
-        <div class="header">
-          <div>
-            <h1 class="title">ESCALA 12 HORAS - DECORACAO</h1>
-            <p class="subtitle">${turmaLabel} - ${ano}</p>
-          </div>
-          <div class="legend">
+	        <div class="header">
+	          <div class="brand">
+	            <img class="logo" src="${logoGlobalpack}" alt="Globalpack" />
+	            <div>
+	              <h1 class="title">ESCALA 12 HORAS - DECORACAO</h1>
+	              <p class="subtitle">${turmaLabel} - ${ano}</p>
+	            </div>
+	          </div>
+	          <div class="legend">
             <span><span class="legend-badge work">T</span>TRABALHA</span>
             <span><span class="legend-badge off">F</span>FOLGA</span>
           </div>
