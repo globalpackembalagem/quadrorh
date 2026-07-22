@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PeriodoPonto, PeriodoStatus } from '@/types/database';
 import { toast } from 'sonner';
+import { pontoApi } from '@/lib/pontoApi';
 
 export function usePeriodosPonto() {
   return useQuery({
@@ -36,11 +37,10 @@ export function useCreatePeriodo() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (periodo: { data_inicio: string; data_fim: string }) => {
-      const { data, error } = await supabase
-        .from('periodos_ponto')
-        .insert({ ...periodo, status: 'aberto' as PeriodoStatus })
-        .select()
-        .single();
+      const { data, error } = await pontoApi.insert('periodos_ponto', { ...periodo, status: 'aberto' as PeriodoStatus }, {
+        select: '*',
+        single: true,
+      });
       if (error) throw error;
       return data;
     },
@@ -59,12 +59,11 @@ export function useUpdatePeriodoStatus() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: PeriodoStatus }) => {
-      const { data, error } = await supabase
-        .from('periodos_ponto')
-        .update({ status })
-        .eq('id', id)
-        .select()
-        .single();
+      const { data, error } = await pontoApi.update('periodos_ponto', { status }, {
+        eq: { id },
+        select: '*',
+        single: true,
+      });
       if (error) throw error;
       return data;
     },
@@ -80,7 +79,7 @@ export function useDeletePeriodo() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('periodos_ponto').delete().eq('id', id);
+      const { error } = await pontoApi.delete('periodos_ponto', { eq: { id } });
       if (error) throw error;
     },
     onSuccess: () => {

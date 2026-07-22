@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { RegistroPonto, PontoTipo } from '@/types/database';
 import { toast } from 'sonner';
+import { pontoApi } from '@/lib/pontoApi';
 
 export function useRegistrosPonto(periodoId?: string) {
   return useQuery({
@@ -69,11 +70,10 @@ export function useCreateRegistroPonto() {
       tipo: PontoTipo;
       observacao?: string | null;
     }) => {
-      const { data, error } = await supabase
-        .from('registros_ponto')
-        .insert(registro)
-        .select()
-        .single();
+      const { data, error } = await pontoApi.insert('registros_ponto', registro, {
+        select: '*',
+        single: true,
+      });
       if (error) throw error;
       return data;
     },
@@ -95,7 +95,7 @@ export function useDeleteRegistroPonto() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('registros_ponto').delete().eq('id', id);
+      const { error } = await pontoApi.delete('registros_ponto', { eq: { id } });
       if (error) throw error;
     },
     onSuccess: () => {

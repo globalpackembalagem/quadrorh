@@ -576,6 +576,45 @@ serve(async (req) => {
         return jsonResponse({ success: true, data });
       }
 
+      case "ponto_write": {
+        const { session_token, tabela, operation, payload, filters = {} } = params;
+        const allowedTables = ["periodos_ponto", "registros_ponto"];
+        const allowedOperations = ["insert", "update", "delete"];
+
+        if (!session_token) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
+        if (!allowedTables.includes(tabela)) return jsonResponse({ error: "Tabela invalida" }, 400);
+        if (!allowedOperations.includes(operation)) return jsonResponse({ error: "Operacao invalida" }, 400);
+
+        const writer = await getFuncionariosWriterBySession(supabase, session_token);
+        const canWriteFuncionarios = writer?.acesso_admin === true || writer?.pode_editar_funcionarios === true;
+        const canWriteFaltas = canWriteFuncionarios || writer?.pode_editar_faltas === true;
+        const permitido = tabela === "periodos_ponto" ? canWriteFuncionarios : canWriteFaltas;
+        if (!permitido) return jsonResponse({ error: "Acesso negado" }, 403);
+
+        let query = supabase.from(tabela);
+        if (operation === "insert") query = query.insert(payload);
+        if (operation === "update") query = applyFuncionariosFilters(query.update(payload), filters);
+        if (operation === "delete") {
+          if (!hasFuncionariosFilters(filters)) {
+            return jsonResponse({ error: "Delete exige filtro" }, 400);
+          }
+          const deleteQuery = applyFuncionariosFilters(query.delete({ count: "exact" }), filters);
+          const { count, error } = await deleteQuery;
+          if (error) throw error;
+          if (!count || count < 1) {
+            return jsonResponse({ error: "Nenhum registro encontrado para excluir" }, 404);
+          }
+          return jsonResponse({ success: true, count });
+        }
+
+        query = query.select(filters?.select || "*");
+        if (filters?.single) query = query.single();
+
+        const { data, error } = await query;
+        if (error) return jsonResponse({ error: error.message || "Erro ao gravar ponto" }, 400);
+        return jsonResponse({ success: true, data });
+      }
+
       case "quadro_trava_gerenciar": {
         const { session_token, area, acao } = params;
         if (!session_token) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
