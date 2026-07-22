@@ -130,7 +130,13 @@ export default function ControleFaltas() {
   const { data: setores = [] } = useSetores();
   const { canEditFaltas, isAdmin, userRole, isRHMode } = useAuth();
   const isRealParceria = isRHMode && userRole?.nome?.toUpperCase() === 'REAL PARCERIA';
-  const podeVerTodasMetricasFaltas = true;
+  const nomeUsuarioNormalizado = (userRole?.nome || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .trim();
+  const isLiderRestrito = ['LEILA', 'ALEX', 'AMILTON', 'SILVIA'].includes(nomeUsuarioNormalizado);
+  const podeVerTodasMetricasFaltas = !isLiderRestrito && (isAdmin || ['LUCIANO', 'PAULO', 'MAURICIO', 'ELIANE', 'SONIA'].includes(nomeUsuarioNormalizado));
   const { data: liberacoes = [] } = useLiberacoesFaltas();
   const [liberarDatasOpen, setLiberarDatasOpen] = useState(false);
   const [cobrarFaltasOpen, setCobrarFaltasOpen] = useState(false);

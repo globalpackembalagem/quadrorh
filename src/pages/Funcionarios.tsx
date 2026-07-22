@@ -660,6 +660,8 @@ export default function Funcionarios() {
   const { data: situacoesAtivas = [] } = useSituacoesAtivas();
   const { canEditFuncionarios, isVisualizacao, isAdmin, isRHMode, userRole } = useAuth();
   const isRealParceria = userRole?.nome?.toUpperCase() === 'REAL PARCERIA';
+  const nomeUsuarioNormalizado = normalizarNomeUsuario(userRole?.nome);
+  const isLiderRestrito = ['LEILA', 'ALEX', 'AMILTON', 'SILVIA'].includes(nomeUsuarioNormalizado);
   const podeEditarFuncionarios = canEditFuncionarios && !isVisualizacao && !isRealParceria;
   const updateFuncionario = useUpdateFuncionario();
   const deleteFuncionario = useDeleteFuncionario();
@@ -726,12 +728,12 @@ export default function Funcionarios() {
 
   const setoresIdsUsuario = userRole?.setores_ids || [];
   const funcionariosVisiveis = useMemo(() => {
-    if (isAdmin) return funcionarios;
+    if (isAdmin && !isLiderRestrito) return funcionarios;
     if (setoresIdsUsuario.length === 0) return [];
 
     const permitidos = new Set(setoresIdsUsuario);
     return funcionarios.filter(f => !!f.setor_id && permitidos.has(f.setor_id));
-  }, [funcionarios, isAdmin, setoresIdsUsuario]);
+  }, [funcionarios, isAdmin, isLiderRestrito, setoresIdsUsuario]);
 
   // funcionariosAtivosParaContagem mantido para compatibilidade com view do gestor
   const funcionariosAtivosParaContagem = useMemo(() => {
