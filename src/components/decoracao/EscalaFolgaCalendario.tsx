@@ -75,20 +75,38 @@ interface MesCalendarioProps {
 function MesCalendario({ ano, mes, turma }: MesCalendarioProps) {
   const dias = useMemo(() => getDiasDoMes(ano, mes), [ano, mes]);
   const hoje = new Date();
+  const resumoMes = useMemo(() => {
+    let trabalhando = 0;
+    let folga = 0;
+
+    dias.forEach((dia) => {
+      if (!dia) return;
+      if (getTrabalhaOuFolga(dia, turma)) trabalhando += 1;
+      else folga += 1;
+    });
+
+    return { trabalhando, folga };
+  }, [dias, turma]);
 
   return (
-    <div className="border rounded-lg overflow-hidden bg-card">
-      <div className="bg-amber-500 text-black font-bold text-center py-2.5 text-base uppercase">
-        {MESES[mes]} / {ano}
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-colors hover:border-blue-300">
+      <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-3 py-2">
+        <div className="text-sm font-bold uppercase text-slate-900">
+          {MESES[mes]} / {ano}
+        </div>
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold">
+          <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-700">T {resumoMes.trabalhando}</span>
+          <span className="rounded bg-red-50 px-1.5 py-0.5 text-red-700">F {resumoMes.folga}</span>
+        </div>
       </div>
       <div className="grid grid-cols-7 text-sm">
         {DIAS_SEMANA.map(d => (
-          <div key={d} className="text-center py-2 font-semibold bg-muted/50 border-b text-muted-foreground">
+          <div key={d} className="border-b border-slate-200 bg-slate-100 py-1.5 text-center text-[11px] font-bold uppercase text-slate-500">
             {d}
           </div>
         ))}
         {dias.map((dia, i) => {
-          if (!dia) return <div key={`empty-${i}`} className="h-14" />;
+          if (!dia) return <div key={`empty-${i}`} className="min-h-11 border-b border-r border-slate-100 bg-slate-50/70" />;
 
           const trabalha = getTrabalhaOuFolga(dia, turma);
           const isHoje = dia.toDateString() === hoje.toDateString();
@@ -96,18 +114,21 @@ function MesCalendario({ ano, mes, turma }: MesCalendarioProps) {
           return (
             <div
               key={i}
-              className="flex flex-col items-center justify-center h-14 border-b border-r"
+              className={cn(
+                "flex min-h-11 flex-col items-center justify-center border-b border-r border-slate-100 bg-white",
+                isHoje && "bg-blue-50 ring-1 ring-inset ring-blue-300"
+              )}
             >
               <span className={cn(
-                "text-sm leading-none",
-                isHoje && "font-bold underline"
+                "text-xs font-semibold leading-none text-slate-700",
+                isHoje && "text-blue-700"
               )}>
                 {dia.getDate()}
               </span>
               <span
                 className={cn(
-                  "text-xs font-bold mt-1 px-2.5 py-0.5 rounded",
-                  trabalha ? "bg-green-700 text-white" : "bg-red-700 text-white"
+                  "mt-1 inline-flex h-5 min-w-6 items-center justify-center rounded px-1.5 text-xs font-bold text-white",
+                  trabalha ? "bg-emerald-600" : "bg-red-600"
                 )}
               >
                 {trabalha ? 'T' : 'F'}
@@ -289,25 +310,30 @@ export function EscalaFolgaCalendario() {
   }, [ano, turma]);
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <Calendar className="h-6 w-6" />
-            Escala 12 Horas - DecoraÃ§Ã£o
-          </CardTitle>
+    <Card className="border-slate-200 bg-white shadow-sm">
+      <CardHeader className="border-b border-slate-200 bg-slate-50/70 pb-4">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-xl font-extrabold text-slate-900">
+              <Calendar className="h-5 w-5 text-blue-600" />
+              Escala 12 Horas - Decoracao
+            </CardTitle>
+            <p className="mt-1 text-sm text-slate-500">
+              Calendario anual da turma com dias de trabalho e folga.
+            </p>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 rounded-md border border-slate-200 bg-white p-1">
               <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setAno(a => a - 1)}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="font-bold text-xl min-w-[55px] text-center">{ano}</span>
+              <span className="min-w-[58px] text-center text-lg font-extrabold text-slate-900">{ano}</span>
               <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setAno(a => a + 1)}>
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
             <Select value={turma} onValueChange={(v) => setTurma(v as 'T1' | 'T2')}>
-              <SelectTrigger className="w-[130px] h-9 font-bold">
+              <SelectTrigger className="h-10 w-[130px] bg-white font-bold">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -315,44 +341,43 @@ export function EscalaFolgaCalendario() {
                 <SelectItem value="T2">TURMA 2</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="default" size="sm" className="h-9 gap-1.5 font-semibold" onClick={handleImprimir}>
+            <Button variant="default" size="sm" className="h-10 gap-1.5 font-semibold" onClick={handleImprimir}>
               <Printer className="h-4 w-4" />
               IMPRIMIR
             </Button>
-            <Button variant="outline" size="sm" className="h-9" onClick={compartilharAnoCompleto}>
+            <Button variant="outline" size="sm" className="h-10 bg-white" onClick={compartilharAnoCompleto}>
               <Share2 className="mr-1 h-3.5 w-3.5" />
               Resumo WhatsApp
             </Button>
-            <Button variant="outline" size="sm" className="h-9" onClick={() => exportarExcel(ano, turma)}>
+            <Button variant="outline" size="sm" className="h-10 bg-white" onClick={() => exportarExcel(ano, turma)}>
               <Download className="mr-1 h-3.5 w-3.5" />
               Excel
             </Button>
           </div>
         </div>
-        {/* CabeÃ§alho turma */}
-        <div className="flex items-center justify-between mt-2">
-          <div className="flex gap-4 text-sm">
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block w-5 h-5 rounded bg-green-700" /> T = Trabalha
+        <div className="mt-1 flex flex-col gap-3 rounded-lg border border-slate-200 bg-white px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex gap-3 text-sm font-semibold text-slate-700">
+            <span className="flex items-center gap-1.5 rounded-md bg-emerald-50 px-2 py-1 text-emerald-700">
+              <span className="inline-block h-3 w-3 rounded bg-emerald-600" /> T = Trabalha
             </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block w-5 h-5 rounded bg-red-700" /> F = Folga
+            <span className="flex items-center gap-1.5 rounded-md bg-red-50 px-2 py-1 text-red-700">
+              <span className="inline-block h-3 w-3 rounded bg-red-600" /> F = Folga
             </span>
           </div>
-          <span className="text-lg font-bold text-amber-600">
-            {turma === 'T1' ? 'TURMA 1' : 'TURMA 2'} â€¢ {ano}
+          <span className="rounded-md bg-blue-50 px-3 py-1.5 text-sm font-extrabold uppercase text-blue-700">
+            {turma === 'T1' ? 'Turma 1' : 'Turma 2'} - {ano}
           </span>
         </div>
       </CardHeader>
-      <CardContent ref={printRef}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <CardContent ref={printRef} className="pt-5">
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           {Array.from({ length: 12 }, (_, m) => (
             <div key={m} className="relative group">
               <MesCalendario ano={ano} mes={m} turma={turma} />
               <Button
                 variant="ghost"
                 size="sm"
-                className="absolute top-0.5 right-0.5 h-7 px-2 opacity-0 group-hover:opacity-100 transition-opacity bg-amber-500/80 hover:bg-amber-600 text-black"
+                className="absolute right-2 top-2 h-7 px-2 opacity-0 transition-opacity group-hover:opacity-100 bg-white/90 hover:bg-white"
                 onClick={() => compartilharWhatsApp(m)}
                 title="Enviar por WhatsApp"
               >
