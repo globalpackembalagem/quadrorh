@@ -30,6 +30,20 @@ interface ModeloNotificacao {
 
 const MODELOS: ModeloNotificacao[] = [
   {
+    tipo: 'atualizacao_temporarios',
+    badge: 'ATUALIZACAO',
+    icon: Bell,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50 dark:bg-blue-950/30',
+    borderColor: 'border-blue-200 dark:border-blue-800',
+    badgeClass: 'bg-blue-600 text-white',
+    titulo: 'ATUALIZACAO: SUBSTITUIR / EFETIVAR TEMPORARIOS',
+    mensagem: 'Nova funcionalidade disponivel:\n\nNo menu lateral acesse FUNCIONARIOS e clique na aba SUBSTITUIR / EFETIVAR.\n\nUse essa aba para solicitar substituicao ou efetivacao de temporarios ativos.\n\nApos ler, clique em CIENTE.',
+    acoes: 'ciente',
+    entrega: 'modal',
+    destino: 'Usuarios envolvidos na rotina',
+  },
+  {
     tipo: 'admissao_confirmacao',
     badge: 'ADMISSÃO',
     icon: UserPlus,
@@ -227,6 +241,7 @@ const MENU_LABELS: Record<string, string> = {
   cobertura_treinamento_consulta: 'Cob/Trein.',
   cobertura_treinamento_resposta: '↩ Resp. Cob/Trein.',
   evento_sistema_modal: 'Aviso RH',
+  atualizacao_temporarios: 'Atualiz. Temporarios',
 };
 
 interface Props {
