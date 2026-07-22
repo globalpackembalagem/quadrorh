@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from 'react';
+﻿import { useState, useMemo, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,9 +8,9 @@ import { cn } from '@/lib/utils';
 import { getTrabalhaOuFolga } from '@/lib/escalaPanama';
 import { loadXLSX } from '@/lib/xlsx';
 
-const DIAS_SEMANA = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+const DIAS_SEMANA = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'SÃ¡b', 'Dom'];
 const MESES = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Janeiro', 'Fevereiro', 'MarÃ§o', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
 ];
 
@@ -35,9 +35,9 @@ function getDiasDoMes(ano: number, mes: number) {
 
 function gerarTextoWhatsApp(ano: number, mes: number, turma: 'T1' | 'T2'): string {
   const dias = getDiasDoMes(ano, mes);
-  const diasAbrev = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
+  const diasAbrev = ['seg', 'ter', 'qua', 'qui', 'sex', 'sÃ¡b', 'dom'];
 
-  let texto = `📅 *ESCALA 12 HORAS - TURMA ${turma === 'T1' ? '1' : '2'}*\n`;
+  let texto = `ðŸ“… *ESCALA 12 HORAS - TURMA ${turma === 'T1' ? '1' : '2'}*\n`;
   texto += `*${MESES[mes].toUpperCase()} /${ano}*\n\n`;
 
   let semana: string[] = [];
@@ -50,7 +50,7 @@ function gerarTextoWhatsApp(ano: number, mes: number, turma: 'T1' | 'T2'): strin
     const d = dia.getDate().toString().padStart(2, '0');
     const ds = dia.getDay();
     const abrev = diasAbrev[ds === 0 ? 6 : ds - 1];
-    const emoji = trabalha ? '🟢' : '🔴';
+    const emoji = trabalha ? 'ðŸŸ¢' : 'ðŸ”´';
     semana.push(`${emoji}${d}(${abrev})`);
 
     if (semana.length === 7) {
@@ -62,7 +62,7 @@ function gerarTextoWhatsApp(ano: number, mes: number, turma: 'T1' | 'T2'): strin
     texto += semana.join(' ') + '\n';
   }
 
-  texto += '\n🟢 = Trabalha | 🔴 = Folga';
+  texto += '\nðŸŸ¢ = Trabalha | ðŸ”´ = Folga';
   return texto;
 }
 
@@ -135,7 +135,7 @@ export function EscalaFolgaCalendario() {
   const exportarExcel = async (ano: number, turma: 'T1' | 'T2') => {
     const XLSX = await loadXLSX();
     const wb = XLSX.utils.book_new();
-    const diasAbrev = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+    const diasAbrev = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'SÃ¡b', 'Dom'];
 
     for (let m = 0; m < 12; m++) {
       const diasNoMes = new Date(ano, m + 1, 0).getDate();
@@ -161,7 +161,7 @@ export function EscalaFolgaCalendario() {
       for (let d = 1; d <= diasNoMes; d++) {
         if (getTrabalhaOuFolga(new Date(ano, m, d), turma)) t++; else f++;
       }
-      return { 'Mês': MESES[m], 'Dias Trabalho': t, 'Dias Folga': f };
+      return { 'MÃªs': MESES[m], 'Dias Trabalho': t, 'Dias Folga': f };
     });
     const wsResumo = XLSX.utils.json_to_sheet(resumo);
     wsResumo['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 12 }];
@@ -171,8 +171,8 @@ export function EscalaFolgaCalendario() {
   };
 
   const compartilharAnoCompleto = () => {
-    let texto = `📅 *ESCALA 12 HORAS - TURMA ${turma === 'T1' ? '1' : '2'} - ${ano}*\n\n`;
-    texto += '🟢 = Trabalha | 🔴 = Folga\n\n';
+    let texto = `ðŸ“… *ESCALA 12 HORAS - TURMA ${turma === 'T1' ? '1' : '2'} - ${ano}*\n\n`;
+    texto += 'ðŸŸ¢ = Trabalha | ðŸ”´ = Folga\n\n';
     
     for (let m = 0; m < 12; m++) {
       const diasNoMes = new Date(ano, m + 1, 0).getDate();
@@ -182,7 +182,7 @@ export function EscalaFolgaCalendario() {
         if (getTrabalhaOuFolga(new Date(ano, m, d), turma)) tCount++;
         else fCount++;
       }
-      texto += `*${MESES[m]}*: 🟢${tCount} dias | 🔴${fCount} folgas\n`;
+      texto += `*${MESES[m]}*: ðŸŸ¢${tCount} dias | ðŸ”´${fCount} folgas\n`;
     }
 
     const url = `https://wa.me/?text=${encodeURIComponent(texto)}`;
@@ -201,35 +201,33 @@ export function EscalaFolgaCalendario() {
       const dias = getDiasDoMes(ano, m);
       let cellsHtml = '';
       
-      // Header row
       DIAS_SEMANA.forEach(d => {
-        cellsHtml += `<div style="text-align:center;padding:4px;font-weight:bold;background:#f0f0f0;border-bottom:1px solid #ccc;font-size:11px;">${d}</div>`;
+        cellsHtml += `<div class="weekday">${d}</div>`;
       });
 
       dias.forEach((dia, i) => {
         if (!dia) {
-          cellsHtml += `<div style="height:40px;"></div>`;
+          cellsHtml += `<div class="day empty"></div>`;
           return;
         }
         const trabalha = getTrabalhaOuFolga(dia, turma);
-        const bgColor = trabalha ? '#15803d' : '#b91c1c';
         cellsHtml += `
-          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:40px;border-bottom:1px solid #eee;border-right:1px solid #eee;">
-            <span style="font-size:12px;">${dia.getDate()}</span>
-            <span style="font-size:10px;font-weight:bold;color:white;background:${bgColor};padding:1px 6px;border-radius:3px;margin-top:2px;">${trabalha ? 'T' : 'F'}</span>
+          <div class="day">
+            <span class="num">${dia.getDate()}</span>
+            <span class="badge ${trabalha ? 'work' : 'off'}">${trabalha ? 'T' : 'F'}</span>
           </div>
         `;
       });
 
       mesesHtml += `
-        <div style="border:1px solid #ccc;border-radius:6px;overflow:hidden;break-inside:avoid;">
-          <div style="background:#f59e0b;color:black;font-weight:bold;text-align:center;padding:6px;font-size:13px;text-transform:uppercase;">
+        <section class="month">
+          <div class="month-title">
             ${MESES[m]} / ${ano}
           </div>
-          <div style="display:grid;grid-template-columns:repeat(7,1fr);">
+          <div class="month-grid">
             ${cellsHtml}
           </div>
-        </div>
+        </section>
       `;
     }
 
@@ -238,30 +236,52 @@ export function EscalaFolgaCalendario() {
       <html>
       <head>
         <title>Escala ${turmaLabel} - ${ano}</title>
-        <style>
-          @media print {
-            body { margin: 0; padding: 10mm; }
-            .no-print { display: none !important; }
-          }
-          body { font-family: Arial, sans-serif; }
-        </style>
+	        <style>
+	          @page { size: A4 landscape; margin: 6mm; }
+	          @media print {
+	            body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+	            .no-print { display: none !important; }
+	          }
+	          * { box-sizing: border-box; }
+	          body { font-family: Inter, Arial, sans-serif; color: #0f172a; }
+	          .header { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 5px; margin-bottom: 6px; }
+	          .title { margin: 0; font-size: 15px; font-weight: 800; text-transform: uppercase; }
+	          .subtitle { margin: 2px 0 0; font-size: 11px; color: #475569; font-weight: 700; }
+	          .legend { display: flex; gap: 10px; font-size: 10px; font-weight: 700; align-items: center; }
+	          .legend-badge, .badge { display: inline-flex; align-items: center; justify-content: center; border-radius: 3px; color: #fff; font-weight: 800; }
+	          .legend-badge { width: 18px; height: 14px; margin-right: 3px; }
+	          .work { background: #15803d; }
+	          .off { background: #b91c1c; }
+	          .year-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+	          .month { border: 1px solid #cbd5e1; border-radius: 5px; overflow: hidden; break-inside: avoid; }
+	          .month-title { background: #f59e0b; color: #111827; font-weight: 800; text-align: center; padding: 3px; font-size: 10px; text-transform: uppercase; }
+	          .month-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+	          .weekday { text-align: center; padding: 2px 1px; font-weight: 800; background: #f1f5f9; border-bottom: 1px solid #cbd5e1; font-size: 8px; color: #475569; }
+	          .day { min-height: 19px; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; gap: 3px; }
+	          .day:nth-child(7n) { border-right: 0; }
+	          .empty { background: #f8fafc; }
+	          .num { font-size: 8px; min-width: 8px; text-align: right; }
+	          .badge { width: 15px; height: 11px; font-size: 8px; line-height: 1; }
+	          .footer { text-align: right; margin-top: 4px; font-size: 8px; color: #64748b; }
+	        </style>
       </head>
       <body>
-        <div style="text-align:center;margin-bottom:20px;border-bottom:3px solid #f59e0b;padding-bottom:15px;">
-          <h1 style="margin:0;font-size:24px;">ESCALA 12 HORAS - DECORAÇÃO</h1>
-          <h2 style="margin:5px 0;font-size:20px;color:#f59e0b;">${turmaLabel} - ANO ${ano}</h2>
-          <div style="display:flex;justify-content:center;gap:20px;margin-top:8px;font-size:13px;">
-            <span>🟢 <strong style="background:#15803d;color:white;padding:1px 8px;border-radius:3px;">T</strong> = Trabalha</span>
-            <span>🔴 <strong style="background:#b91c1c;color:white;padding:1px 8px;border-radius:3px;">F</strong> = Folga</span>
+        <div class="header">
+          <div>
+            <h1 class="title">ESCALA 12 HORAS - DECORACAO</h1>
+            <p class="subtitle">${turmaLabel} - ${ano}</p>
+          </div>
+          <div class="legend">
+            <span><span class="legend-badge work">T</span>TRABALHA</span>
+            <span><span class="legend-badge off">F</span>FOLGA</span>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        <div class="year-grid">
           ${mesesHtml}
         </div>
-        <div style="text-align:center;margin-top:15px;font-size:11px;color:#888;">
-          Gerado em ${new Date().toLocaleDateString('pt-BR')} • GLOBALPACK - Decoração
-        </div>
-        <script>window.onload = function() { window.print(); }</script>
+        <div class="footer">
+          Gerado em ${new Date().toLocaleDateString('pt-BR')} - GLOBALPACK
+        </div>        <script>window.onload = function() { window.print(); }</script>
       </body>
       </html>
     `);
@@ -274,7 +294,7 @@ export function EscalaFolgaCalendario() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <CardTitle className="flex items-center gap-2 text-xl">
             <Calendar className="h-6 w-6" />
-            Escala 12 Horas - Decoração
+            Escala 12 Horas - DecoraÃ§Ã£o
           </CardTitle>
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex items-center gap-1">
@@ -309,7 +329,7 @@ export function EscalaFolgaCalendario() {
             </Button>
           </div>
         </div>
-        {/* Cabeçalho turma */}
+        {/* CabeÃ§alho turma */}
         <div className="flex items-center justify-between mt-2">
           <div className="flex gap-4 text-sm">
             <span className="flex items-center gap-1.5">
@@ -320,7 +340,7 @@ export function EscalaFolgaCalendario() {
             </span>
           </div>
           <span className="text-lg font-bold text-amber-600">
-            {turma === 'T1' ? 'TURMA 1' : 'TURMA 2'} • {ano}
+            {turma === 'T1' ? 'TURMA 1' : 'TURMA 2'} â€¢ {ano}
           </span>
         </div>
       </CardHeader>
@@ -345,4 +365,5 @@ export function EscalaFolgaCalendario() {
     </Card>
   );
 }
+
 
