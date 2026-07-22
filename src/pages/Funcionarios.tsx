@@ -166,14 +166,16 @@ function TemporariosTab({
     return funcionarios.filter(f => {
       const mat = f.matricula?.toUpperCase() || '';
       const situacao = normalizarTextoSistema(f.situacao?.nome) || '';
-      return mat.startsWith('TEMP') && situacao === 'ATIVO';
+      const setorContaNoQuadro = f.setor?.conta_no_quadro !== false && f.setor?.ativo !== false;
+      const situacaoContaNoQuadro = f.situacao?.conta_no_quadro !== false && f.situacao?.ativa !== false;
+      return mat.startsWith('TEMP') && situacao === 'ATIVO' && setorContaNoQuadro && situacaoContaNoQuadro;
     });
   }, [funcionarios]);
 
   const solicitacoesPorFuncionario = useMemo(() => {
     const mapa = new Map<string, SolicitacaoTemporario>();
     solicitacoes.forEach((sol) => {
-      if (!mapa.has(sol.funcionario_id) && sol.status !== 'CANCELADA') {
+      if (!mapa.has(sol.funcionario_id) && !['CANCELADA', 'CONCLUIDA', 'CONCLUÍDA'].includes(sol.status || '')) {
         mapa.set(sol.funcionario_id, sol);
       }
     });
@@ -1290,7 +1292,7 @@ export default function Funcionarios() {
             <TabsTrigger value="lista">LISTA</TabsTrigger>
             <TabsTrigger value="temporarios" className="gap-1">
               <Clock className="h-3 w-3" />
-              TEMPORÁRIOS
+              SUBSTITUIR / EFETIVAR
             </TabsTrigger>
           </TabsList>
 
@@ -1492,7 +1494,7 @@ export default function Funcionarios() {
           <TabsTrigger value="lista">LISTA</TabsTrigger>
           <TabsTrigger value="temporarios" className="gap-1">
             <Clock className="h-3 w-3" />
-            TEMPORÁRIOS
+            SUBSTITUIR / EFETIVAR
           </TabsTrigger>
         </TabsList>
 
