@@ -8,6 +8,7 @@ import { normalizarFuncionarioPayload } from '@/lib/normalizacao';
 import { useAuth } from '@/hooks/useAuth';
 import { funcionariosApi } from '@/lib/funcionariosApi';
 import { notificarMovimentacaoLider } from '@/lib/notificarMovimentacaoLider';
+import { notificarAlteracaoSituacaoFuncionario } from '@/lib/notificarAlteracaoSituacao';
 
 const FUNCIONARIOS_STALE_TIME = 5 * 60 * 1000;
 const FUNCIONARIOS_GC_TIME = 30 * 60 * 1000;
@@ -699,19 +700,32 @@ export function useUpdateFuncionario() {
 
 	      const funcionarioDepois = funcionarioDepoisCompleto || data;
 	      await registrarHistoricoQuadroSeTravado(funcionarioAntes as any, funcionarioDepois as any, userRole?.nome || 'SISTEMA');
-	      const antes = funcionarioAntes as any;
-	      const depois = funcionarioDepois as any;
-	      const mudouTurma = (antes?.turma || '') !== (depois?.turma || '');
-	      const mudouSetor = (antes?.setor_id || '') !== (depois?.setor_id || '');
+		      const antes = funcionarioAntes as any;
+		      const depois = funcionarioDepois as any;
+		      const mudouTurma = (antes?.turma || '') !== (depois?.turma || '');
+		      const mudouSetor = (antes?.setor_id || '') !== (depois?.setor_id || '');
+		      const mudouSituacao = (antes?.situacao_id || '') !== (depois?.situacao_id || '');
 
 	      if (!isAdmin && (mudouTurma || mudouSetor)) {
 	        await notificarMovimentacaoLider({
 	          titulo: mudouSetor ? 'ALTERACAO DE SETOR/TURMA' : 'ALTERACAO DE TURMA',
 	          mensagem: `${(depois?.nome_completo || '').toUpperCase()}\nLider: ${(userRole?.nome || 'SISTEMA').toUpperCase()}\nOrigem: ${(antes?.setor?.nome || '-').toUpperCase()}${antes?.turma ? ` / ${antes.turma}` : ''}\nDestino: ${(depois?.setor?.nome || '-').toUpperCase()}${depois?.turma ? ` / ${depois.turma}` : ''}`,
-	          referenciaId: depois?.id || null,
-	        });
-	      }
-	      return funcionarioDepois;
+		          referenciaId: depois?.id || null,
+		        });
+		      }
+		      if (mudouSituacao) {
+		        await notificarAlteracaoSituacaoFuncionario({
+		          funcionarioId: depois?.id,
+		          funcionarioNome: depois?.nome_completo || '',
+		          matricula: depois?.matricula || null,
+		          setorNome: depois?.setor?.nome || antes?.setor?.nome || null,
+		          turma: depois?.turma || null,
+		          situacaoAnterior: antes?.situacao?.nome || null,
+		          situacaoNova: depois?.situacao?.nome || novaSituacaoNome || null,
+		          usuarioNome: userRole?.nome || 'SISTEMA',
+		        });
+		      }
+		      return funcionarioDepois;
     },
     onSuccess: (data) => {
       atualizarFuncionarioNoCache(queryClient, data as Funcionario);

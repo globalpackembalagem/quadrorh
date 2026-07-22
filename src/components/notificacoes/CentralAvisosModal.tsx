@@ -39,6 +39,7 @@ const tipoNotificacaoLiberado = (tipo: string | null | undefined, liberados?: st
     if (l === 'turma_pendente' && t.includes('turma_pendente')) return true;
 	    if (l === 'demissao' && t.includes('demissao')) return true;
 	    if (l === 'temporario' && (t.includes('solicitacao_desligamento_temp') || t.includes('solicitacao_efetivacao_temp'))) return true;
+	    if (l === 'alteracao_situacao_funcionario' && t.includes('alteracao_situacao_funcionario')) return true;
 	    if (l === 'divergencia' && t.includes('divergencia')) return true;
     if (l === 'previsao_admissao' && (t.includes('previsao') || t.includes('admissao'))) return true;
     if (l === 'evento_sistema_modal' && (t.includes('evento_sistema') || t.includes('ciencia') || t.includes('alteracao_quadro') || t.includes('historico_quadro'))) return true;
@@ -73,6 +74,7 @@ const TIPO_BADGE_LABELS: Record<string, string> = {
 	  alteracao_quadro: 'ALTERACAO DO QUADRO',
 	  solicitacao_desligamento_temp: 'SUBSTITUIR TEMP',
 	  solicitacao_efetivacao_temp: 'EFETIVAR TEMP',
+	  alteracao_situacao_funcionario: 'SITUACAO',
 	    historico_quadro_comunicado: 'HISTORICO DO QUADRO',
 ciencia_retorno: 'CIÊNCIA DO GESTOR',
 };
@@ -104,6 +106,7 @@ const TIPO_CONFIG: Record<string, { icon: typeof Bell; color: string; bgColor: s
 	  alteracao_quadro: { icon: BarChart3, color: 'text-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-950/30', borderColor: 'border-blue-200 dark:border-blue-800', badgeClass: 'bg-blue-600 text-white' },
 	  solicitacao_desligamento_temp: { icon: UserMinus, color: 'text-red-600', bgColor: 'bg-red-50 dark:bg-red-950/30', borderColor: 'border-red-200 dark:border-red-800', badgeClass: 'bg-red-600 text-white' },
 	  solicitacao_efetivacao_temp: { icon: UserPlus, color: 'text-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-950/30', borderColor: 'border-blue-200 dark:border-blue-800', badgeClass: 'bg-blue-600 text-white' },
+	  alteracao_situacao_funcionario: { icon: RefreshCw, color: 'text-amber-700', bgColor: 'bg-amber-50 dark:bg-amber-950/30', borderColor: 'border-amber-200 dark:border-amber-800', badgeClass: 'bg-amber-700 text-white' },
 	    historico_quadro_comunicado: { icon: BarChart3, color: 'text-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-950/30', borderColor: 'border-blue-200 dark:border-blue-800', badgeClass: 'bg-blue-600 text-white' },
 ciencia_retorno: { icon: CheckCheck, color: 'text-emerald-600', bgColor: 'bg-emerald-50 dark:bg-emerald-950/30', borderColor: 'border-emerald-200 dark:border-emerald-800', badgeClass: 'bg-emerald-600 text-white' },
 };
