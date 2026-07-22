@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
-import { Download, History, Search } from 'lucide-react';
+import { Download, History, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useHistoricoMovimentacaoQuadro, TIPOS_MOVIMENTACAO_QUADRO } from '@/hooks/useHistoricoMovimentacaoQuadro';
 import { AREAS_QUADRO_TRAVA, AreaQuadroTrava, contarFuncionariosDaArea } from '@/hooks/useFuncionarios';
@@ -121,6 +121,7 @@ function areaDoSetor(setor: any): AreaQuadroTrava | null {
 
 export default function HistoricoQuadro() {
   const { usuarioAtual, isAdmin } = useUsuario();
+  const queryClient = useQueryClient();
   const { data: setores = [] } = useSetoresAtivos();
   const [setorId, setSetorId] = useState('todos');
   const [tipo, setTipo] = useState('todos');
@@ -129,6 +130,7 @@ export default function HistoricoQuadro() {
   const [busca, setBusca] = useState('');
   const [areaSelecionada, setAreaSelecionada] = useState<AreaQuadroTrava>('SOPRO A');
   const nomeUsuarioNormalizado = normalizarBusca(usuarioAtual.nome);
+  const podeExcluirHistorico = ['LUCIANO', 'MAURICIO'].includes(nomeUsuarioNormalizado);
   const podeVerTudo = isAdmin
     || ['LUCIANO', 'MAURICIO', 'PAULO'].includes(nomeUsuarioNormalizado)
     || usuarioAtual.pode_editar_funcionarios
@@ -260,6 +262,32 @@ export default function HistoricoQuadro() {
   }, [areaSelecionada, registrosVisiveis, travasPorArea]);
 
   const podeAcessar = podeVerTudo || usuarioAtual.setoresIds.length > 0;
+
+  const excluirRegistroHistorico = async (id: string) => {
+    if (!podeExcluirHistorico) return;
+    if (!window.confirm('Confirma excluir este registro do historico? O cadastro do funcionario nao sera alterado.')) return;
+
+    try {
+      const usuario = JSON.parse(localStorage.getItem('usuario_logado') || 'null');
+      const sessionToken = usuario?.session_token;
+      if (!sessionToken) throw new Error('Sessao expirada. Entre novamente.');
+
+      const { data, error } = await supabase.functions.invoke('auth-handler', {
+        body: {
+          action: 'historico_quadro_excluir_registro',
+          session_token: sessionToken,
+          id,
+        },
+      });
+
+      if (error || data?.error) throw new Error(data?.error || error?.message || 'Erro ao excluir registro');
+
+      toast.success('Registro excluido do historico');
+      queryClient.invalidateQueries({ queryKey: ['historico_movimentacao_quadro'] });
+    } catch (error: any) {
+      toast.error(error?.message || 'Erro ao excluir registro');
+    }
+  };
 
   const renderAreaCard = (area: AreaQuadroTrava) => {
     const trava = travasPorArea.get(area);
@@ -436,27 +464,28 @@ export default function HistoricoQuadro() {
         <CardContent className="max-h-[520px] overflow-auto">
           <Table>
             <TableHeader className="sticky top-0 z-10 bg-card">
-              <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Funcionario</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Origem / Setor</TableHead>
-                <TableHead>Destino</TableHead>
-		                <TableHead>Impacto</TableHead>
-		                <TableHead>Antes / Atual</TableHead>
-		              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-	                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Carregando...</TableCell>
-                </TableRow>
-              ) : registrosComSaldo.length === 0 ? (
-                <TableRow>
-	                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">Nenhuma movimentacao registrada.</TableCell>
-                </TableRow>
-              ) : (
-                registrosComSaldo.map((item) => (
+	              <TableRow>
+	                <TableHead>Data</TableHead>
+	                <TableHead>Funcionario</TableHead>
+	                <TableHead>Tipo</TableHead>
+	                <TableHead>Origem / Setor</TableHead>
+	                <TableHead>Destino</TableHead>
+			                <TableHead>Impacto</TableHead>
+			                <TableHead>Antes / Atual</TableHead>
+                {podeExcluirHistorico && <TableHead className="text-right">Acoes</TableHead>}
+			              </TableRow>
+	            </TableHeader>
+	            <TableBody>
+	              {isLoading ? (
+	                <TableRow>
+		                  <TableCell colSpan={podeExcluirHistorico ? 8 : 7} className="py-8 text-center text-muted-foreground">Carregando...</TableCell>
+	                </TableRow>
+	              ) : registrosComSaldo.length === 0 ? (
+	                <TableRow>
+		                  <TableCell colSpan={podeExcluirHistorico ? 8 : 7} className="py-8 text-center text-muted-foreground">Nenhuma movimentacao registrada.</TableCell>
+	                </TableRow>
+	              ) : (
+	                registrosComSaldo.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{format(parseISO(item.data_movimentacao), 'dd/MM/yyyy')}</TableCell>
 	                    <TableCell>
@@ -481,11 +510,25 @@ export default function HistoricoQuadro() {
                           <span className="inline-flex min-w-[72px] items-center justify-center gap-1 tabular-nums">
                             <span>{item.quantidade_antes_calculada ?? '-'}</span>
                             <span className="text-muted-foreground">/</span>
-                            <span className="font-bold text-primary">{item.quantidade_depois_calculada ?? '-'}</span>
-                          </span>
-                        </TableCell>
-	                  </TableRow>
-                ))
+	                            <span className="font-bold text-primary">{item.quantidade_depois_calculada ?? '-'}</span>
+	                          </span>
+	                        </TableCell>
+                        {podeExcluirHistorico && (
+                          <TableCell className="text-right">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              onClick={() => excluirRegistroHistorico(item.id)}
+                              title="Excluir do historico"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        )}
+		                  </TableRow>
+	                ))
               )}
             </TableBody>
           </Table>

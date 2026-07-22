@@ -678,6 +678,28 @@ serve(async (req) => {
         });
       }
 
+      case "historico_quadro_excluir_registro": {
+        const { session_token, id } = params;
+        if (!session_token) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
+        if (!id) return jsonResponse({ error: "Registro obrigatorio" }, 400);
+
+        const writer = await getFuncionariosWriterBySession(supabase, session_token);
+        const nome = (writer?.nome || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+        if (!["LUCIANO", "MAURICIO"].includes(nome)) {
+          return jsonResponse({ error: "Acesso negado" }, 403);
+        }
+
+        const { count, error: deleteError } = await supabase
+          .from("historico_movimentacao_quadro")
+          .delete({ count: "exact" })
+          .eq("id", id);
+
+        if (deleteError) throw deleteError;
+        if (!count) return jsonResponse({ error: "Registro nao encontrado" }, 404);
+
+        return jsonResponse({ success: true, removidos: count });
+      }
+
       case "programar_situacao_funcionario": {
         const { session_token, funcionario_id, situacao_id, data_inicio, data_fim = null, observacao = null } = params;
         if (!session_token) return jsonResponse({ error: "Sessao obrigatoria" }, 403);
