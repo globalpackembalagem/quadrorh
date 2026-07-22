@@ -882,9 +882,9 @@ serve(async (req) => {
             : "O RH deve avaliar a efetivacao.",
         ].filter(Boolean).join("\n");
 
-        const { data: evento, error: eventoError } = await supabase
-          .from("eventos_sistema")
-          .insert({
+	        const { data: evento, error: eventoError } = await supabase
+	          .from("eventos_sistema")
+	          .insert({
             tipo: isDesligamento ? "solicitacao_desligamento_temp" : "solicitacao_efetivacao_temp",
             descricao: `Solicitacao de ${acaoTexto} de temporario: ${nomeFunc}`,
             funcionario_id: funcionario.id,
@@ -903,11 +903,42 @@ serve(async (req) => {
             },
           })
           .select("id")
-          .single();
-        if (eventoError) throw eventoError;
+	          .single();
+	        if (eventoError) throw eventoError;
 
-        return jsonResponse({ success: true, solicitacao_id: solicitacao?.id, evento_id: evento?.id });
-      }
+	        const nomesDestinatarios = new Set(["PAULO", "MAURICIO", "ELIANE", "LUCIANO", "SONIA"]);
+	        const { data: destinatarios, error: destinatariosError } = await supabase
+	          .from("user_roles")
+	          .select("id, nome, recebe_notificacoes")
+	          .eq("ativo", true);
+	        if (destinatariosError) throw destinatariosError;
+
+	        const notificacoes = (destinatarios || [])
+	          .filter((destinatario: any) => {
+	            const nomeDestinatario = String(destinatario.nome || "")
+	              .normalize("NFD")
+	              .replace(/[\u0300-\u036f]/g, "")
+	              .toUpperCase()
+	              .trim();
+	            return destinatario.recebe_notificacoes !== false && nomesDestinatarios.has(nomeDestinatario);
+	          })
+	          .map((destinatario: any) => ({
+	            user_role_id: destinatario.id,
+	            tipo: isDesligamento ? "solicitacao_desligamento_temp" : "solicitacao_efetivacao_temp",
+	            titulo: isDesligamento ? "TEMPORARIO PARA SUBSTITUIR" : "TEMPORARIO PARA EFETIVAR",
+	            mensagem,
+	            referencia_id: evento?.id || null,
+	          }));
+
+	        if (notificacoes.length > 0) {
+	          const { error: notificacoesError } = await supabase
+	            .from("notificacoes")
+	            .insert(notificacoes);
+	          if (notificacoesError) throw notificacoesError;
+	        }
+	
+	        return jsonResponse({ success: true, solicitacao_id: solicitacao?.id, evento_id: evento?.id });
+	      }
 
       case "admin_create_user": {
         const { session_token, admin_id, nome, email, setoresIds = [], permissoes = {}, tiposNotificacao = [] } = params;
