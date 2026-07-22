@@ -714,13 +714,22 @@ export default function Funcionarios() {
       .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
   };
 
+  const setoresIdsUsuario = userRole?.setores_ids || [];
+  const funcionariosVisiveis = useMemo(() => {
+    if (isAdmin) return funcionarios;
+    if (setoresIdsUsuario.length === 0) return [];
+
+    const permitidos = new Set(setoresIdsUsuario);
+    return funcionarios.filter(f => !!f.setor_id && permitidos.has(f.setor_id));
+  }, [funcionarios, isAdmin, setoresIdsUsuario]);
+
   // funcionariosAtivosParaContagem mantido para compatibilidade com view do gestor
   const funcionariosAtivosParaContagem = useMemo(() => {
-    return funcionarios.filter(f => {
+    return funcionariosVisiveis.filter(f => {
       const sitNome = f.situacao?.nome?.toUpperCase() || '';
       return sitNome !== 'DEMISSÃO' && sitNome !== 'PED. DEMISSÃO';
     });
-  }, [funcionarios]);
+  }, [funcionariosVisiveis]);
 
   // Turmas de cada grupo
   const TURMAS_SOPRO = ['1A', '1B', '2A', '2B'];
@@ -742,9 +751,9 @@ export default function Funcionarios() {
 
   // Funcionários pré-filtrados pelo grupo selecionado
   const funcionariosDoGrupo = useMemo(() => {
-    if (grupoFilter === 'TODOS') return funcionarios;
-    return funcionarios.filter(f => funcionarioPertenceGrupo(f, grupoFilter));
-  }, [funcionarios, grupoFilter, funcionarioPertenceGrupo]);
+    if (grupoFilter === 'TODOS') return funcionariosVisiveis;
+    return funcionariosVisiveis.filter(f => funcionarioPertenceGrupo(f, grupoFilter));
+  }, [funcionariosVisiveis, grupoFilter, funcionarioPertenceGrupo]);
 
   const funcionariosAtivosGrupo = useMemo(() => {
     return funcionariosDoGrupo.filter(f => {
@@ -826,7 +835,7 @@ export default function Funcionarios() {
 
   // Agrupado por turma para a view do gestor
   const funcionariosPorTurma = useMemo(() => {
-    const ativos = funcionarios.filter(f => {
+    const ativos = funcionariosVisiveis.filter(f => {
       const sitNome = f.situacao?.nome?.toUpperCase() || '';
       return sitNome !== 'DEMISSÃO' && sitNome !== 'PED. DEMISSÃO';
     });
@@ -842,7 +851,7 @@ export default function Funcionarios() {
       return a.localeCompare(b);
     });
     return sorted;
-  }, [funcionarios]);
+  }, [funcionariosVisiveis]);
 
   const resetForm = () => {
     setEmpresa('GLOBALPACK');
@@ -1207,20 +1216,20 @@ export default function Funcionarios() {
 
   // Detectar grupo do gestor pelo setor dos funcionários
   const gestorGrupo = useMemo(() => {
-    for (const f of funcionarios) {
+    for (const f of funcionariosVisiveis) {
       const grupo = (f.setor as any)?.grupo?.toUpperCase() || '';
       if (grupo.startsWith('SOPRO')) return 'SOPRO';
       if (grupo.startsWith('DECORAÇ') || grupo.startsWith('DECORAC')) return 'DECORACAO';
     }
     return 'OUTROS';
-  }, [funcionarios]);
+  }, [funcionariosVisiveis]);
 
   const [gestorTurmaFilter, setGestorTurmaFilter] = useState('TODOS');
   const [gestorTurnoFilter, setGestorTurnoFilter] = useState('TODOS');
 
   // Funcionários filtrados para gestor: ordem alfabética + filtros
   const gestorFuncionariosFiltrados = useMemo(() => {
-    let result = funcionarios.filter(f => {
+    let result = funcionariosVisiveis.filter(f => {
       const sitNome = f.situacao?.nome?.toUpperCase() || '';
       return sitNome !== 'DEMISSÃO' && sitNome !== 'PED. DEMISSÃO';
     });
@@ -1251,7 +1260,7 @@ export default function Funcionarios() {
     }
 
     return result.sort((a, b) => a.nome_completo.localeCompare(b.nome_completo));
-  }, [funcionarios, gestorGrupo, gestorTurmaFilter, gestorTurnoFilter, debouncedSearch]);
+  }, [funcionariosVisiveis, gestorGrupo, gestorTurmaFilter, gestorTurnoFilter, debouncedSearch]);
 
   if (isLoading) {
     return (
@@ -1272,7 +1281,7 @@ export default function Funcionarios() {
             <p className="page-description">CLIQUE EM UM FUNCIONÁRIO PARA EDITAR A TURMA</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <ExportarFuncionariosDialog funcionarios={funcionarios} setores={setores} situacoes={todasSituacoes} />
+            <ExportarFuncionariosDialog funcionarios={funcionariosVisiveis} setores={setores} situacoes={todasSituacoes} />
           </div>
         </div>
 
@@ -1406,7 +1415,7 @@ export default function Funcionarios() {
           </TabsContent>
 
           <TabsContent value="temporarios" className="mt-4">
-            <TemporariosTab funcionarios={funcionarios} userRole={userRole} isRHMode={isRHMode} />
+            <TemporariosTab funcionarios={funcionariosVisiveis} userRole={userRole} isRHMode={isRHMode} />
           </TabsContent>
         </Tabs>
 
@@ -1702,7 +1711,7 @@ export default function Funcionarios() {
         </TabsContent>
 
         <TabsContent value="temporarios" className="mt-4">
-          <TemporariosTab funcionarios={funcionarios} userRole={userRole} isRHMode={isRHMode} />
+          <TemporariosTab funcionarios={funcionariosVisiveis} userRole={userRole} isRHMode={isRHMode} />
         </TabsContent>
       </Tabs>
 
