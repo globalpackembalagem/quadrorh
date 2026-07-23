@@ -17,6 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { loadXLSX } from '@/lib/xlsx';
 import { getTipoSetorTurma } from '@/lib/turmas';
+import { formatarDataHoraSegura } from '@/lib/datas';
 
 type QuadroTrava = {
   id: string;
@@ -52,14 +53,7 @@ function normalizarBusca(valor?: string | null) {
 }
 
 function formatarDataHora(valor?: string | null) {
-  if (!valor) return '-';
-  return new Date(valor).toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatarDataHoraSegura(valor);
 }
 
 function formatarArea(area: AreaQuadroTrava) {
@@ -245,8 +239,8 @@ export default function HistoricoQuadro() {
 
     return [...registrosVisiveis]
       .sort((a, b) => {
-        const dataA = new Date(a.created_at ?? a.data_movimentacao).getTime();
-        const dataB = new Date(b.created_at ?? b.data_movimentacao).getTime();
+        const dataA = new Date(a.created_at ?? `${a.data_movimentacao}T00:00:00`).getTime() || 0;
+        const dataB = new Date(b.created_at ?? `${b.data_movimentacao}T00:00:00`).getTime() || 0;
         return dataA - dataB;
       })
       .map((item) => {

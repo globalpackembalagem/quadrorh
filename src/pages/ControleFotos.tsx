@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { funcionariosApi } from "@/lib/funcionariosApi";
 import { isFolgaEscalaDecoracao } from "@/lib/escalaPanama";
 import { loadXLSX } from "@/lib/xlsx";
+import { formatarDataHoraSegura } from "@/lib/datas";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -133,8 +134,7 @@ function getSessionToken() {
 }
 
 function formatData(valor?: string | null) {
-  if (!valor) return "-";
-  return new Date(valor).toLocaleString("pt-BR");
+  return formatarDataHoraSegura(valor);
 }
 
 function getUsuarioLogado() {

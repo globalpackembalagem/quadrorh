@@ -516,10 +516,10 @@ export default function ControleFaltas() {
   }, [funcionarios]);
 
   const funcionariosAgrupadosPorFuncionario = useMemo(() => {
-    if (!debouncedFiltroNome.trim()) return funcionariosAgrupadosMetricas;
+    if (!debouncedFiltroNome.trim()) return funcionariosAgrupados;
 
     const termo = debouncedFiltroNome.toUpperCase().trim();
-    return funcionariosAgrupadosMetricas
+    return funcionariosAgrupados
       .map(({ setor, funcionarios }) => ({
         setor,
         funcionarios: funcionarios.filter(func =>
@@ -528,12 +528,17 @@ export default function ControleFaltas() {
         ),
       }))
       .filter(({ funcionarios }) => funcionarios.length > 0);
-  }, [funcionariosAgrupadosMetricas, debouncedFiltroNome]);
+  }, [funcionariosAgrupados, debouncedFiltroNome]);
 
   const totalFuncionariosPorFuncionario = useMemo(
     () => funcionariosAgrupadosPorFuncionario.reduce((total, grupo) => total + grupo.funcionarios.length, 0),
     [funcionariosAgrupadosPorFuncionario]
   );
+
+  const funcionariosAgrupadosMetricasVisiveis = useMemo(() => {
+    if (podeVerTodasMetricasFaltas) return funcionariosAgrupadosMetricas;
+    return funcionariosAgrupados;
+  }, [funcionariosAgrupados, funcionariosAgrupadosMetricas, podeVerTodasMetricasFaltas]);
 
   // Filtrar funcionários agrupados por grupo selecionado (para visualização)
   const funcionariosAgrupadosFiltrados = useMemo(() => {
@@ -1438,9 +1443,9 @@ export default function ControleFaltas() {
         </DialogContent>
       </Dialog>
 
-      {periodo && funcionariosAgrupadosMetricas.length > 0 && (
+      {periodo && funcionariosAgrupadosMetricasVisiveis.length > 0 && (
         <DashboardFaltasDiario
-          funcionariosAgrupados={funcionariosAgrupadosMetricas}
+          funcionariosAgrupados={funcionariosAgrupadosMetricasVisiveis}
           registros={registros}
           diasPeriodo={diasPeriodo}
           periodo={periodo}
