@@ -1861,7 +1861,7 @@ export default function ControleFaltas() {
                                       const info = tipos[key];
                                       if (!info || info.count === 0) return null;
                                       return (
-                                        <span key={key} className={cn(cor, 'font-bold mr-0.5')}>
+                                        <span key={key} className={cn(cor, 'font-normal mr-0.5')}>
                                           {info.count}{label}
                                         </span>
                                       );
@@ -1876,7 +1876,7 @@ export default function ControleFaltas() {
                                       if (!info || info.count === 0) return null;
                                       return (
                                         <div key={key} className="space-y-0.5">
-                                          <div className={cn("text-xs font-bold", cor)}>
+                                          <div className={cn("text-xs font-normal", cor)}>
                                             {label === 'F' ? 'FALTA' : label === 'SM' ? 'SUMIDO' : label === 'A' ? 'ATESTADO' : label === 'SS' ? 'SUSPENSÃO' : label === 'FE' ? 'FÉRIAS' : label === 'DA' ? 'DAY OFF' : label} ({info.count})
                                           </div>
                                           <ul className="text-[11px] text-muted-foreground pl-2">
@@ -2029,7 +2029,7 @@ export default function ControleFaltas() {
                                   onClick={() => !bloqueado && abrirModal(func as Funcionario, dia)}
                                   disabled={bloqueado}
                                     className={cn(
-                                    'h-5 w-5 sm:h-6 sm:w-6 mx-auto rounded flex items-center justify-center font-bold text-[10px] sm:text-xs transition-colors',
+                                    'h-5 w-5 sm:h-6 sm:w-6 mx-auto rounded flex items-center justify-center font-normal text-[10px] sm:text-xs transition-colors',
                                     tipo === 'P' && 'bg-success/20 text-success hover:bg-success/30',
                                     tipo === 'F' && 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
                                     tipo === 'A' && 'bg-warning text-warning-foreground hover:bg-warning/90',

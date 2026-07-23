@@ -660,24 +660,24 @@ export function DashboardFaltasDiario({
             <span className="text-[10px] opacity-60" title="Folga">🛏️</span>
           )}
           {badgeF > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[18px] h-[15px] rounded-md bg-slate-900 text-white text-[10px] font-bold px-[3px] shadow-sm leading-none">
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[15px] rounded-md bg-slate-900 text-white text-[10px] font-normal px-[3px] shadow-sm leading-none">
               {badgeF}F
             </span>
           )}
           {badgeA > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[18px] h-[15px] rounded-md bg-slate-900 text-white text-[10px] font-bold px-[3px] shadow-sm leading-none">
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[15px] rounded-md bg-slate-900 text-white text-[10px] font-normal px-[3px] shadow-sm leading-none">
               {badgeA}A
             </span>
           )}
           {badgeT > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[18px] h-[15px] rounded-md bg-primary text-primary-foreground text-[10px] font-bold px-[3px] shadow-sm leading-none">
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[15px] rounded-md bg-primary text-primary-foreground text-[10px] font-normal px-[3px] shadow-sm leading-none">
               {badgeT}T
             </span>
           )}
         </div>
         {saldo != null && (
                     <span className={cn(
-                     "inline-flex items-center justify-center h-[16px] rounded-md px-1.5 shadow-sm whitespace-nowrap leading-none text-[9px] font-black",
+	                     "inline-flex items-center justify-center h-[16px] rounded-md px-1.5 shadow-sm whitespace-nowrap leading-none text-[9px] font-normal",
                       saldo > 0 ? "bg-success text-success-foreground" : saldo < 0 ? "bg-destructive text-destructive-foreground" : "bg-muted text-muted-foreground"
                     )}>
                       {saldo > 0 ? `+${saldo}` : saldo} SALDO
