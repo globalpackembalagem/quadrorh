@@ -373,17 +373,15 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
           indisponiveisMap.set(chave, { nome, motivo });
         };
 
-        if (mostrarSumidos) {
-          sumidosInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'SUMIDO'));
-          cobFeriasInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'COBERTURA FERIAS'));
-          treinamentoInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'TREINAMENTO'));
-          funcionarios
-            .filter(f => getTurmaCardFuncionario(f, grupo) === turma)
-            .forEach(f => {
-              const motivo = motivoIndisponivelPorSituacao(f.situacao?.nome);
-              if (motivo) adicionarIndisponivel(f.nome_completo, motivo);
-            });
-        }
+        sumidosInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'SUMIDO'));
+        cobFeriasInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'COBERTURA FERIAS'));
+        treinamentoInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'TREINAMENTO'));
+        funcionarios
+          .filter(f => getTurmaCardFuncionario(f, grupo) === turma)
+          .forEach(f => {
+            const motivo = motivoIndisponivelPorSituacao(f.situacao?.nome);
+            if (motivo) adicionarIndisponivel(f.nome_completo, motivo);
+          });
 
         const indisponiveisLista = Array.from(indisponiveisMap.values()).sort((a, b) => a.nome.localeCompare(b.nome));
         const indisponiveisTotal = indisponiveisLista.length;
