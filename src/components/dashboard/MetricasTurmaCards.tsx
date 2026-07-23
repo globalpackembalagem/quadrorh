@@ -348,7 +348,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
         const sumidosQtd = (mostrarSumidos && sumidosPorTurma[turma]) ? sumidosPorTurma[turma].total : 0;
         const cobFeriasQtd = (mostrarSumidos && cobFeriasPorTurma[turma]) ? cobFeriasPorTurma[turma].total : 0;
         const treinamentoQtd = (mostrarSumidos && treinamentoPorTurma[turma]) ? treinamentoPorTurma[turma].total : 0;
-        const totalAjustado = mostrarSumidos ? metricas.total - sumidosQtd - cobFeriasQtd - treinamentoQtd : metricas.total;
+        const totalAjustado = mostrarSumidos ? metricas.total - cobFeriasQtd - treinamentoQtd : metricas.total;
         const percentHomens = metricas.total > 0 ? Math.round((metricas.homens / metricas.total) * 100) : 0;
         const percentMulheres = metricas.total > 0 ? Math.round((metricas.mulheres / metricas.total) * 100) : 0;
         const sumidosInfo = sumidosPorTurma[turma] || { total: 0, nomes: [] };
@@ -403,7 +403,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
             {/* Quadro Real e Necessário */}
             <div className="flex items-baseline gap-2 mb-2">
               <div className="text-[42px] font-bold leading-none text-[#0057D9] tabular-nums">
-                {totalAjustado}
+                {totalDisponivel}
               </div>
               <div className="text-sm font-medium text-[#6B7280]">
                 / {metricas.quadroNecessario}
@@ -443,7 +443,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                   <h4 className="mb-2 font-semibold">Cálculo do quadro - {TURMAS_LABELS[turma]}</h4>
                   <div className="flex justify-between"><span>Quadro necessário</span><strong>{metricas.quadroNecessario}</strong></div>
                   <div className="flex justify-between"><span>Quadro cadastrado</span><strong>{totalAjustado}</strong></div>
-                  <div className="flex justify-between"><span>Sumidos</span><strong>{sumidosInfo.total}</strong></div>
+                  <div className="flex justify-between text-[#E53935]"><span>Sumidos</span><strong>{sumidosInfo.total > 0 ? `-${sumidosInfo.total}` : 0}</strong></div>
                   <div className="flex justify-between"><span>Disponíveis</span><strong>{totalDisponivel}</strong></div>
                   <div className="mt-2 rounded-md bg-muted p-2 font-semibold">
                     {diferenca < 0
