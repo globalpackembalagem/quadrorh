@@ -218,6 +218,25 @@ export default function Usuarios() {
     enabled: activeTab === 'historico',
   });
 
+  const historicoAcessoVisivel = useMemo(() => {
+    return (historicoAcesso || []).filter((acesso: any) => {
+      const nome = String(acesso.nome_usuario || '').toUpperCase();
+      return !nome.includes('IMPERSONADO') && !nome.includes('LUCIANO COMO') && !nome.includes('ACESSO COMO');
+    });
+  }, [historicoAcesso]);
+
+  const ultimoAcessoUsuarios = useMemo(() => {
+    const mapa = new Map<string, any>();
+    historicoAcessoVisivel.forEach((acesso: any) => {
+      const nome = String(acesso.nome_usuario || '').toUpperCase().trim();
+      if (!nome || nome === 'VISUALIZACAO') return;
+      if (!mapa.has(nome)) mapa.set(nome, acesso);
+    });
+    return Array.from(mapa.values()).sort((a: any, b: any) =>
+      new Date(b.data_acesso).getTime() - new Date(a.data_acesso).getTime()
+    );
+  }, [historicoAcessoVisivel]);
+
   const createUserMutation = useMutation({
     mutationFn: async ({ nome, email, senha, setoresIds, permissoes, tiposNotificacao }: {
       nome: string; email: string; senha: string; setoresIds: string[]; permissoes: Permissoes; tiposNotificacao: string[];
@@ -674,11 +693,34 @@ export default function Usuarios() {
 
         {/* Aba: Histórico de Acesso */}
         <TabsContent value="historico" className="mt-4">
+          <div className="mb-4 rounded-lg border bg-card p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="font-semibold text-sm">ULTIMO ACESSO DOS USUARIOS</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">Ultimo acesso real registrado, sem acessos impersonados.</p>
+              </div>
+              <Badge variant="secondary">{ultimoAcessoUsuarios.length} usuarios</Badge>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {ultimoAcessoUsuarios.slice(0, 16).map((acesso: any) => {
+                const data = new Date(acesso.data_acesso);
+                return (
+                  <div key={`${acesso.nome_usuario}-${acesso.id}`} className="rounded-md border bg-muted/30 px-3 py-2">
+                    <div className="text-sm font-semibold">{String(acesso.nome_usuario || '').toUpperCase()}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {format(data, "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="rounded-lg border bg-card">
             <div className="p-4 border-b">
               <h2 className="font-semibold text-sm">REGISTRO DE ACESSOS</h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {historicoAcesso.length} registro(s) — últimos 500 acessos
+                {historicoAcessoVisivel.length} registro(s) - ultimos 500 acessos reais
               </p>
             </div>
 
@@ -686,7 +728,7 @@ export default function Usuarios() {
               <div className="flex items-center justify-center h-32">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
               </div>
-            ) : historicoAcesso.length === 0 ? (
+            ) : historicoAcessoVisivel.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-32 text-muted-foreground gap-2">
                 <History className="h-8 w-8 opacity-30" />
                 <p className="text-sm">Nenhum acesso registrado ainda</p>
@@ -702,7 +744,7 @@ export default function Usuarios() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {historicoAcesso.map((acesso: any) => {
+                  {historicoAcessoVisivel.map((acesso: any) => {
                     const data = new Date(acesso.data_acesso);
                     const isMobile = acesso.dispositivo === 'MOBILE';
                     const ua = acesso.navegador || '';
