@@ -38,8 +38,9 @@ export default function Sistema() {
   );
 
   useEffect(() => {
+    if (updateConfig.isPending) return;
     setSelecionados(indisponiveisSituacaoIds);
-  }, [indisponiveisSituacaoIds.join('|')]);
+  }, [indisponiveisSituacaoIds.join('|'), updateConfig.isPending]);
 
   const toggleSituacao = (id: string) => {
     setSelecionados(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);

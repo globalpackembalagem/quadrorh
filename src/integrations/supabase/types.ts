@@ -1905,6 +1905,7 @@ export type Database = {
           data_validade: string | null
           dias_validade: number | null
           id: string
+          indisponiveis_situacao_ids: string[]
           motivo_bloqueio: string | null
           sistema_bloqueado: boolean
           updated_at: string
@@ -1915,6 +1916,7 @@ export type Database = {
           data_validade?: string | null
           dias_validade?: number | null
           id?: string
+          indisponiveis_situacao_ids?: string[]
           motivo_bloqueio?: string | null
           sistema_bloqueado?: boolean
           updated_at?: string
@@ -1925,6 +1927,7 @@ export type Database = {
           data_validade?: string | null
           dias_validade?: number | null
           id?: string
+          indisponiveis_situacao_ids?: string[]
           motivo_bloqueio?: string | null
           sistema_bloqueado?: boolean
           updated_at?: string
