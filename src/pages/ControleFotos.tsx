@@ -167,7 +167,6 @@ export default function ControleFotos() {
   const [busca, setBusca] = useState("");
   const [filtroMatricula, setFiltroMatricula] = useState("");
   const [filtroNome, setFiltroNome] = useState("");
-  const [filtroSetor, setFiltroSetor] = useState("");
   const [statusFoto, setStatusFoto] = useState<"TODOS" | "COM" | "SEM">("SEM");
   const [statusDownload, setStatusDownload] = useState<"TODOS" | "NAO_BAIXADAS" | "BAIXADAS">("TODOS");
   const [setoresSelecionados, setSetoresSelecionados] = useState<string[]>([]);
@@ -235,7 +234,6 @@ export default function ControleFotos() {
     const termo = normalizar(busca.trim());
     const termoMatricula = normalizar(filtroMatricula.trim());
     const termoNome = normalizar(filtroNome.trim());
-    const termoSetor = normalizar(filtroSetor.trim());
     return funcionariosControle.filter((func) => {
       const temFoto = temFotoMarcada(func);
       const fotoValida = temFotoValida(func);
@@ -252,10 +250,9 @@ export default function ControleFotos() {
       if (termo && !alvo.includes(termo)) return false;
       if (termoMatricula && !normalizar(func.matricula || "TEMP").includes(termoMatricula)) return false;
       if (termoNome && !normalizar(func.nome_completo || "").includes(termoNome)) return false;
-      if (termoSetor && !normalizar(func.setor?.nome || "").includes(termoSetor)) return false;
       return true;
     });
-  }, [busca, filtroMatricula, filtroNome, filtroSetor, funcionariosControle, setoresSelecionados, statusDownload, statusFoto]);
+  }, [busca, filtroMatricula, filtroNome, funcionariosControle, setoresSelecionados, statusDownload, statusFoto]);
 
   const totais = useMemo(() => {
     const com = funcionariosControle.filter(temFotoMarcada).length;
@@ -577,24 +574,52 @@ export default function ControleFotos() {
           <CardHeader className="pb-3">
             <CardTitle className="text-base">FILTROS</CardTitle>
           </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-[1fr_180px_190px]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, matricula ou setor" className="pl-9" />
+          <CardContent className="space-y-3">
+            <div className="grid gap-3 md:grid-cols-[1fr_180px_190px]">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nome, matricula ou setor" className="pl-9" />
+              </div>
+              <select value={statusFoto} onChange={(e) => setStatusFoto(e.target.value as any)} className="h-10 rounded-md border bg-background px-3 text-sm">
+                <option value="TODOS">TODOS</option>
+                <option value="SEM">SEM FOTO</option>
+                <option value="COM">COM FOTO</option>
+              </select>
+              <select value={statusDownload} onChange={(e) => setStatusDownload(e.target.value as any)} className="h-10 rounded-md border bg-background px-3 text-sm">
+                <option value="TODOS">TODOS DOWNLOADS</option>
+                <option value="NAO_BAIXADAS">NAO BAIXADAS</option>
+                <option value="BAIXADAS">BAIXADAS</option>
+              </select>
+              <Input value={filtroMatricula} onChange={(e) => setFiltroMatricula(e.target.value)} placeholder="Filtrar matricula" />
+              <Input value={filtroNome} onChange={(e) => setFiltroNome(e.target.value)} placeholder="Filtrar nome" />
             </div>
-            <select value={statusFoto} onChange={(e) => setStatusFoto(e.target.value as any)} className="h-10 rounded-md border bg-background px-3 text-sm">
-              <option value="TODOS">TODOS</option>
-              <option value="SEM">SEM FOTO</option>
-              <option value="COM">COM FOTO</option>
-            </select>
-            <select value={statusDownload} onChange={(e) => setStatusDownload(e.target.value as any)} className="h-10 rounded-md border bg-background px-3 text-sm">
-              <option value="TODOS">TODOS DOWNLOADS</option>
-              <option value="NAO_BAIXADAS">NAO BAIXADAS</option>
-              <option value="BAIXADAS">BAIXADAS</option>
-            </select>
-            <Input value={filtroMatricula} onChange={(e) => setFiltroMatricula(e.target.value)} placeholder="Filtrar matricula" />
-            <Input value={filtroNome} onChange={(e) => setFiltroNome(e.target.value)} placeholder="Filtrar nome" />
-            <Input value={filtroSetor} onChange={(e) => setFiltroSetor(e.target.value)} placeholder="Filtrar setor" />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <Label className="text-xs font-bold uppercase text-muted-foreground">Setores</Label>
+                {setoresSelecionados.length > 0 && (
+                  <Button variant="ghost" size="sm" onClick={() => setSetoresSelecionados([])}>
+                    Limpar setores ({setoresSelecionados.length})
+                  </Button>
+                )}
+              </div>
+              <div className="flex max-h-24 flex-wrap gap-2 overflow-y-auto rounded-md border bg-background p-2">
+                {resumoSetores.map((item) => {
+                  const selecionado = setoresSelecionados.includes(item.setor);
+                  return (
+                    <button
+                      key={item.setor}
+                      type="button"
+                      onClick={() => alternarSetor(item.setor)}
+                      className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                        selecionado ? "border-primary bg-primary text-primary-foreground" : "bg-muted/40 hover:bg-muted"
+                      }`}
+                    >
+                      {item.setor} ({item.semFoto})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
