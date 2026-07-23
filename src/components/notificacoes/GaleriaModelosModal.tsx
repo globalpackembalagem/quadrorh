@@ -44,6 +44,20 @@ const MODELOS: ModeloNotificacao[] = [
     destino: 'Usuarios envolvidos na rotina',
   },
   {
+    tipo: 'atualizacao_indisponiveis_quadro',
+    badge: 'ATUALIZACAO',
+    icon: Bell,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50 dark:bg-blue-950/30',
+    borderColor: 'border-blue-200 dark:border-blue-800',
+    badgeClass: 'bg-blue-600 text-white',
+    titulo: 'ATUALIZACAO: INDISPONIVEIS NO QUADRO',
+    mensagem: 'Nova visualizacao no Quadro de Funcionarios:\n\nO numero principal do card mostra os funcionarios disponiveis para trabalhar no quadro.\n\nNo botao INDISPONIVEIS ficam agrupados os funcionarios que reduzem o quadro disponivel, como SUMIDO, COBERTURA FERIAS, AUXILIO DOENCA / INSS, FERIAS, AFASTADO e TREINAMENTO.\n\nAo clicar no botao, o sistema mostra o nome e o motivo.\n\nApos ler, clique em CIENTE.',
+    acoes: 'ciente',
+    entrega: 'modal',
+    destino: 'Lideranca, RH, Paulo e Mauricio',
+  },
+  {
     tipo: 'admissao_confirmacao',
     badge: 'ADMISSÃO',
     icon: UserPlus,
@@ -242,6 +256,7 @@ const MENU_LABELS: Record<string, string> = {
   cobertura_treinamento_resposta: '↩ Resp. Cob/Trein.',
   evento_sistema_modal: 'Aviso RH',
   atualizacao_temporarios: 'Atualiz. Temporarios',
+  atualizacao_indisponiveis_quadro: 'Atualiz. Indisponiveis',
 };
 
 interface Props {

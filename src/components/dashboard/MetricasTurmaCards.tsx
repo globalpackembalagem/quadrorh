@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Users, TrendingUp, TrendingDown, Minus, UserPlus, UserX, Umbrella, GraduationCap, UserRound, UserRoundCheck, AlertTriangle } from 'lucide-react';
+import { Users, TrendingUp, TrendingDown, Minus, UserPlus, UserX, GraduationCap, UserRound, UserRoundCheck, AlertTriangle } from 'lucide-react';
 
 
 import { Funcionario, QuadroPlanejado, QuadroDecoracao } from '@/types/database';
@@ -88,6 +88,24 @@ const getTurmaCardFuncionario = (f: Funcionario, grupo: 'SOPRO' | 'DECORAÃ‡Ã
   return null;
 };
 
+const normalizarTexto = (texto?: string | null) =>
+  (texto || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .trim();
+
+const motivoIndisponivelPorSituacao = (situacao?: string | null) => {
+  const nome = normalizarTexto(situacao);
+  if (!nome) return null;
+  if (nome.includes('AUXILIO') || nome.includes('DOENCA') || nome.includes('INSS')) return 'AUXILIO DOENCA / INSS';
+  if (nome.includes('COBERTURA') && nome.includes('FERIAS')) return 'COBERTURA FERIAS';
+  if (nome.includes('TREINAMENTO')) return 'TREINAMENTO';
+  if (nome.includes('FERIAS')) return 'FERIAS';
+  if (nome.includes('AFAST')) return 'AFASTADO';
+  if (nome.includes('SUMIDO')) return 'SUMIDO';
+  return null;
+};
 // Calcular total planejado para SOPRO
 function calcularTotalPlanejadoSopro(dados: QuadroPlanejado): number {
   const reservaRefeicaoIndustria = Math.round(dados.aux_maquina_industria / 6);
@@ -345,14 +363,34 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
           })),
         ];
         
-        const sumidosQtd = (mostrarSumidos && sumidosPorTurma[turma]) ? sumidosPorTurma[turma].total : 0;
-        const cobFeriasQtd = (mostrarSumidos && cobFeriasPorTurma[turma]) ? cobFeriasPorTurma[turma].total : 0;
-        const treinamentoQtd = (mostrarSumidos && treinamentoPorTurma[turma]) ? treinamentoPorTurma[turma].total : 0;
-        const totalAjustado = mostrarSumidos ? metricas.total - cobFeriasQtd - treinamentoQtd : metricas.total;
+        const sumidosInfo = sumidosPorTurma[turma] || { total: 0, nomes: [] };
+        const cobFeriasInfo = cobFeriasPorTurma[turma] || { total: 0, nomes: [] };
+        const treinamentoInfo = treinamentoPorTurma[turma] || { total: 0, nomes: [] };
+        const indisponiveisMap = new Map<string, { nome: string; motivo: string }>();
+        const adicionarIndisponivel = (nome: string, motivo: string) => {
+          const chave = normalizarTexto(nome);
+          if (!chave || indisponiveisMap.has(chave)) return;
+          indisponiveisMap.set(chave, { nome, motivo });
+        };
+
+        if (mostrarSumidos) {
+          sumidosInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'SUMIDO'));
+          cobFeriasInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'COBERTURA FERIAS'));
+          treinamentoInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'TREINAMENTO'));
+          funcionarios
+            .filter(f => getTurmaCardFuncionario(f, grupo) === turma)
+            .forEach(f => {
+              const motivo = motivoIndisponivelPorSituacao(f.situacao?.nome);
+              if (motivo) adicionarIndisponivel(f.nome_completo, motivo);
+            });
+        }
+
+        const indisponiveisLista = Array.from(indisponiveisMap.values()).sort((a, b) => a.nome.localeCompare(b.nome));
+        const indisponiveisTotal = indisponiveisLista.length;
+        const totalAjustado = metricas.total;
         const percentHomens = metricas.total > 0 ? Math.round((metricas.homens / metricas.total) * 100) : 0;
         const percentMulheres = metricas.total > 0 ? Math.round((metricas.mulheres / metricas.total) * 100) : 0;
-        const sumidosInfo = sumidosPorTurma[turma] || { total: 0, nomes: [] };
-        const totalDisponivel = totalAjustado - sumidosInfo.total;
+        const totalDisponivel = totalAjustado - indisponiveisTotal;
         const diferenca = totalDisponivel - metricas.quadroNecessario;
         const desfalqueOperacional = Math.abs(Math.min(diferenca, 0));
         
@@ -443,7 +481,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
                   <h4 className="mb-2 font-semibold">Cálculo do quadro - {TURMAS_LABELS[turma]}</h4>
                   <div className="flex justify-between"><span>Quadro necessário</span><strong>{metricas.quadroNecessario}</strong></div>
                   <div className="flex justify-between"><span>Quadro cadastrado</span><strong>{totalAjustado}</strong></div>
-                  <div className="flex justify-between text-[#E53935]"><span>Sumidos</span><strong>{sumidosInfo.total > 0 ? `-${sumidosInfo.total}` : 0}</strong></div>
+                  <div className="flex justify-between text-[#E53935]"><span>Indisponiveis</span><strong>{indisponiveisTotal > 0 ? `-${indisponiveisTotal}` : 0}</strong></div>
                   <div className="flex justify-between"><span>Disponíveis</span><strong>{totalDisponivel}</strong></div>
                   <div className="mt-2 rounded-md bg-muted p-2 font-semibold">
                     {diferenca < 0
@@ -456,24 +494,25 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
               </PopoverContent>
             </Popover>
 
-            {sumidosInfo.total > 0 ? (
+            {indisponiveisTotal > 0 ? (
               <Popover>
                 <PopoverTrigger asChild>
                   <button className="mt-2 flex w-full cursor-pointer items-center justify-between gap-1.5 rounded-xl border border-[#E53935]/30 bg-[#FDECEC] px-2 py-2 text-[11px] font-semibold text-[#E53935] transition-colors hover:bg-[#F9DCDC] sm:px-3 sm:text-sm">
                     <div className="flex items-center gap-2">
                       <UserX className="h-4 w-4 shrink-0" />
-                      <span>SUMIDOS</span>
+                      <span>INDISPONIVEIS</span>
                     </div>
-                    <span className="text-base font-bold sm:text-lg">{sumidosInfo.total}</span>
+                    <span className="text-base font-bold sm:text-lg">{indisponiveisTotal}</span>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-72 p-3" align="start">
+                <PopoverContent className="w-80 p-3" align="start">
                   <div className="space-y-1">
-                    <h4 className="font-semibold text-sm mb-2 text-[#E53935]">SUMIDOS - {TURMAS_LABELS[turma]}</h4>
-                    <div className="max-h-48 overflow-y-auto space-y-1.5">
-                      {sumidosInfo.nomes.map((nome, i) => (
-                        <div key={i} className="text-xs p-2 rounded-md bg-[#FDECEC] border border-[#E53935]/20">
-                          <div className="font-semibold">{nome}</div>
+                    <h4 className="font-semibold text-sm mb-2 text-[#E53935]">INDISPONIVEIS - {TURMAS_LABELS[turma]}</h4>
+                    <div className="max-h-56 overflow-y-auto space-y-1.5">
+                      {indisponiveisLista.map((item, i) => (
+                        <div key={`${item.nome}-${item.motivo}-${i}`} className="text-xs p-2 rounded-md bg-[#FDECEC] border border-[#E53935]/20">
+                          <div className="font-semibold">{item.nome}</div>
+                          <div className="mt-0.5 text-[#E53935]">{item.motivo}</div>
                         </div>
                       ))}
                     </div>
@@ -484,7 +523,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
               <div className="mt-2 flex w-full items-center justify-between gap-1.5 rounded-xl border border-[#E5E7EB] bg-[#F4F8FF] px-2 py-2 text-[11px] font-semibold text-[#6B7280] sm:px-3 sm:text-sm">
                 <div className="flex items-center gap-2">
                   <UserX className="h-4 w-4 shrink-0" />
-                  <span>SUMIDOS</span>
+                  <span>INDISPONIVEIS</span>
                 </div>
                 <span className="text-base font-bold sm:text-lg">0</span>
               </div>
@@ -573,60 +612,6 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
               </div>
             )}
 
-            {/* Indicador de Cob. Férias - apenas para LUCIANO */}
-            {mostrarSumidos && cobFeriasPorTurma[turma] && cobFeriasPorTurma[turma].total > 0 && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="flex items-center justify-between gap-1.5 px-3 py-2 mt-1 mb-2 rounded-lg border border-info/30 bg-info/5 text-sm font-semibold text-info hover:bg-info/15 transition-colors cursor-pointer w-full">
-                    <div className="flex items-center gap-2">
-                      <Umbrella className="h-4 w-4 shrink-0" />
-                      <span>COB. FÉRIAS</span>
-                    </div>
-                    <span className="text-lg font-bold">{cobFeriasPorTurma[turma].total}</span>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-3" align="start">
-                  <div className="space-y-1">
-                     <h4 className="font-semibold text-sm mb-2 text-info">COB. FÉRIAS - {TURMAS_LABELS[turma]}</h4>
-                     <div className="max-h-48 overflow-y-auto space-y-1.5">
-                       {cobFeriasPorTurma[turma].nomes.map((nome, i) => (
-                         <div key={i} className="text-xs p-2 rounded-md bg-info/5 border border-info/20">
-                           <div className="font-semibold">{nome}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
-
-            {/* Indicador de Treinamento - apenas para LUCIANO */}
-            {mostrarSumidos && treinamentoPorTurma[turma] && treinamentoPorTurma[turma].total > 0 && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="flex items-center justify-between gap-1.5 px-3 py-2 mt-1 mb-2 rounded-lg border border-warning/30 bg-warning/5 text-sm font-semibold text-warning hover:bg-warning/15 transition-colors cursor-pointer w-full">
-                    <div className="flex items-center gap-2">
-                      <GraduationCap className="h-4 w-4 shrink-0" />
-                      <span>TREINAMENTO</span>
-                    </div>
-                    <span className="text-lg font-bold">{treinamentoPorTurma[turma].total}</span>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-3" align="start">
-                  <div className="space-y-1">
-                     <h4 className="font-semibold text-sm mb-2 text-warning">TREINAMENTO - {TURMAS_LABELS[turma]}</h4>
-                     <div className="max-h-48 overflow-y-auto space-y-1.5">
-                       {treinamentoPorTurma[turma].nomes.map((nome, i) => (
-                         <div key={i} className="text-xs p-2 rounded-md bg-warning/5 border border-warning/20">
-                           <div className="font-semibold">{nome}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
-            
             <div className="space-y-2">
               <div className="flex items-center justify-between rounded-xl bg-[#F4F8FF] p-2.5">
                 <div className="flex items-center gap-2">
