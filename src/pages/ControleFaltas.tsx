@@ -208,6 +208,50 @@ export default function ControleFaltas() {
     return null;
   }, [podeVerTodasMetricasFaltas, userRole, setores]);
 
+  const filtrosPermitidosGestor = useMemo(() => {
+    if (podeVerTodasMetricasFaltas || isRealParceria) {
+      return {
+        sopro: ['A', 'B', 'C'] as Array<'A' | 'B' | 'C'>,
+        decoracaoTurnos: ['DIA', 'NOITE'] as Array<'DIA' | 'NOITE'>,
+      };
+    }
+
+    const setoresUsuario = userRole?.setores_ids || [];
+    const nomesSetores = setoresUsuario.map(id => {
+      const setor = setores.find(s => s.id === id);
+      return `${setor?.nome || ''} ${setor?.grupo || ''}`.toUpperCase();
+    });
+
+    const sopro = (['A', 'B', 'C'] as Array<'A' | 'B' | 'C'>).filter(turma =>
+      nomesSetores.some(nome =>
+        nome.includes(`SOPRO ${turma}`) ||
+        nome.includes(`SOPRO G+P ${turma}`) ||
+        nome.endsWith(` ${turma}`)
+      )
+    );
+
+    const decoracaoTurnos = (['DIA', 'NOITE'] as Array<'DIA' | 'NOITE'>).filter(turno =>
+      nomesSetores.some(nome => nome.includes('DECORACAO') && nome.includes(turno))
+    );
+
+    return { sopro, decoracaoTurnos };
+  }, [podeVerTodasMetricasFaltas, isRealParceria, userRole, setores]);
+
+  useEffect(() => {
+    if (podeVerTodasMetricasFaltas || isRealParceria) return;
+
+    setTurmasSopro(prev => {
+      const permitidas = new Set(filtrosPermitidosGestor.sopro);
+      const filtradas = new Set(Array.from(prev).filter(turma => permitidas.has(turma as 'A' | 'B' | 'C')));
+      return filtradas.size === prev.size ? prev : filtradas;
+    });
+
+    setTurnosDecoracao(prev => {
+      const permitidos = new Set(filtrosPermitidosGestor.decoracaoTurnos);
+      const filtrados = new Set(Array.from(prev).filter(turno => permitidos.has(turno as 'DIA' | 'NOITE')));
+      return filtrados.size === prev.size ? prev : filtrados;
+    });
+  }, [podeVerTodasMetricasFaltas, isRealParceria, filtrosPermitidosGestor]);
   // Filtra funcionários por setor do usuário (gestores só veem seus setores)
   // E também filtra apenas setores do quadro
   // Gestores veem todos do seu GRUPO (SOPRO vê A+B+C, DECORAÇÃO vê DIA+NOITE)
@@ -1532,7 +1576,7 @@ export default function ControleFaltas() {
               {((podeVerTodasMetricasFaltas && grupoFiltro === 'SOPRO') || (!podeVerTodasMetricasFaltas && grupoDoGestor === 'SOPRO') || (isRealParceria && grupoFiltro === 'SOPRO')) && (
                 <>
                   <div className="flex items-center gap-1.5 border-l pl-3">
-                    {(['A', 'B', 'C'] as const).map((turma) => (
+                    {filtrosPermitidosGestor.sopro.map((turma) => (
                       <Button
                         key={turma}
                         variant={turmasSopro.has(turma) ? 'secondary' : 'ghost'}
@@ -1570,7 +1614,7 @@ export default function ControleFaltas() {
               {((podeVerTodasMetricasFaltas && grupoFiltro === 'DECORAÇÃO') || (!podeVerTodasMetricasFaltas && grupoDoGestor === 'DECORAÇÃO') || (isRealParceria && grupoFiltro === 'DECORAÇÃO')) && (
                 <>
                   <div className="flex items-center gap-1.5 border-l pl-3">
-                    {(['DIA', 'NOITE'] as const).map((turno) => (
+                    {filtrosPermitidosGestor.decoracaoTurnos.map((turno) => (
                       <Button
                         key={turno}
                         variant={turnosDecoracao.has(turno) ? 'secondary' : 'ghost'}
