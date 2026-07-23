@@ -264,6 +264,7 @@ export default function Dashboard() {
       <MetricasTurmaCards
         grupo={data.grupoSelecionado}
         funcionarios={data.grupoSelecionado === 'SOPRO' ? data.funcionariosSopro : data.funcionariosDecoracao}
+        todosFuncionariosArea={data.grupoSelecionado === 'SOPRO' ? data.todosSopro : data.todosDecoracao}
         quadroPlanejadoSopro={data.quadroPlanejado}
         quadroPlanejadoDecoracao={data.quadroDecoracao}
         funcionariosPrevisao={data.funcionariosPrevisao}

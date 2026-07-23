@@ -42,6 +42,7 @@ export default function Home() {
       <MetricasTurmaCards
         grupo="SOPRO"
         funcionarios={data.funcionariosSopro}
+        todosFuncionariosArea={data.todosSopro}
         quadroPlanejadoSopro={data.quadroPlanejado}
         funcionariosPrevisao={data.funcionariosPrevisao}
         sumidosPorTurma={data.sumidosSopro}
@@ -55,6 +56,7 @@ export default function Home() {
       <MetricasTurmaCards
         grupo="DECORAÇÃO"
         funcionarios={data.funcionariosDecoracao}
+        todosFuncionariosArea={data.todosDecoracao}
         quadroPlanejadoDecoracao={data.quadroDecoracao}
         funcionariosPrevisao={data.funcionariosPrevisao}
         sumidosPorTurma={data.sumidosDecoracao}

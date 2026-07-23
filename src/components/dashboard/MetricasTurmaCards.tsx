@@ -31,6 +31,7 @@ type PrevisaoCardItem = Partial<Funcionario> & {
 interface MetricasTurmaCardsProps {
   grupo: 'SOPRO' | 'DECORAÇÃO';
   funcionarios: Funcionario[];
+  todosFuncionariosArea?: Funcionario[];
   quadroPlanejadoSopro?: QuadroPlanejado[];
   quadroPlanejadoDecoracao?: QuadroDecoracao[];
   funcionariosPrevisao?: Funcionario[];
@@ -141,7 +142,7 @@ function calcularTotalPlanejadoDecoracao(dados: QuadroDecoracao): number {
   );
 }
 
-export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro = [], quadroPlanejadoDecoracao = [], funcionariosPrevisao = [], sumidosPorTurma = {}, cobFeriasPorTurma = {}, treinamentoPorTurma = {}, mostrarSumidos = false, recentesPorTurma = {}, treinamentosPrevisao = [] }: MetricasTurmaCardsProps) {
+export function MetricasTurmaCards({ grupo, funcionarios, todosFuncionariosArea, quadroPlanejadoSopro = [], quadroPlanejadoDecoracao = [], funcionariosPrevisao = [], sumidosPorTurma = {}, cobFeriasPorTurma = {}, treinamentoPorTurma = {}, mostrarSumidos = false, recentesPorTurma = {}, treinamentosPrevisao = [] }: MetricasTurmaCardsProps) {
   const turmas = grupo === 'SOPRO' ? TURMAS_SOPRO : TURMAS_DECORACAO;
   const { usuarioAtual } = useUsuario();
   const { indisponiveisSituacaoIds } = useSistemaConfig();
@@ -309,7 +310,7 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
     }
     
     return result;
-  }, [funcionarios, turmas, grupo, quadroPlanejadoSopro, quadroPlanejadoDecoracao, funcionariosPrevisao, usuarioAtual, trocasTurno]);
+  }, [funcionarios, todosFuncionariosArea, turmas, grupo, quadroPlanejadoSopro, quadroPlanejadoDecoracao, funcionariosPrevisao, usuarioAtual, trocasTurno, indisponiveisSituacaoIds]);
 
   return (
     <div className={`grid gap-4 ${grupo === 'SOPRO' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 lg:grid-cols-4'}`}>
@@ -374,7 +375,8 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
           indisponiveisMap.set(chave, { nome, motivo });
         };
 
-        funcionarios
+        const baseIndisponiveis = todosFuncionariosArea || funcionarios;
+        baseIndisponiveis
           .filter(f => getTurmaCardFuncionario(f, grupo) === turma)
           .forEach(f => {
             const motivo = indisponiveisSituacaoIds.includes(f.situacao_id)
