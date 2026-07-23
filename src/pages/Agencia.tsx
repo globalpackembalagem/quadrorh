@@ -43,11 +43,22 @@ interface IntegracaoAgencia {
 
 interface ValorExtraAvulso {
   id: string;
-  cidade: string;
-  valor_viagem: number;
+  nome: string;
+  pedagio: number;
+  valor_van: number;
+  valor_micro: number;
+  valor_onibus: number;
   created_at: string;
   updated_at: string;
 }
+
+const extraAvulsoVazio = {
+  nome: '',
+  carro: '',
+  van: '',
+  micro: '',
+  onibus: '',
+};
 
 const camposVazios = {
   nome_completo: '',
@@ -82,6 +93,7 @@ export default function Agencia() {
   const [valorEditando, setValorEditando] = useState<ValorExtraAvulso | null>(null);
   const [novoValorExtra, setNovoValorExtra] = useState('');
   const [dataVigenciaValor, setDataVigenciaValor] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [novoExtraAvulso, setNovoExtraAvulso] = useState(extraAvulsoVazio);
 
   const { data: registros = [], isLoading } = useQuery({
     queryKey: ['integracoes_agencia'],
@@ -96,12 +108,13 @@ export default function Agencia() {
   });
 
   const { data: valoresExtras = [], isLoading: carregandoValoresExtras } = useQuery({
-    queryKey: ['fretado_valores_extras'],
+    queryKey: ['fretado-itinerarios'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('fretado_valores_extras')
+        .from('fretado_itinerarios')
         .select('*')
-        .order('cidade', { ascending: true });
+        .eq('ativo', true)
+        .order('nome', { ascending: true });
       if (error) throw error;
       return data as ValorExtraAvulso[];
     },
@@ -159,6 +172,43 @@ export default function Agencia() {
     },
   });
 
+  const moeda = (valor?: number | null) =>
+    Number(valor || 0) > 0 ? Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-';
+
+  const numeroValor = (valor: string) => Number((valor || '0').replace(/\./g, '').replace(',', '.')) || 0;
+
+  const criarExtraAvulsoMutation = useMutation({
+    mutationFn: async () => {
+      if (!novoExtraAvulso.nome.trim()) throw new Error('Informe a cidade/destino.');
+      const { error } = await supabase.from('fretado_itinerarios').insert({
+        nome: novoExtraAvulso.nome.trim().toUpperCase(),
+        pedagio: numeroValor(novoExtraAvulso.carro),
+        valor_van: numeroValor(novoExtraAvulso.van),
+        valor_micro: numeroValor(novoExtraAvulso.micro),
+        valor_onibus: numeroValor(novoExtraAvulso.onibus),
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fretado-itinerarios'] });
+      setNovoExtraAvulso(extraAvulsoVazio);
+      toast({ title: 'EXTRA AVULSO ADICIONADO' });
+    },
+    onError: (error: any) => toast({ title: error?.message || 'ERRO AO ADICIONAR', variant: 'destructive' }),
+  });
+
+  const excluirExtraAvulsoMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('fretado_itinerarios').update({ ativo: false }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fretado-itinerarios'] });
+      toast({ title: 'EXTRA AVULSO EXCLUIDO' });
+    },
+    onError: () => toast({ title: 'ERRO AO EXCLUIR', variant: 'destructive' }),
+  });
+
   const alterarValorExtraMutation = useMutation({
     mutationFn: async () => {
       if (!valorEditando) return;
@@ -168,24 +218,24 @@ export default function Agencia() {
       }
 
       const { error } = await supabase
-        .from('fretado_valores_extras')
-        .update({ valor_viagem: valor })
+        .from('fretado_itinerarios')
+        .update({ pedagio: valor })
         .eq('id', valorEditando.id);
       if (error) throw error;
 
       await supabase.from('valor_historico').insert({
         registro_id: valorEditando.id,
         tipo: 'FRETADO_VALOR_EXTRA',
-        campo: 'valor_viagem',
-        valor_anterior: valorEditando.valor_viagem,
+        campo: 'pedagio',
+        valor_anterior: valorEditando.pedagio,
         valor_novo: valor,
         motivo: 'IMPLANTACAO - AJUSTE INICIAL',
         data_vigencia: dataVigenciaValor,
-        nome_registro: valorEditando.cidade,
+        nome_registro: valorEditando.nome,
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['fretado_valores_extras'] });
+      queryClient.invalidateQueries({ queryKey: ['fretado-itinerarios'] });
       queryClient.invalidateQueries({ queryKey: ['valor-historico'] });
       toast({ title: 'VALOR ALTERADO' });
       setValorEditando(null);
@@ -253,7 +303,7 @@ export default function Agencia() {
 
   const abrirAlterarValor = (valor: ValorExtraAvulso) => {
     setValorEditando(valor);
-    setNovoValorExtra(String(valor.valor_viagem).replace('.', ','));
+    setNovoValorExtra(String(valor.pedagio).replace('.', ','));
     setDataVigenciaValor(format(new Date(), 'yyyy-MM-dd'));
   };
 
@@ -541,31 +591,76 @@ export default function Agencia() {
 
         <TabsContent value="valores_extras" className="space-y-4">
           <Card>
+            <CardContent className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-3 items-end">
+                <div className="space-y-1.5">
+                  <Label>CIDADE / DESTINO</Label>
+                  <Input
+                    value={novoExtraAvulso.nome}
+                    onChange={e => setNovoExtraAvulso(p => ({ ...p, nome: e.target.value }))}
+                    placeholder="EX: GUARULHOS"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>CARRO (R$)</Label>
+                  <Input inputMode="decimal" value={novoExtraAvulso.carro} onChange={e => setNovoExtraAvulso(p => ({ ...p, carro: e.target.value }))} placeholder="0,00" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>VAN (R$)</Label>
+                  <Input inputMode="decimal" value={novoExtraAvulso.van} onChange={e => setNovoExtraAvulso(p => ({ ...p, van: e.target.value }))} placeholder="0,00" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>MICRO (R$)</Label>
+                  <Input inputMode="decimal" value={novoExtraAvulso.micro} onChange={e => setNovoExtraAvulso(p => ({ ...p, micro: e.target.value }))} placeholder="0,00" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>ONIBUS (R$)</Label>
+                  <Input inputMode="decimal" value={novoExtraAvulso.onibus} onChange={e => setNovoExtraAvulso(p => ({ ...p, onibus: e.target.value }))} placeholder="0,00" />
+                </div>
+                <Button onClick={() => criarExtraAvulsoMutation.mutate()} disabled={criarExtraAvulsoMutation.isPending}>
+                  <Plus className="h-4 w-4 mr-2" /> ADICIONAR
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
             <CardContent className="p-0 overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>CIDADE</TableHead>
-                    <TableHead>VALOR ATUAL</TableHead>
-                    <TableHead>ATUALIZADO EM</TableHead>
-                    <TableHead className="text-right">ACAO</TableHead>
+                    <TableHead>CIDADE / DESTINO</TableHead>
+                    <TableHead>CARRO</TableHead>
+                    <TableHead>VAN</TableHead>
+                    <TableHead>MICRO</TableHead>
+                    <TableHead>ONIBUS</TableHead>
+                    <TableHead className="text-right">ACOES</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {carregandoValoresExtras ? (
-                    <TableRow><TableCell colSpan={4} className="text-center py-8">CARREGANDO...</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center py-8">CARREGANDO...</TableCell></TableRow>
                   ) : valoresExtras.length === 0 ? (
-                    <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">NENHUM VALOR CADASTRADO</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">NENHUM VALOR CADASTRADO</TableCell></TableRow>
                   ) : (
                     valoresExtras.map(valor => (
                       <TableRow key={valor.id}>
-                        <TableCell className="font-medium">{valor.cidade}</TableCell>
-                        <TableCell>{Number(valor.valor_viagem || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</TableCell>
-                        <TableCell>{valor.updated_at ? format(new Date(valor.updated_at), 'dd/MM/yyyy HH:mm') : '-'}</TableCell>
+                        <TableCell className="font-medium">{valor.nome}</TableCell>
+                        <TableCell>{moeda(valor.pedagio)}</TableCell>
+                        <TableCell>{moeda(valor.valor_van)}</TableCell>
+                        <TableCell>{moeda(valor.valor_micro)}</TableCell>
+                        <TableCell>{moeda(valor.valor_onibus)}</TableCell>
                         <TableCell className="text-right">
-                          <Button variant="outline" size="sm" onClick={() => abrirAlterarValor(valor)}>
-                            ALTERAR VALOR
-                          </Button>
+                          <div className="flex justify-end gap-1">
+                            <Button variant="ghost" size="icon" onClick={() => abrirAlterarValor(valor)} title="Alterar valor do carro">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => {
+                              if (confirm('EXCLUIR ESTE EXTRA AVULSO?')) excluirExtraAvulsoMutation.mutate(valor.id);
+                            }}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))
@@ -646,15 +741,15 @@ export default function Agencia() {
       <Dialog open={!!valorEditando} onOpenChange={(open) => !open && setValorEditando(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>ALTERAR VALOR</DialogTitle>
+            <DialogTitle>ALTERAR VALOR DO CARRO</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="rounded-md bg-muted p-3">
-              <p className="text-xs text-muted-foreground">CIDADE</p>
-              <p className="font-medium">{valorEditando?.cidade}</p>
+              <p className="text-xs text-muted-foreground">CIDADE / DESTINO</p>
+              <p className="font-medium">{valorEditando?.nome}</p>
             </div>
             <div className="space-y-1.5">
-              <Label>NOVO VALOR</Label>
+              <Label>NOVO VALOR DO CARRO</Label>
               <Input inputMode="decimal" value={novoValorExtra} onChange={e => setNovoValorExtra(e.target.value)} placeholder="0,00" />
             </div>
             <div className="space-y-1.5">
