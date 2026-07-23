@@ -71,13 +71,15 @@ function contaParaControleFotos(func: FuncionarioFotoControle) {
   const situacao = normalizar(func.situacao?.nome || "");
   const situacoesSemFoto = [
     "PEDIDO DEMISSAO",
+    "PEDIDO DEMISAO",
     "PEDIDO DE DEMISSAO",
     "PED. DEMISSAO",
     "DEMISSAO",
+    "DMEISSAO",
     "TERMINO CONTRATO",
     "TERMINO DE CONTRATO",
   ];
-  return !situacoesSemFoto.includes(situacao) && !situacao.includes("DESLIG");
+  return !situacoesSemFoto.includes(situacao);
 }
 
 function temFotoValida(func: FuncionarioFotoControle) {
