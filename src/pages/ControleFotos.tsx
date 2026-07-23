@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, Download, FileSpreadsheet, ImageDown, Pencil, RefreshCw, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -165,6 +166,48 @@ function getUsuarioLogado() {
   }
 }
 
+async function resizeImageToDataUrl(file: File, maxSize = 900, quality = 0.72) {
+  return new Promise<string>((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Nao foi possivel processar a imagem."));
+          return;
+        }
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error("Nao foi possivel compactar a foto."));
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result));
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(blob);
+        }, "image/jpeg", quality);
+      } catch (error) {
+        reject(error);
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Imagem invalida."));
+    };
+    img.src = objectUrl;
+  });
+}
+
 export default function ControleFotos() {
   const queryClient = useQueryClient();
   const usuarioLogado = getUsuarioLogado();
@@ -179,6 +222,7 @@ export default function ControleFotos() {
   const [editando, setEditando] = useState<FuncionarioFotoControle | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [baixandoTodos, setBaixandoTodos] = useState(false);
+  const uploadFotoRef = useRef<HTMLInputElement | null>(null);
 
   const { data: funcionarios = [], isLoading, refetch } = useQuery({
     queryKey: ["controle-fotos-funcionarios"],
@@ -300,6 +344,32 @@ export default function ControleFotos() {
       toast.error(error instanceof Error ? error.message : "Erro ao salvar.");
     } finally {
       setSalvando(false);
+    }
+  };
+
+  const carregarFotoEdicao = async (file?: File) => {
+    if (!file || !editando) return;
+    setSalvando(true);
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      const { data, error } = await supabase.functions.invoke("fotos-handler", {
+        body: {
+          action: "atualizar_funcionario_foto",
+          codigo: "RHFOTO2026",
+          funcionario_id: editando.id,
+          imagem_base64: dataUrl,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast.success("Foto carregada com sucesso.");
+      setEditando(null);
+      queryClient.invalidateQueries({ queryKey: ["controle-fotos-funcionarios"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Erro ao carregar foto.");
+    } finally {
+      setSalvando(false);
+      if (uploadFotoRef.current) uploadFotoRef.current.value = "";
     }
   };
 
@@ -756,6 +826,13 @@ export default function ControleFotos() {
                   onChange={(e) => setEditando({ ...editando, foto_arquivo_nome: e.target.value })}
                   placeholder="Ex: NOME_FUNCIONARIO_123.jpg"
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Foto</Label>
+                <input ref={uploadFotoRef} className="hidden" type="file" accept="image/*" onChange={(e) => carregarFotoEdicao(e.target.files?.[0])} />
+                <Button type="button" variant="default" className="w-full" onClick={() => uploadFotoRef.current?.click()} disabled={salvando || editando.foto_nao_precisa === true}>
+                  CARREGAR / TROCAR FOTO
+                </Button>
               </div>
               <div className="space-y-2">
                 <Label>Telefone/WhatsApp</Label>
