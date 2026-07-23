@@ -77,12 +77,12 @@ function checkUploadLimit(ip: string) {
   return true;
 }
 
-async function getSituacoesAtivasIds(supabase: any) {
+async function getSituacoesFotoIds(supabase: any) {
   const { data, error } = await supabase
     .from("situacoes")
     .select("id")
     .eq("ativa", true)
-    .ilike("nome", "ATIVO");
+    .in("nome", ["ATIVO", "PREVISAO"]);
   if (error) throw error;
   return (data || []).map((s: any) => s.id);
 }
@@ -134,7 +134,7 @@ serve(async (req) => {
       const termo = String(params.termo || "").trim();
       if (termo.length < 3) return jsonResponse(req, { error: "Digite pelo menos 3 caracteres" }, 400);
 
-      const situacoesIds = await getSituacoesAtivasIds(supabase);
+      const situacoesIds = await getSituacoesFotoIds(supabase);
       if (!situacoesIds.length) return jsonResponse(req, { success: true, data: [] });
 
       const safeTerm = termo.replace(/[%_,]/g, "");
@@ -154,7 +154,7 @@ serve(async (req) => {
     }
 
     if (action === "listar_sem_foto") {
-      const situacoesIds = await getSituacoesAtivasIds(supabase);
+      const situacoesIds = await getSituacoesFotoIds(supabase);
       if (!situacoesIds.length) return jsonResponse(req, { success: true, data: [] });
 
       const { data, error } = await supabase
