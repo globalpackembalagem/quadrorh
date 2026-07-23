@@ -374,18 +374,12 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
           indisponiveisMap.set(chave, { nome, motivo });
         };
 
-        const usaConfiguracaoSistema = indisponiveisSituacaoIds.length > 0;
-        if (!usaConfiguracaoSistema) {
-          sumidosInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'SUMIDO'));
-          cobFeriasInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'COBERTURA FERIAS'));
-          treinamentoInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'TREINAMENTO'));
-        }
         funcionarios
           .filter(f => getTurmaCardFuncionario(f, grupo) === turma)
           .forEach(f => {
-            const motivo = usaConfiguracaoSistema
-              ? (indisponiveisSituacaoIds.includes(f.situacao_id) ? f.situacao?.nome || 'INDISPONIVEL' : null)
-              : motivoIndisponivelPorSituacao(f.situacao?.nome);
+            const motivo = indisponiveisSituacaoIds.includes(f.situacao_id)
+              ? f.situacao?.nome || 'INDISPONIVEL'
+              : null;
             if (motivo) adicionarIndisponivel(f.nome_completo, motivo);
           });
 
