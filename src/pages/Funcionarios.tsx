@@ -716,6 +716,7 @@ export default function Funcionarios() {
   const [treinamentoSetorId, setTreinamentoSetorId] = useState('');
   const [sumidoDesde, setSumidoDesde] = useState('');
   const [naoEMeuFuncionario, setNaoEMeuFuncionario] = useState(false);
+  const [abaFuncionarios, setAbaFuncionarios] = useState('lista');
 
   const somenteNumerosCpf = (valor: string) => valor.replace(/\D/g, '');
   const formatarCpf = (valor: string) => {
@@ -734,6 +735,21 @@ export default function Funcionarios() {
     const permitidos = new Set(setoresIdsUsuario);
     return funcionarios.filter(f => !!f.setor_id && permitidos.has(f.setor_id));
   }, [funcionarios, isAdmin, isLiderRestrito, setoresIdsUsuario]);
+
+  const temporariosAtivosVisiveis = useMemo(() => {
+    return funcionariosVisiveis.filter(f => {
+      const matriculaTemp = (f.matricula || '').toUpperCase().startsWith('TEMP');
+      const situacao = normalizarTextoSistema(f.situacao?.nome) || '';
+      const setorContaNoQuadro = f.setor?.conta_no_quadro !== false && f.setor?.ativo !== false;
+      const situacaoContaNoQuadro = f.situacao?.conta_no_quadro === true && f.situacao?.ativa === true;
+
+      return matriculaTemp && situacao === 'ATIVO' && !f.data_demissao && setorContaNoQuadro && situacaoContaNoQuadro;
+    });
+  }, [funcionariosVisiveis]);
+
+  const funcionariosExportacao = abaFuncionarios === 'temporarios'
+    ? temporariosAtivosVisiveis
+    : funcionariosVisiveis;
 
   // funcionariosAtivosParaContagem mantido para compatibilidade com view do gestor
   const funcionariosAtivosParaContagem = useMemo(() => {
@@ -1293,11 +1309,11 @@ export default function Funcionarios() {
             <p className="page-description">CLIQUE EM UM FUNCIONÁRIO PARA EDITAR A TURMA</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <ExportarFuncionariosDialog funcionarios={funcionariosVisiveis} setores={setores} situacoes={todasSituacoes} />
+            <ExportarFuncionariosDialog funcionarios={funcionariosExportacao} setores={setores} situacoes={todasSituacoes} />
           </div>
         </div>
 
-        <Tabs defaultValue="lista">
+        <Tabs value={abaFuncionarios} onValueChange={setAbaFuncionarios}>
           <TabsList className="h-auto flex-wrap">
             <TabsTrigger value="lista">LISTA</TabsTrigger>
             <TabsTrigger value="temporarios" className="gap-1">
@@ -1493,13 +1509,13 @@ export default function Funcionarios() {
               </Button>
             )}
             {podeEditarFuncionarios && <ZerarBaseDialog />}
-            <ExportarFuncionariosDialog funcionarios={funcionarios} setores={setores} situacoes={todasSituacoes} />
+            <ExportarFuncionariosDialog funcionarios={funcionariosExportacao} setores={setores} situacoes={todasSituacoes} />
             {podeEditarFuncionarios && <ImportarFuncionarios setores={setores} situacoes={todasSituacoes} />}
           </div>
         </div>
       </div>
 
-      <Tabs defaultValue="lista" className="space-y-4">
+      <Tabs value={abaFuncionarios} onValueChange={setAbaFuncionarios} className="space-y-4">
         <TabsList className="h-auto flex-wrap rounded-lg bg-muted p-1">
           <TabsTrigger value="lista">LISTA</TabsTrigger>
           <TabsTrigger value="temporarios" className="gap-1">
