@@ -41,6 +41,14 @@ interface IntegracaoAgencia {
   aprovado: boolean | null;
 }
 
+interface ValorExtraAvulso {
+  id: string;
+  cidade: string;
+  valor_viagem: number;
+  created_at: string;
+  updated_at: string;
+}
+
 const camposVazios = {
   nome_completo: '',
   setor: '',
@@ -71,6 +79,9 @@ export default function Agencia() {
   const [etapaDialog, setEtapaDialog] = useState<'compareceu' | 'aprovado' | null>(null);
   const [filtroStatus, setFiltroStatus] = useState<'todos' | 'presentes' | 'aguardando' | 'nao_compareceu'>('todos');
   const [abaAtiva, setAbaAtiva] = useState('integracao');
+  const [valorEditando, setValorEditando] = useState<ValorExtraAvulso | null>(null);
+  const [novoValorExtra, setNovoValorExtra] = useState('');
+  const [dataVigenciaValor, setDataVigenciaValor] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   const { data: registros = [], isLoading } = useQuery({
     queryKey: ['integracoes_agencia'],
@@ -81,6 +92,18 @@ export default function Agencia() {
         .order('nome_completo', { ascending: true });
       if (error) throw error;
       return data as IntegracaoAgencia[];
+    },
+  });
+
+  const { data: valoresExtras = [], isLoading: carregandoValoresExtras } = useQuery({
+    queryKey: ['fretado_valores_extras'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('fretado_valores_extras')
+        .select('*')
+        .order('cidade', { ascending: true });
+      if (error) throw error;
+      return data as ValorExtraAvulso[];
     },
   });
 
@@ -134,6 +157,40 @@ export default function Agencia() {
       queryClient.invalidateQueries({ queryKey: ['integracoes_agencia'] });
       toast({ title: 'REGISTRO EXCLUÍDO' });
     },
+  });
+
+  const alterarValorExtraMutation = useMutation({
+    mutationFn: async () => {
+      if (!valorEditando) return;
+      const valor = Number(novoValorExtra.replace(',', '.'));
+      if (!Number.isFinite(valor) || valor < 0) {
+        throw new Error('Informe um valor valido.');
+      }
+
+      const { error } = await supabase
+        .from('fretado_valores_extras')
+        .update({ valor_viagem: valor })
+        .eq('id', valorEditando.id);
+      if (error) throw error;
+
+      await supabase.from('valor_historico').insert({
+        registro_id: valorEditando.id,
+        tipo: 'FRETADO_VALOR_EXTRA',
+        campo: 'valor_viagem',
+        valor_anterior: valorEditando.valor_viagem,
+        valor_novo: valor,
+        motivo: 'IMPLANTACAO - AJUSTE INICIAL',
+        data_vigencia: dataVigenciaValor,
+        nome_registro: valorEditando.cidade,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fretado_valores_extras'] });
+      queryClient.invalidateQueries({ queryKey: ['valor-historico'] });
+      toast({ title: 'VALOR ALTERADO' });
+      setValorEditando(null);
+    },
+    onError: (error: any) => toast({ title: error?.message || 'ERRO AO ALTERAR VALOR', variant: 'destructive' }),
   });
 
   const filtrados = useMemo(() => {
@@ -192,6 +249,12 @@ export default function Agencia() {
     setEditando(null);
     setForm(camposVazios);
     setDialogOpen(true);
+  };
+
+  const abrirAlterarValor = (valor: ValorExtraAvulso) => {
+    setValorEditando(valor);
+    setNovoValorExtra(String(valor.valor_viagem).replace('.', ','));
+    setDataVigenciaValor(format(new Date(), 'yyyy-MM-dd'));
   };
 
   const clicarLinha = async (reg: IntegracaoAgencia) => {
@@ -348,6 +411,7 @@ export default function Agencia() {
         <TabsList>
           <TabsTrigger value="integracao">INTEGRAÇÃO</TabsTrigger>
           <TabsTrigger value="aprovados">APROVADOS ({registros.filter(r => r.aprovado === true).length})</TabsTrigger>
+          <TabsTrigger value="valores_extras">VALORES EXTRA AVULSO</TabsTrigger>
         </TabsList>
 
         <TabsContent value="integracao" className="space-y-4">
@@ -474,6 +538,43 @@ export default function Agencia() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="valores_extras" className="space-y-4">
+          <Card>
+            <CardContent className="p-0 overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>CIDADE</TableHead>
+                    <TableHead>VALOR ATUAL</TableHead>
+                    <TableHead>ATUALIZADO EM</TableHead>
+                    <TableHead className="text-right">ACAO</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {carregandoValoresExtras ? (
+                    <TableRow><TableCell colSpan={4} className="text-center py-8">CARREGANDO...</TableCell></TableRow>
+                  ) : valoresExtras.length === 0 ? (
+                    <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">NENHUM VALOR CADASTRADO</TableCell></TableRow>
+                  ) : (
+                    valoresExtras.map(valor => (
+                      <TableRow key={valor.id}>
+                        <TableCell className="font-medium">{valor.cidade}</TableCell>
+                        <TableCell>{Number(valor.valor_viagem || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</TableCell>
+                        <TableCell>{valor.updated_at ? format(new Date(valor.updated_at), 'dd/MM/yyyy HH:mm') : '-'}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="outline" size="sm" onClick={() => abrirAlterarValor(valor)}>
+                            ALTERAR VALOR
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Dialog de status - Aprovado */}
@@ -537,6 +638,34 @@ export default function Agencia() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>CANCELAR</Button>
             <Button onClick={() => salvarMutation.mutate({ ...form, id: editando?.id })} disabled={salvarMutation.isPending}>
               {salvarMutation.isPending ? 'SALVANDO...' : 'SALVAR'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!valorEditando} onOpenChange={(open) => !open && setValorEditando(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>ALTERAR VALOR</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-md bg-muted p-3">
+              <p className="text-xs text-muted-foreground">CIDADE</p>
+              <p className="font-medium">{valorEditando?.cidade}</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>NOVO VALOR</Label>
+              <Input inputMode="decimal" value={novoValorExtra} onChange={e => setNovoValorExtra(e.target.value)} placeholder="0,00" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>A PARTIR DE</Label>
+              <Input type="date" value={dataVigenciaValor} onChange={e => setDataVigenciaValor(e.target.value)} />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setValorEditando(null)}>CANCELAR</Button>
+            <Button onClick={() => alterarValorExtraMutation.mutate()} disabled={alterarValorExtraMutation.isPending}>
+              {alterarValorExtraMutation.isPending ? 'SALVANDO...' : 'SALVAR VALOR'}
             </Button>
           </div>
         </DialogContent>
