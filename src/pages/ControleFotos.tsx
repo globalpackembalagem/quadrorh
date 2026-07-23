@@ -124,6 +124,21 @@ function grupoUsaRegraDoQuadro(grupo: string) {
   return ["SOPRO A", "SOPRO B", "SOPRO C", "DECORACAO DIA", "DECORACAO NOITE"].includes(normalizar(grupo));
 }
 
+const ordemGruposLideranca = ["SOPRO A", "SOPRO B", "SOPRO C", "DECORACAO DIA", "DECORACAO NOITE"];
+
+function ordenarResumoSetores(a: { setor: string; semFoto: number }, b: { setor: string; semFoto: number }) {
+  const grupoA = normalizar(a.setor);
+  const grupoB = normalizar(b.setor);
+  const idxA = ordemGruposLideranca.indexOf(grupoA);
+  const idxB = ordemGruposLideranca.indexOf(grupoB);
+  if (idxA !== -1 || idxB !== -1) {
+    if (idxA === -1) return 1;
+    if (idxB === -1) return -1;
+    return idxA - idxB;
+  }
+  return a.setor.localeCompare(b.setor);
+}
+
 function getSessionToken() {
   try {
     const usuario = JSON.parse(localStorage.getItem("usuario_logado") || "null");
@@ -150,6 +165,9 @@ export default function ControleFotos() {
   const usuarioLogado = getUsuarioLogado();
   const isAdmin = usuarioLogado?.acesso_admin === true;
   const [busca, setBusca] = useState("");
+  const [filtroMatricula, setFiltroMatricula] = useState("");
+  const [filtroNome, setFiltroNome] = useState("");
+  const [filtroSetor, setFiltroSetor] = useState("");
   const [statusFoto, setStatusFoto] = useState<"TODOS" | "COM" | "SEM">("SEM");
   const [statusDownload, setStatusDownload] = useState<"TODOS" | "NAO_BAIXADAS" | "BAIXADAS">("TODOS");
   const [setoresSelecionados, setSetoresSelecionados] = useState<string[]>([]);
@@ -204,7 +222,7 @@ export default function ControleFotos() {
       const semFoto = lista.filter((func) => !temFotoMarcada(func)).length;
       const comFoto = lista.length - semFoto;
       return { setor, total: lista.length, semFoto, comFoto };
-    }).filter((item) => item.semFoto > 0).sort((a, b) => b.semFoto - a.semFoto || a.setor.localeCompare(b.setor));
+    }).filter((item) => item.semFoto > 0).sort(ordenarResumoSetores);
   }, [funcionariosControle, setores]);
 
   const alternarSetor = (setor: string) => {
@@ -215,6 +233,9 @@ export default function ControleFotos() {
 
   const filtrados = useMemo(() => {
     const termo = normalizar(busca.trim());
+    const termoMatricula = normalizar(filtroMatricula.trim());
+    const termoNome = normalizar(filtroNome.trim());
+    const termoSetor = normalizar(filtroSetor.trim());
     return funcionariosControle.filter((func) => {
       const temFoto = temFotoMarcada(func);
       const fotoValida = temFotoValida(func);
@@ -227,11 +248,14 @@ export default function ControleFotos() {
         if (!setoresSelecionados.includes(grupo)) return false;
         if (grupoUsaRegraDoQuadro(grupo) && !contaNoQuadroControleFotos(func)) return false;
       }
-      if (!termo) return true;
       const alvo = normalizar(`${func.nome_completo} ${func.matricula || ""} ${func.setor?.nome || ""}`);
-      return alvo.includes(termo);
+      if (termo && !alvo.includes(termo)) return false;
+      if (termoMatricula && !normalizar(func.matricula || "TEMP").includes(termoMatricula)) return false;
+      if (termoNome && !normalizar(func.nome_completo || "").includes(termoNome)) return false;
+      if (termoSetor && !normalizar(func.setor?.nome || "").includes(termoSetor)) return false;
+      return true;
     });
-  }, [busca, funcionariosControle, setoresSelecionados, statusDownload, statusFoto]);
+  }, [busca, filtroMatricula, filtroNome, filtroSetor, funcionariosControle, setoresSelecionados, statusDownload, statusFoto]);
 
   const totais = useMemo(() => {
     const com = funcionariosControle.filter(temFotoMarcada).length;
@@ -568,6 +592,9 @@ export default function ControleFotos() {
               <option value="NAO_BAIXADAS">NAO BAIXADAS</option>
               <option value="BAIXADAS">BAIXADAS</option>
             </select>
+            <Input value={filtroMatricula} onChange={(e) => setFiltroMatricula(e.target.value)} placeholder="Filtrar matricula" />
+            <Input value={filtroNome} onChange={(e) => setFiltroNome(e.target.value)} placeholder="Filtrar nome" />
+            <Input value={filtroSetor} onChange={(e) => setFiltroSetor(e.target.value)} placeholder="Filtrar setor" />
           </CardContent>
         </Card>
       </div>
