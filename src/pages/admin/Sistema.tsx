@@ -61,18 +61,18 @@ export default function Sistema() {
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold text-foreground">
           <Settings className="h-6 w-6 text-primary" />
-          CONFIGURACAO DOS INDISPONIVEIS
+          CONFIGURACAO DASH
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Defina quais situacoes aparecem no botao/card INDISPONIVEIS do quadro de funcionarios.
+          Ajustes usados nos cards e indicadores do quadro de funcionarios.
         </p>
       </div>
 
       <Card>
         <CardHeader className="space-y-2">
-          <CardTitle className="text-base">Situacoes do botao INDISPONIVEIS</CardTitle>
+          <CardTitle className="text-base">INDISPONIVEIS</CardTitle>
           <p className="text-sm text-muted-foreground">
-            As situacoes selecionadas aparecem agrupadas em INDISPONIVEIS no quadro.
+            Defina quais situacoes aparecem agrupadas no botao/card INDISPONIVEIS do quadro.
           </p>
         </CardHeader>
         <CardContent className="space-y-5">
