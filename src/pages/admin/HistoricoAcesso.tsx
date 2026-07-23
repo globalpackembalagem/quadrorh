@@ -18,11 +18,13 @@ import {
 
 type Filtro = 'todos' | 'logados' | 'visitantes';
 type Periodo = '7d' | '30d' | '90d';
+type DispositivoFiltro = 'todos' | 'desktop' | 'mobile';
 
 export default function HistoricoAcesso() {
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState<Filtro>('todos');
   const [periodo, setPeriodo] = useState<Periodo>('7d');
+  const [dispositivoFiltro, setDispositivoFiltro] = useState<DispositivoFiltro>('todos');
 
   const diasAtras = periodo === '7d' ? 7 : periodo === '30d' ? 30 : 90;
   const dataLimite = subDays(new Date(), diasAtras).toISOString();
@@ -44,12 +46,26 @@ export default function HistoricoAcesso() {
   const filtrados = useMemo(() => {
     return acessos.filter((a) => {
       const isVisitante = a.user_role_id === 'visualizacao';
-      if (filtro === 'logados' && isVisitante) return false;
-      if (filtro === 'visitantes' && !isVisitante) return false;
-      if (busca && !a.nome_usuario.toLowerCase().includes(busca.toLowerCase())) return false;
-      return true;
-    });
-  }, [acessos, filtro, busca]);
+	      if (filtro === 'logados' && isVisitante) return false;
+	      if (filtro === 'visitantes' && !isVisitante) return false;
+	      if (dispositivoFiltro !== 'todos' && (a.dispositivo || '').toLowerCase() !== dispositivoFiltro) return false;
+	      if (busca && !a.nome_usuario.toLowerCase().includes(busca.toLowerCase())) return false;
+	      return true;
+	    });
+	  }, [acessos, filtro, busca, dispositivoFiltro]);
+
+	  const ultimoAcessoPorUsuario = useMemo(() => {
+	    const mapa = new Map<string, any>();
+	    acessos
+	      .filter(a => a.user_role_id !== 'visualizacao')
+	      .forEach((a) => {
+	        const nome = a.nome_usuario || 'SEM NOME';
+	        if (!mapa.has(nome)) mapa.set(nome, a);
+	      });
+	    return Array.from(mapa.values()).sort((a, b) =>
+	      new Date(b.data_acesso).getTime() - new Date(a.data_acesso).getTime()
+	    );
+	  }, [acessos]);
 
   const totalLogados = acessos.filter(a => a.user_role_id !== 'visualizacao').length;
   const totalVisitantes = acessos.filter(a => a.user_role_id === 'visualizacao').length;
@@ -62,11 +78,34 @@ export default function HistoricoAcesso() {
       </div>
 
       {/* Métricas */}
-      <div className="grid grid-cols-3 gap-4">
+	      <div className="grid grid-cols-3 gap-4">
         <div className="bg-card border rounded-lg p-4 text-center">
           <p className="text-2xl font-bold">{acessos.length}</p>
           <p className="text-xs text-muted-foreground">Total de acessos</p>
-        </div>
+	      </div>
+
+	      <div className="bg-card border rounded-lg p-4">
+	        <div className="flex items-center justify-between mb-3">
+	          <div>
+	            <h2 className="text-sm font-bold uppercase">Ultimo acesso dos usuarios</h2>
+	            <p className="text-xs text-muted-foreground">Mostra o ultimo dia e horario registrado por usuario logado.</p>
+	          </div>
+	          <Badge variant="secondary">{ultimoAcessoPorUsuario.length} usuarios</Badge>
+	        </div>
+	        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+	          {ultimoAcessoPorUsuario.slice(0, 12).map((a) => (
+	            <div key={a.nome_usuario} className="rounded-lg border bg-muted/30 px-3 py-2">
+	              <div className="text-sm font-semibold">{a.nome_usuario}</div>
+	              <div className="text-xs text-muted-foreground">
+	                {format(parseISO(a.data_acesso), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+	              </div>
+	            </div>
+	          ))}
+	          {ultimoAcessoPorUsuario.length === 0 && (
+	            <div className="text-sm text-muted-foreground">Nenhum usuario logado encontrado no periodo.</div>
+	          )}
+	        </div>
+	      </div>
         <div className="bg-card border rounded-lg p-4 text-center">
           <p className="text-2xl font-bold text-primary">{totalLogados}</p>
           <p className="text-xs text-muted-foreground">Com login</p>
@@ -101,8 +140,8 @@ export default function HistoricoAcesso() {
             </Button>
           ))}
         </div>
-        <div className="flex gap-1">
-          {(['7d', '30d', '90d'] as Periodo[]).map((p) => (
+	        <div className="flex gap-1">
+	          {(['7d', '30d', '90d'] as Periodo[]).map((p) => (
             <Button
               key={p}
               size="sm"
@@ -111,9 +150,22 @@ export default function HistoricoAcesso() {
             >
               {p}
             </Button>
-          ))}
-        </div>
-      </div>
+	          ))}
+	        </div>
+	        <div className="flex gap-1">
+	          {(['todos', 'desktop', 'mobile'] as DispositivoFiltro[]).map((d) => (
+	            <Button
+	              key={d}
+	              size="sm"
+	              variant={dispositivoFiltro === d ? 'secondary' : 'ghost'}
+	              onClick={() => setDispositivoFiltro(d)}
+	              className="capitalize"
+	            >
+	              {d}
+	            </Button>
+	          ))}
+	        </div>
+	      </div>
 
       {/* Tabela */}
       <div className="border rounded-lg overflow-hidden">
