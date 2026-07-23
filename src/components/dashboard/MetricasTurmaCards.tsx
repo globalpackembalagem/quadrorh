@@ -101,7 +101,6 @@ const motivoIndisponivelPorSituacao = (situacao?: string | null) => {
   if (nome.includes('AUXILIO') || nome.includes('DOENCA') || nome.includes('INSS')) return 'AUXILIO DOENCA / INSS';
   if (nome.includes('COBERTURA') && nome.includes('FERIAS')) return 'COBERTURA FERIAS';
   if (nome.includes('TREINAMENTO')) return 'TREINAMENTO';
-  if (nome.includes('FERIAS')) return 'FERIAS';
   if (nome.includes('AFAST')) return 'AFASTADO';
   if (nome.includes('SUMIDO')) return 'SUMIDO';
   return null;
