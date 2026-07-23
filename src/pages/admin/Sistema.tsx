@@ -48,9 +48,9 @@ export default function Sistema() {
   const salvar = async () => {
     try {
       await updateConfig.mutateAsync({ indisponiveis_situacao_ids: selecionados });
-      toast.success('Configuracao do sistema salva.');
+      toast.success('Configuracao dos INDISPONIVEIS salva.');
     } catch (error) {
-      toast.error('Erro ao salvar configuracao do sistema.');
+      toast.error('Erro ao salvar configuracao dos INDISPONIVEIS.');
     }
   };
 
@@ -59,18 +59,18 @@ export default function Sistema() {
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-bold text-foreground">
           <Settings className="h-6 w-6 text-primary" />
-          SISTEMA
+          CONFIGURACAO DOS INDISPONIVEIS
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Defina quais situacoes entram no card INDISPONIVEIS do quadro de funcionarios.
+          Defina quais situacoes aparecem no botao/card INDISPONIVEIS do quadro de funcionarios.
         </p>
       </div>
 
       <Card>
         <CardHeader className="space-y-2">
-          <CardTitle className="text-base">Situacoes que descontam do quadro disponivel</CardTitle>
+          <CardTitle className="text-base">Situacoes do botao INDISPONIVEIS</CardTitle>
           <p className="text-sm text-muted-foreground">
-            ATIVO, PREVISAO e situacoes de desligamento ficam fora dessa lista.
+            As situacoes selecionadas aparecem agrupadas em INDISPONIVEIS no quadro.
           </p>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -117,7 +117,7 @@ export default function Sistema() {
           <div className="flex justify-end">
             <Button onClick={salvar} disabled={updateConfig.isPending} className="gap-2">
               <Save className="h-4 w-4" />
-              {updateConfig.isPending ? 'Salvando...' : 'Salvar configuracao'}
+              {updateConfig.isPending ? 'Salvando...' : 'Salvar indisponiveis'}
             </Button>
           </div>
         </CardContent>
