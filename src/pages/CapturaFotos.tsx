@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type FuncionarioFoto = {
   id: string;
@@ -88,7 +89,9 @@ export default function CapturaFotos() {
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
   const [sucesso, setSucesso] = useState("");
+  const [modalMensagem, setModalMensagem] = useState<{ titulo: string; texto: string; tipo: "erro" | "sucesso" } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const buscaInputRef = useRef<HTMLInputElement | null>(null);
 
   const podeSalvar = useMemo(() => {
@@ -208,6 +211,22 @@ export default function CapturaFotos() {
 
   const salvar = async () => {
     if (!selecionado) return;
+    if (telefone.replace(/\D/g, "").length < 10) {
+      setModalMensagem({ titulo: "FALTA WHATSAPP", texto: "Informe o numero do WhatsApp antes de salvar.", tipo: "erro" });
+      return;
+    }
+    if (!fretadoEscolhido) {
+      setModalMensagem({ titulo: "FALTA FRETADO", texto: "Informe se o funcionario usa fretado ou nao usa fretado.", tipo: "erro" });
+      return;
+    }
+    if (usaFretado && !linhaFretado) {
+      setModalMensagem({ titulo: "FALTA LINHA DO FRETADO", texto: "Selecione a linha do fretado antes de salvar.", tipo: "erro" });
+      return;
+    }
+    if (!imagemBase64) {
+      setModalMensagem({ titulo: "FALTA FOTO", texto: "Tire ou carregue a foto antes de salvar.", tipo: "erro" });
+      return;
+    }
     setErro("");
     setSucesso("");
     setCarregando(true);
@@ -231,9 +250,12 @@ export default function CapturaFotos() {
       setLinhaFretado("");
       setImagemBase64("");
       setPreview("");
+      setModalMensagem({ titulo: "SALVO COM SUCESSO", texto: "Foto e dados atualizados. Procure o proximo funcionario.", tipo: "sucesso" });
       window.setTimeout(() => buscaInputRef.current?.focus(), 100);
     } catch (e) {
-      setErro(e instanceof Error ? e.message : "Erro ao salvar");
+      const mensagem = e instanceof Error ? e.message : "Erro ao salvar";
+      setErro(mensagem);
+      setModalMensagem({ titulo: "ERRO AO SALVAR", texto: mensagem, tipo: "erro" });
     } finally {
       setCarregando(false);
     }
@@ -388,11 +410,15 @@ export default function CapturaFotos() {
 	                      <p className="text-sm font-semibold text-slate-800">ROSTO E PEITO</p>
 	                      <p className="text-xs text-slate-600">Centralize o rosto e pegue do peito para cima.</p>
 	                    </div>
-	                    <input ref={fileInputRef} className="hidden" type="file" accept="image/*" capture="environment" onChange={(e) => handleFoto(e.target.files?.[0])} />
-	                    <Button type="button" variant="secondary" className="h-12 w-full text-base" onClick={() => fileInputRef.current?.click()}>
-	                      {preview ? <RefreshCw className="mr-2 h-5 w-5" /> : <Camera className="mr-2 h-5 w-5" />}
-	                      {preview ? "Tirar novamente" : "Tirar foto"}
-	                    </Button>
+		                    <input ref={fileInputRef} className="hidden" type="file" accept="image/*" capture="environment" onChange={(e) => handleFoto(e.target.files?.[0])} />
+		                    <input ref={uploadInputRef} className="hidden" type="file" accept="image/*" onChange={(e) => handleFoto(e.target.files?.[0])} />
+		                    <Button type="button" variant="secondary" className="h-12 w-full text-base" onClick={() => fileInputRef.current?.click()}>
+		                      {preview ? <RefreshCw className="mr-2 h-5 w-5" /> : <Camera className="mr-2 h-5 w-5" />}
+		                      {preview ? "Tirar novamente" : "Tirar foto"}
+		                    </Button>
+		                    <Button type="button" variant="outline" className="h-11 w-full" onClick={() => uploadInputRef.current?.click()}>
+		                      Carregar foto
+		                    </Button>
 	                    {preview && (
 	                      <div className="rounded-md border-2 border-blue-500/70 p-2">
 	                        <img src={preview} alt="Preview" className="max-h-72 w-full rounded-md object-cover" />
@@ -400,9 +426,9 @@ export default function CapturaFotos() {
 	                    )}
 	                  </div>
 
-                  <Button onClick={salvar} disabled={carregando || !podeSalvar} className="w-full">
-                    <Camera className="mr-2 h-4 w-4" /> Salvar
-                  </Button>
+	                  <Button onClick={salvar} disabled={carregando} className="w-full">
+	                    <Camera className="mr-2 h-4 w-4" /> Salvar
+	                  </Button>
                   {!podeSalvar && (
                     <p className="text-xs text-slate-500">
                       Preencha telefone, fretado e tire a foto para salvar.
@@ -416,8 +442,21 @@ export default function CapturaFotos() {
               )}
             </CardContent>
           </Card>
-        </div>
-      </div>
-    </main>
-  );
-}
+	        </div>
+	      </div>
+	      <Dialog open={!!modalMensagem} onOpenChange={(open) => !open && setModalMensagem(null)}>
+	        <DialogContent className="max-w-sm">
+	          <DialogHeader>
+	            <DialogTitle>{modalMensagem?.titulo}</DialogTitle>
+	          </DialogHeader>
+	          <div className={modalMensagem?.tipo === "sucesso" ? "rounded-md bg-emerald-50 p-4 text-emerald-800" : "rounded-md bg-red-50 p-4 text-red-800"}>
+	            {modalMensagem?.texto}
+	          </div>
+	          <Button className="w-full" onClick={() => setModalMensagem(null)}>
+	            OK
+	          </Button>
+	        </DialogContent>
+	      </Dialog>
+	    </main>
+	  );
+	}
