@@ -55,7 +55,7 @@ const MODELOS: ModeloNotificacao[] = [
     mensagem: 'Nova visualizacao no Quadro de Funcionarios:\n\nO numero principal do card mostra os funcionarios disponiveis para trabalhar no quadro.\n\nNo botao INDISPONIVEIS ficam agrupados os funcionarios que reduzem o quadro disponivel, como SUMIDO, COBERTURA FERIAS, AUXILIO DOENCA / INSS, FERIAS, AFASTADO e TREINAMENTO.\n\nAo clicar no botao, o sistema mostra o nome e o motivo.\n\nApos ler, clique em CIENTE.',
     acoes: 'ciente',
     entrega: 'modal',
-    destino: 'Lideranca, RH, Paulo e Mauricio',
+    destino: 'Lideranca, RH, Paulo, Mauricio e Junior',
   },
   {
     tipo: 'admissao_confirmacao',

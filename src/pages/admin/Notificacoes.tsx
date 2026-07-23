@@ -615,7 +615,7 @@ const [galeriaOpen, setGaleriaOpen] = useState(false);
         .filter((usuario: any) => {
           const nome = String(usuario.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
           return usuario.acesso_admin
-            || ['LUCIANO', 'MAURICIO', 'PAULO'].includes(nome)
+            || ['LUCIANO', 'MAURICIO', 'PAULO', 'JUNIOR'].includes(nome)
             || ['rh_completo', 'rh_demissoes', 'gestor_setor'].includes(usuario.perfil);
         })
         .map((usuario: any) => usuario.id);
@@ -633,7 +633,7 @@ const [galeriaOpen, setGaleriaOpen] = useState(false);
         criado_por: userRole?.nome || 'LUCIANO',
         dados_extra: {
           destinatarios,
-          mensagem_personalizada: 'O HISTORICO DO QUADRO ESTA DISPONIVEL PARA CONSULTA. ELE MOSTRA AS MOVIMENTACOES QUE ALTERAM O QUADRO, COM DATA, FUNCIONARIO, SETOR/TURMA E IMPACTO. LIDERANCA VISUALIZA APENAS SEUS SETORES; RH, PAULO E MAURICIO VISUALIZAM TODOS.',
+          mensagem_personalizada: 'O HISTORICO DO QUADRO ESTA DISPONIVEL PARA CONSULTA. ELE MOSTRA AS MOVIMENTACOES QUE ALTERAM O QUADRO, COM DATA, FUNCIONARIO, SETOR/TURMA E IMPACTO. LIDERANCA VISUALIZA APENAS SEUS SETORES; RH, PAULO, MAURICIO E JUNIOR VISUALIZAM TODOS.',
           link: '/historico-quadro',
         },
         notificado: false,
