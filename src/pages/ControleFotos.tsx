@@ -362,8 +362,15 @@ export default function ControleFotos() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      toast.success("Foto carregada com sucesso.");
-      setEditando(null);
+      toast.success("Foto carregada com sucesso. Complete os dados e clique em Salvar.");
+      setEditando((atual) => atual ? {
+        ...atual,
+        tem_foto: true,
+        foto_nao_precisa: false,
+        foto_arquivo_nome: data?.foto_arquivo_nome || atual.foto_arquivo_nome,
+        foto_storage_path: data?.foto_storage_path || atual.foto_storage_path,
+        foto_verificada_em: new Date().toISOString(),
+      } : atual);
       queryClient.invalidateQueries({ queryKey: ["controle-fotos-funcionarios"] });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao carregar foto.");
