@@ -50,26 +50,26 @@ export function useUpdateSistemaConfig() {
       };
 
       if (atual?.id) {
-        const { data, error } = await (supabase as any)
+        const { error } = await (supabase as any)
           .from('sistema_config')
           .update(updatePayload)
-          .eq('id', atual.id)
-          .select('*')
-          .single();
+          .eq('id', atual.id);
         if (error) throw error;
-        return data;
+        return { id: atual.id, ...updatePayload };
       }
 
-      const { data, error } = await (supabase as any)
+      const { error } = await (supabase as any)
         .from('sistema_config')
-        .insert(updatePayload)
-        .select('*')
-        .single();
+        .insert(updatePayload);
       if (error) throw error;
-      return data;
+      return updatePayload;
     },
-    onSuccess: async () => {
-      queryClient.invalidateQueries({ queryKey: ['sistema-config'] });
+    onSuccess: async (data) => {
+      queryClient.setQueryData(['sistema-config'], (atual: SistemaConfig | null | undefined) => ({
+        ...(atual || {}),
+        ...data,
+      }));
+      await queryClient.invalidateQueries({ queryKey: ['sistema-config'] });
       await queryClient.refetchQueries({ queryKey: ['sistema-config'] });
     },
   });
