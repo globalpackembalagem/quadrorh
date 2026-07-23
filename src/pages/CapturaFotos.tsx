@@ -29,12 +29,12 @@ function formatTelefone(value: string) {
   return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
-async function resizeImageToDataUrl(file: File, maxSize = 1200, quality = 0.82) {
+async function resizeImageToDataUrl(file: File, maxSize = 900, quality = 0.72) {
   return new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
         const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
         const canvas = document.createElement("canvas");
         canvas.width = Math.round(img.width * scale);
@@ -44,14 +44,30 @@ async function resizeImageToDataUrl(file: File, maxSize = 1200, quality = 0.82) 
           reject(new Error("Nao foi possivel processar a imagem"));
           return;
         }
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", quality));
-      };
-      img.onerror = () => reject(new Error("Imagem invalida"));
-      img.src = String(reader.result);
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error("Nao foi possivel compactar a foto"));
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result));
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(blob);
+        }, "image/jpeg", quality);
+      } catch (error) {
+        reject(error);
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
     };
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Imagem invalida"));
+    };
+    img.src = objectUrl;
   });
 }
 
@@ -175,9 +191,19 @@ export default function CapturaFotos() {
 
   const handleFoto = async (file?: File) => {
     if (!file) return;
-    const dataUrl = await resizeImageToDataUrl(file);
-    setImagemBase64(dataUrl);
-    setPreview(dataUrl);
+    setErro("");
+    setCarregando(true);
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      setImagemBase64(dataUrl);
+      setPreview(dataUrl);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Erro ao processar foto. Tente tirar a foto novamente.");
+      setImagemBase64("");
+      setPreview("");
+    } finally {
+      setCarregando(false);
+    }
   };
 
   const salvar = async () => {
