@@ -412,13 +412,15 @@ export default function CapturaFotos() {
 	                    </div>
 		                    <input ref={fileInputRef} className="hidden" type="file" accept="image/*" capture="environment" onChange={(e) => handleFoto(e.target.files?.[0])} />
 		                    <input ref={uploadInputRef} className="hidden" type="file" accept="image/*" onChange={(e) => handleFoto(e.target.files?.[0])} />
-		                    <Button type="button" variant="secondary" className="h-12 w-full text-base" onClick={() => fileInputRef.current?.click()}>
-		                      {preview ? <RefreshCw className="mr-2 h-5 w-5" /> : <Camera className="mr-2 h-5 w-5" />}
-		                      {preview ? "Tirar novamente" : "Tirar foto"}
-		                    </Button>
-		                    <Button type="button" variant="outline" className="h-11 w-full" onClick={() => uploadInputRef.current?.click()}>
-		                      Carregar foto
-		                    </Button>
+			                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+			                      <Button type="button" variant="secondary" className="h-12 w-full text-base" onClick={() => fileInputRef.current?.click()}>
+			                        {preview ? <RefreshCw className="mr-2 h-5 w-5" /> : <Camera className="mr-2 h-5 w-5" />}
+			                        {preview ? "Tirar novamente" : "Tirar foto"}
+			                      </Button>
+			                      <Button type="button" variant="default" className="h-12 w-full text-base" onClick={() => uploadInputRef.current?.click()}>
+			                        CARREGAR FOTO DA GALERIA
+			                      </Button>
+			                    </div>
 	                    {preview && (
 	                      <div className="rounded-md border-2 border-blue-500/70 p-2">
 	                        <img src={preview} alt="Preview" className="max-h-72 w-full rounded-md object-cover" />
