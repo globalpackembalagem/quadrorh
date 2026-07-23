@@ -7,6 +7,8 @@ export interface SistemaConfig {
   indisponiveis_situacao_ids?: string[] | null;
 }
 
+const SISTEMA_CONFIG_ID = '00000000-0000-0000-0000-000000000001';
+
 export function useSistemaConfig() {
   const { data } = useQuery({
     queryKey: ['sistema-config'],
@@ -14,8 +16,7 @@ export function useSistemaConfig() {
       const { data, error } = await (supabase as any)
         .from('sistema_config')
         .select('*')
-        .order('created_at', { ascending: true })
-        .limit(1)
+        .eq('id', SISTEMA_CONFIG_ID)
         .maybeSingle();
 
       if (error) throw error;
@@ -35,34 +36,16 @@ export function useUpdateSistemaConfig() {
 
   return useMutation({
     mutationFn: async (payload: Partial<SistemaConfig>) => {
-      const { data: atual, error: selectError } = await (supabase as any)
-        .from('sistema_config')
-        .select('id')
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle();
-
-      if (selectError) throw selectError;
-
       const updatePayload = {
         ...payload,
         atualizado_por: usuarioAtual?.nome || 'SISTEMA',
       };
 
-      if (atual?.id) {
-        const { error } = await (supabase as any)
-          .from('sistema_config')
-          .update(updatePayload)
-          .eq('id', atual.id);
-        if (error) throw error;
-        return { id: atual.id, ...updatePayload };
-      }
-
       const { error } = await (supabase as any)
         .from('sistema_config')
-        .insert(updatePayload);
+        .upsert({ id: SISTEMA_CONFIG_ID, ...updatePayload }, { onConflict: 'id' });
       if (error) throw error;
-      return updatePayload;
+      return { id: SISTEMA_CONFIG_ID, ...updatePayload };
     },
     onSuccess: async (data) => {
       queryClient.setQueryData(['sistema-config'], (atual: SistemaConfig | null | undefined) => ({
