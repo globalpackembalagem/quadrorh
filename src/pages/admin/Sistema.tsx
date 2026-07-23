@@ -49,8 +49,9 @@ export default function Sistema() {
     try {
       await updateConfig.mutateAsync({ indisponiveis_situacao_ids: selecionados });
       toast.success('Configuracao dos INDISPONIVEIS salva.');
-    } catch (error) {
-      toast.error('Erro ao salvar configuracao dos INDISPONIVEIS.');
+    } catch (error: any) {
+      console.error('Erro ao salvar indisponiveis:', error);
+      toast.error(error?.message || 'Erro ao salvar configuracao dos INDISPONIVEIS.');
     }
   };
 
