@@ -38,6 +38,7 @@ type FuncionarioFotoControle = {
   telefone_whatsapp: string | null;
   usa_fretado: boolean | null;
   linha_fretado: string | null;
+  foto_nao_precisa?: boolean;
 };
 
 const linhasFretado = ["VARZEA A", "VARZEA B", "CAMPINAS", "LOUVEIRA"];
@@ -87,7 +88,11 @@ function temFotoMarcada(func: FuncionarioFotoControle) {
 }
 
 function naoPrecisaFoto(func: FuncionarioFotoControle) {
-  return func.tem_foto === true && !func.foto_storage_path && !func.foto_arquivo_nome;
+  return func.foto_nao_precisa === true || normalizar(func.foto_arquivo_nome || "") === "NAO PRECISA";
+}
+
+function fotoResolvida(func: FuncionarioFotoControle) {
+  return temFotoMarcada(func) || naoPrecisaFoto(func);
 }
 
 function statusFotoLabel(func: FuncionarioFotoControle) {
@@ -218,7 +223,7 @@ export default function ControleFotos() {
         if (grupo !== setor) return false;
         return grupoUsaRegraDoQuadro(grupo) ? contaNoQuadroControleFotos(func) : true;
       });
-      const semFoto = lista.filter((func) => !temFotoMarcada(func)).length;
+      const semFoto = lista.filter((func) => !fotoResolvida(func)).length;
       const comFoto = lista.length - semFoto;
       return { setor, total: lista.length, semFoto, comFoto };
     }).filter((item) => item.semFoto > 0).sort(ordenarResumoSetores);
@@ -237,8 +242,9 @@ export default function ControleFotos() {
     return funcionariosControle.filter((func) => {
       const temFoto = temFotoMarcada(func);
       const fotoValida = temFotoValida(func);
+      const resolvida = fotoResolvida(func);
       if (statusFoto === "COM" && !temFoto) return false;
-      if (statusFoto === "SEM" && temFoto) return false;
+      if (statusFoto === "SEM" && resolvida) return false;
       if (statusDownload === "NAO_BAIXADAS" && (!fotoValida || func.foto_baixada_em)) return false;
       if (statusDownload === "BAIXADAS" && (!fotoValida || !func.foto_baixada_em)) return false;
       if (setoresSelecionados.length > 0) {
@@ -256,7 +262,8 @@ export default function ControleFotos() {
 
   const totais = useMemo(() => {
     const com = funcionariosControle.filter(temFotoMarcada).length;
-    return { total: funcionariosControle.length, com, sem: funcionariosControle.length - com };
+    const sem = funcionariosControle.filter((func) => !fotoResolvida(func)).length;
+    return { total: funcionariosControle.length, com, sem };
   }, [funcionariosControle]);
 
 
@@ -277,9 +284,9 @@ export default function ControleFotos() {
     setSalvando(true);
     try {
       const payload = {
-        tem_foto: editando.tem_foto === true,
-        foto_arquivo_nome: editando.foto_arquivo_nome || null,
-        foto_verificada_em: editando.tem_foto ? (editando.foto_verificada_em || new Date().toISOString()) : null,
+        tem_foto: editando.foto_nao_precisa ? false : editando.tem_foto === true,
+        foto_arquivo_nome: editando.foto_nao_precisa ? "NAO PRECISA" : editando.foto_arquivo_nome || null,
+        foto_verificada_em: editando.tem_foto || editando.foto_nao_precisa ? (editando.foto_verificada_em || new Date().toISOString()) : null,
         telefone_whatsapp: editando.telefone_whatsapp || null,
         usa_fretado: editando.usa_fretado === true,
         linha_fretado: editando.usa_fretado ? (editando.linha_fretado || null) : null,
@@ -449,8 +456,9 @@ export default function ControleFotos() {
       SETOR: func.setor?.nome || "",
       TURMA: func.turma || "",
       SITUACAO: func.situacao?.nome || "",
-      "TEM FOTO": statusFotoLabel(func),
-      "ARQUIVO FOTO": naoPrecisaFoto(func) ? "NAO PRECISA" : func.foto_arquivo_nome || "",
+      "TEM FOTO": temFotoMarcada(func) ? "SIM" : "NAO",
+      "NAO PRECISA FOTO": naoPrecisaFoto(func) ? "SIM" : "NAO",
+      "ARQUIVO FOTO": naoPrecisaFoto(func) ? "" : func.foto_arquivo_nome || "",
       "CAMINHO FOTO": func.foto_storage_path || "",
       "VERIFICADA EM": formatData(func.foto_verificada_em),
       "BAIXADA EM": formatData(func.foto_baixada_em),
@@ -663,16 +671,16 @@ export default function ControleFotos() {
                       <td className="px-3 py-3">{formatDate(func.data_admissao)}</td>
                       <td className="px-3 py-3">{func.setor?.nome || "-"}</td>
                       <td className="px-3 py-3">
-                        <Badge variant={fotoMarcada ? (naoPrecisa ? "secondary" : "default") : "destructive"}>
+                        <Badge variant={naoPrecisa ? "secondary" : fotoMarcada ? "default" : "destructive"}>
                           {statusFotoLabel(func)}
                         </Badge>
                       </td>
-                      <td className="max-w-[180px] truncate px-3 py-3">{naoPrecisa ? "NAO PRECISA" : func.foto_arquivo_nome || "-"}</td>
+                      <td className="max-w-[180px] truncate px-3 py-3">{naoPrecisa ? "-" : func.foto_arquivo_nome || "-"}</td>
                       <td className="px-3 py-3">{formatData(func.foto_verificada_em)}</td>
                       <td className="px-3 py-3">{formatData(func.foto_baixada_em)}</td>
                       <td className="px-3 py-3">
                         <div className="flex justify-end gap-2">
-                          <Button size="sm" variant="outline" onClick={() => setEditando({ ...func })}>
+                          <Button size="sm" variant="outline" onClick={() => setEditando({ ...func, foto_nao_precisa: naoPrecisaFoto(func) })}>
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button size="sm" variant="outline" onClick={() => baixarFoto(func)} disabled={!fotoValida || !func.foto_storage_path}>
@@ -713,13 +721,41 @@ export default function ControleFotos() {
                 <div className="font-semibold">{editando.nome_completo}</div>
                 <div className="text-sm text-muted-foreground">{editando.matricula || "TEMP"} - {editando.setor?.nome || "SEM SETOR"}</div>
               </div>
-              <label className="flex items-center gap-2 text-sm font-medium">
-                <input type="checkbox" checked={editando.tem_foto === true} onChange={(e) => setEditando({ ...editando, tem_foto: e.target.checked })} />
-                TEM FOTO / NAO PRECISA
-              </label>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <label className="flex items-center gap-2 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    checked={editando.tem_foto === true && editando.foto_nao_precisa !== true}
+                    onChange={(e) => setEditando({
+                      ...editando,
+                      tem_foto: e.target.checked,
+                      foto_nao_precisa: e.target.checked ? false : editando.foto_nao_precisa,
+                    })}
+                  />
+                  TEM FOTO
+                </label>
+                <label className="flex items-center gap-2 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    checked={editando.foto_nao_precisa === true}
+                    onChange={(e) => setEditando({
+                      ...editando,
+                      foto_nao_precisa: e.target.checked,
+                      tem_foto: e.target.checked ? false : editando.tem_foto,
+                      foto_arquivo_nome: e.target.checked ? "NAO PRECISA" : "",
+                    })}
+                  />
+                  NAO PRECISA FOTO
+                </label>
+              </div>
               <div className="space-y-2">
                 <Label>Nome do arquivo</Label>
-                <Input value={editando.foto_arquivo_nome || ""} onChange={(e) => setEditando({ ...editando, foto_arquivo_nome: e.target.value })} placeholder="Ex: NOME_FUNCIONARIO_123.jpg" />
+                <Input
+                  value={editando.foto_nao_precisa ? "" : editando.foto_arquivo_nome || ""}
+                  disabled={editando.foto_nao_precisa === true}
+                  onChange={(e) => setEditando({ ...editando, foto_arquivo_nome: e.target.value })}
+                  placeholder="Ex: NOME_FUNCIONARIO_123.jpg"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Telefone/WhatsApp</Label>
