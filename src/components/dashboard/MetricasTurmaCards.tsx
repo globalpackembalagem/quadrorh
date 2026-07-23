@@ -9,6 +9,7 @@ import { useUsuario } from '@/contexts/UserContext';
 import { cn } from '@/lib/utils';
 import { getTrabalhaOuFolga } from '@/lib/escalaPanama';
 import { useAutoEfetivarTrocasProgramadas, useTrocasTurno } from '@/hooks/useTrocasTurno';
+import { useSistemaConfig } from '@/hooks/useSistemaConfig';
 import { toast } from 'sonner';
 import { addDays, differenceInCalendarDays, format, parseISO, startOfDay } from 'date-fns';
 import {
@@ -143,6 +144,7 @@ function calcularTotalPlanejadoDecoracao(dados: QuadroDecoracao): number {
 export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro = [], quadroPlanejadoDecoracao = [], funcionariosPrevisao = [], sumidosPorTurma = {}, cobFeriasPorTurma = {}, treinamentoPorTurma = {}, mostrarSumidos = false, recentesPorTurma = {}, treinamentosPrevisao = [] }: MetricasTurmaCardsProps) {
   const turmas = grupo === 'SOPRO' ? TURMAS_SOPRO : TURMAS_DECORACAO;
   const { usuarioAtual } = useUsuario();
+  const { indisponiveisSituacaoIds } = useSistemaConfig();
   const { data: trocasTurno = [] } = useTrocasTurno();
   useAutoEfetivarTrocasProgramadas(trocasTurno);
   const escalaHojeDecoracao = useMemo(() => ({
@@ -372,13 +374,18 @@ export function MetricasTurmaCards({ grupo, funcionarios, quadroPlanejadoSopro =
           indisponiveisMap.set(chave, { nome, motivo });
         };
 
-        sumidosInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'SUMIDO'));
-        cobFeriasInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'COBERTURA FERIAS'));
-        treinamentoInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'TREINAMENTO'));
+        const usaConfiguracaoSistema = indisponiveisSituacaoIds.length > 0;
+        if (!usaConfiguracaoSistema) {
+          sumidosInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'SUMIDO'));
+          cobFeriasInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'COBERTURA FERIAS'));
+          treinamentoInfo.nomes.forEach(nome => adicionarIndisponivel(nome, 'TREINAMENTO'));
+        }
         funcionarios
           .filter(f => getTurmaCardFuncionario(f, grupo) === turma)
           .forEach(f => {
-            const motivo = motivoIndisponivelPorSituacao(f.situacao?.nome);
+            const motivo = usaConfiguracaoSistema
+              ? (indisponiveisSituacaoIds.includes(f.situacao_id) ? f.situacao?.nome || 'INDISPONIVEL' : null)
+              : motivoIndisponivelPorSituacao(f.situacao?.nome);
             if (motivo) adicionarIndisponivel(f.nome_completo, motivo);
           });
 

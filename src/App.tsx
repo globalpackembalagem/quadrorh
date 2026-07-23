@@ -85,6 +85,7 @@ const Setores = lazyRetry(() => import("./pages/admin/Setores"));
 const Situacoes = lazyRetry(() => import("./pages/admin/Situacoes"));
 const Periodos = lazyRetry(() => import("./pages/admin/Periodos"));
 const Usuarios = lazyRetry(() => import("./pages/admin/Usuarios"));
+const Sistema = lazyRetry(() => import("./pages/admin/Sistema"));
 const Backup = lazyRetry(() => import("./pages/admin/Backup"));
 const TiposDesligamento = lazyRetry(() => import("./pages/admin/TiposDesligamento"));
 const NotFound = lazyRetry(() => import("./pages/NotFound"));
@@ -247,6 +248,7 @@ function LayoutRouter() {
             <Route path="/admin/situacoes" element={<RotaProtegida requireAdmin><Situacoes /></RotaProtegida>} />
             <Route path="/admin/periodos" element={<RotaProtegida requireAdmin><Periodos /></RotaProtegida>} />
             <Route path="/admin/usuarios" element={<RotaProtegida requireAdmin><Usuarios /></RotaProtegida>} />
+            <Route path="/admin/sistema" element={<RotaProtegida requireAdmin><Sistema /></RotaProtegida>} />
             <Route path="/admin/backup" element={<RotaProtegida requireAdmin><Backup /></RotaProtegida>} />
             <Route path="/admin/tipos-desligamento" element={<RotaProtegida requireAdmin><TiposDesligamento /></RotaProtegida>} />
             

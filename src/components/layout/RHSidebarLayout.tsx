@@ -118,7 +118,7 @@ const adminMainItems: NavItem[] = [
   { name: 'CONTROLE DE FOTOS', href: '/admin/controle-fotos', icon: ImageDown },
 ];
 
-const adminNavigation = [
+const adminNavigationBase = [
   { name: 'SETORES', href: '/admin/setores', icon: Building2 },
   { name: 'SITUAÇÕES', href: '/admin/situacoes', icon: FileText },
   { name: 'TIPOS DESLIGAMENTO', href: '/admin/tipos-desligamento', icon: UserMinus },
@@ -131,6 +131,26 @@ const adminNavigation = [
 ];
 
 // Item do manual - acessível para todos os logados
+const adminNavigation: NavItem[] = [
+  { name: 'SETORES', href: '/admin/setores', icon: Building2 },
+  { name: 'SITUACOES', href: '/admin/situacoes', icon: FileText },
+  { name: 'TIPOS DESLIGAMENTO', href: '/admin/tipos-desligamento', icon: UserMinus },
+  { name: 'PERIODOS', href: '/admin/periodos', icon: Clock },
+  {
+    name: 'USUARIOS',
+    href: '/admin/usuarios',
+    icon: UserCog,
+    subItems: [
+      { name: 'CADASTRO DE USUARIOS', href: '/admin/usuarios', icon: UserCog },
+      { name: 'ACESSOS USUARIOS', href: '/admin/acessos-usuarios', icon: Activity },
+    ],
+  },
+  { name: 'SISTEMA', href: '/admin/sistema', icon: Settings },
+  { name: 'BACKUP', href: '/admin/backup', icon: Database },
+  { name: 'REFERENCIA', href: '/admin/referencia', icon: Lightbulb },
+  { name: 'MANUAL DO GESTOR', href: '/manual', icon: BookOpen },
+];
+
 const manualNavItem = { name: 'MANUAL DO GESTOR', href: '/manual', icon: BookOpen };
 
 // Função para filtrar navegação por perfil e permissões granulares
